@@ -12,6 +12,9 @@ import { ELEMENT_COLOR, ELEMENT_LABEL, NORMAL_COLOR } from '../game/battle';
 import * as St from '../game/stats';
 import * as A from '../game/actions';
 import type { OwnedPet } from '../game/types';
+import { canShareCards, shareCard } from '../lib/shareCard';
+import { useAuth } from '../state/AuthContext';
+import { useFriends } from '../state/FriendsContext';
 
 /** One pet up close: make it active, spend stat points and choose its battle moves. */
 export default function PetSheet({ petId, onClose }: { petId: string; onClose: () => void }) {
@@ -19,6 +22,9 @@ export default function PetSheet({ petId, onClose }: { petId: string; onClose: (
   const pet = state.pets.find((p) => p.id === petId);
   const [confirmReset, setConfirmReset] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
+  const [sharing, setSharing] = useState(false);
+  const { username } = useAuth();
+  const { myCode } = useFriends();
   if (!pet) return null;
   const sp = SPECIES_BY_ID[pet.speciesId];
   const lv = levelFor(pet.xp);
@@ -151,6 +157,18 @@ export default function PetSheet({ petId, onClose }: { petId: string; onClose: (
             })}
           </View>
           {msg ? <Text style={styles.msg}>{msg}</Text> : null}
+          {canShareCards() ? (
+            <Button
+              label={sharing ? 'Making your card…' : '📸 Share card'}
+              disabled={sharing}
+              onPress={async () => {
+                setSharing(true);
+                const r = await shareCard(pet, username ?? 'A Sproutling trainer', myCode);
+                setSharing(false);
+                setMsg(r === 'downloaded' ? 'Card saved to your downloads! Post it anywhere.' : r === 'failed' ? 'Couldn’t make the card. Try again.' : null);
+              }}
+            />
+          ) : null}
           <Button primary label="Done" onPress={onClose} />
         </ScrollView>
       </View>
