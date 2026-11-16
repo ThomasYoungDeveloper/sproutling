@@ -34,7 +34,7 @@ export function friendlyAuthError(msg: string): string {
   if (/invalid login/i.test(msg)) return 'That email and password don’t match. Try again or reset your password.';
   if (/email not confirmed/i.test(msg)) return 'Please confirm your email first. Check your inbox (and spam) for a link from Sproutling.';
   if (/already registered|already been registered/i.test(msg)) return 'That email already has an account. Try signing in instead.';
-  if (/not authorized|email_address_not_authorized/i.test(msg)) return 'We can’t send email to that address yet. Sproutling is in a private test, so ask Tom for an invite.';
+  if (/not authorized|email_address_not_authorized/i.test(msg)) return 'We can’t send email to that address yet. Sproutling is in a private test, so ask whoever invited you to add your email.';
   if (/rate limit|too many/i.test(msg)) return 'Too many tries. Please wait a minute and try again.';
   if (/password/i.test(msg) && /(6|characters|short)/i.test(msg)) return 'Use a password with at least 6 characters.';
   if (/valid email|invalid email/i.test(msg)) return 'That doesn’t look like an email address.';
