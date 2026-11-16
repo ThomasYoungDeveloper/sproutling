@@ -1,12 +1,12 @@
 import { gradeInfo } from '../game/stats';
 import React, { useEffect, useRef } from 'react';
-import { Animated, Pressable, StyleSheet, Text, View, type ViewStyle, type StyleProp } from 'react-native';
+import { Animated, Pressable, StyleSheet, Text, View, type ViewStyle, type StyleProp, type LayoutChangeEvent } from 'react-native';
 import { colors, radius, space, font } from '../theme';
 import type { Rarity } from '../game/types';
 import { RARITY_INFO } from '../game/rarity';
 
-export function Card({ children, style }: { children: React.ReactNode; style?: StyleProp<ViewStyle> }) {
-  return <View style={[styles.card, style]}>{children}</View>;
+export function Card({ children, style, onLayout }: { children: React.ReactNode; style?: StyleProp<ViewStyle>; onLayout?: (e: LayoutChangeEvent) => void }) {
+  return <View style={[styles.card, style]} onLayout={onLayout}>{children}</View>;
 }
 
 export function SectionHead({ title, meta }: { title: string; meta?: string }) {

@@ -87,29 +87,31 @@ function ActivityRow({ d }: { d: ReturnType<typeof A.today> }) {
     <View style={styles.activity} accessibilityLabel={`Activity rings: ${closed} of 3 closed. Mindful minutes: ${mindful}.`}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
         {(['move', 'exercise', 'stand'] as const).map((k) => (
-          <MiniRing key={k} frac={r[k]} color={RING_COLORS[k]} />
+          <MiniRing key={k} frac={r[k]} color={RING_COLORS[k]} size={28} />
         ))}
       </View>
-      <View style={{ flex: 1 }}>
+      <View style={{ flex: 1, gap: 4 }}>
         <Text style={styles.actTitle}>{closed === 3 ? 'All rings closed!' : `${closed} of 3 rings closed`}</Text>
-        <Text style={styles.actSub}>
-          {closed === 3 ? 'Rings Closed buff: +5% all stats' : `+${RING_XP} XP per ring, bonus for all 3`}
-          {(d.exerciseMin ?? 0) >= EXERCISE_MINUTES || r.exercise >= 1 ? ' · 🏋️ Trained' : ''}
-        </Text>
-      </View>
-      <View style={[styles.mindful, mindful >= MINDFUL_MINUTES && styles.mindfulOn]}>
-        <Text style={[styles.mindfulText, mindful >= MINDFUL_MINUTES && { color: '#5B3FA8' }]}>🧘 {mindful} min</Text>
+        <Text style={styles.actSub}>{closed === 3 ? 'Rings Closed buff: +5% all stats' : `+${RING_XP} XP per ring, bonus for all 3`}</Text>
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+          {(d.exerciseMin ?? 0) >= EXERCISE_MINUTES || r.exercise >= 1 ? (
+            <View style={[styles.mindful, { backgroundColor: '#E3F6D8' }]}><Text style={[styles.mindfulText, { color: '#3E7A1E' }]}>🏋️ Trained</Text></View>
+          ) : null}
+          <View style={[styles.mindful, mindful >= MINDFUL_MINUTES && styles.mindfulOn]}>
+            <Text style={[styles.mindfulText, mindful >= MINDFUL_MINUTES && { color: '#5B3FA8' }]}>🧘 {mindful} mindful min{mindful >= MINDFUL_MINUTES ? ' · Calm' : ''}</Text>
+          </View>
+        </View>
       </View>
     </View>
   );
 }
 
-function MiniRing({ frac, color }: { frac: number; color: string }) {
+function MiniRing({ frac, color, size = 24 }: { frac: number; color: string; size?: number }) {
   const r = 9;
   const len = 2 * Math.PI * r;
   const f = Math.max(0, Math.min(1, frac));
   return (
-    <Svg width={24} height={24} viewBox="0 0 24 24">
+    <Svg width={size} height={size} viewBox="0 0 24 24">
       <Circle cx={12} cy={12} r={r} fill="none" stroke={color} strokeOpacity={0.2} strokeWidth={4} />
       {f > 0 ? <Circle cx={12} cy={12} r={r} fill="none" stroke={color} strokeWidth={4} strokeDasharray={`${len * f} ${len}`} strokeLinecap="round" transform="rotate(-90 12 12)" /> : null}
     </Svg>

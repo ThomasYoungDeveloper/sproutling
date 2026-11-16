@@ -15,6 +15,7 @@ export default function EventCard() {
   const [msg, setMsg] = useState<string | null>(null);
   const [party, setParty] = useState(0);
   const [open, setOpen] = useState(false);
+  const [box, setBox] = useState({ w: 0, h: 0 });
   const today = A.todayKey(state);
   const run = Ev.eventOn(today);
 
@@ -62,29 +63,34 @@ export default function EventCard() {
   }
 
   return (
-    <Card style={[styles.card, { borderColor: ev.colors[1] }]}>
-      <Svg style={StyleSheet.absoluteFill} width="100%" height="100%" preserveAspectRatio="none" viewBox="0 0 100 100">
-        <Defs>
-          <LinearGradient id={`ev-${ev.id}`} x1="0" y1="0" x2="1" y2="1">
-            <Stop offset="0" stopColor={ev.colors[0]} />
-            <Stop offset="1" stopColor={ev.colors[1]} />
-          </LinearGradient>
-        </Defs>
-        <Rect x={0} y={0} width={100} height={100} fill={`url(#ev-${ev.id})`} />
-      </Svg>
+    <Card
+      style={[styles.card, { borderColor: ev.colors[1], backgroundColor: ev.colors[1] }]}
+      onLayout={(e) => setBox({ w: Math.ceil(e.nativeEvent.layout.width), h: Math.ceil(e.nativeEvent.layout.height) })}
+    >
+      {box.w > 0 ? (
+        // Sized from the card's real size: a percent-sized gradient doesn't resize on iPhone.
+        <Svg style={{ position: 'absolute', top: 0, left: 0 }} width={box.w} height={box.h}>
+          <Defs>
+            <LinearGradient id={`ev-${ev.id}`} x1="0" y1="0" x2="1" y2="1">
+              <Stop offset="0" stopColor={ev.colors[0]} />
+              <Stop offset="1" stopColor={ev.colors[1]} />
+            </LinearGradient>
+          </Defs>
+          <Rect x={0} y={0} width={box.w} height={box.h} fill={`url(#ev-${ev.id})`} />
+        </Svg>
+      ) : null}
       {party ? <Confetti key={party} amount={50} width={400} height={400} /> : null}
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.sm }}>
-        <Text style={{ fontSize: 34 }}>{ev.emoji}</Text>
-        <View style={{ flex: 1 }}>
-          <Text style={styles.label}>LIMITED EVENT · {daysLeft} DAY{daysLeft === 1 ? '' : 'S'} LEFT</Text>
-          <Text style={styles.title}>{ev.name}</Text>
-        </View>
-        <View style={styles.count}>
-          <Text style={styles.countText}>{ev.token} {tokens}</Text>
-        </View>
+        <Text style={styles.label} numberOfLines={1}>{ev.emoji}  LIMITED EVENT · {daysLeft} DAY{daysLeft === 1 ? '' : 'S'} LEFT</Text>
         <Pressable onPress={() => setOpen(false)} style={styles.collapse} accessibilityRole="button" accessibilityLabel="Collapse">
           <Text style={styles.collapseText}>⌃</Text>
         </Pressable>
+      </View>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.sm }}>
+        <Text style={styles.title} numberOfLines={2}>{ev.name}</Text>
+        <View style={styles.count}>
+          <Text style={styles.countText}>{ev.token} {tokens}</Text>
+        </View>
       </View>
       <Text style={styles.blurb}>{ev.blurb}</Text>
       <View style={{ gap: 4 }}>
@@ -141,8 +147,8 @@ const styles = StyleSheet.create({
   card: { overflow: 'hidden', gap: space.sm },
   off: { backgroundColor: '#FFF8EC', borderColor: '#F2E2C2' },
   offText: { fontSize: 14, fontWeight: '700', color: colors.ink },
-  label: { fontSize: 11, fontWeight: '900', color: '#FFE9C9', letterSpacing: 1 },
-  title: { fontSize: 22, fontWeight: '900', color: '#FFFFFF' },
+  label: { flex: 1, fontSize: 11, fontWeight: '900', color: '#FFE9C9', letterSpacing: 1 },
+  title: { flex: 1, fontSize: 24, fontWeight: '900', color: '#FFFFFF' },
   count: { backgroundColor: 'rgba(255,255,255,0.95)', borderRadius: 14, paddingHorizontal: 10, paddingVertical: 6 },
   countText: { fontSize: 18, fontWeight: '900', color: colors.ink },
   blurb: { fontSize: 13, fontWeight: '700', color: '#FFF3E0' },
