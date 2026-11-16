@@ -1,3 +1,4 @@
+import { ivsOf } from './stats';
 import type { Egg, GameState, OwnedPet, Rarity } from './types';
 import { SPECIES, SPECIES_BY_ID } from './species';
 import { levelFor } from './scoring';
@@ -68,7 +69,7 @@ export function breed(s: GameState, aId: string, bId: string, rng: Rng = default
     stepsWalked: 0,
     incubating: false,
     foundOn: A.todayKey(s),
-    bred: { speciesId, parents: [a.speciesId, b.speciesId], parentSkins: [a.skin ?? null, b.skin ?? null] },
+    bred: { speciesId, parents: [a.speciesId, b.speciesId], parentSkins: [a.skin ?? null, b.skin ?? null], parentIvs: [ivsOf(a), ivsOf(b)] },
   };
   const rest = gameNow(s, now) + REST_HOURS * 3_600_000;
   const pets = s.pets.map((p) => (p.id === aId || p.id === bId ? { ...p, restUntil: rest } : p));

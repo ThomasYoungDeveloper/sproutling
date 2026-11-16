@@ -1,12 +1,13 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useGame } from '../state/GameContext';
-import { Card, SectionHead, RarityBadge, Chip } from '../components/ui';
+import { Card, SectionHead, RarityBadge, Chip, GradeChip } from '../components/ui';
 import PetSprite from '../components/PetSprite';
 import { colors, font, space } from '../theme';
 import { SPECIES, SPECIES_BY_ID } from '../game/species';
 import { RARITIES, RARITY_INFO } from '../game/rarity';
 import { levelFor, stageFor } from '../game/scoring';
+import { gradeOf } from '../game/stats';
 import * as Ach from '../game/achievements';
 import { SKINS, SKIN_INFO, skinDexCount, skinKey } from '../game/skins';
 import { useOverlay } from '../components/Overlay';
@@ -69,7 +70,10 @@ export default function DexScreen() {
                 {p.skin ? <Text style={[styles.skinBadge, { color: SKIN_INFO[p.skin].color }]}>{SKIN_INFO[p.skin].emoji}</Text> : null}
                 {pointsLeft(p) > 0 ? <View style={styles.pts}><Text style={styles.ptsText}>+{pointsLeft(p)}</Text></View> : null}
                 <Text style={styles.name} numberOfLines={1}>{p.nickname}</Text>
-                {active ? <Chip label="Active" /> : <RarityBadge rarity={sp.rarity} />}
+                <View style={{ flexDirection: 'row', gap: 4, alignItems: 'center' }}>
+                  <GradeChip grade={gradeOf(p)} />
+                  {active ? <Chip label="Active" /> : <RarityBadge rarity={sp.rarity} />}
+                </View>
               </Pressable>
             );
           })}

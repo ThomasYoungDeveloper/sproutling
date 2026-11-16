@@ -70,7 +70,7 @@ export const COSMETICS: Cosmetic[] = [
   { id: 'autumn', name: 'Harvest Grove', slot: 'scene', rarity: 'epic', price: 0, special: true, event: 'harvest' },
   { id: 'winterfest', name: 'Winter Festival', slot: 'scene', rarity: 'epic', price: 0, special: true, event: 'winter' },
 
-  { id: 'ball', name: 'Bouncy Ball', slot: 'toy', rarity: 'common', price: 0, emoji: '⚽', reaction: 'hop', line: 'Boing! Again!' },
+  { id: 'ball', name: 'Bouncy Ball', slot: 'toy', rarity: 'common', price: 0, emoji: '⚽', reaction: 'hop', line: 'Bounce bounce! Again!' },
   { id: 'cookie', name: 'Cookie', slot: 'toy', rarity: 'common', price: 50, emoji: '🍪', reaction: 'munch', line: 'Nom nom nom!' },
   { id: 'strawberry', name: 'Strawberry', slot: 'toy', rarity: 'common', price: 50, emoji: '🍓', reaction: 'munch', line: 'So juicy!' },
   { id: 'fish', name: 'Fishy Snack', slot: 'toy', rarity: 'common', price: 50, emoji: '🐟', reaction: 'munch', line: 'Yum, fishy!' },

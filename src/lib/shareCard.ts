@@ -6,7 +6,7 @@ import { RARITY_INFO } from '../game/rarity';
 import { levelFor } from '../game/scoring';
 import { SKIN_INFO } from '../game/skins';
 import { ELEMENT_COLOR, ELEMENT_LABEL } from '../game/battle';
-import { PERSONALITIES, personalityOf, statsFor } from '../game/stats';
+import { PERSONALITIES, gradeInfo, gradeOf, personalityOf, statsFor } from '../game/stats';
 import type { OwnedPet } from '../game/types';
 
 /**
@@ -115,6 +115,8 @@ export async function makeCardBlob(pet: OwnedPet, trainer: string, friendCode: s
   const badges: { text: string; color: string }[] = [{ text: rarity.label.toUpperCase(), color: rarity.color }, { text: ELEMENT_LABEL[sp.element].toUpperCase(), color: el }];
   if (pet.skin) badges.push({ text: `${SKIN_INFO[pet.skin].label.toUpperCase()} SKIN`, color: SKIN_INFO[pet.skin].color });
   if (pet.shiny) badges.push({ text: 'SHINY', color: '#E3A81E' });
+  const grade = gradeOf(pet);
+  badges.push({ text: grade >= 100 ? '💯 PERFECT' : `${grade}%`, color: gradeInfo(grade).color });
   ctx.font = font(30);
   const widths = badges.map((b) => ctx.measureText(b.text).width + 50);
   let bx = W / 2 - (widths.reduce((a, b) => a + b, 0) + (badges.length - 1) * 16) / 2;

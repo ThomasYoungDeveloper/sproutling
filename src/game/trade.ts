@@ -2,6 +2,7 @@ import type { GameState, OwnedPet, Skin } from './types';
 import { SKINS, noteSkin } from './skins';
 import { makeId, type Rng, defaultRng } from './random';
 import { SPECIES_BY_ID } from './species';
+import { ivsOf, personalityOf, readIvs, PERSONALITIES, type Ivs, type Personality } from './stats';
 
 /** A pet as it travels in a trade. */
 export interface TradePet {
@@ -12,6 +13,8 @@ export interface TradePet {
   shiny: boolean;
   hatchedOn?: string;
   skin?: Skin;
+  ivs?: Ivs;
+  personality?: Personality;
 }
 
 export const toTradePet = (p: OwnedPet): TradePet => ({
@@ -22,6 +25,8 @@ export const toTradePet = (p: OwnedPet): TradePet => ({
   shiny: !!p.shiny,
   hatchedOn: p.hatchedOn,
   ...(p.skin ? { skin: p.skin } : {}),
+  ivs: ivsOf(p),
+  personality: personalityOf(p),
 });
 
 export type OfferCheck = { ok: true } | { ok: false; reason: string };
@@ -57,6 +62,8 @@ export function applyTrade(s: GameState, tradeId: string, giveId: string, get: T
     shiny: !!get.shiny,
     hatchedOn: get.hatchedOn ?? '',
     ...(get.skin && SKINS.includes(get.skin) ? { skin: get.skin } : {}),
+    ...(readIvs(get.ivs) ? { ivs: readIvs(get.ivs) } : {}),
+    ...(get.personality && PERSONALITIES[get.personality] ? { personality: get.personality } : {}),
   };
   const isNew = !s.dex[get.speciesId];
   const pets = [...s.pets.filter((p) => p.id !== giveId), received];

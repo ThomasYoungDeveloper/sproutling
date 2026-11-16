@@ -308,4 +308,27 @@ ok(A.applyShields(shielded.state).used === 0, 'shields are not used twice');
   const ES = { ...newGame(), days: { '2026-10-31': full, '2026-11-02': full, '2026-11-03': { ...full, water: 0 } } } as GameState;
   ok(Ev.eventTokens(ES, run) === 5, 'tokens: 3 + 2, days outside the event ignored');
 }
+// Pet grades
+{
+  let seed = 7; const rq = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+  const iv = St.rollIvs(rq);
+  ok(Object.values(iv).every((v) => v >= 0 && v <= 15 && Number.isInteger(v)), 'quality values are 0-15');
+  ok(St.gradeOf({ ivs: { hp: 15, atk: 15, def: 15, spd: 15 } }) === 100 && St.gradeOf({ ivs: { hp: 0, atk: 0, def: 0, spd: 0 } }) === 0, 'grade 0% to 100%');
+  ok(St.gradeInfo(100).label === 'Perfect' && St.gradeInfo(85).stars === 3 && St.gradeInfo(40).stars === 0, 'grade labels');
+  const old = { id: 'abc123', speciesId: 'p15', nickname: 'Foxy', xp: 0, shiny: false, hatchedOn: '' };
+  ok(St.gradeOf(old) === St.gradeOf({ ...old }) && St.gradeOf(old) >= 0, 'older pets get a stable grade');
+  ok(St.readIvs({ hp: 99, atk: -3, def: 7.4, spd: 2 })!.hp === 15 && St.readIvs({ hp: 1 }) === undefined, 'bad quality values are cleaned up');
+  const perfect = St.statsFor({ speciesId: 'p15', xp: 5000, ivs: { hp: 15, atk: 15, def: 15, spd: 15 }, personality: 'gentle' });
+  const zero = St.statsFor({ speciesId: 'p15', xp: 5000, ivs: { hp: 0, atk: 0, def: 0, spd: 0 }, personality: 'gentle' });
+  ok(perfect.atk > zero.atk && perfect.atk <= Math.ceil(zero.atk * 1.11), 'a perfect pet is up to 10% stronger');
+  const kids = Array.from({ length: 200 }, () => St.inheritIvs(rq, { hp: 15, atk: 15, def: 15, spd: 15 }, { hp: 15, atk: 15, def: 15, spd: 15 }));
+  ok(kids.every((k) => Object.values(k).every((v) => v >= 5)), 'nursery babies have every stat at least 5');
+  const avgKid = kids.reduce((a, k) => a + St.gradeOf({ ivs: k }), 0) / kids.length;
+  ok(avgKid > 75, 'great parents make better babies (avg ' + Math.round(avgKid) + '%)');
+  // Trades keep the grade
+  const tp = T.toTradePet({ ...old, ivs: { hp: 1, atk: 2, def: 3, spd: 4 } } as any);
+  const g0 = { ...newGame(), pets: [{ ...old, id: 'mine' }, { ...old, id: 'give' }], activePetId: 'mine' } as GameState;
+  const got = T.applyTrade(g0, 'tr1', 'give', tp, rq)!.received;
+  ok(got.ivs?.def === 3 && got.id !== old.id, 'traded pets keep their grade');
+}
 console.log(fails ? `${fails} FAILED` : 'ALL PASSED'); process.exit(fails ? 1 : 0);

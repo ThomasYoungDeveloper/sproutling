@@ -31,6 +31,9 @@ export default function PetSheet({ petId, onClose }: { petId: string; onClose: (
   const stats = St.statsFor(pet);
   const left = St.pointsLeft(pet);
   const pers = St.PERSONALITIES[St.personalityOf(pet)];
+  const ivs = St.ivsOf(pet);
+  const grade = St.gradeOf(pet);
+  const gi = St.gradeInfo(grade);
   const equipped = St.equippedMoves(pet).map((m) => m.id);
   const isActive = state.activePetId === pet.id;
   const maxStat: Record<St.Stat, number> = { hp: 400, atk: 110, def: 100, spd: 100 };
@@ -60,6 +63,27 @@ export default function PetSheet({ petId, onClose }: { petId: string; onClose: (
               ) : (
                 <Button small primary label="Make active" onPress={() => { buzz('success'); apply((s) => A.setActivePet(s, pet.id)); }} />
               )}
+            </View>
+          </View>
+
+          <View style={styles.section}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Text style={styles.title}>🔎 Grade</Text>
+              <Text style={[styles.gradeBig, { color: gi.color }]}>{grade >= 100 ? '💯 100%' : `${grade}%`}</Text>
+            </View>
+            <Text style={[font.small, { fontWeight: '800' }]}>
+              {St.gradeStars(grade)} {gi.label}. {grade >= 100 ? 'A perfect pet: the best of the best!' : 'Every pet is born with hidden quality from 0 to 15 in each stat. A perfect 15 makes that stat up to 10% stronger.'}
+            </Text>
+            <View style={styles.ivGrid}>
+              {St.STATS.map((k) => (
+                <View key={k} style={styles.ivCell}>
+                  <Text style={styles.ivLabel}>{St.STAT_INFO[k].emoji} {St.STAT_INFO[k].short}</Text>
+                  <View style={styles.ivBar}>
+                    <View style={{ width: `${(ivs[k] / St.IV_MAX) * 100}%`, height: '100%', borderRadius: 999, backgroundColor: ivs[k] === St.IV_MAX ? '#E3A81E' : St.STAT_INFO[k].color }} />
+                  </View>
+                  <Text style={styles.ivVal}>{ivs[k]}/{St.IV_MAX}</Text>
+                </View>
+              ))}
             </View>
           </View>
 
@@ -177,6 +201,12 @@ export default function PetSheet({ petId, onClose }: { petId: string; onClose: (
 }
 
 const styles = StyleSheet.create({
+  gradeBig: { fontSize: 24, fontWeight: '900' },
+  ivGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  ivCell: { width: '47%', gap: 3 },
+  ivLabel: { fontSize: 12, fontWeight: '900', color: colors.ink },
+  ivBar: { height: 8, borderRadius: 999, backgroundColor: '#E8EEEC', overflow: 'hidden' },
+  ivVal: { fontSize: 11, fontWeight: '800', color: colors.muted },
   backdrop: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(24,30,48,0.6)', justifyContent: 'center', alignItems: 'center', padding: space.md, zIndex: 80 },
   sheet: { backgroundColor: '#FFFFFF', borderRadius: 22, padding: space.lg, width: '100%', maxWidth: 460, maxHeight: '96%' },
   head: { flexDirection: 'row', gap: space.sm, alignItems: 'center' },

@@ -7,6 +7,7 @@ import { CHESTS } from '../game/loot';
 import { RARITY_INFO } from '../game/rarity';
 import { SPECIES_BY_ID } from '../game/species';
 import { levelFor } from '../game/scoring';
+import { gradeInfo, gradeOf, gradeStars } from '../game/stats';
 import type { Skin } from '../game/types';
 import { COSMETIC_BY_ID } from '../game/cosmetics';
 import { SKIN_INFO } from '../game/skins';
@@ -112,6 +113,13 @@ function EggReveal({ r, onClose }: { r: Extract<Reveal, { kind: 'egg' }>; onClos
           ) : null}
           <PopIn delay={400}>
             <Text style={styles.name}>{sp.name}{r.pet.shiny ? ' ✦ Shiny!' : ''}</Text>
+          </PopIn>
+          <PopIn delay={460}>
+            <View style={[styles.skinTag, { borderColor: gradeInfo(gradeOf(r.pet)).color }]}>
+              <Text style={[styles.skinText, { color: gradeInfo(gradeOf(r.pet)).color }]}>
+                {gradeOf(r.pet) >= 100 ? '💯 PERFECT 100%!' : `${gradeStars(gradeOf(r.pet))} Grade ${gradeOf(r.pet)}% · ${gradeInfo(gradeOf(r.pet)).label}`}
+              </Text>
+            </View>
           </PopIn>
           <PopIn delay={520}>
             <Text style={styles.blurb}>{sp.blurb}</Text>

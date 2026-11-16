@@ -19,6 +19,9 @@ export interface RankedInfo {
   losses: number;
   last: { season: string; points: number; claimed: boolean } | null;
   board: RankedRow[];
+  global: RankedRow[];
+  rank: number | null;
+  players: number;
 }
 
 interface Ctx {
@@ -48,6 +51,9 @@ export function RankedProvider({ children }: { children: React.ReactNode }) {
       losses: raw.me?.losses ?? 0,
       last: raw.last ?? null,
       board: (raw.board ?? []).map((r: any) => ({ ...r, card: readCard(r.card) })),
+      global: (raw.global ?? []).map((r: any) => ({ ...r, card: readCard(r.card) })),
+      rank: raw.rank ?? null,
+      players: raw.players ?? 0,
     });
   }, [user?.id]);
 

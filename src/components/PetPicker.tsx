@@ -6,6 +6,7 @@ import { buzz } from './fx';
 import { colors, font, space } from '../theme';
 import { SPECIES_BY_ID } from '../game/species';
 import { levelFor, stageFor } from '../game/scoring';
+import { gradeOf } from '../game/stats';
 import type { OwnedPet } from '../game/types';
 
 export interface PickerPet {
@@ -65,7 +66,7 @@ export default function PetPicker({
             return (
               <Pressable key={p.pet.id} onPress={() => toggle(p)} style={[styles.tile, on && styles.on, !!p.disabled && styles.off]} accessibilityRole="checkbox" accessibilityState={{ checked: on, disabled: !!p.disabled }} accessibilityLabel={`${p.pet.nickname}, level ${levelFor(p.pet.xp)}`}>
                 <PetSprite species={sp} stage={stageFor(p.pet.xp)} size={70} shiny={p.pet.shiny} skin={p.pet.skin} />
-                <View style={styles.lv}><Text style={styles.lvText}>Lv {levelFor(p.pet.xp)}</Text></View>
+                <View style={styles.lv}><Text style={styles.lvText}>Lv {levelFor(p.pet.xp)} · {gradeOf(p.pet)}%</Text></View>
                 {on && max > 1 ? <View style={styles.num}><Text style={styles.numText}>{order + 1}</Text></View> : null}
                 {on && max === 1 ? <View style={styles.num}><Text style={styles.numText}>✓</Text></View> : null}
                 <Text style={styles.name} numberOfLines={1}>{p.pet.nickname}</Text>

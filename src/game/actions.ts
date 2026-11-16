@@ -4,7 +4,7 @@ import { emptyDay, scoreDay, dailyQuests, streakFrom, COINS_PER_XP } from './sco
 import { boostedTotal } from './care';
 import { grantCosmetic, rollChestCosmetic } from './cosmetics';
 import { BRED_SKIN_BOOST, rollSkin, skinKey } from './skins';
-import { randomPersonality } from './stats';
+import { randomPersonality, rollIvs, inheritIvs } from './stats';
 import { openChest, type ChestResult } from './loot';
 import { speciesOfRarity, SPECIES, SPECIES_BY_ID } from './species';
 import { SHINY_CHANCE, stepsToHatch } from './rarity';
@@ -151,6 +151,7 @@ export function hatch(s: GameState, eggId: string, rng: Rng = defaultRng): Hatch
     hatchedOn: todayKey(s),
     ...(skin ? { skin } : {}),
     personality: randomPersonality(rng),
+    ivs: egg.bred?.parentIvs ? inheritIvs(rng, egg.bred.parentIvs[0], egg.bred.parentIvs[1]) : rollIvs(rng),
   };
   const isNew = !s.dex[species.id];
   return {

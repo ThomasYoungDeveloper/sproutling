@@ -7,6 +7,7 @@ import { tierFor } from '../game/ranked';
 import { raidBoss } from '../game/team';
 import PetSprite from './PetSprite';
 import PetPicker from './PetPicker';
+import PowerGlow from './PowerGlow';
 import { Backdrop, skyNow } from './PetScene';
 import { Button } from './ui';
 import { Confetti, PopIn, buzz } from './fx';
@@ -185,7 +186,7 @@ export default function BattleScreen({ opponent, onClose, onResult }: { opponent
         <FighterCard f={them} label={opponent.name} style={{ top: 34, left: 12 }} />
         <FighterCard f={me} label="You" style={{ bottom: 40, right: 12 }} buffs={setup.buffs} />
         <FighterSprite f={them} side="them" lunge={lunge.them} hit={hit.them} faint={faint.them} style={{ top: 78, right: 24 }} />
-        <FighterSprite f={me} side="me" lunge={lunge.me} hit={hit.me} faint={faint.me} style={{ bottom: 56, left: 20 }} />
+        <FighterSprite f={me} side="me" lunge={lunge.me} hit={hit.me} faint={faint.me} style={{ bottom: 56, left: 20 }} glow={setup.buffs.length} />
         {pops.map((p) => (
           <DamagePop key={p.id} side={p.side} text={p.text} color={p.color} onDone={() => setPops((list) => list.filter((x) => x.id !== p.id))} />
         ))}
@@ -363,7 +364,7 @@ function FighterCard({ f, label, style, buffs }: { f: B.Fighter; label: string; 
   );
 }
 
-function FighterSprite({ f, side, lunge, hit, faint, style }: { f: B.Fighter; side: B.Side; lunge: Animated.Value; hit: Animated.Value; faint: Animated.Value; style: any }) {
+function FighterSprite({ f, side, lunge, hit, faint, style, glow = 0 }: { f: B.Fighter; side: B.Side; lunge: Animated.Value; hit: Animated.Value; faint: Animated.Value; style: any; glow?: number }) {
   const sp = SPECIES_BY_ID[f.speciesId];
   const dir = side === 'me' ? 1 : -1;
   const bob = useRef(new Animated.Value(0)).current;
@@ -391,6 +392,7 @@ function FighterSprite({ f, side, lunge, hit, faint, style }: { f: B.Fighter; si
         },
       ]}
     >
+      <PowerGlow count={glow} size={side === 'me' ? 150 : 128} />
       <PopIn key={f.key}>
         <PetSprite species={sp} stage={stageFor(f.xp)} size={side === 'me' ? 150 : 128} shiny={f.shiny} skin={f.skin} hat={f.hat} mood={f.status?.type === 'drowsy' ? 'sleepy' : 'happy'} />
       </PopIn>

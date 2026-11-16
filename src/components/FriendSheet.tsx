@@ -7,6 +7,7 @@ import { buzz, PopIn } from './fx';
 import { colors, font, space } from '../theme';
 import { SPECIES, SPECIES_BY_ID } from '../game/species';
 import { levelFor, stageFor } from '../game/scoring';
+import { gradeOf } from '../game/stats';
 import { GIFT_COINS, GIFTS_PER_DAY } from '../game/actions';
 import { lastSeen } from '../screens/friendsShared';
 import { Backdrop } from './PetScene';
@@ -65,7 +66,7 @@ export default function FriendSheet({ friend, onClose }: { friend: Friend; onClo
                   return (
                     <View key={i} style={styles.tile}>
                       <PetSprite species={sp} stage={stageFor(p.xp)} size={64} shiny={p.shiny} skin={p.skin} hat={p.hat} />
-                      <View style={styles.lv}><Text style={styles.lvText}>Lv {levelFor(p.xp)}</Text></View>
+                      <View style={styles.lv}><Text style={styles.lvText}>Lv {levelFor(p.xp)} · {gradeOf(p)}%</Text></View>
                       <Text style={styles.name} numberOfLines={1}>{p.nickname}</Text>
                       <RarityBadge rarity={sp.rarity} />
                     </View>

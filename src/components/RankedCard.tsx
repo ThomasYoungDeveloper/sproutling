@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useRanked } from '../state/RankedContext';
 import { Button, Card, ProgressBar } from './ui';
 import PetSprite from './PetSprite';
@@ -13,6 +13,7 @@ export default function RankedCard() {
   const { ranked, claimSeason } = useRanked();
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [party, setParty] = useState(0);
+  const [tab, setTab] = useState<'global' | 'friends'>('global');
   if (!ranked) return null;
   const tier = R.tierFor(ranked.points);
   const prog = R.tierProgress(ranked.points);
@@ -64,8 +65,20 @@ export default function RankedCard() {
         </PopIn>
       ) : null}
 
+      <View style={styles.tabs}>
+        {(['global', 'friends'] as const).map((t) => (
+          <Pressable key={t} onPress={() => setTab(t)} style={[styles.tab, tab === t && styles.tabOn]} accessibilityRole="tab" accessibilityState={{ selected: tab === t }}>
+            <Text style={[styles.tabText, tab === t && styles.tabTextOn]}>{t === 'global' ? '🌎 Everyone' : '👋 Friends'}</Text>
+          </Pressable>
+        ))}
+      </View>
+      {tab === 'global' ? (
+        <Text style={styles.sub}>
+          {ranked.rank ? `You’re #${ranked.rank.toLocaleString()} of ${ranked.players.toLocaleString()} ranked players.` : `${ranked.players.toLocaleString()} ranked players this season. Win a battle to join the board!`}
+        </Text>
+      ) : null}
       <View style={{ gap: 6 }}>
-        {ranked.board.slice(0, 10).map((r, i) => {
+        {(tab === 'global' ? ranked.global.slice(0, 25) : ranked.board.slice(0, 10)).map((r, i) => {
           const t = R.tierFor(r.points);
           const p = r.card?.active;
           const sp = p ? SPECIES_BY_ID[p.speciesId] : undefined;
@@ -78,7 +91,14 @@ export default function RankedCard() {
             </View>
           );
         })}
-        {ranked.board.length < 2 ? <Text style={styles.sub}>Add friends to see who’s on top this season!</Text> : null}
+        {tab === 'global' && ranked.rank && ranked.rank > 25 ? (
+          <View style={[styles.row, styles.rowMe]}>
+            <Text style={[styles.place, { width: 44 }]}>#{ranked.rank}</Text>
+            <Text style={styles.name} numberOfLines={1}>You</Text>
+            <Text style={[styles.pts, { color: tier.color }]}>{tier.emoji} {ranked.points}</Text>
+          </View>
+        ) : null}
+        {tab === 'friends' && ranked.board.length < 2 ? <Text style={styles.sub}>Add friends to see who’s on top this season!</Text> : null}
       </View>
       {msg ? <Text style={[styles.msg, msg.ok && { color: '#DDF4EA' }]}>{msg.text}</Text> : null}
     </Card>
@@ -100,5 +120,10 @@ const styles = StyleSheet.create({
   avatar: { width: 36, height: 36, borderRadius: 10, backgroundColor: 'rgba(255,255,255,0.9)', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
   name: { flex: 1, fontSize: 14, fontWeight: '900', color: '#FFFFFF' },
   pts: { fontSize: 14, fontWeight: '900' },
+  tabs: { flexDirection: 'row', backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 14, padding: 4, gap: 4 },
+  tab: { flex: 1, paddingVertical: 8, borderRadius: 10, alignItems: 'center' },
+  tabOn: { backgroundColor: '#FFFFFF' },
+  tabText: { fontSize: 14, fontWeight: '900', color: '#C8CEF0' },
+  tabTextOn: { color: '#1B2240' },
   msg: { fontSize: 13, fontWeight: '800', color: '#FFE0D1' },
 });

@@ -50,6 +50,8 @@ export interface OwnedPet {
   personality?: import('./stats').Personality;
   /** Stat points spent through training. */
   train?: import('./stats').Training;
+  /** Hidden quality values (0–15 each) that make up the pet's grade. */
+  ivs?: import('./stats').Ivs;
   /** The moves this pet brings to battle (up to 4). */
   moves?: string[];
   /** Game time (ms) until this pet can breed again. */
@@ -66,7 +68,7 @@ export interface Egg {
   incubating: boolean;
   foundOn: string;
   /** Eggs from the Pet Nursery: who the parents were and which pet will hatch. */
-  bred?: { speciesId: string; parents: [string, string]; parentSkins: (Skin | null)[] };
+  bred?: { speciesId: string; parents: [string, string]; parentSkins: (Skin | null)[]; parentIvs?: [import('./stats').Ivs, import('./stats').Ivs] };
 }
 
 /** Rare color variants of a pet. */

@@ -1,3 +1,4 @@
+import { gradeInfo } from '../game/stats';
 import React, { useEffect, useRef } from 'react';
 import { Animated, Pressable, StyleSheet, Text, View, type ViewStyle, type StyleProp } from 'react-native';
 import { colors, radius, space, font } from '../theme';
@@ -61,6 +62,16 @@ export function RarityBadge({ rarity }: { rarity: Rarity }) {
   return (
     <View style={[styles.badge, { backgroundColor: r.soft }]}>
       <Text style={[styles.badgeText, { color: r.color }]}>{r.label}</Text>
+    </View>
+  );
+}
+
+/** A pet's grade, e.g. "87%" in its grade color. */
+export function GradeChip({ grade, small }: { grade: number; small?: boolean }) {
+  const g = gradeInfo(grade);
+  return (
+    <View style={[styles.badge, { backgroundColor: g.color }, small && { paddingHorizontal: 5, paddingVertical: 1 }]} accessibilityLabel={`Grade ${grade}%, ${g.label}`}>
+      <Text style={[styles.badgeText, { color: '#FFFFFF' }, small && { fontSize: 10 }]}>{grade >= 100 ? '💯' : `${grade}%`}</Text>
     </View>
   );
 }

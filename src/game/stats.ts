@@ -43,6 +43,56 @@ export const randomPersonality = (rng: () => number): Personality => PERSONALITY
 
 export type Training = Partial<Record<Stat, number>>;
 
+/* ====================== Grade (hidden quality) ====================== */
+
+/** Hidden quality values from 0 to 15 for each stat, rolled when a pet hatches (like Pokémon GO). */
+export type Ivs = Record<Stat, number>;
+export const IV_MAX = 15;
+const clampIv = (n: unknown) => (typeof n === 'number' && Number.isFinite(n) ? Math.max(0, Math.min(IV_MAX, Math.round(n))) : null);
+
+export function rollIvs(rng: () => number, floor = 0): Ivs {
+  const one = () => floor + Math.floor(rng() * (IV_MAX - floor + 1));
+  return { hp: one(), atk: one(), def: one(), spd: one() };
+}
+
+/** Nursery babies: each stat comes from a random parent half the time, otherwise a fresh roll of at least 5. */
+export function inheritIvs(rng: () => number, a: Ivs, b: Ivs): Ivs {
+  const out = {} as Ivs;
+  for (const k of ['hp', 'atk', 'def', 'spd'] as Stat[]) out[k] = rng() < 0.5 ? (rng() < 0.5 ? a : b)[k] : 5 + Math.floor(rng() * (IV_MAX - 4));
+  return out;
+}
+
+/** Cleans up values that came from a trade or a friend's card. */
+export function readIvs(v: unknown): Ivs | undefined {
+  if (!v || typeof v !== 'object') return undefined;
+  const o = v as Record<string, unknown>;
+  const r = { hp: clampIv(o.hp), atk: clampIv(o.atk), def: clampIv(o.def), spd: clampIv(o.spd) };
+  return r.hp === null || r.atk === null || r.def === null || r.spd === null ? undefined : (r as Ivs);
+}
+
+/** A pet's quality values: stored when hatched, or worked out from its id for older pets so they never change. */
+export function ivsOf(p: { ivs?: Ivs; id?: string; speciesId?: string; nickname?: string }): Ivs {
+  const own = readIvs(p.ivs);
+  if (own) return own;
+  const h = hash(`iv:${p.id || `${p.speciesId}${p.nickname}`}`);
+  return { hp: h & 15, atk: (h >>> 4) & 15, def: (h >>> 8) & 15, spd: (h >>> 12) & 15 };
+}
+
+/** 0 to 100. 100% means every stat is perfect. */
+export function gradeOf(p: { ivs?: Ivs; id?: string; speciesId?: string; nickname?: string }): number {
+  const v = ivsOf(p);
+  return Math.round(((v.hp + v.atk + v.def + v.spd) / (IV_MAX * 4)) * 100);
+}
+
+export function gradeInfo(g: number): { label: string; stars: number; color: string } {
+  if (g >= 100) return { label: 'Perfect', stars: 4, color: '#E3A81E' };
+  if (g >= 82) return { label: 'Amazing', stars: 3, color: '#E5484D' };
+  if (g >= 67) return { label: 'Great', stars: 2, color: '#9C5FD8' };
+  if (g >= 51) return { label: 'Good', stars: 1, color: '#3D8FD6' };
+  return { label: 'Okay', stars: 0, color: '#6B9E86' };
+}
+export const gradeStars = (g: number) => { const n = gradeInfo(g).stars; return n === 4 ? '💯' : '⭐'.repeat(n) || '·'; };
+
 const RARITY_TIER: Record<Rarity, number> = { common: 0, uncommon: 1, rare: 2, epic: 3, legendary: 4 };
 const ELEMENT_BONUS: Record<Element, Partial<Record<Stat, number>>> = {
   ember: { atk: 3 },
@@ -63,7 +113,7 @@ export interface StatBlock {
 }
 
 /** Final battle stats for a pet. */
-export function statsFor(p: { speciesId: string; xp: number; train?: Training; personality?: Personality; id?: string; nickname?: string }): StatBlock {
+export function statsFor(p: { speciesId: string; xp: number; train?: Training; personality?: Personality; id?: string; nickname?: string; ivs?: Ivs }): StatBlock {
   const sp = SPECIES_BY_ID[p.speciesId];
   const tier = RARITY_TIER[sp.rarity];
   const lv = levelFor(p.xp);
@@ -80,6 +130,9 @@ export function statsFor(p: { speciesId: string; xp: number; train?: Training; p
   if (pers === 'sturdy') raw.def *= 1.1;
   if (pers === 'swift') raw.spd *= 1.1;
   if (pers === 'hardy') raw.hp *= 1.1;
+  // Grade: a perfect stat is up to 10% stronger.
+  const iv = ivsOf(p);
+  for (const k of ['hp', 'atk', 'def', 'spd'] as Stat[]) raw[k] *= 1 + iv[k] / 150;
   return { hp: Math.round(raw.hp), atk: Math.round(raw.atk), def: Math.round(raw.def), spd: Math.round(raw.spd) };
 }
 

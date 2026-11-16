@@ -12,6 +12,8 @@ import * as A from '../game/actions';
 import * as C from '../game/care';
 import type { Element } from '../game/types';
 import { SCENES } from './Cosmetics';
+import PowerGlow from './PowerGlow';
+import { habitBuffs } from '../game/battle';
 import { COSMETIC_BY_ID, ownedToys, type Cosmetic } from '../game/cosmetics';
 
 const STAGE_LABEL = { baby: 'Baby', teen: 'Teen', adult: 'Adult' } as const;
@@ -205,6 +207,82 @@ function DraggableToy({ toy, onDrop, onTap, onGrab, small }: { toy: Cosmetic; on
   );
 }
 
+const TOY_SIZE = 46;
+const AUTO_LINES = ['I love my {toy}!', 'Watch this!', 'Hehe, so fun!', 'Play with me!', 'Again, again!', 'Best day ever!'];
+/** Top of a toy resting on the ground, measured from the top of the scene. */
+const GROUND_TOP = 288;
+
+/** A toy sitting in the scene. Drag it around, drag it back to the tray, or tap it to make your pet play. */
+function PlacedToy({ toy, x, fromY, bounce, onMove, onTap }: { toy: Cosmetic; x: number; fromY: number; bounce: number; onMove: (dx: number, upToTray: boolean) => void; onTap: () => void }) {
+  const drop = useRef(new Animated.Value(fromY - GROUND_TOP)).current;
+  const jump = useRef(new Animated.Value(0)).current;
+  const drag = useRef(new Animated.ValueXY()).current;
+  const moved = useRef(false);
+  const cb = useRef({ onMove, onTap });
+  cb.current = { onMove, onTap };
+  useEffect(() => {
+    Animated.spring(drop, { toValue: 0, friction: 4, tension: 90, useNativeDriver: false }).start();
+  }, []);
+  // The pet played with it: it bounces, rolls or wobbles.
+  useEffect(() => {
+    if (!bounce) return;
+    jump.setValue(0);
+    Animated.sequence([
+      Animated.timing(jump, { toValue: 1, duration: 220, easing: Easing.out(Easing.quad), useNativeDriver: false }),
+      Animated.spring(jump, { toValue: 0, friction: 3, tension: 120, useNativeDriver: false }),
+    ]).start();
+  }, [bounce]);
+  const pan = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: () => true,
+      onPanResponderTerminationRequest: () => false,
+      onPanResponderGrant: () => {
+        moved.current = false;
+      },
+      onPanResponderMove: (e, g) => {
+        if (Math.abs(g.dx) + Math.abs(g.dy) > 6) moved.current = true;
+        drag.setValue({ x: g.dx, y: g.dy });
+      },
+      onPanResponderRelease: (e, g) => {
+        if (!moved.current) {
+          drag.setValue({ x: 0, y: 0 });
+          cb.current.onTap();
+          return;
+        }
+        // Let go: it lands where you dropped it (or goes home if dropped on the tray).
+        drop.setValue(g.dy);
+        drag.setValue({ x: 0, y: 0 });
+        cb.current.onMove(g.dx, GROUND_TOP + g.dy > GROUND_TOP + 40);
+        Animated.spring(drop, { toValue: 0, friction: 4, tension: 90, useNativeDriver: false }).start();
+      },
+    }),
+  ).current;
+  const isFood = toy.reaction === 'munch';
+  return (
+    <Animated.View
+      {...pan.panHandlers}
+      accessibilityLabel={`${toy.name} in the scene: tap to play, drag to move`}
+      style={[
+        styles.placed,
+        Platform.OS === 'web' ? ({ cursor: 'grab', touchAction: 'none', userSelect: 'none' } as any) : null,
+        {
+          left: x - TOY_SIZE / 2,
+          top: GROUND_TOP,
+          transform: [
+            { translateX: drag.x },
+            { translateY: Animated.add(Animated.add(drop, drag.y), jump.interpolate({ inputRange: [0, 1], outputRange: [0, isFood ? -4 : -46] })) },
+            { rotate: jump.interpolate({ inputRange: [0, 1], outputRange: ['0deg', toy.reaction === 'spin' ? '200deg' : '25deg'] }) },
+          ],
+        },
+      ]}
+    >
+      <View style={styles.placedShadow} />
+      <Text style={styles.placedEmoji} selectable={false}>{toy.emoji}</Text>
+    </Animated.View>
+  );
+}
+
 export default function PetScene({ onTrinketsEmpty, onDressUp, onShop }: { onTrinketsEmpty?: () => void; onDressUp?: () => void; onShop?: () => void }) {
   const { state, apply } = useGame();
   const pet = A.activePet(state)!;
@@ -258,11 +336,63 @@ export default function PetScene({ onTrinketsEmpty, onDressUp, onShop }: { onTri
     petBox.current?.measureInWindow?.((x: number, y: number, w: number, h: number) => {
       petRect.current = { x, y, w, h };
     });
-  const toys = ownedToys(state);
+  const allToys = ownedToys(state);
+  const buffs = habitBuffs(state);
+  const [placed, setPlaced] = useState<{ key: number; id: string; x: number; fromY: number; bounce: number }[]>([]);
+  const toys = allToys.filter((t) => !placed.some((p) => p.id === t.id));
+  const sceneBox = useRef<any>(null);
+  const sceneRect = useRef<{ x: number; y: number } | null>(null);
+  const measureAll = () => {
+    measurePet();
+    sceneBox.current?.measureInWindow?.((x: number, y: number) => {
+      sceneRect.current = { x, y };
+    });
+  };
+  // The pet walks over to toys. petX is its offset from the middle of the scene.
+  const petX = useRef(new Animated.Value(0)).current;
+  const petXNow = useRef(0);
+  const walkTo = (target: number, then?: () => void) => {
+    const limit = Math.max(0, width / 2 - 80);
+    const to = Math.max(-limit, Math.min(limit, target));
+    const dist = Math.abs(to - petXNow.current);
+    petXNow.current = to;
+    if (dist < 4) return then?.();
+    Animated.timing(petX, { toValue: to, duration: Math.min(1200, 250 + dist * 4), easing: Easing.inOut(Easing.quad), useNativeDriver: true }).start(() => then?.());
+  };
+  /** Walk next to a toy at scene x, then play with it. */
+  const playWith = (key: number, earn: boolean) => {
+    const p = placedRef.current.find((q) => q.key === key);
+    if (!p) return;
+    const toy = COSMETIC_BY_ID[p.id];
+    const center = width / 2;
+    const side = p.x < center + petXNow.current ? 1 : -1;
+    walkTo(p.x - center + side * 62, () => {
+      react(toy, earn);
+      if (toy.reaction === 'munch') {
+        // Food gets eaten, then goes back in the tray.
+        setTimeout(() => setPlaced((list) => list.filter((q) => q.key !== key)), 800);
+      } else {
+        setPlaced((list) => list.map((q) => (q.key === key ? { ...q, bounce: q.bounce + 1 } : q)));
+      }
+    });
+  };
+  const placedRef = useRef(placed);
+  placedRef.current = placed;
+  // While a toy is out, the pet plays with it by itself now and then.
+  useEffect(() => {
+    if (!placed.some((p) => COSMETIC_BY_ID[p.id]?.reaction !== 'munch')) return;
+    const t = setInterval(() => {
+      const fun = placedRef.current.filter((p) => COSMETIC_BY_ID[p.id]?.reaction !== 'munch');
+      if (!fun.length) return;
+      if (Math.random() < 0.35) return walkTo(0);
+      playWith(fun[Math.floor(Math.random() * fun.length)].key, false);
+    }, 5200);
+    return () => clearInterval(t);
+  }, [placed.length, width]);
 
-  const react = (toy: Cosmetic) => {
+  const react = (toy: Cosmetic, earn = true) => {
     const sounds = { munch: 'munch', bubbles: 'bubbles', notes: 'notes', rocket: 'whoosh', spin: 'whoosh', hop: toy.id === 'duck' ? 'squeak' : 'pop' } as const;
-    buzz('success', sounds[toy.reaction ?? 'hop']);
+    buzz(earn ? 'success' : 'light', sounds[toy.reaction ?? 'hop']);
     const sets: Record<string, string[]> = {
       munch: ['😋', '✨', '💛'],
       bubbles: ['🫧', '🫧', '✨', '🫧'],
@@ -273,7 +403,7 @@ export default function PetScene({ onTrinketsEmpty, onDressUp, onShop }: { onTri
     };
     setBurstSet(sets[toy.reaction ?? 'hop']);
     setBurst((b) => b + 1);
-    setToyLine({ id: Date.now(), text: toy.line ?? 'Yay!' });
+    setToyLine({ id: Date.now(), text: earn ? toy.line ?? 'Yay!' : AUTO_LINES[Math.floor(Math.random() * AUTO_LINES.length)].replace('{toy}', toy.name.toLowerCase()) });
     setTimeout(() => setToyLine((l) => (l && Date.now() - l.id >= 2200 ? null : l)), 2300);
     if (toy.reaction === 'munch') {
       squash.setValue(0);
@@ -292,15 +422,29 @@ export default function PetScene({ onTrinketsEmpty, onDressUp, onShop }: { onTri
         Animated.spring(hop, { toValue: 0, friction: 3.5, tension: 120, useNativeDriver: true }),
       ]).start();
     }
-    apply(C.playToy);
+    if (earn) apply(C.playToy);
   };
 
   // Drop test: is the finger over the pet?
-  const dropOnPet = (toy: Cosmetic) => (x: number, y: number) => {
+  const dropToy = (toy: Cosmetic) => (x: number, y: number) => {
+    const sr = sceneRect.current;
+    if (!sr) return false;
+    const sx = x - sr.x;
+    const sy = y - sr.y;
+    if (sx < 0 || sx > width || sy < 0 || sy > GROUND_TOP + 30) return false; // dropped on the tray or outside: back it goes
     const r = petRect.current;
-    const hit = !!r && x >= r.x - 30 && x <= r.x + r.w + 30 && y >= r.y - 30 && y <= r.y + r.h + 30;
-    if (hit) react(toy);
-    return hit;
+    const onPet = !!r && x >= r.x - 30 && x <= r.x + r.w + 30 && y >= r.y - 30 && y <= r.y + r.h + 30;
+    const center = width / 2 + petXNow.current;
+    // Dropped on the pet: it lands right beside them.
+    const tx = onPet ? center + (sx < center ? -62 : 62) : Math.max(TOY_SIZE, Math.min(width - TOY_SIZE, sx));
+    const key = Date.now();
+    setPlaced((list) => [...list, { key, id: toy.id, x: tx, fromY: Math.min(GROUND_TOP, sy - TOY_SIZE / 2), bounce: 0 }]);
+    setTimeout(() => playWith(key, true), onPet ? 350 : 500);
+    return true;
+  };
+  const moveToy = (key: number) => (dx: number, toTray: boolean) => {
+    if (toTray) return setPlaced((list) => list.filter((q) => q.key !== key));
+    setPlaced((list) => list.map((q) => (q.key === key ? { ...q, x: Math.max(TOY_SIZE, Math.min(width - TOY_SIZE, q.x + dx)) } : q)));
   };
 
   // Floating XP and level-up banners.
@@ -332,6 +476,7 @@ export default function PetScene({ onTrinketsEmpty, onDressUp, onShop }: { onTri
   }, [pet.id]);
 
   const petTransform = [
+    { translateX: petX },
     { translateY: Animated.add(bob.interpolate({ inputRange: [0, 1], outputRange: [0, -7] }), hop.interpolate({ inputRange: [0, 1], outputRange: [0, -38] })) },
     { rotate: spin.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '360deg'] }) },
     { scaleY: Animated.add(bob.interpolate({ inputRange: [0, 1], outputRange: [1, 1.03] }), squash.interpolate({ inputRange: [0, 1], outputRange: [0, -0.14] })) },
@@ -342,7 +487,7 @@ export default function PetScene({ onTrinketsEmpty, onDressUp, onShop }: { onTri
 
   return (
     <View style={styles.card}>
-      <View style={styles.scene} onLayout={(e) => setWidth(e.nativeEvent.layout.width)}>
+      <View style={styles.scene} ref={sceneBox} onLayout={(e) => setWidth(e.nativeEvent.layout.width)}>
         <Backdrop element={sp.element} sky={sky} scene={state.scene} />
         <Cloud width={width} top={18} duration={38000} delay={0} scale={1} />
         <Cloud width={width} top={58} duration={52000} delay={9000} scale={0.7} />
@@ -370,6 +515,11 @@ export default function PetScene({ onTrinketsEmpty, onDressUp, onShop }: { onTri
             <View style={[styles.mood, { borderColor: mi.color }]}>
               <Text style={[styles.moodText, { color: mi.color }]}>{mi.emoji} {mi.label}</Text>
             </View>
+            {buffs.length ? (
+              <View style={[styles.mood, { borderColor: '#E3A81E' }]} accessibilityLabel={`Powered up: ${buffs.map((b) => b.label).join(', ')}`}>
+                <Text style={[styles.moodText, { color: '#B07F00' }]}>⚡ {buffs.map((b) => b.emoji).join('')}</Text>
+              </View>
+            ) : null}
           </View>
         </View>
 
@@ -377,7 +527,7 @@ export default function PetScene({ onTrinketsEmpty, onDressUp, onShop }: { onTri
           <View style={styles.bubbleWrap} pointerEvents="none">
             <PopIn key={toyLine ? toyLine.id : toyHint ? 'hint' : mood}>
               <View style={styles.bubble}>
-                <Text style={styles.bubbleText}>{toyLine ? toyLine.text : toyHint ? 'Drag a toy onto me!' : C.moodLine(mood, pet.nickname)}</Text>
+                <Text style={styles.bubbleText}>{toyLine ? toyLine.text : toyHint ? 'Drag a toy out to play!' : C.moodLine(mood, pet.nickname)}</Text>
               </View>
             </PopIn>
           </View>
@@ -387,6 +537,7 @@ export default function PetScene({ onTrinketsEmpty, onDressUp, onShop }: { onTri
           ))}
           <Pressable onPress={doPlay} accessibilityRole="button" accessibilityLabel={`Play with ${pet.nickname}`}>
             <Animated.View ref={petBox as any} style={{ transform: petTransform }}>
+              <PowerGlow count={buffs.length} size={200} />
               <PetSprite species={sp} stage={stage} size={200} shiny={pet.shiny} skin={pet.skin} mood={mood === 'sleepy' ? 'sleepy' : mood === 'joy' ? 'joy' : 'happy'} hat={pet.look?.hat} aura={pet.look?.aura} />
             </Animated.View>
           </Pressable>
@@ -402,6 +553,10 @@ export default function PetScene({ onTrinketsEmpty, onDressUp, onShop }: { onTri
           ) : null}
         </View>
 
+        {placed.map((p) => {
+          const toy = COSMETIC_BY_ID[p.id];
+          return toy ? <PlacedToy key={p.key} toy={toy} x={p.x} fromY={p.fromY} bounce={p.bounce} onMove={moveToy(p.key)} onTap={() => playWith(p.key, true)} /> : null;
+        })}
         <View style={styles.tray}>
           <Pressable onPress={onDressUp} style={styles.trayBtn} accessibilityRole="button" accessibilityLabel="Dress up">
             <Text style={styles.trayIcon}>👗</Text>
@@ -413,8 +568,8 @@ export default function PetScene({ onTrinketsEmpty, onDressUp, onShop }: { onTri
                 key={t.id}
                 toy={t}
                 small={toys.length > 5}
-                onDrop={dropOnPet(t)}
-                onGrab={measurePet}
+                onDrop={dropToy(t)}
+                onGrab={measureAll}
                 onTap={() => {
                   setToyHint(true);
                   setTimeout(() => setToyHint(false), 1800);
@@ -496,6 +651,9 @@ const styles = StyleSheet.create({
   toys: { flex: 1, flexDirection: 'row', justifyContent: 'center', gap: 5 },
   toy: { width: 42, height: 42, borderRadius: 14, backgroundColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: colors.line },
   toyEmoji: { fontSize: 24 },
+  placed: { position: 'absolute', width: TOY_SIZE, height: TOY_SIZE, alignItems: 'center', justifyContent: 'center', zIndex: 8 },
+  placedEmoji: { fontSize: 34 },
+  placedShadow: { position: 'absolute', bottom: -4, width: 30, height: 7, borderRadius: 4, backgroundColor: 'rgba(0,0,0,0.15)' },
   head: { flexDirection: 'row', gap: space.sm, padding: space.lg, paddingBottom: 0 },
   level: { backgroundColor: colors.gold, borderRadius: 10, paddingHorizontal: 8, paddingVertical: 3, borderWidth: 2, borderColor: '#FFFFFF' },
   levelText: { color: '#5A3E00', fontWeight: '900', fontSize: 13 },
