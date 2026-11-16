@@ -90,7 +90,7 @@ export default function EggsScreen() {
                 return (
                   <Pressable key={i} onPress={openShop} style={[styles.slot, styles.slotLocked]} accessibilityRole="button" accessibilityLabel={`Locked incubator. Buy for ${incubatorPrice(i + 1)} coins`}>
                     <Svg width={20} height={20} viewBox="0 0 24 24"><Rect x={5} y={11} width={14} height={10} rx={2} fill="none" stroke={colors.muted} strokeWidth={2.6} /><Path d="M8 11V8a4 4 0 0 1 8 0v3" fill="none" stroke={colors.muted} strokeWidth={2.6} strokeLinecap="round" /></Svg>
-                    <Text style={styles.slotText}>● {incubatorPrice(i + 1)?.toLocaleString()}</Text>
+                    <Text style={styles.slotText}>🪙 {incubatorPrice(i + 1)?.toLocaleString()}</Text>
                   </Pressable>
                 );
               }

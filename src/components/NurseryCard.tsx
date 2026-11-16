@@ -146,7 +146,7 @@ export default function NurseryCard() {
           ) : (
             <Text style={font.small}>Pick two adult pets. Their baby is usually one of their species, with a 10% chance of a surprise!</Text>
           )}
-          <Button primary label={`💞 Make an egg (● ${Br.BREED_COST})`} disabled={!a || !b} onPress={makeEgg} />
+          <Button primary label={`💞 Make an egg (🪙 ${Br.BREED_COST})`} disabled={!a || !b} onPress={makeEgg} />
           {check && !check.ok ? <Text style={styles.msg}>{check.reason}</Text> : null}
           {msg ? <Text style={styles.msg}>{msg}</Text> : null}
         </>

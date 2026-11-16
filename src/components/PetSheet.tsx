@@ -152,7 +152,7 @@ export default function PetSheet({ petId, onClose }: { petId: string; onClose: (
                   setMsg('Points reset. Spend them again however you like!');
                 }}
               >
-                <Text style={styles.reset}>{confirmReset ? `Tap again to reset points (● ${St.RESPEC_COST})` : 'Reset points'}</Text>
+                <Text style={styles.reset}>{confirmReset ? `Tap again to reset points (🪙 ${St.RESPEC_COST})` : 'Reset points'}</Text>
               </Pressable>
             ) : null}
           </View>

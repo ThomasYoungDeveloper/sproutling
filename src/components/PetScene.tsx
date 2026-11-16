@@ -60,14 +60,36 @@ function Cloud({ width, top, duration, delay, scale }: { width: number; top: num
   );
 }
 
-export function Backdrop({ element, sky, scene }: { element: Element; sky: Sky; scene?: string }) {
+/**
+ * The scene behind a pet. It measures the space it sits in and draws at that exact size:
+ * a percent-sized drawing on iPhone keeps its first size and leaves bare strips when the box grows.
+ */
+export function Backdrop(props: { element: Element; sky: Sky; scene?: string }) {
+  const [box, setBox] = React.useState({ w: 0, h: 0 });
+  const theme = props.scene ? SCENES[props.scene] : undefined;
+  const base = theme ? theme.sky[1] : SKY[props.sky][1];
+  return (
+    <View
+      pointerEvents="none"
+      style={[StyleSheet.absoluteFill, { backgroundColor: base }]}
+      onLayout={(e) => {
+        const w = Math.ceil(e.nativeEvent.layout.width), h = Math.ceil(e.nativeEvent.layout.height);
+        if (w !== box.w || h !== box.h) setBox({ w, h });
+      }}
+    >
+      {box.w > 0 ? <BackdropArt {...props} w={box.w} h={box.h} /> : null}
+    </View>
+  );
+}
+
+function BackdropArt({ element, sky, scene, w, h }: { element: Element; sky: Sky; scene?: string; w: number; h: number }) {
   const theme = scene ? SCENES[scene] : undefined;
   const [top, bottom] = theme ? theme.sky : SKY[sky];
   const [h1, h2, h3] = theme ? theme.hills : HILLS[element];
   const night = theme ? !!theme.dark : sky === 'night';
   const dim = theme ? 1 : night ? 0.75 : 1;
   return (
-    <Svg style={StyleSheet.absoluteFill} width="100%" height="100%" viewBox="0 0 400 300" preserveAspectRatio="xMidYMax slice">
+    <Svg style={{ position: 'absolute', top: 0, left: 0 }} width={w} height={h} viewBox="0 0 400 300" preserveAspectRatio="xMidYMax slice">
       <Defs>
         <LinearGradient id={`sky-${scene ?? sky}`} x1="0" y1="0" x2="0" y2="1">
           <Stop offset="0" stopColor={top} />

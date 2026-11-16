@@ -146,8 +146,8 @@ function Shell() {
       {tab === 'home' && !starter ? null : <View style={styles.top}>
         <Text style={styles.brand}>Sprout<Text style={{ color: colors.mint }}>ling</Text></Text>
         <View style={styles.pills}>
-          <View style={styles.pill}><Text style={styles.pillText}>▲ {A.streak(state)}-day{state.shields ? ` 🛡️${state.shields}` : ''}</Text></View>
-          <View style={styles.pill}><RollingNumber value={state.coins} prefix="● " style={styles.pillText} /></View>
+          <View style={styles.pill}><Text style={styles.pillText}>🔥 {A.streak(state)}-day{state.shields ? ` 🛡️${state.shields}` : ''}</Text></View>
+          <View style={styles.pill}><RollingNumber value={state.coins} prefix="🪙 " style={styles.pillText} /></View>
           <Pressable onPress={() => setShowAccount(true)} style={[styles.pill, user ? null : styles.signIn]} accessibilityRole="button" accessibilityLabel={user ? 'Account' : 'Sign in to save your pets'}>
             <Text style={[styles.pillText, !user && { color: '#fff' }]} numberOfLines={1}>{sync === 'error' ? '⚠ Offline' : `☁ ${username ?? 'Me'}`}</Text>
           </Pressable>

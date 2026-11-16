@@ -35,6 +35,7 @@ export default function FriendSheet({ friend, onClose }: { friend: Friend; onClo
         </Pressable>
         <ScrollView contentContainerStyle={{ gap: space.sm }}>
           <View style={styles.hero}>
+            <View style={styles.stage}>
             {activeSpecies ? <Backdrop element={activeSpecies.element} sky="day" scene={card?.scene} /> : null}
             {activeSpecies && active ? (
               <PopIn>
@@ -45,7 +46,8 @@ export default function FriendSheet({ friend, onClose }: { friend: Friend; onClo
             ) : (
               <Text style={{ fontSize: 64 }}>🥚</Text>
             )}
-            <Text style={font.title}>{live.username}</Text>
+            </View>
+            <Text style={[font.title, { marginTop: space.sm }]}>{live.username}</Text>
             {active && activeSpecies ? (
               <Text style={font.small}>
                 Lv {levelFor(active.xp)} {active.nickname} the {activeSpecies.name}
@@ -56,7 +58,7 @@ export default function FriendSheet({ friend, onClose }: { friend: Friend; onClo
           </View>
 
           <View style={styles.stats}>
-            <Stat label="Streak" value={`▲ ${card?.streak ?? 0}`} />
+            <Stat label="Streak" value={`🔥 ${card?.streak ?? 0}`} />
             <Stat label="Pets" value={`${card?.pets ?? 0}`} />
             <Stat label="Pet-dex" value={`${card?.dex ?? 0}/${SPECIES.length}`} />
             <Stat label="Badges" value={`🏅 ${card?.badges ?? 0}`} />
@@ -162,7 +164,8 @@ const styles = StyleSheet.create({
   backText: { fontSize: 16, fontWeight: '900', color: colors.mintDark },
   backdrop: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(24,30,48,0.55)', justifyContent: 'center', alignItems: 'center', padding: space.lg, zIndex: 50 },
   sheet: { backgroundColor: '#FFFFFF', borderRadius: 22, padding: space.lg, width: '100%', maxWidth: 420, maxHeight: '92%' },
-  hero: { alignItems: 'center', gap: 2, backgroundColor: colors.sky, borderRadius: 18, paddingVertical: space.md, overflow: 'hidden' },
+  hero: { alignItems: 'center', gap: 2 },
+  stage: { alignSelf: 'stretch', height: 200, borderRadius: 18, overflow: 'hidden', alignItems: 'center', justifyContent: 'flex-end', paddingBottom: 8, backgroundColor: colors.sky },
   stats: { flexDirection: 'row', gap: space.sm },
   stat: { flex: 1, alignItems: 'center', borderWidth: 1, borderColor: colors.line, borderRadius: 14, paddingVertical: space.sm, backgroundColor: '#FAFCFB' },
   statValue: { fontSize: 18, fontWeight: '900', color: colors.ink },

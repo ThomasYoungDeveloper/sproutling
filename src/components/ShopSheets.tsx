@@ -88,7 +88,7 @@ export function ShopSheet({ onClose, onWardrobe }: { onClose: () => void; onWard
             <Text style={font.title}>🛍️ Today’s shop</Text>
             <Text style={font.small}>New items in {left}</Text>
           </View>
-          <View style={styles.coins}><Text style={styles.coinsText}>● {state.coins.toLocaleString()}</Text></View>
+          <View style={styles.coins}><Text style={styles.coinsText}>🪙 {state.coins.toLocaleString()}</Text></View>
         </View>
         <ScrollView style={{ maxHeight: 520 }} contentContainerStyle={{ gap: space.sm, paddingBottom: space.sm }}>
           {slots.map((slot) => {
@@ -113,7 +113,7 @@ export function ShopSheet({ onClose, onWardrobe }: { onClose: () => void; onWard
                           )
                         ) : (
                           <Pressable onPress={() => purchase(c)} style={[styles.price, !afford && { opacity: 0.55 }]} accessibilityRole="button" accessibilityLabel={`Buy ${c.name} for ${c.price} coins`}>
-                            <Text style={styles.priceText}>● {c.price}</Text>
+                            <Text style={styles.priceText}>🪙 {c.price}</Text>
                           </Pressable>
                         )}
                       </Tile>

@@ -186,7 +186,7 @@ export default function FriendsScreen({ initialAdd, onUsedInitialAdd, initialGui
                 {activeToday(f) ? <View style={styles.onlineDot} /> : null}
               </View>
               <Text style={font.small} numberOfLines={1}>
-                ▲ {f.card?.streak ?? 0}-day · {lastSeen(f)}
+                🔥 {f.card?.streak ?? 0}-day · {lastSeen(f)}
               </Text>
             </View>
             <Button
