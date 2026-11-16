@@ -351,4 +351,21 @@ ok(A.applyShields(shielded.state).used === 0, 'shields are not used twice');
   const tr = B.makeFighter(pet, 'b', [{ id: 'trained', label: '', emoji: '', text: '' }]).stats.atk;
   ok(tr > plain, 'trained raises attack');
 }
+// Reminders
+{
+  const R = require('../src/game/reminders');
+  const base = newGame();
+  const S0 = { ...base, pets: [{ id: 'x', speciesId: 'p1', nickname: 'Fluff', xp: 0, shiny: false, hatchedOn: '' }], activePetId: 'x' };
+  const morning = new Date(); morning.setHours(9, 0, 0, 0);
+  const plan = R.planReminders(S0, { now: morning.getTime() });
+  ok(plan.some((r: any) => r.id === 'habits-0' && new Date(r.at).getHours() === 19), 'evening reminder tonight when habits are not done');
+  ok(plan.every((r: any) => r.at > morning.getTime()), 'reminders are always in the future');
+  const doneDay = A.setWater(A.setSleep(A.addSteps(S0, 9000), 8), 6);
+  ok(!R.planReminders(doneDay, { now: morning.getTime() }).some((r: any) => r.id === 'habits-0'), 'no reminder tonight once habits are done');
+  const late = new Date(morning); late.setHours(21);
+  ok(!R.planReminders(S0, { now: late.getTime() }).some((r: any) => r.id === 'habits-0'), 'no reminder for an evening that already passed');
+  ok(R.planReminders(S0, { now: morning.getTime(), inGuild: true, raidHitsLeft: 2 }).some((r: any) => r.id === 'raid') || morning.getDay() === 0 || morning.getDay() === 6, 'guild raid reminder before the weekend ends');
+  ok(!R.planReminders(S0, { now: morning.getTime(), inGuild: true, raidHitsLeft: 0 }).some((r: any) => r.id === 'raid'), 'no raid reminder when out of hits');
+  ok(R.planReminders({ ...S0, pets: [], activePetId: null }, { now: morning.getTime() }).length === 0, 'no reminders before you have a pet');
+}
 console.log(fails ? `${fails} FAILED` : 'ALL PASSED'); process.exit(fails ? 1 : 0);

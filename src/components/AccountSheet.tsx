@@ -8,6 +8,9 @@ import { isMuted, onMuteChange, play, setMuted } from '../lib/sound';
 import { useOverlay } from './Overlay';
 import PremiumSheet from './PremiumSheet';
 import { colors, font, space } from '../theme';
+import { useTeam } from '../state/TeamContext';
+import { planReminders } from '../game/reminders';
+import { getRemindersOn, onRemindersChange, remindersSupported, setRemindersOn } from '../lib/remindersState';
 
 function SoundToggle() {
   const [muted, setM] = useState(isMuted());
@@ -34,6 +37,53 @@ function SoundToggle() {
         <View style={[styles.knob, !muted && { alignSelf: 'flex-end' }]} />
       </View>
     </Pressable>
+  );
+}
+
+function RemindersToggle() {
+  const { state } = useGame();
+  const { team } = useTeam();
+  const [on, setOn] = useState(false);
+  const [note, setNote] = useState<string | null>(null);
+  useEffect(() => {
+    getRemindersOn().then(setOn);
+    return onRemindersChange(setOn);
+  }, []);
+  const list = on ? planReminders(state, { inGuild: !!team, raidHitsLeft: team?.raid.hits_left }).slice(0, 4) : [];
+  const when = (t: number) => new Date(t).toLocaleString(undefined, { weekday: 'short', hour: 'numeric', minute: '2-digit' });
+  return (
+    <View>
+      <Pressable
+        onPress={async () => {
+          const r = await setRemindersOn(!on);
+          setNote(!on && !r ? 'Notifications are off for Sproutling. Turn them on in iPhone Settings › Sproutling.' : null);
+        }}
+        style={styles.soundRow}
+        accessibilityRole="switch"
+        accessibilityState={{ checked: on }}
+        accessibilityLabel="Reminders"
+      >
+        <Text style={{ fontSize: 20 }}>{on ? '🔔' : '🔕'}</Text>
+        <View style={{ flex: 1 }}>
+          <Text style={[font.body, { fontWeight: '800' }]}>Reminders</Text>
+          <Text style={font.tiny}>Streaks, hatching eggs, expeditions, guild raids{remindersSupported ? '' : ' · phone app only'}</Text>
+        </View>
+        <View style={[styles.switch, on && styles.switchOn]}>
+          <View style={[styles.knob, on && { alignSelf: 'flex-end' }]} />
+        </View>
+      </Pressable>
+      {note ? <Text style={styles.msg}>{note}</Text> : null}
+      {list.length ? (
+        <View style={styles.coming}>
+          <Text style={[font.tiny, { fontWeight: '900' }]}>Coming up</Text>
+          {list.map((r) => (
+            <Text key={r.id} style={font.tiny} numberOfLines={1}>
+              <Text style={{ fontWeight: '900' }}>{when(r.at)}</Text> · {r.title}
+            </Text>
+          ))}
+        </View>
+      ) : null}
+    </View>
   );
 }
 
@@ -87,11 +137,13 @@ export default function AccountSheet({ onClose }: { onClose: () => void }) {
             </View>
             {msg ? <Text style={[styles.msg, msg.ok && styles.ok]}>{msg.text}</Text> : null}
             <SoundToggle />
+            <RemindersToggle />
             <PremiumRow />
             <View style={styles.testing}>
               <Text style={[font.small, { fontWeight: '900' }]}>Testing (preview build)</Text>
-              <View style={styles.row}>
+              <View style={[styles.row, { flexWrap: 'wrap' }]}>
                 <Button small label="Skip to tomorrow" onPress={() => { apply(A.nextDay); onClose(); }} />
+                <Button small label="Replay tutorial" onPress={() => { apply((s) => ({ ...s, tutorialDone: false })); onClose(); }} />
                 <Button
                   small
                   label={confirmReset ? 'Tap again to reset' : 'Reset game'}
@@ -120,6 +172,7 @@ export default function AccountSheet({ onClose }: { onClose: () => void }) {
 }
 
 const styles = StyleSheet.create({
+  coming: { backgroundColor: '#F6FAF8', borderRadius: 12, padding: 10, gap: 3, marginTop: 6 },
   soundRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 8 },
   switch: { width: 46, height: 26, borderRadius: 13, backgroundColor: '#D6DEDA', padding: 3, justifyContent: 'center' },
   switchOn: { backgroundColor: colors.mint },

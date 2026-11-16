@@ -17,6 +17,8 @@ import { OverlayProvider } from './src/components/Overlay';
 import { TeamProvider } from './src/state/TeamContext';
 import { RankedProvider } from './src/state/RankedContext';
 import { useHealthSync } from './src/lib/useHealthSync';
+import { useReminders } from './src/lib/useReminders';
+import Tutorial from './src/components/Tutorial';
 import * as Ach from './src/game/achievements';
 import LabScreen from './src/screens/LabScreen';
 import { FadeSwitch, PopIn, RollingNumber } from './src/components/fx';
@@ -49,6 +51,7 @@ function takeInviteCode(): string | null {
 function Shell() {
   const { state, apply, reset, sync, loaded } = useGame();
   useHealthSync();
+  useReminders();
   const { incoming, tradesForMe, notice, dismissNotice } = useFriends();
   const [invite, setInvite] = useState<string | null>(null);
   const [showLogin, setShowLogin] = useState(false);
@@ -89,11 +92,11 @@ function Shell() {
     }
   }, [settled, today]);
   useEffect(() => {
-    if (settled && !starter && login.canClaim && loginShownFor.current !== today) {
+    if (settled && !starter && state.tutorialDone && login.canClaim && loginShownFor.current !== today) {
       loginShownFor.current = today;
       setShowLogin(true);
     }
-  }, [settled, starter, login.canClaim, today]);
+  }, [settled, starter, state.tutorialDone, login.canClaim, today]);
 
   // Notices (like opened gifts) fade away on their own.
   useEffect(() => {
@@ -167,6 +170,7 @@ function Shell() {
           );
         })}
       </View>}
+      {settled && !starter && !state.tutorialDone ? <Tutorial /> : null}
       {showAccount && <AccountSheet onClose={() => setShowAccount(false)} />}
       {showLogin && !starter && <DailyLoginSheet onClose={() => setShowLogin(false)} />}
       {shieldNote && !notice ? (

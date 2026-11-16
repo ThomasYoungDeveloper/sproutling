@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useGame } from '../state/GameContext';
 import PetSprite from './PetSprite';
@@ -12,7 +12,8 @@ import { ELEMENT_COLOR, ELEMENT_LABEL, NORMAL_COLOR } from '../game/battle';
 import * as St from '../game/stats';
 import * as A from '../game/actions';
 import type { OwnedPet } from '../game/types';
-import { canShareCards, shareCard } from '../lib/shareCard';
+import { sharePetCard } from '../lib/shareCapture';
+import { ShareCardView } from './ShareCardView';
 import { useAuth } from '../state/AuthContext';
 import { useFriends } from '../state/FriendsContext';
 
@@ -23,6 +24,9 @@ export default function PetSheet({ petId, onClose }: { petId: string; onClose: (
   const [confirmReset, setConfirmReset] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const [sharing, setSharing] = useState(false);
+  const [preview, setPreview] = useState(false);
+  const [cardW, setCardW] = useState(0);
+  const cardRef = useRef<any>(null);
   const { username } = useAuth();
   const { myCode } = useFriends();
   if (!pet) return null;
@@ -181,21 +185,35 @@ export default function PetSheet({ petId, onClose }: { petId: string; onClose: (
             })}
           </View>
           {msg ? <Text style={styles.msg}>{msg}</Text> : null}
-          {canShareCards() ? (
-            <Button
-              label={sharing ? 'Making your card…' : '📸 Share card'}
-              disabled={sharing}
-              onPress={async () => {
-                setSharing(true);
-                const r = await shareCard(pet, username ?? 'A Sproutling trainer', myCode);
-                setSharing(false);
-                setMsg(r === 'downloaded' ? 'Card saved to your downloads! Post it anywhere.' : r === 'failed' ? 'Couldn’t make the card. Try again.' : null);
-              }}
-            />
-          ) : null}
+          <Button label="📸 Share card" onPress={() => setPreview(true)} />
           <Button primary label="Done" onPress={onClose} />
         </ScrollView>
       </View>
+      {preview ? (
+        <View style={styles.backdrop}>
+          <View style={[styles.sheet, { alignItems: 'center', gap: space.sm }]} onLayout={(e) => setCardW(Math.min(360, e.nativeEvent.layout.width - space.lg * 2))}>
+            <Text style={font.h2}>Share {pet.nickname}</Text>
+            {cardW > 0 ? <ShareCardView ref={cardRef} pet={pet} trainer={username ?? 'A Sproutling trainer'} friendCode={myCode} width={cardW} /> : null}
+            {msg ? <Text style={styles.msg}>{msg}</Text> : null}
+            <Button
+              primary
+              style={{ alignSelf: 'stretch' }}
+              label={sharing ? 'Making your card…' : 'Share'}
+              disabled={sharing}
+              onPress={async () => {
+                setSharing(true);
+                setMsg(null);
+                const r = await sharePetCard(cardRef.current, pet, username ?? 'A Sproutling trainer', myCode);
+                setSharing(false);
+                if (r === 'downloaded') setMsg('Card saved to your downloads! Post it anywhere.');
+                else if (r === 'failed') setMsg('Couldn’t make the card. Try again.');
+                else if (r === 'shared') setPreview(false);
+              }}
+            />
+            <Button style={{ alignSelf: 'stretch' }} label="Back" onPress={() => { setPreview(false); setMsg(null); }} />
+          </View>
+        </View>
+      ) : null}
     </View>
   );
 }

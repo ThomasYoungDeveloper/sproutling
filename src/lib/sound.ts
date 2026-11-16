@@ -2,8 +2,8 @@ import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 /**
- * Little synthesized sound effects (no audio files). Uses the Web Audio API in the browser;
- * on phones this stays silent until the native app adds its own audio.
+ * Little synthesized sound effects. The browser builds them live with the Web Audio API;
+ * the phone app plays the same recipes pre-rendered to tiny WAV files (scripts/make-sounds.mjs).
  */
 
 export type SoundName =
@@ -76,8 +76,28 @@ function noise(a: any, at: number, dur: number, opts: { vol?: number; freq?: num
 
 const C5 = 523.25, E5 = 659.25, G5 = 783.99, C6 = 1046.5, A5 = 880, D5 = 587.33, F5 = 698.46;
 
+/** Phone app: one preloaded player per sound, created on first use. */
+const players: Partial<Record<SoundName, any>> = {};
+let nativeReady = false;
+function playNative(name: SoundName) {
+  try {
+    const { createAudioPlayer, setAudioModeAsync } = require('expo-audio');
+    const { SOUND_FILES } = require('./soundFiles');
+    if (!nativeReady) {
+      nativeReady = true;
+      // Play alongside the user's music and respect the silent switch.
+      setAudioModeAsync({ playsInSilentMode: false, interruptionMode: 'mixWithOthers' }).catch(() => {});
+    }
+    let p = players[name];
+    if (!p) p = players[name] = createAudioPlayer(SOUND_FILES[name]);
+    p.seekTo(0);
+    p.play();
+  } catch {}
+}
+
 export function play(name: SoundName) {
   if (muted) return;
+  if (Platform.OS !== 'web') return playNative(name);
   const a = audio();
   if (!a) return;
   const t = a.currentTime + 0.005;

@@ -127,6 +127,8 @@ export interface GameState {
   scene?: string;
   /** Completed trades already swapped into this save. */
   appliedTrades?: Record<string, true>;
+  /** The first-time walkthrough has been seen. */
+  tutorialDone?: boolean;
   /** Battle record and today's rewarded battles. */
   battle?: { day: string; rewarded: number; wonToday: boolean; wins: number; losses: number };
 }
