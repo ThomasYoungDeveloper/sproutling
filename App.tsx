@@ -15,6 +15,7 @@ import DailyLoginSheet from './src/components/DailyLoginSheet';
 import { FriendsProvider, useFriends } from './src/state/FriendsContext';
 import { OverlayProvider } from './src/components/Overlay';
 import { TeamProvider } from './src/state/TeamContext';
+import { RankedProvider } from './src/state/RankedContext';
 import * as Ach from './src/game/achievements';
 import LabScreen from './src/screens/LabScreen';
 import { FadeSwitch, PopIn, RollingNumber } from './src/components/fx';
@@ -221,9 +222,11 @@ function Gate() {
       <RevealProvider>
         <FriendsProvider>
           <TeamProvider>
-            <OverlayProvider>
-              <Shell />
-            </OverlayProvider>
+            <RankedProvider>
+              <OverlayProvider>
+                <Shell />
+              </OverlayProvider>
+            </RankedProvider>
           </TeamProvider>
         </FriendsProvider>
       </RevealProvider>

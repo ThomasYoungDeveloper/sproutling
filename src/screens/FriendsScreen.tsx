@@ -12,6 +12,7 @@ import { levelFor, stageFor } from '../game/scoring';
 import { GIFTS_PER_DAY } from '../game/actions';
 import { activeToday, copyText, lastSeen, shareInvite } from './friendsShared';
 import { ArenaCard, TradesCard } from '../components/SocialPanels';
+import RankedCard from '../components/RankedCard';
 import TeamCard from '../components/TeamCard';
 import FashionShow from '../components/FashionShow';
 
@@ -132,6 +133,7 @@ export default function FriendsScreen({ initialAdd, onUsedInitialAdd }: { initia
       </View>
       {section === 'team' && <TeamCard />}
       {section === 'battle' && <ArenaCard />}
+      {section === 'battle' && <RankedCard />}
       {section === 'show' && <FashionShow />}
       {section === 'friends' && (
         <>

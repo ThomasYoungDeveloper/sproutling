@@ -2,6 +2,8 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Animated, Easing, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { useGame } from '../state/GameContext';
 import { useTeam } from '../state/TeamContext';
+import { useRanked } from '../state/RankedContext';
+import { tierFor } from '../game/ranked';
 import { raidBoss } from '../game/team';
 import PetSprite from './PetSprite';
 import PetPicker from './PetPicker';
@@ -42,6 +44,8 @@ export default function BattleScreen({ opponent, onClose, onResult }: { opponent
   const [sky] = useState(skyNow);
   const { team: guild, raidHit } = useTeam();
   const [raid, setRaid] = useState<{ dmg: number; boss: string } | null>(null);
+  const { report, ranked } = useRanked();
+  const [rp, setRp] = useState<number | null>(null);
   const setup = B.myBattleSetup(state);
 
   const lunge = { me: useRef(new Animated.Value(0)).current, them: useRef(new Animated.Value(0)).current };
@@ -139,6 +143,7 @@ export default function BattleScreen({ opponent, onClose, onResult }: { opponent
       apply(() => r.state);
       setReward(r.reward);
       onResult?.(won);
+      report(opponent.friendId ?? null, won).then(setRp);
       const dmg = B.raidDamage(after);
       if (guild) raidHit(dmg).then((res) => setRaid(res === 'ok' ? { dmg, boss: raidBoss(guild.week).name } : null));
       buzz(won ? 'success' : 'medium', won ? 'win' : 'lose');
@@ -236,7 +241,7 @@ export default function BattleScreen({ opponent, onClose, onResult }: { opponent
             )}
           </>
         ) : (
-          <Result won={battle.over === 'win'} reward={reward} raid={raid} name={opponent.name} onRematch={() => { setRaid(null); setPhase('pick'); }} onClose={onClose} />
+          <Result won={battle.over === 'win'} reward={reward} raid={raid} rp={rp} points={ranked?.points ?? null} name={opponent.name} onRematch={() => { setRaid(null); setRp(null); setPhase('pick'); }} onClose={onClose} />
         )}
       </View>
     </View>
@@ -275,7 +280,7 @@ function MoveButton({ m, foe, energy, disabled, onPress }: { m: MoveDef; foe: B.
   );
 }
 
-function Result({ won, reward, raid, name, onRematch, onClose }: { won: boolean; reward: B.BattleReward | null; raid: { dmg: number; boss: string } | null; name: string; onRematch: () => void; onClose: () => void }) {
+function Result({ won, reward, raid, rp, points, name, onRematch, onClose }: { won: boolean; reward: B.BattleReward | null; raid: { dmg: number; boss: string } | null; rp: number | null; points: number | null; name: string; onRematch: () => void; onClose: () => void }) {
   const { width, height } = useWindowDimensions();
   const nm = name === 'Wild pets' ? 'the wild pets' : name;
   return (
@@ -295,6 +300,13 @@ function Result({ won, reward, raid, name, onRematch, onClose }: { won: boolean;
       ) : (
         <Text style={styles.tip}>Battle rewards are used up for today. You can still battle for fun!</Text>
       )}
+      {rp ? (
+        <PopIn delay={300}>
+          <View style={[styles.reward, { backgroundColor: tierFor(points ?? 0).color }]}>
+            <Text style={[styles.rewardText, { color: '#fff' }]}>{tierFor(points ?? 0).emoji} {rp > 0 ? '+' : ''}{rp} ranked points{points != null ? ` · ${points} total` : ''}</Text>
+          </View>
+        </PopIn>
+      ) : null}
       {raid ? (
         <PopIn delay={400}>
           <View style={[styles.reward, { backgroundColor: '#2A1E3D' }]}><Text style={[styles.rewardText, { color: '#fff' }]}>🐉 {raid.dmg} damage to {raid.boss}!</Text></View>

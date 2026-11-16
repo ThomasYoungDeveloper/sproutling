@@ -278,4 +278,17 @@ ok(A.applyShields(shielded.state).used === 0, 'shields are not used twice');
   RB.theirs[0].hp = -999;
   ok(B.raidDamage(RB) <= 400, 'raid hits are capped at 400');
 }
+// Ranked seasons
+{
+  const R = require('../src/game/ranked');
+  ok(R.tierFor(0).id === 'bronze' && R.tierFor(99).id === 'bronze' && R.tierFor(100).id === 'silver' && R.tierFor(5000).id === 'legend', 'ranked tiers by points');
+  ok(R.tierProgress(175).next.id === 'gold' && Math.abs(R.tierProgress(175).frac - 0.5) < 1e-9 && R.tierProgress(175).need === 75, 'tier progress halfway to gold');
+  ok(R.tierProgress(2000).next === null, 'legend has no next tier');
+  ok(R.seasonDaysLeft(new Date('2026-11-30T10:00:00Z')) === 1 && R.seasonDaysLeft(new Date('2026-11-01T00:00:00Z')) === 30, 'season days left');
+  const base = newGame();
+  const leg = R.seasonReward(base, 1600).state;
+  ok(leg.coins === base.coins + 500 && leg.chests.length === base.chests.length + 1 && leg.wardrobe.trophy, 'legend reward: coins, gold chest, laurel');
+  const br = R.seasonReward(base, 10).state;
+  ok(br.coins === base.coins + 50 && br.chests.length === base.chests.length, 'bronze reward is coins only');
+}
 console.log(fails ? `${fails} FAILED` : 'ALL PASSED'); process.exit(fails ? 1 : 0);
