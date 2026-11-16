@@ -161,7 +161,7 @@ export function WardrobeSheet({ onClose, onShop }: { onClose: () => void; onShop
     <View style={styles.backdrop}>
       <Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessibilityLabel="Close" />
       <View style={styles.sheet}>
-        <Text style={font.title}>👗 Dress up {pet.nickname}</Text>
+        <Text style={font.title}>👗 Style {pet.nickname}</Text>
         <View style={styles.preview}>
           <Backdrop element={sp.element} sky={sky} scene={state.scene} />
           <PopIn key={`${pet.look?.hat}-${pet.look?.aura}`}>

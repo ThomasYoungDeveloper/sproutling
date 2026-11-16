@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
 import { useGame } from '../state/GameContext';
 import { Button, Card, ProgressBar } from './ui';
@@ -14,6 +14,7 @@ export default function EventCard() {
   const { state, apply } = useGame();
   const [msg, setMsg] = useState<string | null>(null);
   const [party, setParty] = useState(0);
+  const [open, setOpen] = useState(false);
   const today = A.todayKey(state);
   const run = Ev.eventOn(today);
 
@@ -35,6 +36,30 @@ export default function EventCard() {
   const daysLeft = Ev.daysBetween(today, run.end) + 1;
   const todayTokens = Math.min(Ev.TOKENS_PER_DAY, state.days[today] ? dailyQuests(state.days[today]).filter((q) => q.done).length : 0);
   const max = ev.milestones[ev.milestones.length - 1].tokens;
+  const ready = ev.milestones.filter((m, i) => tokens >= m.tokens && !got.includes(i)).length;
+  const tokenName = ev.id === 'harvest' ? 'acorns' : 'stars';
+
+  if (!open) {
+    return (
+      <Pressable
+        onPress={() => { buzz('light'); setOpen(true); }}
+        style={({ pressed }) => [styles.row, { backgroundColor: ev.colors[0] }, pressed && { transform: [{ scale: 0.98 }] }]}
+        accessibilityRole="button"
+        accessibilityLabel={`${ev.name}, ${daysLeft} days left${ready ? `, ${ready} rewards to claim` : ''}. Open`}
+      >
+        <Text style={{ fontSize: 26 }}>{ev.emoji}</Text>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.rowTitle}>{ev.name}</Text>
+          <Text style={styles.rowSub} numberOfLines={2}>Earn {tokenName} from daily quests for limited gear · {daysLeft} day{daysLeft === 1 ? '' : 's'} left</Text>
+        </View>
+        {ready ? (
+          <View style={styles.claimPill}><Text style={styles.claimPillText}>Claim {ready}</Text></View>
+        ) : (
+          <View style={styles.claimPill}><Text style={styles.claimPillText}>{ev.token} {tokens}</Text></View>
+        )}
+      </Pressable>
+    );
+  }
 
   return (
     <Card style={[styles.card, { borderColor: ev.colors[1] }]}>
@@ -57,6 +82,9 @@ export default function EventCard() {
         <View style={styles.count}>
           <Text style={styles.countText}>{ev.token} {tokens}</Text>
         </View>
+        <Pressable onPress={() => setOpen(false)} style={styles.collapse} accessibilityRole="button" accessibilityLabel="Collapse">
+          <Text style={styles.collapseText}>⌃</Text>
+        </Pressable>
       </View>
       <Text style={styles.blurb}>{ev.blurb}</Text>
       <View style={{ gap: 4 }}>
@@ -103,6 +131,13 @@ export default function EventCard() {
 }
 
 const styles = StyleSheet.create({
+  row: { flexDirection: 'row', alignItems: 'center', gap: 10, borderRadius: 18, paddingVertical: 12, paddingHorizontal: 14 },
+  rowTitle: { fontSize: 16, fontWeight: '900', color: '#FFFFFF' },
+  rowSub: { fontSize: 12, fontWeight: '800', color: '#FFE9C9' },
+  claimPill: { backgroundColor: '#FFFFFF', borderRadius: 12, paddingHorizontal: 12, paddingVertical: 7 },
+  claimPillText: { color: '#8A3E15', fontSize: 14, fontWeight: '900' },
+  collapse: { width: 34, height: 34, borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.2)', alignItems: 'center', justifyContent: 'center' },
+  collapseText: { color: '#FFFFFF', fontSize: 18, fontWeight: '900', marginTop: 4 },
   card: { overflow: 'hidden', gap: space.sm },
   off: { backgroundColor: '#FFF8EC', borderColor: '#F2E2C2' },
   offText: { fontSize: 14, fontWeight: '700', color: colors.ink },

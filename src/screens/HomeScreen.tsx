@@ -1,171 +1,174 @@
 import React, { useEffect, useRef } from 'react';
-import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
-import Svg, { Path } from 'react-native-svg';
+import { Animated, Easing, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useGame } from '../state/GameContext';
-import { Card, SectionHead, Button, Chip } from '../components/ui';
 import PetScene from '../components/PetScene';
+import TodayCard from '../components/TodayCard';
 import { useOverlay } from '../components/Overlay';
 import { ShopSheet, WardrobeSheet } from '../components/ShopSheets';
 import ExpeditionCard from '../components/ExpeditionCard';
 import EventCard from '../components/EventCard';
 import AchievementsSheet from '../components/AchievementsSheet';
 import PetSheet from '../components/PetSheet';
+import EggSprite from '../components/EggSprite';
+import { Button } from '../components/ui';
 import { buzz, PopIn } from '../components/fx';
 import { colors, font, space } from '../theme';
-import { scoreDay, dailyQuests, ELEMENT_HABIT } from '../game/scoring';
+import { RARITY_INFO } from '../game/rarity';
 import * as A from '../game/actions';
 import * as C from '../game/care';
 
-export default function HomeScreen({ onNavigate }: { onNavigate?: (tab: 'eggs' | 'chests') => void }) {
+type Tab = 'eggs' | 'chests';
+
+/** Reminders that get a chip. Everything else already shows up on Home (tray, Today card, event and expedition rows). */
+const CHIP_IDS = ['train', 'chests', 'badges', 'egg'];
+
+function chipLabel(r: C.Reminder, s: ReturnType<typeof useGame>['state']): { icon: string; text: string } {
+  if (r.id === 'train' && r.petId) {
+    const p = s.pets.find((x) => x.id === r.petId);
+    const pts = r.text.match(/has (\d+)/)?.[1] ?? '';
+    return { icon: '💪', text: `Train ${p?.nickname ?? 'pet'} · ${pts} pt${pts === '1' ? '' : 's'}` };
+  }
+  if (r.id === 'chests') return { icon: '🎁', text: s.chests.length === 1 ? 'Open a chest' : `Open ${s.chests.length} chests` };
+  if (r.id === 'badges') return { icon: '🏅', text: 'Badges' };
+  if (r.id === 'egg') return { icon: '👣', text: r.text.replace(/^Your /, '').replace(' hatches in', ' hatches in') };
+  return { icon: r.icon, text: r.text };
+}
+
+export default function HomeScreen({ onNavigate, onAccount, account }: { onNavigate?: (tab: Tab) => void; onAccount?: () => void; account?: { initial: string; label: string; warn?: boolean } }) {
   const { state, apply } = useGame();
-  const d = A.today(state);
-  const el = A.activeElement(state);
-  const score = scoreDay(d, el);
-  const eb = el ? ELEMENT_HABIT[el] : null;
   const pet = A.activePet(state);
-  const mult = C.careMultiplier(d);
-  const todo = C.reminders(state).slice(0, 4);
   const overlay = useOverlay();
   const openShop = () => overlay.open(<ShopSheet onClose={overlay.close} onWardrobe={openWardrobe} />);
   const openWardrobe = () => overlay.open(<WardrobeSheet onClose={overlay.close} onShop={openShop} />);
+  const readyEggs = state.eggs.filter(A.isReady);
+  const chips = C.reminders(state).filter((r) => CHIP_IDS.includes(r.id));
 
   const act = (r: C.Reminder) => {
     buzz('light');
-    if (r.action === 'feed') apply(C.feed);
-    else if (r.action === 'play') apply(C.play);
-    else if (r.action === 'treat') apply(C.treat);
-    else if (r.action === 'eggs' || r.action === 'chests') onNavigate?.(r.action);
+    if (r.action === 'eggs' || r.action === 'chests') onNavigate?.(r.action);
     else if (r.action === 'badges') overlay.open(<AchievementsSheet onClose={overlay.close} />);
     else if (r.action === 'train' && r.petId) overlay.open(<PetSheet petId={r.petId} onClose={overlay.close} />);
+    else if (r.id === 'egg') onNavigate?.('eggs');
   };
 
   return (
     <View style={{ gap: space.md }}>
-      {pet ? <PetScene onShop={openShop} onDressUp={openWardrobe} /> : null}
+      {pet ? <PetScene onShop={openShop} onDressUp={openWardrobe} onAccount={onAccount} account={account} /> : null}
 
-      {todo.length > 0 && (
-        <Card>
-          <SectionHead title="Reminders" meta={pet ? `${pet.nickname}’s wishes` : undefined} />
-          {todo.map((r) => {
-            const tappable = ['feed', 'play', 'treat', 'eggs', 'chests', 'badges', 'train'].includes(r.action ?? '');
+      <TodayCard />
+
+      {readyEggs.length ? <HatchCard rarity={readyEggs[0].rarity} count={readyEggs.length} onPress={() => { buzz('success'); onNavigate?.('eggs'); }} /> : null}
+
+      {chips.length ? (
+        <View style={styles.chips}>
+          {chips.slice(0, 2).map((r) => {
+            const c = chipLabel(r, state);
             return (
-              <Pressable key={r.id} onPress={tappable ? () => act(r) : undefined} style={({ pressed }) => [styles.reminder, pressed && tappable && { transform: [{ scale: 0.98 }] }]} accessibilityRole={tappable ? 'button' : undefined}>
-                <Text style={{ fontSize: 20 }}>{r.icon}</Text>
-                <Text style={[font.body, { flex: 1, fontWeight: '700' }]}>{r.text}</Text>
-                {tappable ? <Text style={styles.go}>{r.action === 'eggs' || r.action === 'chests' ? 'Go ›' : r.action === 'badges' ? 'Claim ›' : r.action === 'train' ? 'Train ›' : 'Do it'}</Text> : null}
+              <Pressable key={r.id} onPress={() => act(r)} style={({ pressed }) => [styles.chip, pressed && { transform: [{ scale: 0.96 }] }]} accessibilityRole="button" accessibilityLabel={r.text}>
+                <Text style={{ fontSize: 15 }}>{c.icon}</Text>
+                <Text style={styles.chipText}>{c.text}</Text>
               </Pressable>
             );
           })}
-        </Card>
-      )}
+          {chips.length > 2 ? (
+            <Pressable
+              onPress={() => overlay.open(<TodoSheet items={chips} onPick={(r) => { overlay.close(); act(r); }} onClose={overlay.close} />)}
+              style={({ pressed }) => [styles.chip, styles.more, pressed && { transform: [{ scale: 0.96 }] }]}
+              accessibilityRole="button"
+              accessibilityLabel={`${chips.length - 2} more to do`}
+            >
+              <Text style={[styles.chipText, { color: colors.mintDark }]}>+{chips.length - 2}</Text>
+            </Pressable>
+          ) : null}
+        </View>
+      ) : null}
 
       <EventCard />
       <ExpeditionCard />
-
-      <Card>
-        <SectionHead title="Daily quests" meta="+15 XP each" />
-        {dailyQuests(d).map((q) => (
-          <View key={q.id} style={styles.quest}>
-            {q.done ? (
-              <PopIn key="done">
-                <View style={[styles.qbox, styles.qdone]}><Text style={styles.check}>✓</Text></View>
-              </PopIn>
-            ) : (
-              <View style={styles.qbox} />
-            )}
-            <Text style={[font.body, { flex: 1, fontWeight: '700' }, q.done && { color: colors.muted, textDecorationLine: 'line-through' }]}>{q.label}</Text>
-            <Text style={font.small}>{q.progress}</Text>
-          </View>
-        ))}
-        <Text style={font.small}>Finish all three to earn a Bronze chest.</Text>
-      </Card>
-
-      <Card>
-        <SectionHead title="Today" meta={mult > 1 ? `+${C.boostedTotal(d, el)} XP (×${mult.toFixed(1)})` : `+${score.total} XP`} />
-        {eb && pet ? (
-          <View style={styles.elBonus}>
-            <Text style={{ fontSize: 18 }}>{eb.emoji}</Text>
-            <Text style={[font.small, { flex: 1, color: colors.ink, fontWeight: '800' }]}>{pet.nickname}’s element bonus: {eb.label}</Text>
-          </View>
-        ) : null}
-
-        <Habit icon="👟" label={`${d.steps.toLocaleString()} steps`} sub="Also warms your eggs" xp={score.steps}>
-          <Button small label="+500" onPress={() => { buzz(); apply((s) => A.addSteps(s, 500)); }} />
-          <Button small label="+1,000" onPress={() => { buzz(); apply((s) => A.addSteps(s, 1000)); }} />
-          <Button small label="+5,000" onPress={() => { buzz(); apply((s) => A.addSteps(s, 5000)); }} />
-        </Habit>
-
-        <Habit icon="🌙" label={`${d.sleepHours} h sleep`} sub="Sweet spot 7–9 hours" xp={score.sleep}>
-          <Button small label="− 30 min" onPress={() => { buzz(); apply((s) => A.setSleep(s, d.sleepHours - 0.5)); }} />
-          <Button small label="+ 30 min" onPress={() => { buzz(); apply((s) => A.setSleep(s, d.sleepHours + 0.5)); }} />
-        </Habit>
-
-        <Habit icon="💧" label={`${d.water} of 8 glasses`} sub="Tap a glass to fill it" xp={score.water}>
-          {Array.from({ length: 8 }, (_, i) => (
-            <Glass key={i} on={i < d.water} index={i} onPress={() => { buzz(); apply((s) => A.setWater(s, d.water === i + 1 ? i : i + 1)); }} />
-          ))}
-        </Habit>
-        <Text style={font.tiny}>Web preview: you enter habits by hand. The phone app will read verified data from Apple Health or Health Connect.</Text>
-      </Card>
     </View>
   );
 }
 
-/** A water glass that fills with a little bounce. */
-function Glass({ on, index, onPress }: { on: boolean; index: number; onPress: () => void }) {
-  const v = useRef(new Animated.Value(on ? 1 : 0)).current;
+/** A big, wobbling call to action when an egg is ready to hatch. */
+function HatchCard({ rarity, count, onPress }: { rarity: Parameters<typeof EggSprite>[0]['rarity']; count: number; onPress: () => void }) {
+  const wobble = useRef(new Animated.Value(0)).current;
+  const twinkle = useRef(new Animated.Value(0)).current;
   useEffect(() => {
-    Animated.spring(v, { toValue: on ? 1 : 0, friction: 4, tension: 160, useNativeDriver: true }).start();
-  }, [on]);
+    const a = Animated.loop(
+      Animated.sequence([
+        Animated.delay(1100),
+        Animated.timing(wobble, { toValue: 1, duration: 120, useNativeDriver: true }),
+        Animated.timing(wobble, { toValue: -1, duration: 160, useNativeDriver: true }),
+        Animated.timing(wobble, { toValue: 0.6, duration: 140, useNativeDriver: true }),
+        Animated.timing(wobble, { toValue: 0, duration: 140, useNativeDriver: true }),
+      ]),
+    );
+    const b = Animated.loop(Animated.timing(twinkle, { toValue: 1, duration: 1600, easing: Easing.inOut(Easing.sin), useNativeDriver: true }));
+    a.start();
+    b.start();
+    return () => {
+      a.stop();
+      b.stop();
+    };
+  }, []);
+  const label = RARITY_INFO[rarity].label;
+  const sparkle = (delay: number) => twinkle.interpolate({ inputRange: [0, (0.1 + delay) % 1, (0.5 + delay) % 1 > (0.1 + delay) % 1 ? (0.5 + delay) % 1 : 0.99, 1], outputRange: [0, 1, 0, 0], extrapolate: 'clamp' });
   return (
-    <Pressable accessibilityLabel={`${index + 1} glasses`} onPress={onPress}>
-      <Animated.View style={{ transform: [{ scale: v.interpolate({ inputRange: [0, 0.6, 1], outputRange: [1, 1.25, 1] }) }] }}>
-        <Svg width={26} height={30} viewBox="0 0 28 32">
-          <Path d="M5 4 H23 L20.5 28 Q20 30 18 30 H10 Q8 30 7.5 28 Z" fill={on ? '#8FC9F0' : '#fff'} stroke={on ? '#2E7FB8' : '#B9CDD6'} strokeWidth={2.2} strokeLinejoin="round" />
-        </Svg>
-      </Animated.View>
-    </Pressable>
+    <PopIn>
+      <Pressable onPress={onPress} style={({ pressed }) => [styles.hatch, pressed && { transform: [{ scale: 0.98 }] }]} accessibilityRole="button" accessibilityLabel={`Your ${label} egg is ready to hatch. Hatch it now`}>
+        <Animated.Text style={[styles.spark, { top: 8, left: 70, opacity: sparkle(0) }]}>✦</Animated.Text>
+        <Animated.Text style={[styles.spark, { bottom: 8, left: 10, fontSize: 11, opacity: sparkle(0.3) }]}>✦</Animated.Text>
+        <Animated.Text style={[styles.spark, { top: 10, right: 100, fontSize: 12, opacity: sparkle(0.6) }]}>✦</Animated.Text>
+        <View style={styles.eggBox}>
+          <Animated.View style={{ transform: [{ rotate: wobble.interpolate({ inputRange: [-1, 1], outputRange: ['-12deg', '12deg'] }) }] }}>
+            <EggSprite rarity={rarity} size={46} />
+          </Animated.View>
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.hatchKicker}>IT’S CRACKING!</Text>
+          <Text style={styles.hatchTitle}>{count > 1 ? `${count} eggs are ready` : `Your ${label} egg is ready`}</Text>
+        </View>
+        <View style={styles.hatchBtn}><Text style={styles.hatchBtnText}>Hatch!</Text></View>
+      </Pressable>
+    </PopIn>
   );
 }
 
-function Habit({ icon, label, sub, xp, children }: { icon: string; label: string; sub: string; xp: number; children: React.ReactNode }) {
+function TodoSheet({ items, onPick, onClose }: { items: C.Reminder[]; onPick: (r: C.Reminder) => void; onClose: () => void }) {
   return (
-    <View style={styles.habit}>
-      <View style={styles.habitTop}>
-        <Text style={{ fontSize: 22 }}>{icon}</Text>
-        <View style={{ flex: 1 }}>
-          <Text style={[font.body, { fontWeight: '800' }]}>{label}</Text>
-          <Text style={font.small}>{sub}</Text>
-        </View>
-        <PopIn key={xp} from={0.6}>
-          <Chip label={`+${xp} XP`} tone={xp ? 'mint' : 'muted'} />
-        </PopIn>
+    <View style={styles.dim}>
+      <Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessibilityLabel="Close" />
+      <View style={styles.sheet}>
+        <View style={styles.grab} />
+        <Text style={font.title}>To do</Text>
+        {items.map((r) => (
+          <Pressable key={r.id} onPress={() => onPick(r)} style={({ pressed }) => [styles.todo, pressed && { opacity: 0.7 }]} accessibilityRole="button">
+            <Text style={{ fontSize: 20 }}>{r.icon}</Text>
+            <Text style={[font.body, { flex: 1, fontWeight: '800' }]}>{r.text}</Text>
+            <Text style={styles.go}>›</Text>
+          </Pressable>
+        ))}
+        <Button label="Close" onPress={onClose} />
       </View>
-      <View style={styles.controls}>{children}</View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  elBonus: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#FFF6DD', borderRadius: 12, paddingHorizontal: 10, paddingVertical: 6 },
-  reminder: { flexDirection: 'row', alignItems: 'center', gap: space.sm, paddingVertical: 8, borderTopWidth: 1, borderTopColor: colors.line },
-  go: { fontWeight: '900', fontSize: 13, color: colors.mintDark },
-  petCard: { backgroundColor: colors.sky, borderRadius: 24, borderWidth: 1, borderColor: colors.line, padding: space.lg, overflow: 'hidden' },
-  petHead: { flexDirection: 'row', gap: space.sm },
-  petName: { fontSize: 24, fontWeight: '800', color: colors.ink, padding: 0 },
-  stage: { fontSize: 12, fontWeight: '800', color: colors.muted, textTransform: 'uppercase', letterSpacing: 0.8 },
-  petStage: { alignItems: 'center', justifyContent: 'center', height: 200 },
-  bubble: { position: 'absolute', top: 0, right: 0, maxWidth: 150, backgroundColor: '#fff', borderRadius: 14, borderBottomRightRadius: 4, paddingVertical: 6, paddingHorizontal: 10, borderWidth: 1, borderColor: colors.line, zIndex: 2 },
-  xpRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 },
-  quest: { flexDirection: 'row', alignItems: 'center', gap: space.sm, paddingVertical: 6, borderTopWidth: 1, borderTopColor: colors.line },
-  qbox: { width: 22, height: 22, borderRadius: 7, borderWidth: 2, borderColor: '#BFD3CB', alignItems: 'center', justifyContent: 'center' },
-  qdone: { backgroundColor: colors.mint, borderColor: colors.mint },
-  check: { color: '#fff', fontWeight: '900', fontSize: 13 },
-  habit: { borderTopWidth: 1, borderTopColor: colors.line, paddingTop: space.sm, gap: space.sm },
-  habitTop: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
-  controls: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, alignItems: 'center' },
-  meal: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#FAFBF9', borderWidth: 1, borderColor: colors.line, borderRadius: 10, paddingVertical: 6, paddingHorizontal: 10 },
-  mealForm: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, alignItems: 'center' },
-  input: { borderWidth: 1, borderColor: colors.line, borderRadius: 10, paddingVertical: 8, paddingHorizontal: 10, backgroundColor: '#fff', fontSize: 15, color: colors.ink },
-  vegToggle: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 4 },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, alignItems: 'center' },
+  chip: { height: 38, paddingHorizontal: 12, borderRadius: 999, borderWidth: 1, borderColor: colors.line, backgroundColor: '#FFFFFF', flexDirection: 'row', alignItems: 'center', gap: 6 },
+  chipText: { fontSize: 14, fontWeight: '900', color: colors.ink },
+  more: { backgroundColor: colors.mintSoft, borderColor: colors.mintSoft, flexShrink: 0 },
+  hatch: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: '#FFC93C', borderWidth: 3, borderColor: '#FFFFFF', borderRadius: 22, paddingVertical: 10, paddingLeft: 10, paddingRight: 14, overflow: 'hidden', shadowColor: '#E0A21A', shadowOpacity: 1, shadowRadius: 0, shadowOffset: { width: 0, height: 6 }, elevation: 3 },
+  eggBox: { width: 60, height: 60, borderRadius: 18, backgroundColor: '#FFF3CC', alignItems: 'center', justifyContent: 'center' },
+  hatchKicker: { fontSize: 12, fontWeight: '900', letterSpacing: 1, color: '#8A5A00' },
+  hatchTitle: { fontSize: 19, fontWeight: '900', color: '#4A2F00', lineHeight: 22 },
+  hatchBtn: { backgroundColor: '#E8590C', borderRadius: 14, paddingHorizontal: 14, paddingVertical: 10, shadowColor: '#A63E06', shadowOpacity: 1, shadowRadius: 0, shadowOffset: { width: 0, height: 3 } },
+  hatchBtnText: { color: '#FFFFFF', fontSize: 16, fontWeight: '900' },
+  spark: { position: 'absolute', color: '#FFFFFF', fontSize: 14, fontWeight: '900' },
+  dim: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(24,30,48,0.5)', justifyContent: 'flex-end', alignItems: 'center', zIndex: 50 },
+  sheet: { backgroundColor: '#FFFFFF', borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: space.lg, paddingTop: 10, gap: space.sm, width: '100%', maxWidth: 520 },
+  grab: { width: 44, height: 5, borderRadius: 999, backgroundColor: colors.line, alignSelf: 'center', marginBottom: 4 },
+  todo: { flexDirection: 'row', alignItems: 'center', gap: space.sm, paddingVertical: 10, borderTopWidth: 1, borderTopColor: colors.line },
+  go: { fontSize: 22, fontWeight: '900', color: colors.muted },
 });

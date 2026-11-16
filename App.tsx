@@ -115,7 +115,7 @@ function Shell() {
   return (
     <SafeAreaView style={styles.root}>
       <StatusBar style="dark" />
-      <View style={styles.top}>
+      {tab === 'home' && !starter ? null : <View style={styles.top}>
         <Text style={styles.brand}>Sprout<Text style={{ color: colors.mint }}>ling</Text></Text>
         <View style={styles.pills}>
           <View style={styles.pill}><Text style={styles.pillText}>▲ {A.streak(state)}-day{state.shields ? ` 🛡️${state.shields}` : ''}</Text></View>
@@ -124,13 +124,13 @@ function Shell() {
             <Text style={[styles.pillText, !user && { color: '#fff' }]} numberOfLines={1}>{sync === 'error' ? '⚠ Offline' : `☁ ${username ?? 'Me'}`}</Text>
           </Pressable>
         </View>
-      </View>
-      <ScrollView contentContainerStyle={styles.scroll}>
+      </View>}
+      <ScrollView contentContainerStyle={[styles.scroll, tab === 'home' && !starter && { paddingTop: space.md }]}>
         {starter ? <StarterScreen /> : null}
         {!starter && (
           <FadeSwitch id={tab}>
             <View style={{ gap: space.md }}>
-        {tab === 'home' && (
+        {tab === 'home' && login.canClaim && (
           <Pressable onPress={() => setShowLogin(true)} style={[styles.daily, login.canClaim && styles.dailyReady]} accessibilityRole="button" accessibilityLabel="Daily rewards">
             <Text style={{ fontSize: 22 }}>{login.canClaim ? '🎁' : '✅'}</Text>
             <View style={{ flex: 1 }}>
@@ -139,7 +139,13 @@ function Shell() {
             </View>
           </Pressable>
         )}
-        {tab === 'home' && <HomeScreen onNavigate={setTab} />}
+        {tab === 'home' && (
+          <HomeScreen
+            onNavigate={setTab}
+            onAccount={() => setShowAccount(true)}
+            account={{ initial: (username ?? (user ? 'T' : '?'))[0].toUpperCase(), label: user ? `Account: ${username ?? 'you'}${sync === 'error' ? ', offline' : ''}` : 'Sign in to save your pets', warn: sync === 'error' || !user }}
+          />
+        )}
         {tab === 'eggs' && <EggsScreen />}
         {tab === 'chests' && <ChestsScreen />}
         {tab === 'dex' && <DexScreen />}
@@ -147,23 +153,6 @@ function Shell() {
             </View>
           </FadeSwitch>
         )}
-        <View style={styles.demo}>
-          <Text style={[font.tiny, { flex: 1 }]}>Preview build. Your progress saves to your account.</Text>
-          <Button small label="Skip to tomorrow" onPress={() => apply(A.nextDay)} />
-          <Button
-            small
-            label={confirmReset ? 'Tap again to reset' : 'Reset'}
-            onPress={() => {
-              if (confirmReset) {
-                reset();
-                setConfirmReset(false);
-              } else {
-                setConfirmReset(true);
-                setTimeout(() => setConfirmReset(false), 3000);
-              }
-            }}
-          />
-        </View>
       </ScrollView>
       {!starter && <View style={styles.nav}>
         {TABS.map((t) => {

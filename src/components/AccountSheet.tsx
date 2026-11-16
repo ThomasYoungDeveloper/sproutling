@@ -1,3 +1,4 @@
+import * as A from '../game/actions';
 import React, { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useAuth } from '../state/AuthContext';
@@ -49,7 +50,8 @@ function PremiumRow() {
 
 export default function AccountSheet({ onClose }: { onClose: () => void }) {
   const { user, username, signOut, saveUsername } = useAuth();
-  const { sync } = useGame();
+  const { sync, apply, reset } = useGame();
+  const [confirmReset, setConfirmReset] = useState(false);
   const [name, setName] = useState(username ?? '');
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ text: string; ok?: boolean } | null>(null);
@@ -86,6 +88,26 @@ export default function AccountSheet({ onClose }: { onClose: () => void }) {
             {msg ? <Text style={[styles.msg, msg.ok && styles.ok]}>{msg.text}</Text> : null}
             <SoundToggle />
             <PremiumRow />
+            <View style={styles.testing}>
+              <Text style={[font.small, { fontWeight: '900' }]}>Testing (preview build)</Text>
+              <View style={styles.row}>
+                <Button small label="Skip to tomorrow" onPress={() => { apply(A.nextDay); onClose(); }} />
+                <Button
+                  small
+                  label={confirmReset ? 'Tap again to reset' : 'Reset game'}
+                  onPress={() => {
+                    if (confirmReset) {
+                      reset();
+                      setConfirmReset(false);
+                      onClose();
+                    } else {
+                      setConfirmReset(true);
+                      setTimeout(() => setConfirmReset(false), 3000);
+                    }
+                  }}
+                />
+              </View>
+            </View>
             <View style={[styles.row, { marginTop: space.md }]}>
               <Button label="Sign out" onPress={signOut} />
               <Button primary label="Done" onPress={onClose} style={{ flex: 1 }} />
@@ -108,5 +130,6 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', gap: space.sm, alignItems: 'center' },
   msg: { fontSize: 13, fontWeight: '700', color: '#C4562F' },
   ok: { color: colors.mintDark },
+  testing: { borderTopWidth: 1, borderTopColor: colors.line, paddingTop: space.sm, gap: 6, marginTop: space.sm },
   status: { backgroundColor: colors.mintSoft, borderRadius: 10, paddingVertical: 6, paddingHorizontal: 10, alignSelf: 'flex-start' },
 });

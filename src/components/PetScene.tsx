@@ -4,7 +4,10 @@ import Svg, { Circle, Defs, Ellipse, LinearGradient, Path, Rect, Stop } from 're
 import { useGame } from '../state/GameContext';
 import PetSprite from './PetSprite';
 import { ProgressBar, RarityBadge } from './ui';
-import { buzz, PopIn } from './fx';
+import { buzz, PopIn, RollingNumber } from './fx';
+import { RARITY_INFO } from '../game/rarity';
+import { SKIN_INFO } from '../game/skins';
+import { gradeOf } from '../game/stats';
 import { colors, space } from '../theme';
 import { SPECIES_BY_ID } from '../game/species';
 import { levelProgress, stageFor } from '../game/scoring';
@@ -210,7 +213,7 @@ function DraggableToy({ toy, onDrop, onTap, onGrab, small }: { toy: Cosmetic; on
 const TOY_SIZE = 46;
 const AUTO_LINES = ['I love my {toy}!', 'Watch this!', 'Hehe, so fun!', 'Play with me!', 'Again, again!', 'Best day ever!'];
 /** Top of a toy resting on the ground, measured from the top of the scene. */
-const GROUND_TOP = 288;
+const GROUND_TOP = 316;
 
 /** A toy sitting in the scene. Drag it around, drag it back to the tray, or tap it to make your pet play. */
 function PlacedToy({ toy, x, fromY, bounce, onMove, onTap }: { toy: Cosmetic; x: number; fromY: number; bounce: number; onMove: (dx: number, upToTray: boolean) => void; onTap: () => void }) {
@@ -283,7 +286,7 @@ function PlacedToy({ toy, x, fromY, bounce, onMove, onTap }: { toy: Cosmetic; x:
   );
 }
 
-export default function PetScene({ onTrinketsEmpty, onDressUp, onShop }: { onTrinketsEmpty?: () => void; onDressUp?: () => void; onShop?: () => void }) {
+export default function PetScene({ onTrinketsEmpty, onDressUp, onShop, onAccount, account }: { onTrinketsEmpty?: () => void; onDressUp?: () => void; onShop?: () => void; onAccount?: () => void; account?: { initial: string; label: string; warn?: boolean } }) {
   const { state, apply } = useGame();
   const pet = A.activePet(state)!;
   const sp = SPECIES_BY_ID[pet.speciesId];
@@ -297,6 +300,8 @@ export default function PetScene({ onTrinketsEmpty, onDressUp, onShop }: { onTri
   const trinkets = C.trinketCount(state);
   const [sky] = useState(skyNow);
   const [width, setWidth] = useState(0);
+  const [showToys, setShowToys] = useState(false);
+  const streak = A.streak(state);
 
   // Idle: gentle bob and breathing. Tapping makes the pet hop.
   const bob = useRef(new Animated.Value(0)).current;
@@ -439,6 +444,7 @@ export default function PetScene({ onTrinketsEmpty, onDressUp, onShop }: { onTri
     const tx = onPet ? center + (sx < center ? -62 : 62) : Math.max(TOY_SIZE, Math.min(width - TOY_SIZE, sx));
     const key = Date.now();
     setPlaced((list) => [...list, { key, id: toy.id, x: tx, fromY: Math.min(GROUND_TOP, sy - TOY_SIZE / 2), bounce: 0 }]);
+    setShowToys(false);
     setTimeout(() => playWith(key, true), onPet ? 350 : 500);
     return true;
   };
@@ -493,8 +499,8 @@ export default function PetScene({ onTrinketsEmpty, onDressUp, onShop }: { onTri
         <Cloud width={width} top={58} duration={52000} delay={9000} scale={0.7} />
 
         <View style={styles.head}>
-          <View style={{ flex: 1 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8, minWidth: 0 }}>
               <View style={styles.level}><Text style={styles.levelText}>Lv {lp.level}</Text></View>
               <TextInput
                 style={[styles.name, { color: ink }]}
@@ -506,20 +512,28 @@ export default function PetScene({ onTrinketsEmpty, onDressUp, onShop }: { onTri
                 maxLength={14}
               />
             </View>
-            <Text style={[styles.sub, { color: night ? '#DDE3FF' : '#4E5F66' }]}>
-              {sp.name} · {STAGE_LABEL[stage]}{pet.shiny ? ' · ✦ Shiny' : ''}
-            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+              <Pressable style={styles.stat} hitSlop={10} accessibilityRole="text" accessibilityLabel={`${streak}-day streak${state.shields ? `, ${state.shields} shields` : ''}`}>
+                <Text style={styles.statText}>🔥 {streak}{state.shields ? ` 🛡️${state.shields}` : ''}</Text>
+              </Pressable>
+              <Pressable style={styles.stat} hitSlop={10} onPress={onShop} accessibilityRole="button" accessibilityLabel={`${state.coins} coins, open shop`}>
+                <RollingNumber value={state.coins} prefix="🪙 " style={styles.statText} />
+              </Pressable>
+              <Pressable style={[styles.avatar, account?.warn && { backgroundColor: '#E8590C' }]} hitSlop={10} onPress={onAccount} accessibilityRole="button" accessibilityLabel={account?.label ?? 'Account'}>
+                <Text style={styles.avatarText}>{account?.warn ? '!' : account?.initial ?? '?'}</Text>
+              </Pressable>
+            </View>
           </View>
-          <View style={{ alignItems: 'flex-end', gap: 6 }}>
-            <RarityBadge rarity={sp.rarity} />
+          <Text style={[styles.sub, { color: night ? '#DDE3FF' : '#3F5560' }]} numberOfLines={1}>
+            {RARITY_INFO[sp.rarity].label} {sp.name}{pet.skin ? ` · ${SKIN_INFO[pet.skin].label} skin` : ''}{pet.shiny ? ' · ✦ Shiny' : ''} · {gradeOf(pet)}%
+          </Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <View style={[styles.xpTrack, { flex: 1 }]} accessibilityLabel={lp.max ? 'Max level' : `${lp.into} of ${lp.need} XP to level ${lp.level + 1}`}>
+              <View style={[styles.xpFill, { width: `${Math.round((lp.max ? 1 : lp.into / lp.need) * 100)}%` }]} />
+            </View>
             <View style={[styles.mood, { borderColor: mi.color }]}>
               <Text style={[styles.moodText, { color: mi.color }]}>{mi.emoji} {mi.label}</Text>
             </View>
-            {buffs.length ? (
-              <View style={[styles.mood, { borderColor: '#E3A81E' }]} accessibilityLabel={`Powered up: ${buffs.map((b) => b.label).join(', ')}`}>
-                <Text style={[styles.moodText, { color: '#B07F00' }]}>⚡ {buffs.map((b) => b.emoji).join('')}</Text>
-              </View>
-            ) : null}
           </View>
         </View>
 
@@ -557,54 +571,36 @@ export default function PetScene({ onTrinketsEmpty, onDressUp, onShop }: { onTri
           const toy = COSMETIC_BY_ID[p.id];
           return toy ? <PlacedToy key={p.key} toy={toy} x={p.x} fromY={p.fromY} bounce={p.bounce} onMove={moveToy(p.key)} onTap={() => playWith(p.key, true)} /> : null;
         })}
+        {showToys ? (
+          <View style={styles.toyShelf}>
+            {toys.length ? (
+              toys.slice(0, 8).map((t) => (
+                <DraggableToy
+                  key={t.id}
+                  toy={t}
+                  small={toys.length > 6}
+                  onDrop={dropToy(t)}
+                  onGrab={measureAll}
+                  onTap={() => {
+                    setToyHint(true);
+                    setTimeout(() => setToyHint(false), 1800);
+                  }}
+                />
+              ))
+            ) : (
+              <Text style={styles.shelfEmpty}>All your toys are out. Drag them back here to put them away.</Text>
+            )}
+          </View>
+        ) : null}
         <View style={styles.tray}>
-          <Pressable onPress={onDressUp} style={styles.trayBtn} accessibilityRole="button" accessibilityLabel="Dress up">
-            <Text style={styles.trayIcon}>👗</Text>
-            <Text style={styles.trayLabel}>Dress</Text>
-          </Pressable>
-          <View style={styles.toys}>
-            {toys.slice(0, 7).map((t) => (
-              <DraggableToy
-                key={t.id}
-                toy={t}
-                small={toys.length > 5}
-                onDrop={dropToy(t)}
-                onGrab={measureAll}
-                onTap={() => {
-                  setToyHint(true);
-                  setTimeout(() => setToyHint(false), 1800);
-                }}
-              />
-            ))}
-          </View>
-          <Pressable onPress={onShop} style={styles.trayBtn} accessibilityRole="button" accessibilityLabel="Shop">
-            <Text style={styles.trayIcon}>🛍️</Text>
-            <Text style={styles.trayLabel}>Shop</Text>
-          </Pressable>
-        </View>
-      </View>
-
-      <View style={styles.footer}>
-        <View style={styles.xpRow}>
-          <Text style={styles.xpLabel}>{lp.max ? `Lv ${lp.level} · Max level` : `Lv ${lp.level} → ${lp.level + 1}`}</Text>
-          <Text style={styles.xpNum}>{lp.max ? `${pet.xp.toLocaleString()} XP` : `${lp.into.toLocaleString()} / ${lp.need.toLocaleString()} XP`}</Text>
-        </View>
-        <ProgressBar value={lp.into / lp.need} height={12} />
-
-        <View style={styles.careHead}>
-          <Text style={styles.careTitle}>Care for {pet.nickname}</Text>
-          <View style={[styles.boost, mult > 1 && styles.boostOn]}>
-            <Text style={[styles.boostText, mult > 1 && { color: '#9A6A00' }]}>XP boost ×{mult.toFixed(1)}</Text>
-          </View>
-        </View>
-        <View style={styles.careRow}>
-          <CareButton icon="🍙" label="Feed" done={tasks[0].done} onPress={() => { buzz('success'); apply(C.feed); }} />
-          <CareButton icon="🎾" label={tasks[1].done ? 'Play' : `Play ${tasks[1].progress}`} done={tasks[1].done} onPress={doPlay} />
-          <CareButton
+          <TrayButton icon="🍙" label="Feed" done={tasks[0].done} onPress={() => { buzz('success'); apply(C.feed); }} />
+          <TrayButton icon="🎾" label={tasks[1].done ? 'Play' : `Play ${tasks[1].progress}`} done={tasks[1].done} onPress={doPlay} />
+          <TrayButton
             icon="✨"
-            label={trinkets ? `Treat (${trinkets})` : 'Treat'}
+            label="Treat"
+            badge={tasks[2].done ? undefined : trinkets}
             done={tasks[2].done}
-            disabled={!tasks[2].done && trinkets === 0}
+            dim={!tasks[2].done && trinkets === 0}
             onPress={() => {
               if (!trinkets) return onTrinketsEmpty?.();
               buzz('success');
@@ -612,56 +608,74 @@ export default function PetScene({ onTrinketsEmpty, onDressUp, onShop }: { onTri
               apply(C.treat);
             }}
           />
+          <View style={styles.trayDivider} />
+          <TrayButton square icon="🧸" label="Toys" on={showToys} onPress={() => { buzz('light'); setShowToys((v) => !v); }} />
+          <TrayButton square icon="👗" label="Style" onPress={() => onDressUp?.()} />
         </View>
-        <Text style={styles.hint}>
-          {mult >= 1.3 - 1e-9 ? `${pet.nickname} is very well cared for today. Every habit earns 30% more XP!` : trinkets === 0 && !tasks[2].done ? 'Each care task adds +10% XP today. Trinkets for treats come from chests.' : 'Each care task adds +10% XP today. Your pet never loses anything if you skip a day.'}
-        </Text>
       </View>
     </View>
   );
 }
 
-function CareButton({ icon, label, done, disabled, onPress }: { icon: string; label: string; done: boolean; disabled?: boolean; onPress: () => void }) {
+/** One button in the pet's tray: care tasks, toys and style. */
+function TrayButton({ icon, label, done, dim, badge, square, on, onPress }: { icon: string; label: string; done?: boolean; dim?: boolean; badge?: number; square?: boolean; on?: boolean; onPress: () => void }) {
   const press = useRef(new Animated.Value(1)).current;
   return (
     <Pressable
-      onPress={done || disabled ? undefined : onPress}
-      onPressIn={() => Animated.spring(press, { toValue: 0.92, useNativeDriver: true, friction: 6 }).start()}
+      onPress={done ? undefined : onPress}
+      onPressIn={() => Animated.spring(press, { toValue: 0.9, useNativeDriver: true, friction: 6 }).start()}
       onPressOut={() => Animated.spring(press, { toValue: 1, useNativeDriver: true, friction: 4 }).start()}
-      style={{ flex: 1 }}
+      style={square ? { width: 56 } : { flex: 1 }}
       accessibilityRole="button"
-      accessibilityState={{ disabled: done || disabled, checked: done }}
-      accessibilityLabel={label}
+      accessibilityState={{ disabled: done, checked: done, selected: on }}
+      accessibilityLabel={badge !== undefined ? `${label}, ${badge} left` : label}
     >
-      <Animated.View style={[styles.careBtn, done && styles.careDone, disabled && { opacity: 0.45 }, { transform: [{ scale: press }] }]}>
-        <Text style={{ fontSize: 22 }}>{done ? '✅' : icon}</Text>
-        <Text style={[styles.careLabel, done && { color: colors.mintDark }]}>{label}</Text>
+      <Animated.View style={[styles.trayBtn, done && styles.trayDone, on && styles.trayOn, dim && { opacity: 0.5 }, { transform: [{ scale: press }] }]}>
+        <Text style={{ fontSize: 20 }}>{done ? '✅' : icon}</Text>
+        <Text style={[styles.trayLabel, done && { color: colors.mintDark }]} numberOfLines={1}>{label}</Text>
+        {badge ? (
+          <View style={styles.trayBadge}><Text style={styles.trayBadgeText}>{badge}</Text></View>
+        ) : null}
       </Animated.View>
     </Pressable>
   );
 }
 
+
 const styles = StyleSheet.create({
   card: { borderRadius: 26, overflow: 'hidden', backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: colors.line, shadowColor: '#2B4A40', shadowOpacity: 0.12, shadowRadius: 18, shadowOffset: { width: 0, height: 6 }, elevation: 3 },
-  scene: { height: 410 },
-  tray: { position: 'absolute', left: 10, right: 10, bottom: 10, flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: 'rgba(255,255,255,0.82)', borderRadius: 20, padding: 6, zIndex: 10 },
-  trayBtn: { alignItems: 'center', width: 52, paddingVertical: 2 },
+  scene: { height: 450 },
+  tray: { position: 'absolute', left: 10, right: 10, bottom: 10, flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: 'rgba(255,255,255,0.88)', borderRadius: 20, padding: 6, zIndex: 10 },
+  trayDivider: { width: 1, height: 36, backgroundColor: colors.line },
+  trayDone: { borderColor: colors.mint, backgroundColor: colors.mintSoft },
+  trayOn: { borderColor: '#3D8FD6', backgroundColor: '#EAF3FC' },
+  trayBadge: { position: 'absolute', top: -6, right: -4, minWidth: 20, height: 20, paddingHorizontal: 5, borderRadius: 999, backgroundColor: '#9C5FD8', alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: '#FFFFFF' },
+  trayBadgeText: { color: '#FFFFFF', fontSize: 11, fontWeight: '900' },
+  toyShelf: { position: 'absolute', left: 10, right: 10, bottom: 82, flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 6, backgroundColor: 'rgba(255,255,255,0.92)', borderRadius: 18, padding: 6, zIndex: 11 },
+  shelfEmpty: { fontSize: 12, fontWeight: '800', color: colors.muted, padding: 6, textAlign: 'center' },
+  stat: { height: 26, paddingHorizontal: 8, borderRadius: 999, backgroundColor: 'rgba(255,255,255,0.88)', alignItems: 'center', justifyContent: 'center' },
+  statText: { fontSize: 12, fontWeight: '900', color: colors.ink },
+  avatar: { width: 26, height: 26, borderRadius: 13, backgroundColor: colors.mint, borderWidth: 2, borderColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center' },
+  avatarText: { color: '#FFFFFF', fontSize: 12, fontWeight: '900' },
+  xpTrack: { height: 6, maxWidth: 190, borderRadius: 999, backgroundColor: 'rgba(255,255,255,0.75)', overflow: 'hidden' },
+  xpFill: { height: '100%', borderRadius: 999, backgroundColor: colors.mint },
+  trayBtn: { height: 54, borderRadius: 14, borderWidth: 1, borderColor: colors.line, backgroundColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center', gap: 1 },
   trayIcon: { fontSize: 22 },
-  trayLabel: { fontSize: 10, fontWeight: '900', color: colors.ink },
+  trayLabel: { fontSize: 11, fontWeight: '900', color: colors.ink },
   toys: { flex: 1, flexDirection: 'row', justifyContent: 'center', gap: 5 },
   toy: { width: 42, height: 42, borderRadius: 14, backgroundColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: colors.line },
   toyEmoji: { fontSize: 24 },
   placed: { position: 'absolute', width: TOY_SIZE, height: TOY_SIZE, alignItems: 'center', justifyContent: 'center', zIndex: 8 },
   placedEmoji: { fontSize: 34 },
   placedShadow: { position: 'absolute', bottom: -4, width: 30, height: 7, borderRadius: 4, backgroundColor: 'rgba(0,0,0,0.15)' },
-  head: { flexDirection: 'row', gap: space.sm, padding: space.lg, paddingBottom: 0 },
+  head: { gap: 4, paddingTop: 12, paddingRight: 12, paddingLeft: 16 },
   level: { backgroundColor: colors.gold, borderRadius: 10, paddingHorizontal: 8, paddingVertical: 3, borderWidth: 2, borderColor: '#FFFFFF' },
   levelText: { color: '#5A3E00', fontWeight: '900', fontSize: 13 },
   name: { fontSize: 24, fontWeight: '900', padding: 0, flexShrink: 1, minWidth: 60 },
-  sub: { fontSize: 12, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.8, marginTop: 2 },
+  sub: { fontSize: 13, fontWeight: '800', marginTop: 2 },
   mood: { backgroundColor: 'rgba(255,255,255,0.92)', borderRadius: 999, borderWidth: 1.5, paddingHorizontal: 9, paddingVertical: 3 },
   moodText: { fontSize: 12, fontWeight: '900' },
-  stage: { flex: 1, alignItems: 'center', justifyContent: 'flex-end', paddingBottom: 72, paddingTop: 44 },
+  stage: { flex: 1, alignItems: 'center', justifyContent: 'flex-end', paddingBottom: 86, paddingTop: 30 },
   bubbleWrap: { position: 'absolute', top: 6, left: 0, right: 0, alignItems: 'center', zIndex: 3 },
   bubble: { backgroundColor: '#FFFFFF', borderRadius: 16, paddingVertical: 7, paddingHorizontal: 12, maxWidth: 230, shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 6, elevation: 2 },
   bubbleText: { fontSize: 13, fontWeight: '800', color: colors.ink, textAlign: 'center' },
