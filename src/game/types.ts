@@ -42,6 +42,10 @@ export interface OwnedPet {
   xp: number;
   shiny: boolean;
   hatchedOn: string;
+  /** A rare color variant, if this pet has one. */
+  skin?: Skin;
+  /** Game time (ms) until this pet can breed again. */
+  restUntil?: number;
   /** What this pet is wearing (cosmetic ids). */
   look?: { hat?: string; aura?: string };
 }
@@ -53,7 +57,12 @@ export interface Egg {
   stepsWalked: number;
   incubating: boolean;
   foundOn: string;
+  /** Eggs from the Pet Nursery: who the parents were and which pet will hatch. */
+  bred?: { speciesId: string; parents: [string, string]; parentSkins: (Skin | null)[] };
 }
+
+/** Rare color variants of a pet. */
+export type Skin = 'mono' | 'silver' | 'gold' | 'rainbow';
 
 export type ChestKind = 'bronze' | 'silver' | 'gold';
 
@@ -83,7 +92,9 @@ export interface GameState {
   /** Daily login rewards: last day claimed and how many claimed in total. */
   login?: { last: string; count: number };
   /** Lifetime counters for achievements. */
-  stats?: { hatched?: number; chests?: number; expeditions?: number; toys?: number };
+  stats?: { hatched?: number; chests?: number; expeditions?: number; toys?: number; bred?: number };
+  /** Every pet-and-skin combination you've ever owned, keyed "p15:gold". */
+  skinDex?: Record<string, true>;
   /** Achievements whose rewards you've claimed. */
   achievements?: Record<string, true>;
   /** A pet out exploring. */

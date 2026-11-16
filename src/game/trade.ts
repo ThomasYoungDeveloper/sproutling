@@ -1,4 +1,5 @@
-import type { GameState, OwnedPet } from './types';
+import type { GameState, OwnedPet, Skin } from './types';
+import { SKINS, noteSkin } from './skins';
 import { makeId, type Rng, defaultRng } from './random';
 import { SPECIES_BY_ID } from './species';
 
@@ -10,6 +11,7 @@ export interface TradePet {
   xp: number;
   shiny: boolean;
   hatchedOn?: string;
+  skin?: Skin;
 }
 
 export const toTradePet = (p: OwnedPet): TradePet => ({
@@ -19,6 +21,7 @@ export const toTradePet = (p: OwnedPet): TradePet => ({
   xp: Math.max(0, Math.floor(p.xp)),
   shiny: !!p.shiny,
   hatchedOn: p.hatchedOn,
+  ...(p.skin ? { skin: p.skin } : {}),
 });
 
 export type OfferCheck = { ok: true } | { ok: false; reason: string };
@@ -53,12 +56,13 @@ export function applyTrade(s: GameState, tradeId: string, giveId: string, get: T
     xp: Math.max(0, Math.floor(get.xp)),
     shiny: !!get.shiny,
     hatchedOn: get.hatchedOn ?? '',
+    ...(get.skin && SKINS.includes(get.skin) ? { skin: get.skin } : {}),
   };
   const isNew = !s.dex[get.speciesId];
   const pets = [...s.pets.filter((p) => p.id !== giveId), received];
   const activePetId = s.activePetId === giveId || !pets.some((p) => p.id === s.activePetId) ? received.id : s.activePetId;
   return {
-    state: { ...s, pets, activePetId, dex: { ...s.dex, [get.speciesId]: true }, appliedTrades: { ...s.appliedTrades, [tradeId]: true } },
+    state: noteSkin({ ...s, pets, activePetId, dex: { ...s.dex, [get.speciesId]: true }, appliedTrades: { ...s.appliedTrades, [tradeId]: true } }, received),
     received,
     isNew,
   };

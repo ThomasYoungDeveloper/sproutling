@@ -1,4 +1,4 @@
-import type { Element, GameState, Rarity } from './types';
+import type { Element, GameState, Rarity, Skin } from './types';
 import { levelFor } from './scoring';
 import { SPECIES, SPECIES_BY_ID } from './species';
 import { careMultiplier } from './care';
@@ -30,6 +30,7 @@ export const SPECIAL_COST = 2;
 export interface Fighter {
   key: string;
   hat?: string;
+  skin?: Skin;
   speciesId: string;
   nickname: string;
   shiny: boolean;
@@ -46,6 +47,7 @@ export interface Fighter {
 export interface PetLike {
   id?: string;
   hat?: string;
+  skin?: Skin;
   look?: { hat?: string };
   speciesId: string;
   nickname: string;
@@ -61,6 +63,7 @@ export function makeFighter(p: PetLike, key: string, power = 1): Fighter {
   return {
     key,
     hat: p.hat ?? p.look?.hat,
+    skin: p.skin,
     speciesId: p.speciesId,
     nickname: p.nickname || sp.name,
     shiny: p.shiny,

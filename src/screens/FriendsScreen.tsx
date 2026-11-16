@@ -228,7 +228,7 @@ function Avatar({ t }: { t: Trainer }) {
   const sp = p ? SPECIES_BY_ID[p.speciesId] : undefined;
   return (
     <View style={styles.avatar}>
-      {sp && p ? <PetSprite species={sp} stage={stageFor(p.xp)} size={48} shiny={p.shiny} /> : <Text style={{ fontSize: 24 }}>🥚</Text>}
+      {sp && p ? <PetSprite species={sp} stage={stageFor(p.xp)} size={48} shiny={p.shiny} skin={p.skin} /> : <Text style={{ fontSize: 24 }}>🥚</Text>}
       {sp && p ? <View style={styles.lv}><Text style={styles.lvText}>{levelFor(p.xp)}</Text></View> : null}
     </View>
   );

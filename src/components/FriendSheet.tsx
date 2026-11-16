@@ -32,7 +32,7 @@ export default function FriendSheet({ friend, onClose }: { friend: Friend; onClo
             {activeSpecies ? <Backdrop element={activeSpecies.element} sky="day" scene={card?.scene} /> : null}
             {activeSpecies && active ? (
               <PopIn>
-                <PetSprite species={activeSpecies} stage={stageFor(active.xp)} size={150} shiny={active.shiny} hat={active.hat} aura={active.aura} />
+                <PetSprite species={activeSpecies} stage={stageFor(active.xp)} size={150} shiny={active.shiny} skin={active.skin} hat={active.hat} aura={active.aura} />
               </PopIn>
             ) : (
               <Text style={{ fontSize: 64 }}>🥚</Text>
@@ -64,7 +64,7 @@ export default function FriendSheet({ friend, onClose }: { friend: Friend; onClo
                   if (!sp) return null;
                   return (
                     <View key={i} style={styles.tile}>
-                      <PetSprite species={sp} stage={stageFor(p.xp)} size={64} shiny={p.shiny} hat={p.hat} />
+                      <PetSprite species={sp} stage={stageFor(p.xp)} size={64} shiny={p.shiny} skin={p.skin} hat={p.hat} />
                       <View style={styles.lv}><Text style={styles.lvText}>Lv {levelFor(p.xp)}</Text></View>
                       <Text style={styles.name} numberOfLines={1}>{p.nickname}</Text>
                       <RarityBadge rarity={sp.rarity} />

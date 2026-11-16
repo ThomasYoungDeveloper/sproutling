@@ -8,8 +8,10 @@ import { SPECIES, SPECIES_BY_ID } from '../game/species';
 import { RARITIES, RARITY_INFO } from '../game/rarity';
 import { levelFor, stageFor } from '../game/scoring';
 import * as Ach from '../game/achievements';
+import { SKINS, SKIN_INFO, skinDexCount, skinKey } from '../game/skins';
 import { useOverlay } from '../components/Overlay';
 import AchievementsSheet from '../components/AchievementsSheet';
+import NurseryCard from '../components/NurseryCard';
 import * as A from '../game/actions';
 
 function BadgeBanner() {
@@ -50,6 +52,7 @@ export default function DexScreen() {
   return (
     <View style={{ gap: space.md }}>
       <BadgeBanner />
+      <NurseryCard />
       <Card>
         <SectionHead title="Your team" meta={`${state.pets.length} pets`} />
         <View style={styles.grid}>
@@ -58,8 +61,9 @@ export default function DexScreen() {
             const active = p.id === state.activePetId;
             return (
               <Pressable key={p.id} onPress={() => apply((s) => A.setActivePet(s, p.id))} style={[styles.tile, active && styles.active]} accessibilityLabel={`Make ${p.nickname} active`}>
-                <PetSprite species={sp} stage={stageFor(p.xp)} size={86} shiny={p.shiny} hat={p.look?.hat} />
+                <PetSprite species={sp} stage={stageFor(p.xp)} size={86} shiny={p.shiny} skin={p.skin} hat={p.look?.hat} />
                 <View style={styles.lv}><Text style={styles.lvText}>Lv {levelFor(p.xp)}</Text></View>
+                {p.skin ? <Text style={[styles.skinBadge, { color: SKIN_INFO[p.skin].color }]}>{SKIN_INFO[p.skin].emoji}</Text> : null}
                 <Text style={styles.name} numberOfLines={1}>{p.nickname}</Text>
                 {active ? <Chip label="Active" /> : <RarityBadge rarity={sp.rarity} />}
               </Pressable>
@@ -71,6 +75,15 @@ export default function DexScreen() {
 
       <Card>
         <SectionHead title="Pet-dex" meta={`${found} of ${SPECIES.length} found`} />
+        <View style={styles.skinRow}>
+          {SKINS.map((k) => (
+            <View key={k} style={styles.skinLegend}>
+              <View style={[styles.skinDot, { backgroundColor: SKIN_INFO[k].color }]} />
+              <Text style={font.tiny}>{SKIN_INFO[k].label}</Text>
+            </View>
+          ))}
+          <Text style={[font.tiny, { fontWeight: '900' }]}>Skins: {skinDexCount(state)} / {SPECIES.length * SKINS.length}</Text>
+        </View>
         {RARITIES.map((r) => (
           <View key={r} style={{ gap: 6 }}>
             <Text style={[styles.tier, { color: RARITY_INFO[r].color }]}>{RARITY_INFO[r].label}</Text>
@@ -81,6 +94,13 @@ export default function DexScreen() {
                   <View key={s.id} style={styles.tile}>
                     <PetSprite species={s} stage="adult" size={76} silhouette={!seen} />
                     <Text style={styles.name} numberOfLines={1}>{seen ? s.name : '???'}</Text>
+                    {seen ? (
+                      <View style={{ flexDirection: 'row', gap: 4 }} accessibilityLabel={`${SKINS.filter((k) => state.skinDex?.[skinKey(s.id, k)]).length} of 4 skins`}>
+                        {SKINS.map((k) => (
+                          <View key={k} style={[styles.skinDot, state.skinDex?.[skinKey(s.id, k)] ? { backgroundColor: SKIN_INFO[k].color } : styles.skinEmpty]} />
+                        ))}
+                      </View>
+                    ) : null}
                   </View>
                 );
               })}
@@ -98,6 +118,11 @@ const styles = StyleSheet.create({
   active: { borderColor: colors.mint, backgroundColor: colors.mintSoft },
   name: { fontWeight: '800', fontSize: 13, color: colors.ink },
   lv: { position: 'absolute', top: 6, left: 6, backgroundColor: colors.ink, borderRadius: 8, paddingHorizontal: 6, paddingVertical: 2 },
+  skinBadge: { position: 'absolute', top: 4, right: 8, fontSize: 16 },
   lvText: { color: '#fff', fontWeight: '900', fontSize: 11 },
+  skinRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, alignItems: 'center' },
+  skinLegend: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  skinDot: { width: 9, height: 9, borderRadius: 5 },
+  skinEmpty: { borderWidth: 1.5, borderColor: '#C9D3D0' },
   tier: { fontSize: 12, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.8, marginTop: space.sm },
 });

@@ -3,6 +3,7 @@ import { dateKey } from './dates';
 import { emptyDay, scoreDay, dailyQuests, streakFrom, COINS_PER_XP } from './scoring';
 import { boostedTotal } from './care';
 import { grantCosmetic, rollChestCosmetic } from './cosmetics';
+import { BRED_SKIN_BOOST, rollSkin, skinKey } from './skins';
 import { openChest, type ChestResult } from './loot';
 import { speciesOfRarity, SPECIES, SPECIES_BY_ID } from './species';
 import { SHINY_CHANCE, stepsToHatch } from './rarity';
@@ -109,7 +110,9 @@ export interface Hatched {
 export function hatch(s: GameState, eggId: string, rng: Rng = defaultRng): Hatched | null {
   const egg = s.eggs.find((e) => e.id === eggId);
   if (!egg || !isReady(egg)) return null;
-  const species = pickOne(speciesOfRarity(egg.rarity), rng);
+  // Nursery eggs already know which pet is inside; wild eggs pick one of their rarity.
+  const species = (egg.bred && SPECIES_BY_ID[egg.bred.speciesId]) || pickOne(speciesOfRarity(egg.rarity), rng);
+  const skin = rollSkin(rng, egg.bred ? BRED_SKIN_BOOST : 1, egg.bred?.parentSkins ?? []);
   const pet: OwnedPet = {
     id: makeId(rng),
     speciesId: species.id,
@@ -117,6 +120,7 @@ export function hatch(s: GameState, eggId: string, rng: Rng = defaultRng): Hatch
     xp: 0,
     shiny: rng() < SHINY_CHANCE,
     hatchedOn: todayKey(s),
+    ...(skin ? { skin } : {}),
   };
   const isNew = !s.dex[species.id];
   return {
@@ -129,6 +133,7 @@ export function hatch(s: GameState, eggId: string, rng: Rng = defaultRng): Hatch
       dex: { ...s.dex, [species.id]: true },
       activePetId: s.activePetId ?? pet.id,
       stats: { ...s.stats, hatched: (s.stats?.hatched ?? 0) + 1 },
+      ...(skin ? { skinDex: { ...s.skinDex, [skinKey(species.id, skin)]: true as const } } : {}),
     },
   };
 }

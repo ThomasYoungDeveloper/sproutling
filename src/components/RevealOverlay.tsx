@@ -7,7 +7,9 @@ import { CHESTS } from '../game/loot';
 import { RARITY_INFO } from '../game/rarity';
 import { SPECIES_BY_ID } from '../game/species';
 import { levelFor } from '../game/scoring';
+import type { Skin } from '../game/types';
 import { COSMETIC_BY_ID } from '../game/cosmetics';
+import { SKIN_INFO } from '../game/skins';
 import { ItemIcon } from './Cosmetics';
 import EggSprite from './EggSprite';
 import PetSprite from './PetSprite';
@@ -18,7 +20,7 @@ export type Reveal =
   | { kind: 'egg'; rarity: Rarity; pet: OwnedPet; isNew: boolean; title?: string; eggColor?: string; eggSpots?: string[]; onMakeActive?: () => void }
   | { kind: 'chest'; chest: ChestKind; result: ChestResult }
   | { kind: 'grow'; pet: OwnedPet; stage: Stage }
-  | { kind: 'trade'; gave: { speciesId: string; nickname: string; shiny: boolean } | null; got: OwnedPet; isNew: boolean; friend: string };
+  | { kind: 'trade'; gave: { speciesId: string; nickname: string; shiny: boolean; skin?: Skin } | null; got: OwnedPet; isNew: boolean; friend: string };
 
 const Ctx = createContext<(r: Reveal) => void>(() => {});
 export const useReveal = () => useContext(Ctx);
@@ -58,7 +60,7 @@ function EggReveal({ r, onClose }: { r: Extract<Reveal, { kind: 'egg' }>; onClos
   const idle = useIdleWobble();
   const sp = SPECIES_BY_ID[r.pet.speciesId];
   const info = RARITY_INFO[sp.rarity];
-  const big = BIG.includes(sp.rarity);
+  const big = BIG.includes(sp.rarity) || r.pet.skin === 'gold' || r.pet.skin === 'rainbow';
 
   const tap = () => {
     if (phase !== 'tap') return;
@@ -94,13 +96,20 @@ function EggReveal({ r, onClose }: { r: Extract<Reveal, { kind: 'egg' }>; onClos
           <Rays color={big ? '#FFD84D' : info.color} size={big ? 420 : 340} />
           <Confetti amount={big ? 110 : 50} width={width} height={height} />
           <PopIn from={0.1}>
-            <PetSprite species={sp} stage="baby" size={220} shiny={r.pet.shiny} mood="joy" />
+            <PetSprite species={sp} stage="baby" size={220} shiny={r.pet.shiny} skin={r.pet.skin} mood="joy" />
           </PopIn>
           <PopIn delay={250}>
             <View style={[styles.banner, { backgroundColor: info.color }]}>
               <Text style={styles.bannerText}>{sp.rarity === 'legendary' ? 'LEGENDARY!' : sp.rarity === 'epic' ? 'EPIC!' : info.label.toUpperCase()}</Text>
             </View>
           </PopIn>
+          {r.pet.skin ? (
+            <PopIn delay={330}>
+              <View style={[styles.skinTag, { borderColor: SKIN_INFO[r.pet.skin].color }]}>
+                <Text style={[styles.skinText, { color: SKIN_INFO[r.pet.skin].color }]}>{SKIN_INFO[r.pet.skin].emoji} {SKIN_INFO[r.pet.skin].label.toUpperCase()} SKIN!</Text>
+              </View>
+            </PopIn>
+          ) : null}
           <PopIn delay={400}>
             <Text style={styles.name}>{sp.name}{r.pet.shiny ? ' ✦ Shiny!' : ''}</Text>
           </PopIn>
@@ -151,7 +160,7 @@ function TradeReveal({ r, onClose }: { r: Extract<Reveal, { kind: 'trade' }>; on
           <Text style={styles.kicker}>Trading with {r.friend}…</Text>
           {gave && r.gave ? (
             <Animated.View style={{ opacity: out.interpolate({ inputRange: [0, 1], outputRange: [1, 0] }), transform: [{ translateX: out.interpolate({ inputRange: [0, 1], outputRange: [0, 260] }) }, { rotate: out.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '25deg'] }) }] }}>
-              <PetSprite species={gave} stage="adult" size={180} shiny={r.gave.shiny} />
+              <PetSprite species={gave} stage="adult" size={180} shiny={r.gave.shiny} skin={r.gave.skin} />
             </Animated.View>
           ) : (
             <Text style={{ fontSize: 80 }}>⇄</Text>
@@ -164,7 +173,7 @@ function TradeReveal({ r, onClose }: { r: Extract<Reveal, { kind: 'trade' }>; on
           <Confetti amount={70} width={width} height={height} />
           <Text style={styles.kicker}>Trade complete!</Text>
           <PopIn from={0.1}>
-            <PetSprite species={got} stage="adult" size={210} shiny={r.got.shiny} mood="joy" />
+            <PetSprite species={got} stage="adult" size={210} shiny={r.got.shiny} skin={r.got.skin} mood="joy" />
           </PopIn>
           <PopIn delay={200}>
             <View style={[styles.banner, { backgroundColor: info.color }]}>
@@ -309,7 +318,7 @@ function GrowReveal({ r, onClose }: { r: Extract<Reveal, { kind: 'grow' }>; onCl
         <Confetti amount={70} width={width} height={height} />
         <Text style={styles.kicker}>Level up!</Text>
         <PopIn from={0.4}>
-          <PetSprite species={sp} stage={r.stage} size={230} shiny={r.pet.shiny} mood="joy" />
+          <PetSprite species={sp} stage={r.stage} size={230} shiny={r.pet.shiny} skin={r.pet.skin} mood="joy" />
         </PopIn>
         <PopIn delay={300}>
           <Text style={styles.name}>{r.pet.nickname} grew into a {STAGE_LABEL[r.stage]}!</Text>
@@ -337,6 +346,8 @@ const styles = StyleSheet.create({
   newTag: { backgroundColor: '#FF9E7A', borderRadius: 999, paddingHorizontal: 12, paddingVertical: 5 },
   newText: { color: '#FFFFFF', fontWeight: '900', fontSize: 13 },
   row: { flexDirection: 'row', gap: 10, marginTop: 4 },
+  skinTag: { backgroundColor: '#FFFFFF', borderRadius: 999, borderWidth: 3, paddingHorizontal: 16, paddingVertical: 6, marginTop: 6 },
+  skinText: { fontWeight: '900', fontSize: 16, letterSpacing: 1 },
   lootRow: { flexDirection: 'row', gap: 10, flexWrap: 'wrap', justifyContent: 'center' },
   lootCard: { width: 104, minHeight: 116, borderRadius: 18, backgroundColor: '#FFFFFF', borderWidth: 3, borderColor: '#FFD25E', alignItems: 'center', justifyContent: 'center', padding: 8, gap: 2 },
   coin: { width: 34, height: 34, borderRadius: 17, backgroundColor: '#FFC94D', borderWidth: 4, borderColor: '#E9A92A' },

@@ -387,7 +387,7 @@ export default function PetScene({ onTrinketsEmpty, onDressUp, onShop }: { onTri
           ))}
           <Pressable onPress={doPlay} accessibilityRole="button" accessibilityLabel={`Play with ${pet.nickname}`}>
             <Animated.View ref={petBox as any} style={{ transform: petTransform }}>
-              <PetSprite species={sp} stage={stage} size={200} shiny={pet.shiny} mood={mood === 'sleepy' ? 'sleepy' : mood === 'joy' ? 'joy' : 'happy'} hat={pet.look?.hat} aura={pet.look?.aura} />
+              <PetSprite species={sp} stage={stage} size={200} shiny={pet.shiny} skin={pet.skin} mood={mood === 'sleepy' ? 'sleepy' : mood === 'joy' ? 'joy' : 'happy'} hat={pet.look?.hat} aura={pet.look?.aura} />
             </Animated.View>
           </Pressable>
           {levelUp ? (

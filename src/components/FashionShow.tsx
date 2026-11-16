@@ -12,12 +12,14 @@ import { colors, font, space } from '../theme';
 import { SPECIES_BY_ID } from '../game/species';
 import { stageFor } from '../game/scoring';
 import * as A from '../game/actions';
+import type { Skin } from '../game/types';
 
 interface ShowPet {
   speciesId: string;
   nickname: string;
   xp: number;
   shiny: boolean;
+  skin?: Skin;
   hat?: string;
   aura?: string;
   scene?: string;
@@ -70,7 +72,7 @@ function Stage({ pet, size = 120 }: { pet: ShowPet; size?: number }) {
       <View style={StyleSheet.absoluteFill}>
         <SceneSwatch id={pet.scene ?? 'meadow'} size={size * 1.6} />
       </View>
-      <PetSprite species={sp} stage={stageFor(pet.xp)} size={size * 0.85} shiny={pet.shiny} hat={pet.hat} aura={pet.aura} />
+      <PetSprite species={sp} stage={stageFor(pet.xp)} size={size * 0.85} shiny={pet.shiny} skin={pet.skin} hat={pet.hat} aura={pet.aura} />
     </View>
   );
 }
@@ -98,7 +100,7 @@ export default function FashionShow() {
   const theme = themeFor(board.week);
   const mine = board.entries.find((e) => e.mine);
   const pet = A.activePet(state);
-  const myPet: ShowPet | null = pet ? { speciesId: pet.speciesId, nickname: pet.nickname, xp: pet.xp, shiny: pet.shiny, ...(pet.look?.hat ? { hat: pet.look.hat } : {}), ...(pet.look?.aura ? { aura: pet.look.aura } : {}), ...(state.scene ? { scene: state.scene } : {}) } : null;
+  const myPet: ShowPet | null = pet ? { speciesId: pet.speciesId, nickname: pet.nickname, xp: pet.xp, shiny: pet.shiny, ...(pet.skin ? { skin: pet.skin } : {}), ...(pet.look?.hat ? { hat: pet.look.hat } : {}), ...(pet.look?.aura ? { aura: pet.look.aura } : {}), ...(state.scene ? { scene: state.scene } : {}) } : null;
 
   const enter = async () => {
     if (!myPet) return;

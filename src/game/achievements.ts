@@ -2,6 +2,7 @@ import type { ChestKind, GameState } from './types';
 import { SPECIES, SPECIES_BY_ID } from './species';
 import { levelFor } from './scoring';
 import { grantCosmetic } from './cosmetics';
+import { ownsSkin, skinDexCount } from './skins';
 import { totalSteps } from './expedition';
 import * as A from './actions';
 
@@ -18,7 +19,7 @@ export interface Achievement {
   name: string;
   emoji: string;
   desc: string;
-  group: 'Walking' | 'Collecting' | 'Growing' | 'Habits' | 'Adventure' | 'Style';
+  group: 'Walking' | 'Collecting' | 'Skins & Nursery' | 'Growing' | 'Habits' | 'Adventure' | 'Style';
   goal: number;
   value: (s: GameState) => number;
   reward: Reward;
@@ -43,6 +44,13 @@ export const ACHIEVEMENTS: Achievement[] = [
   { id: 'hatch5', name: 'Egg Whisperer', emoji: '🥚', desc: 'Hatch 5 eggs', group: 'Collecting', goal: 5, value: (s) => s.stats?.hatched ?? 0, reward: { coins: 60 } },
   { id: 'shiny', name: 'Ooh, Shiny!', emoji: '✨', desc: 'Own a shiny pet', group: 'Collecting', goal: 1, value: (s) => (s.pets.some((p) => p.shiny) ? 1 : 0), reward: { chest: 'silver' } },
   { id: 'legend', name: 'Living Legend', emoji: '🐉', desc: 'Own a Legendary pet', group: 'Collecting', goal: 1, value: (s) => (s.pets.some((p) => SPECIES_BY_ID[p.speciesId]?.rarity === 'legendary') ? 1 : 0), reward: { chest: 'gold' } },
+
+  { id: 'skin1', name: 'Something Special', emoji: '🎨', desc: 'Get a pet with a skin', group: 'Skins & Nursery', goal: 1, value: (s) => Math.min(1, skinDexCount(s)), reward: { chest: 'silver' } },
+  { id: 'skins10', name: 'Color Collector', emoji: '🖍️', desc: 'Collect 10 different pet skins', group: 'Skins & Nursery', goal: 10, value: skinDexCount, reward: { chest: 'gold' } },
+  { id: 'goldskin', name: 'Solid Gold', emoji: '🥇', desc: 'Get a Gold skin', group: 'Skins & Nursery', goal: 1, value: (s) => (ownsSkin(s, 'gold') ? 1 : 0), reward: { chest: 'gold', coins: 100 } },
+  { id: 'rainbow', name: 'Over the Rainbow', emoji: '🌈', desc: 'Get a Rainbow skin', group: 'Skins & Nursery', goal: 1, value: (s) => (ownsSkin(s, 'rainbow') ? 1 : 0), reward: { chest: 'gold', coins: 250 } },
+  { id: 'breed1', name: 'Proud Parent', emoji: '💞', desc: 'Make an egg in the Pet Nursery', group: 'Skins & Nursery', goal: 1, value: (s) => s.stats?.bred ?? 0, reward: { coins: 50 } },
+  { id: 'breed10', name: 'Nursery Pro', emoji: '🍼', desc: 'Make 10 eggs in the Pet Nursery', group: 'Skins & Nursery', goal: 10, value: (s) => s.stats?.bred ?? 0, reward: { chest: 'silver' } },
 
   { id: 'lv7', name: 'All Grown Up', emoji: '🌳', desc: 'Raise a pet to level 7 (adult)', group: 'Growing', goal: 7, value: maxLevel, reward: { chest: 'bronze', coins: 40 } },
   { id: 'lv15', name: 'Pet Pro', emoji: '💪', desc: 'Raise a pet to level 15', group: 'Growing', goal: 15, value: maxLevel, reward: { chest: 'silver' } },

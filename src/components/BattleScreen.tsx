@@ -286,7 +286,7 @@ function FighterSprite({ f, side, lunge, hit, faint, style }: { f: B.Fighter; si
       ]}
     >
       <PopIn key={f.key}>
-        <PetSprite species={sp} stage={stageFor(f.xp)} size={side === 'me' ? 150 : 128} shiny={f.shiny} hat={f.hat} />
+        <PetSprite species={sp} stage={stageFor(f.xp)} size={side === 'me' ? 150 : 128} shiny={f.shiny} skin={f.skin} hat={f.hat} />
       </PopIn>
     </Animated.View>
   );

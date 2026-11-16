@@ -129,7 +129,7 @@ function MiniPet({ p, label }: { p: TradePet | null; label: string }) {
   const sp = p ? SPECIES_BY_ID[p.speciesId] : null;
   return (
     <View style={styles.mini}>
-      <View style={styles.miniArt}>{sp && p ? <PetSprite species={sp} stage={stageFor(p.xp)} size={60} shiny={p.shiny} /> : <Text style={{ fontSize: 28 }}>❔</Text>}</View>
+      <View style={styles.miniArt}>{sp && p ? <PetSprite species={sp} stage={stageFor(p.xp)} size={60} shiny={p.shiny} skin={p.skin} /> : <Text style={{ fontSize: 28 }}>❔</Text>}</View>
       <Text style={styles.miniName} numberOfLines={1}>{p ? p.nickname : '???'}</Text>
       <Text style={styles.miniSub} numberOfLines={1}>{p && sp ? `Lv ${levelFor(p.xp)} · ${sp.rarity[0].toUpperCase() + sp.rarity.slice(1)}` : label}</Text>
     </View>

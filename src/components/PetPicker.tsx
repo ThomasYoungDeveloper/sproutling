@@ -64,7 +64,7 @@ export default function PetPicker({
             const order = picked.indexOf(p.pet.id);
             return (
               <Pressable key={p.pet.id} onPress={() => toggle(p)} style={[styles.tile, on && styles.on, !!p.disabled && styles.off]} accessibilityRole="checkbox" accessibilityState={{ checked: on, disabled: !!p.disabled }} accessibilityLabel={`${p.pet.nickname}, level ${levelFor(p.pet.xp)}`}>
-                <PetSprite species={sp} stage={stageFor(p.pet.xp)} size={70} shiny={p.pet.shiny} />
+                <PetSprite species={sp} stage={stageFor(p.pet.xp)} size={70} shiny={p.pet.shiny} skin={p.pet.skin} />
                 <View style={styles.lv}><Text style={styles.lvText}>Lv {levelFor(p.pet.xp)}</Text></View>
                 {on && max > 1 ? <View style={styles.num}><Text style={styles.numText}>{order + 1}</Text></View> : null}
                 {on && max === 1 ? <View style={styles.num}><Text style={styles.numText}>✓</Text></View> : null}

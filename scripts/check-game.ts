@@ -11,6 +11,8 @@ import * as Cos from '../src/game/cosmetics';
 import * as Team from '../src/game/team';
 import * as Ex from '../src/game/expedition';
 import * as Ach from '../src/game/achievements';
+import * as Sk from '../src/game/skins';
+import * as Br from '../src/game/breeding';
 import { levelFor, levelProgress, stageFor } from '../src/game/scoring';
 import type { ChestKind, GameState } from '../src/game/types';
 
@@ -195,4 +197,32 @@ const Hch = Ach.claim(H, 'steps10k')!; ok(Hch.coins === H.coins + 30, 'step badg
 const fullDex = { ...H, dex: Object.fromEntries(SPECIES.map((x) => [x.id, true])) } as GameState;
 const Hd = Ach.claim(fullDex, 'dexall')!; ok(!!Hd && Cos.owns(Hd, 'trophy') && Hd.chests.length === fullDex.chests.length + 1, 'completing the Pet-dex gives the Champion Laurel');
 ok(Ach.ACHIEVEMENTS.length >= 25 && new Set(Ach.ACHIEVEMENTS.map((a) => a.id)).size === Ach.ACHIEVEMENTS.length, 'badge ids are unique');
+// Skins
+let n0 = 0; const counts: Record<string, number> = {}; let sd = 99; const srng = () => ((sd = (sd * 16807) % 2147483647) / 2147483647);
+for (let i = 0; i < 100000; i++) { const k = Sk.rollSkin(srng) ?? 'none'; counts[k] = (counts[k] ?? 0) + 1; }
+ok(Math.abs(counts.mono / 1000 - 5) < 0.6 && Math.abs(counts.silver / 1000 - 3) < 0.5 && Math.abs(counts.gold / 1000 - 1.5) < 0.4 && Math.abs(counts.rainbow / 1000 - 0.5) < 0.25, `skin odds ~5/3/1.5/0.5% (${counts.mono / 1000}/${counts.silver / 1000}/${counts.gold / 1000}/${counts.rainbow / 1000})`);
+let bredSkins = 0; for (let i = 0; i < 20000; i++) if (Sk.rollSkin(srng, Sk.BRED_SKIN_BOOST)) bredSkins++;
+ok(Math.abs(bredSkins / 200 - 30) < 2, `nursery eggs ~30% skins (${bredSkins / 200}%)`);
+let inherited = 0; for (let i = 0; i < 20000; i++) if (Sk.rollSkin(srng, 1, ['gold', null]) === 'gold') inherited++;
+ok(inherited / 200 > 24 && inherited / 200 < 29, `a gold parent passes gold ~26% of the time (${inherited / 200}%)`);
+ok(Sk.noteSkin(t, { speciesId: 'p02', skin: 'gold' }).skinDex!['p02:gold'] === true, 'skins are recorded in the Skin-dex');
+// Breeding
+const NOW = 2_000_000_000_000;
+let Bd = { ...t, coins: 500, expedition: undefined, eggs: [], pets: [
+  { id: 'mom', speciesId: 'p15', nickname: 'Foxy', xp: 1100, shiny: false, hatchedOn: '', skin: 'gold' as const },
+  { id: 'dad', speciesId: 'p02', nickname: 'Flushy', xp: 1100, shiny: false, hatchedOn: '' },
+  { id: 'kid', speciesId: 'p82', nickname: 'Omu', xp: 100, shiny: false, hatchedOn: '' } ], activePetId: 'mom' } as GameState;
+ok(!Br.canBreed(Bd, 'mom', 'kid', NOW).ok, 'only adults (level 7+) can breed');
+ok(!Br.canBreed(Bd, 'mom', 'mom', NOW).ok, 'a pet cannot breed with itself');
+ok(!Br.canBreed({ ...Bd, coins: 50 }, 'mom', 'dad', NOW).ok, 'breeding costs 100 coins');
+const br = Br.breed(Bd, 'mom', 'dad', () => 0.7, NOW)!;
+ok(br.state.coins === 400 && br.state.eggs.length === 1 && br.egg.bred!.parentSkins[0] === 'gold', 'breeding makes an egg that remembers the parents');
+ok(['p15', 'p02'].includes(br.egg.bred!.speciesId) && br.egg.rarity === SPECIES.find((x) => x.id === br.egg.bred!.speciesId)!.rarity, 'baby is a parent species with matching egg rarity');
+ok(!Br.canBreed(br.state, 'mom', 'dad', NOW + 3_600_000).ok && Br.canBreed({ ...br.state, coins: 500 }, 'mom', 'dad', NOW + 25 * 3_600_000).ok, 'parents rest for 24 hours');
+const sur = Br.breed(Bd, 'mom', 'dad', () => 0.01, NOW)!; ok(sur.surprise && !['p15', 'p02'].includes(sur.egg.bred!.speciesId), 'surprise babies can happen');
+const surEl = SPECIES.find((x) => x.id === sur.egg.bred!.speciesId)!.element; ok(['moon', 'tide', SPECIES.find((x) => x.id === 'p02')!.element, SPECIES.find((x) => x.id === 'p15')!.element].includes(surEl), 'surprise shares a parent element');
+let HB = { ...br.state, eggs: br.state.eggs.map((e) => ({ ...e, incubating: true, stepsWalked: 1e9 })) } as GameState;
+const hb = A.hatch(HB, HB.eggs[0].id, () => 0.001)!;
+ok(hb.pet.speciesId === br.egg.bred!.speciesId, 'the nursery egg hatches the promised species');
+ok(hb.pet.skin === "gold" && !!hb.state.skinDex?.[`${hb.pet.speciesId}:gold`], 'lucky babies inherit a parent skin and fill the Skin-dex');
 console.log(fails ? `${fails} FAILED` : 'ALL PASSED'); process.exit(fails ? 1 : 0);

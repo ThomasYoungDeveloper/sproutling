@@ -27,9 +27,12 @@ export default function EggsScreen() {
           const ready = A.isReady(e);
           return (
             <View key={e.id} style={styles.eggRow}>
-              <EggSprite rarity={e.rarity} size={70} cracked={ready} />
+              <EggSprite rarity={e.rarity} size={70} cracked={ready} spots={e.bred ? ['#FF8FB1', '#FFD6E5', '#FF8FB1', '#B18CFF'] : undefined} />
               <View style={{ flex: 1, gap: 4 }}>
-                <RarityBadge rarity={e.rarity} />
+                <View style={{ flexDirection: 'row', gap: 6, alignItems: 'center' }}>
+                  <RarityBadge rarity={e.rarity} />
+                  {e.bred ? <Text style={styles.nursery}>💞 Nursery egg</Text> : null}
+                </View>
                 <Text style={font.small}>
                   {ready ? 'Ready to hatch!' : `${(Math.min(e.stepsWalked, need) / STEPS_PER_KM).toFixed(1)} of ${RARITY_INFO[e.rarity].eggKm} km walked`}
                 </Text>
@@ -44,7 +47,7 @@ export default function EggsScreen() {
                     if (!r) return;
                     apply(() => r.state);
                     const petId = r.pet.id;
-                    reveal({ kind: 'egg', rarity: e.rarity, pet: r.pet, isNew: r.isNew, onMakeActive: r.state.activePetId === petId ? undefined : () => apply((s) => A.setActivePet(s, petId)) });
+                    reveal({ kind: 'egg', rarity: e.rarity, pet: r.pet, isNew: r.isNew, ...(e.bred ? { eggSpots: ['#FF8FB1', '#FFD6E5', '#FF8FB1', '#B18CFF'], title: 'Your nursery egg is hatching!' } : {}), onMakeActive: r.state.activePetId === petId ? undefined : () => apply((s) => A.setActivePet(s, petId)) });
                   }}
                 />
               ) : null}
@@ -60,8 +63,9 @@ export default function EggsScreen() {
         <View style={styles.grid}>
           {waiting.map((e) => (
             <View key={e.id} style={styles.eggCard}>
-              <EggSprite rarity={e.rarity} size={64} />
+              <EggSprite rarity={e.rarity} size={64} spots={e.bred ? ['#FF8FB1', '#FFD6E5', '#FF8FB1', '#B18CFF'] : undefined} />
               <RarityBadge rarity={e.rarity} />
+              {e.bred ? <Text style={styles.nursery}>💞 Nursery</Text> : null}
               <Text style={font.tiny}>{RARITY_INFO[e.rarity].eggKm} km to hatch</Text>
               <Button small label="Incubate" primary={free > 0} disabled={free <= 0} onPress={() => apply((s) => A.incubate(s, e.id))} />
             </View>
@@ -73,6 +77,7 @@ export default function EggsScreen() {
 }
 
 const styles = StyleSheet.create({
+  nursery: { fontWeight: '900', fontSize: 11, color: '#C2185B' },
   eggRow: { flexDirection: 'row', alignItems: 'center', gap: space.md, borderTopWidth: 1, borderTopColor: colors.line, paddingTop: space.sm },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   eggCard: { width: '31%', minWidth: 100, flexGrow: 1, alignItems: 'center', gap: 4, borderWidth: 1, borderColor: colors.line, borderRadius: 16, padding: space.sm, backgroundColor: '#FAFCFB' },

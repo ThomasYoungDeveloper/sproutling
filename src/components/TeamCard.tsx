@@ -21,7 +21,7 @@ function MemberRow({ m, top }: { m: TeamMember; top: number }) {
   return (
     <View style={styles.member}>
       <View style={styles.avatar}>
-        {sp && p ? <PetSprite species={sp} stage={stageFor(p.xp)} size={40} shiny={p.shiny} hat={p.hat} /> : <Text style={{ fontSize: 20 }}>🥚</Text>}
+        {sp && p ? <PetSprite species={sp} stage={stageFor(p.xp)} size={40} shiny={p.shiny} skin={p.skin} hat={p.hat} /> : <Text style={{ fontSize: 20 }}>🥚</Text>}
       </View>
       <View style={{ flex: 1, gap: 3 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>

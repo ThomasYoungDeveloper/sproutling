@@ -165,7 +165,7 @@ export function WardrobeSheet({ onClose, onShop }: { onClose: () => void; onShop
         <View style={styles.preview}>
           <Backdrop element={sp.element} sky={sky} scene={state.scene} />
           <PopIn key={`${pet.look?.hat}-${pet.look?.aura}`}>
-            <PetSprite species={sp} stage={stageFor(pet.xp)} size={170} shiny={pet.shiny} hat={pet.look?.hat} aura={pet.look?.aura} mood="joy" />
+            <PetSprite species={sp} stage={stageFor(pet.xp)} size={170} shiny={pet.shiny} skin={pet.skin} hat={pet.look?.hat} aura={pet.look?.aura} mood="joy" />
           </PopIn>
         </View>
         <View style={styles.tabs}>
