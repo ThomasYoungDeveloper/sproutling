@@ -17,7 +17,7 @@ import FashionShow from '../components/FashionShow';
 
 const SECTIONS = [
   { id: 'friends', label: 'Friends', icon: '👋' },
-  { id: 'team', label: 'Team', icon: '🏡' },
+  { id: 'team', label: 'Guild', icon: '🛡️' },
   { id: 'battle', label: 'Battle', icon: '⚔️' },
   { id: 'show', label: 'Show', icon: '🎀' },
 ] as const;
@@ -171,7 +171,7 @@ export default function FriendsScreen({ initialAdd, onUsedInitialAdd }: { initia
             <Text style={{ fontSize: 40 }}>👋</Text>
             <Text style={[font.body, { fontWeight: '800', textAlign: 'center' }]}>No friends yet</Text>
             <Text style={[font.small, { textAlign: 'center' }]}>
-              Share your invite link with family or friends. You’ll see each other’s pets and streaks, and you can send each other gifts every day.
+              Share your invite link with friends. You’ll see each other’s pets and streaks, and you can send each other gifts every day.
             </Text>
           </View>
         ) : null}

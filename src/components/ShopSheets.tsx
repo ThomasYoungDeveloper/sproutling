@@ -4,6 +4,8 @@ import { useGame } from '../state/GameContext';
 import PetSprite from './PetSprite';
 import { Backdrop, skyNow } from './PetScene';
 import { ItemIcon } from './Cosmetics';
+import { useOverlay } from './Overlay';
+import PremiumSheet from './PremiumSheet';
 import { Button } from './ui';
 import { buzz, PopIn } from './fx';
 import { colors, font, space } from '../theme';
@@ -55,6 +57,7 @@ export function ShopSheet({ onClose, onWardrobe }: { onClose: () => void; onWard
   const [msg, setMsg] = useState<string | null>(null);
   const slots: Slot[] = ['toy', 'hat', 'aura', 'scene'];
   const premium = K.COSMETICS.filter((c) => c.premium);
+  const overlay = useOverlay();
 
   const purchase = (c: Cosmetic) => {
     const r = K.buy(state, c.id);
@@ -120,10 +123,10 @@ export function ShopSheet({ onClose, onWardrobe }: { onClose: () => void; onWard
             );
           })}
           <View style={{ gap: 6 }}>
-            <Text style={styles.section}>Premium (coming soon)</Text>
+            <Text style={styles.section}>⭐ Premium (coming soon)</Text>
             <View style={styles.grid}>
               {premium.map((c) => (
-                <Tile key={c.id} c={c} dim>
+                <Tile key={c.id} c={c} dim onPress={() => overlay.open(<PremiumSheet onClose={overlay.close} />)}>
                   <View style={[styles.price, { backgroundColor: '#F1EAFB' }]}><Text style={[styles.priceText, { color: '#7A4BC2' }]}>🔒 Premium</Text></View>
                 </Tile>
               ))}

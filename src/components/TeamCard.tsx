@@ -52,23 +52,23 @@ export default function TeamCard() {
     return (
       <Card style={styles.card}>
         <View style={{ flexDirection: 'row', gap: space.sm, alignItems: 'center' }}>
-          <Text style={{ fontSize: 34 }}>🏡</Text>
+          <Text style={{ fontSize: 34 }}>🛡️</Text>
           <View style={{ flex: 1 }}>
-            <Text style={[font.h2, { color: '#fff' }]}>Family team</Text>
-            <Text style={[font.small, { color: '#DDF4EA' }]}>Walk together toward a weekly goal. Everyone gets a team chest!</Text>
+            <Text style={[font.h2, { color: '#fff' }]}>Guilds</Text>
+            <Text style={[font.small, { color: '#DDF4EA' }]}>Join forces with friends toward a weekly step goal. Everyone gets a guild chest!</Text>
           </View>
         </View>
         {mode === 'none' ? (
           <View style={styles.row}>
-            <Button primary label="Start a team" style={{ flex: 1 }} onPress={() => setMode('create')} />
+            <Button primary label="Start a guild" style={{ flex: 1 }} onPress={() => setMode('create')} />
             <Button label="Join with a code" style={{ flex: 1 }} onPress={() => setMode('join')} />
           </View>
         ) : mode === 'create' ? (
           <View style={{ gap: space.sm }}>
-            <TextInput style={styles.input} value={name} onChangeText={setName} placeholder="Team name (like The Youngs)" maxLength={24} accessibilityLabel="Team name" />
+            <TextInput style={styles.input} value={name} onChangeText={setName} placeholder="Guild name (like Morning Walkers)" maxLength={24} accessibilityLabel="Guild name" />
             <View style={styles.emojis}>
               {TEAM_EMOJIS.map((e) => (
-                <Pressable key={e} onPress={() => setEmoji(e)} style={[styles.emoji, emoji === e && styles.emojiOn]} accessibilityRole="button" accessibilityLabel={`Team badge ${e}`}>
+                <Pressable key={e} onPress={() => setEmoji(e)} style={[styles.emoji, emoji === e && styles.emojiOn]} accessibilityRole="button" accessibilityLabel={`Guild badge ${e}`}>
                   <Text style={{ fontSize: 22 }}>{e}</Text>
                 </Pressable>
               ))}
@@ -77,7 +77,7 @@ export default function TeamCard() {
               <Button label="Back" onPress={() => setMode('none')} />
               <Button
                 primary
-                label={busy ? 'Creating…' : 'Create team'}
+                label={busy ? 'Creating…' : 'Create guild'}
                 disabled={busy}
                 style={{ flex: 1 }}
                 onPress={async () => {
@@ -92,12 +92,12 @@ export default function TeamCard() {
           </View>
         ) : (
           <View style={{ gap: space.sm }}>
-            <TextInput style={styles.input} value={code} onChangeText={setCode} placeholder="Team code" autoCapitalize="characters" maxLength={6} accessibilityLabel="Team code" />
+            <TextInput style={styles.input} value={code} onChangeText={setCode} placeholder="Guild code" autoCapitalize="characters" maxLength={6} accessibilityLabel="Guild code" />
             <View style={styles.row}>
               <Button label="Back" onPress={() => setMode('none')} />
               <Button
                 primary
-                label={busy ? 'Joining…' : 'Join team'}
+                label={busy ? 'Joining…' : 'Join guild'}
                 disabled={busy}
                 style={{ flex: 1 }}
                 onPress={async () => {
@@ -144,11 +144,11 @@ export default function TeamCard() {
         <Pressable
           onPress={async () => {
             const r = await copyText(team.code);
-            setMsg({ ok: true, text: r === 'copied' ? `Code ${team.code} copied! Send it to your family.` : `Your team code is ${team.code}.` });
+            setMsg({ ok: true, text: r === 'copied' ? `Code ${team.code} copied! Share it with friends to invite them.` : `Your guild code is ${team.code}.` });
           }}
           style={styles.code}
           accessibilityRole="button"
-          accessibilityLabel={`Team code ${team.code}, tap to copy`}
+          accessibilityLabel={`Guild code ${team.code}, tap to copy`}
         >
           <Text style={styles.codeLabel}>CODE</Text>
           <Text style={styles.codeText}>{team.code}</Text>
@@ -199,7 +199,7 @@ export default function TeamCard() {
         }}
         accessibilityRole="button"
       >
-        <Text style={styles.leave}>{confirmLeave ? 'Tap again to leave the team' : 'Leave team'}</Text>
+        <Text style={styles.leave}>{confirmLeave ? 'Tap again to leave the guild' : 'Leave guild'}</Text>
       </Pressable>
     </Card>
   );

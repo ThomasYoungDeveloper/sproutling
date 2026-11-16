@@ -40,11 +40,11 @@ interface Ctx {
 const TeamCtx = createContext<Ctx | null>(null);
 
 const MESSAGES: Record<string, string> = {
-  already_in_team: 'You’re already on a team. Leave it first to start or join another.',
-  bad_name: 'Give your team a name (at least 2 letters).',
-  not_found: 'No team with that code. Check the letters?',
-  full: 'That team is full (20 players).',
-  not_yet: 'Your team hasn’t reached that goal yet. Keep walking!',
+  already_in_team: 'You’re already in a guild. Leave it first to start or join another.',
+  bad_name: 'Give your guild a name (at least 2 letters).',
+  not_found: 'No guild with that code. Check the letters?',
+  full: 'That guild is full (20 players).',
+  not_yet: 'Your guild hasn’t reached that goal yet. Keep walking!',
   already: 'You already opened this week’s chest.',
   signed_out: 'Sign in first.',
 };
@@ -96,7 +96,7 @@ export function TeamProvider({ children }: { children: React.ReactNode }) {
       if (data !== 'ok') return { ok: false, text: MESSAGES[data as string] ?? 'Something went wrong.' };
       lastReported.current = -1;
       await refresh();
-      return { ok: true, text: 'Team created! Share the code with your family.' };
+      return { ok: true, text: 'Guild created! Share the code with friends.' };
     },
     [refresh],
   );
@@ -108,7 +108,7 @@ export function TeamProvider({ children }: { children: React.ReactNode }) {
       if (data !== 'ok') return { ok: false, text: MESSAGES[data as string] ?? 'Something went wrong.' };
       lastReported.current = -1;
       await refresh();
-      return { ok: true, text: 'Welcome to the team!' };
+      return { ok: true, text: 'Welcome to the guild!' };
     },
     [refresh],
   );
@@ -124,7 +124,7 @@ export function TeamProvider({ children }: { children: React.ReactNode }) {
       const { data, error } = await supabase.rpc('claim_team_chest', { tier });
       if (error) return { ok: false, text: 'Couldn’t reach Sproutling. Try again in a moment.' };
       if (data !== 'ok') return { ok: false, text: MESSAGES[data as string] ?? 'Something went wrong.' };
-      apply((s) => A.grantChest(s, tier === 'super' ? 'gold' : 'silver', tier === 'super' ? 'Team super goal' : 'Team weekly goal'));
+      apply((s) => A.grantChest(s, tier === 'super' ? 'gold' : 'silver', tier === 'super' ? 'Guild super goal' : 'Guild weekly goal'));
       await refresh();
       return { ok: true, text: tier === 'super' ? 'Gold chest added! Open it on the Chests tab.' : 'Silver chest added! Open it on the Chests tab.' };
     },

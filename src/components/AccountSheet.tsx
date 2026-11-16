@@ -4,6 +4,8 @@ import { useAuth } from '../state/AuthContext';
 import { useGame } from '../state/GameContext';
 import { Button } from './ui';
 import { isMuted, onMuteChange, play, setMuted } from '../lib/sound';
+import { useOverlay } from './Overlay';
+import PremiumSheet from './PremiumSheet';
 import { colors, font, space } from '../theme';
 
 function SoundToggle() {
@@ -30,6 +32,17 @@ function SoundToggle() {
       <View style={[styles.switch, !muted && styles.switchOn]}>
         <View style={[styles.knob, !muted && { alignSelf: 'flex-end' }]} />
       </View>
+    </Pressable>
+  );
+}
+
+function PremiumRow() {
+  const overlay = useOverlay();
+  return (
+    <Pressable onPress={() => overlay.open(<PremiumSheet onClose={overlay.close} />)} style={styles.soundRow} accessibilityRole="button" accessibilityLabel="Sproutling Premium">
+      <Text style={{ fontSize: 20 }}>⭐</Text>
+      <Text style={[font.body, { flex: 1, fontWeight: '800' }]}>Sproutling Premium</Text>
+      <Text style={{ fontWeight: '900', color: '#6E56CF' }}>Coming soon ›</Text>
     </Pressable>
   );
 }
@@ -72,6 +85,7 @@ export default function AccountSheet({ onClose }: { onClose: () => void }) {
             </View>
             {msg ? <Text style={[styles.msg, msg.ok && styles.ok]}>{msg.text}</Text> : null}
             <SoundToggle />
+            <PremiumRow />
             <View style={[styles.row, { marginTop: space.md }]}>
               <Button label="Sign out" onPress={signOut} />
               <Button primary label="Done" onPress={onClose} style={{ flex: 1 }} />
