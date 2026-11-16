@@ -1,5 +1,5 @@
-import React from 'react';
-import { Pressable, StyleSheet, Text, View, type ViewStyle, type StyleProp } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { Animated, Pressable, StyleSheet, Text, View, type ViewStyle, type StyleProp } from 'react-native';
 import { colors, radius, space, font } from '../theme';
 import type { Rarity } from '../game/types';
 import { RARITY_INFO } from '../game/rarity';
@@ -18,22 +18,40 @@ export function SectionHead({ title, meta }: { title: string; meta?: string }) {
 }
 
 export function Button({ label, onPress, primary, disabled, small, style }: { label: string; onPress: () => void; primary?: boolean; disabled?: boolean; small?: boolean; style?: StyleProp<ViewStyle> }) {
+  const scale = useRef(new Animated.Value(1)).current;
+  const to = (v: number, friction: number) => Animated.spring(scale, { toValue: v, friction, tension: 220, useNativeDriver: true }).start();
+  // Layout styles (flex, alignSelf, margins) size the tap area; the rest styles the button itself.
+  const flat = (StyleSheet.flatten(style) ?? {}) as Record<string, any>;
+  const outer: Record<string, any> = {};
+  const inner: Record<string, any> = {};
+  Object.entries(flat).forEach(([k, val]) => ((/^(flex|alignSelf|margin|width|minWidth|maxWidth)/.test(k) ? outer : inner)[k] = val));
+  if (outer.alignSelf === 'stretch' || outer.flex) inner.alignSelf = 'stretch';
   return (
     <Pressable
       accessibilityRole="button"
+      accessibilityState={{ disabled: !!disabled }}
       onPress={disabled ? undefined : onPress}
-      style={({ pressed }) => [styles.btn, primary && styles.btnPrimary, small && styles.btnSmall, disabled && styles.btnDisabled, pressed && !disabled && { opacity: 0.8 }, style]}
+      onPressIn={() => !disabled && to(0.94, 6)}
+      onPressOut={() => to(1, 3.5)}
+      style={outer}
     >
-      <Text style={[styles.btnText, primary && { color: '#fff' }]}>{label}</Text>
+      <Animated.View style={[styles.btn, primary && styles.btnPrimary, small && styles.btnSmall, disabled && styles.btnDisabled, inner, { transform: [{ scale }] }]}>
+        <Text style={[styles.btnText, primary && { color: '#fff' }]}>{label}</Text>
+      </Animated.View>
     </Pressable>
   );
 }
 
+/** A bar that slides smoothly to its new value. */
 export function ProgressBar({ value, color = colors.mint, height = 10 }: { value: number; color?: string; height?: number }) {
-  const pct = Math.max(0, Math.min(1, value)) * 100;
+  const target = Math.max(0, Math.min(1, value));
+  const v = useRef(new Animated.Value(target)).current;
+  useEffect(() => {
+    Animated.spring(v, { toValue: target, friction: 7, tension: 50, useNativeDriver: false }).start();
+  }, [target]);
   return (
     <View style={[styles.track, { height }]}>
-      <View style={{ width: `${pct}%`, height: '100%', backgroundColor: color, borderRadius: 999 }} />
+      <Animated.View style={{ width: v.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] }), height: '100%', backgroundColor: color, borderRadius: 999 }} />
     </View>
   );
 }

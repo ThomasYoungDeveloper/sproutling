@@ -13,7 +13,7 @@ import StarterScreen from './src/screens/StarterScreen';
 import FriendsScreen from './src/screens/FriendsScreen';
 import DailyLoginSheet from './src/components/DailyLoginSheet';
 import { FriendsProvider, useFriends } from './src/state/FriendsContext';
-import { PopIn } from './src/components/fx';
+import { FadeSwitch, PopIn, RollingNumber } from './src/components/fx';
 import { RevealProvider, useReveal } from './src/components/RevealOverlay';
 import { stageFor } from './src/game/scoring';
 import { Button } from './src/components/ui';
@@ -100,7 +100,7 @@ function Shell() {
         <Text style={styles.brand}>Sprout<Text style={{ color: colors.mint }}>ling</Text></Text>
         <View style={styles.pills}>
           <View style={styles.pill}><Text style={styles.pillText}>▲ {A.streak(state)}-day</Text></View>
-          <View style={styles.pill}><Text style={styles.pillText}>● {state.coins.toLocaleString()}</Text></View>
+          <View style={styles.pill}><RollingNumber value={state.coins} prefix="● " style={styles.pillText} /></View>
           <Pressable onPress={() => setShowAccount(true)} style={[styles.pill, user ? null : styles.signIn]} accessibilityRole="button" accessibilityLabel={user ? 'Account' : 'Sign in to save your pets'}>
             <Text style={[styles.pillText, !user && { color: '#fff' }]} numberOfLines={1}>{sync === 'error' ? '⚠ Offline' : `☁ ${username ?? 'Me'}`}</Text>
           </Pressable>
@@ -108,7 +108,10 @@ function Shell() {
       </View>
       <ScrollView contentContainerStyle={styles.scroll}>
         {starter ? <StarterScreen /> : null}
-        {!starter && tab === 'home' && (
+        {!starter && (
+          <FadeSwitch id={tab}>
+            <View style={{ gap: space.md }}>
+        {tab === 'home' && (
           <Pressable onPress={() => setShowLogin(true)} style={[styles.daily, login.canClaim && styles.dailyReady]} accessibilityRole="button" accessibilityLabel="Daily rewards">
             <Text style={{ fontSize: 22 }}>{login.canClaim ? '🎁' : '✅'}</Text>
             <View style={{ flex: 1 }}>
@@ -117,11 +120,14 @@ function Shell() {
             </View>
           </Pressable>
         )}
-        {!starter && tab === 'home' && <HomeScreen />}
-        {!starter && tab === 'eggs' && <EggsScreen />}
-        {!starter && tab === 'chests' && <ChestsScreen />}
-        {!starter && tab === 'dex' && <DexScreen />}
-        {!starter && tab === 'friends' && <FriendsScreen initialAdd={invite} onUsedInitialAdd={() => setInvite(null)} />}
+        {tab === 'home' && <HomeScreen onNavigate={setTab} />}
+        {tab === 'eggs' && <EggsScreen />}
+        {tab === 'chests' && <ChestsScreen />}
+        {tab === 'dex' && <DexScreen />}
+        {tab === 'friends' && <FriendsScreen initialAdd={invite} onUsedInitialAdd={() => setInvite(null)} />}
+            </View>
+          </FadeSwitch>
+        )}
         <View style={styles.demo}>
           <Text style={[font.tiny, { flex: 1 }]}>Preview build. Your progress saves to your account.</Text>
           <Button small label="Skip to tomorrow" onPress={() => apply(A.nextDay)} />

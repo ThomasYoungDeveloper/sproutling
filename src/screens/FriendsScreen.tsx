@@ -7,7 +7,7 @@ import FriendSheet from '../components/FriendSheet';
 import { buzz } from '../components/fx';
 import { colors, font, space } from '../theme';
 import { SPECIES_BY_ID } from '../game/species';
-import { stageFor } from '../game/scoring';
+import { levelFor, stageFor } from '../game/scoring';
 import { GIFTS_PER_DAY } from '../game/actions';
 import { activeToday, copyText, lastSeen, shareInvite } from './friendsShared';
 
@@ -190,6 +190,7 @@ function Avatar({ t }: { t: Trainer }) {
   return (
     <View style={styles.avatar}>
       {sp && p ? <PetSprite species={sp} stage={stageFor(p.xp)} size={48} shiny={p.shiny} /> : <Text style={{ fontSize: 24 }}>🥚</Text>}
+      {sp && p ? <View style={styles.lv}><Text style={styles.lvText}>{levelFor(p.xp)}</Text></View> : null}
     </View>
   );
 }
@@ -204,6 +205,8 @@ const styles = StyleSheet.create({
   ok: { color: colors.mintDark },
   person: { flexDirection: 'row', alignItems: 'center', gap: space.sm, paddingVertical: 6 },
   personName: { fontWeight: '800', fontSize: 15, color: colors.ink, flexShrink: 1 },
+  lv: { position: 'absolute', bottom: 2, right: 2, minWidth: 18, height: 18, borderRadius: 9, backgroundColor: colors.ink, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4 },
+  lvText: { color: '#fff', fontWeight: '900', fontSize: 10 },
   avatar: { width: 52, height: 52, borderRadius: 16, backgroundColor: colors.sky, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
   onlineDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.mint },
   empty: { alignItems: 'center', gap: 4, paddingVertical: space.md, paddingHorizontal: space.sm },

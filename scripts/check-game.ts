@@ -4,6 +4,8 @@ import { CHESTS, oddsFor } from '../src/game/loot';
 import { SPECIES, speciesOfRarity } from '../src/game/species';
 import { RARITIES, stepsToHatch } from '../src/game/rarity';
 import { buildCard, readCard } from '../src/game/card';
+import * as C from '../src/game/care';
+import { levelFor, levelProgress, stageFor } from '../src/game/scoring';
 import type { ChestKind, GameState } from '../src/game/types';
 
 let fails = 0;
@@ -70,4 +72,23 @@ ok(A.claimLogin(l1.state) === null, 'only one login reward per day');
 L = l1.state; for (let i = 0; i < 5; i++) L = A.claimLogin(A.nextDay(L))!.state;
 const l7 = A.claimLogin(A.nextDay(L))!; ok(l7.day === 7 && l7.state.chests.some((c) => c.kind === 'silver'), 'day 7 gives a Silver chest');
 const l8 = A.claimLogin(A.nextDay(A.nextDay(l7.state)))!; ok(l8.day === 1, 'calendar loops, and a missed day doesn’t punish you');
+// Levels
+ok(levelFor(0) === 1 && levelFor(49) === 1 && levelFor(50) === 2 && levelFor(300) === 4 && levelFor(1050) === 7, 'level thresholds');
+ok(stageFor(299) === 'baby' && stageFor(300) === 'teen' && stageFor(1050) === 'adult', 'teen at Lv4, adult at Lv7');
+const lp = levelProgress(200); ok(lp.level === 3 && lp.into === 50 && lp.need === 150, 'level progress bar math');
+// Care
+let K = { ...t, days: {}, items: { 'Moon Seed': 2 } } as GameState;
+K = A.addSteps(K, 5000);
+const base = A.activePet(K)!.xp;
+ok(C.moodFor(A.today(K)) === 'hungry', 'unfed pet is hungry (no penalty)');
+K = C.feed(K);
+ok(A.activePet(K)!.xp > base, 'feeding boosts XP already earned today');
+ok(Math.abs(C.careMultiplier(A.today(K)) - 1.1) < 1e-9, 'feeding gives 1.1x');
+K = C.play(C.play(K)); ok(!C.careTasks(A.today(K))[1].done, 'two plays is not enough');
+K = C.play(K); ok(C.careTasks(A.today(K))[1].done, 'three plays completes play');
+K = C.treat(K); ok(K.items['Moon Seed'] === 1 && Math.abs(C.careMultiplier(A.today(K)) - 1.3) < 1e-9, 'treat uses a trinket, 1.3x max');
+ok(C.treat(K) === K, 'only one treat per day');
+const noBag = { ...t, days: {}, items: {} } as GameState; ok(C.treat(noBag) === noBag, 'no trinkets, no treat');
+const K2 = A.nextDay(K); ok(C.careMultiplier(A.today(K2)) === 1 && A.activePet(K2)!.xp === A.activePet(K)!.xp, 'next day care resets but XP is kept');
+ok(C.reminders(noBag).some((r) => r.id === 'feed') && !C.reminders(K).some((r) => r.id === 'feed'), 'reminders follow care');
 console.log(fails ? `${fails} FAILED` : 'ALL PASSED'); process.exit(fails ? 1 : 0);

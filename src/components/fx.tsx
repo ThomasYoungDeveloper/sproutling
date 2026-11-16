@@ -183,3 +183,50 @@ export function useIdleWobble() {
   }, []);
   return { transform: [{ rotate: v.interpolate({ inputRange: [-1, 1], outputRange: ['-5deg', '5deg'] }) }] };
 }
+
+/** A pill number that rolls from its old value to its new one and bumps when it goes up. */
+export function RollingNumber({ value, style, prefix = '' }: { value: number; style?: any; prefix?: string }) {
+  const [shown, setShown] = React.useState(value);
+  const from = useRef(value);
+  const bump = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    const start = from.current;
+    if (start === value) return;
+    if (value > start) {
+      bump.setValue(0);
+      Animated.sequence([
+        Animated.timing(bump, { toValue: 1, duration: 140, useNativeDriver: true }),
+        Animated.spring(bump, { toValue: 0, friction: 3, useNativeDriver: true }),
+      ]).start();
+    }
+    const t0 = Date.now();
+    let raf: any;
+    const tick = () => {
+      const p = Math.min(1, (Date.now() - t0) / 600);
+      setShown(Math.round(start + (value - start) * (1 - Math.pow(1 - p, 3))));
+      if (p < 1) raf = setTimeout(tick, 16);
+      else from.current = value;
+    };
+    tick();
+    return () => {
+      clearTimeout(raf);
+      from.current = value;
+    };
+  }, [value]);
+  return (
+    <Animated.Text style={[style, { transform: [{ scale: bump.interpolate({ inputRange: [0, 1], outputRange: [1, 1.25] }) }] }]}>
+      {prefix}
+      {shown.toLocaleString()}
+    </Animated.Text>
+  );
+}
+
+/** Fades and slides its children in whenever `id` changes (used for switching tabs). */
+export function FadeSwitch({ id, children }: { id: string; children: React.ReactNode }) {
+  const v = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    v.setValue(0);
+    Animated.timing(v, { toValue: 1, duration: 260, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start();
+  }, [id]);
+  return <Animated.View style={{ opacity: v, transform: [{ translateY: v.interpolate({ inputRange: [0, 1], outputRange: [14, 0] }) }] }}>{children}</Animated.View>;
+}

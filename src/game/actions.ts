@@ -1,6 +1,7 @@
 import type { ChestKind, DayLog, Egg, Element, GameState, Meal, OwnedPet, Rarity } from './types';
 import { dateKey } from './dates';
 import { emptyDay, scoreDay, dailyQuests, streakFrom, COINS_PER_XP } from './scoring';
+import { boostedTotal } from './care';
 import { openChest, type ChestResult } from './loot';
 import { speciesOfRarity, SPECIES, SPECIES_BY_ID } from './species';
 import { SHINY_CHANCE, stepsToHatch } from './rarity';
@@ -22,7 +23,8 @@ export function updateToday(s: GameState, change: (d: DayLog) => DayLog): GameSt
   const key = todayKey(s);
   const before = today(s);
   const after = change({ ...before, meals: [...before.meals] });
-  const gained = scoreDay(after).total - scoreDay(before).total;
+  // XP includes today's care boost, so caring for your pet later in the day boosts earlier habits too.
+  const gained = boostedTotal(after) - boostedTotal(before);
 
   let next: GameState = { ...s, days: { ...s.days, [key]: after } };
 
@@ -35,7 +37,7 @@ export function updateToday(s: GameState, change: (d: DayLog) => DayLog): GameSt
   if (gained !== 0) {
     next.pets = next.pets.map((p) => (p.id === next.activePetId ? { ...p, xp: Math.max(0, p.xp + gained) } : p));
     // Coins follow the day's total XP, so undoing a habit takes its coins back (no farming by toggling).
-    const coinDelta = Math.floor(scoreDay(after).total * COINS_PER_XP) - Math.floor(scoreDay(before).total * COINS_PER_XP);
+    const coinDelta = Math.floor(boostedTotal(after) * COINS_PER_XP) - Math.floor(boostedTotal(before) * COINS_PER_XP);
     next.coins = Math.max(0, next.coins + coinDelta);
   }
 

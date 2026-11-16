@@ -6,7 +6,7 @@ import PetSprite from './PetSprite';
 import { buzz, PopIn } from './fx';
 import { colors, font, space } from '../theme';
 import { SPECIES, SPECIES_BY_ID } from '../game/species';
-import { stageFor } from '../game/scoring';
+import { levelFor, stageFor } from '../game/scoring';
 import { GIFT_COINS, GIFTS_PER_DAY } from '../game/actions';
 import { lastSeen } from '../screens/friendsShared';
 
@@ -35,7 +35,7 @@ export default function FriendSheet({ friend, onClose }: { friend: Friend; onClo
             <Text style={font.title}>{live.username}</Text>
             {active && activeSpecies ? (
               <Text style={font.small}>
-                {active.nickname} the {activeSpecies.name}
+                Lv {levelFor(active.xp)} {active.nickname} the {activeSpecies.name}
               </Text>
             ) : (
               <Text style={font.small}>Hasn’t hatched a pet yet</Text>
@@ -59,6 +59,7 @@ export default function FriendSheet({ friend, onClose }: { friend: Friend; onClo
                   return (
                     <View key={i} style={styles.tile}>
                       <PetSprite species={sp} stage={stageFor(p.xp)} size={64} shiny={p.shiny} />
+                      <View style={styles.lv}><Text style={styles.lvText}>Lv {levelFor(p.xp)}</Text></View>
                       <Text style={styles.name} numberOfLines={1}>{p.nickname}</Text>
                       <RarityBadge rarity={sp.rarity} />
                     </View>
@@ -133,6 +134,8 @@ const styles = StyleSheet.create({
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: '3.5%', rowGap: space.sm },
   tile: { width: '31%', alignItems: 'center', gap: 3, padding: space.xs, borderRadius: 14, borderWidth: 1, borderColor: colors.line, backgroundColor: '#FAFCFB' },
   name: { fontWeight: '800', fontSize: 12, color: colors.ink },
+  lv: { position: 'absolute', top: 4, left: 4, backgroundColor: colors.ink, borderRadius: 7, paddingHorizontal: 5, paddingVertical: 1 },
+  lvText: { color: '#fff', fontWeight: '900', fontSize: 10 },
   soon: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, justifyContent: 'center', marginTop: space.xs },
   row: { flexDirection: 'row', gap: space.sm, alignItems: 'center', marginTop: space.md },
 });

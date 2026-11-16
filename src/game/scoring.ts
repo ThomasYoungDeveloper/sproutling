@@ -23,7 +23,7 @@ export function dailyQuests(d: DayLog): Quest[] {
   return [
     { id: 'walk', label: 'Walk 8,000 steps', done: d.steps >= 8000, progress: `${Math.min(d.steps, 8000).toLocaleString()} / 8,000` },
     { id: 'water', label: 'Drink 6 glasses of water', done: d.water >= 6, progress: `${Math.min(d.water, 6)} / 6` },
-    { id: 'meals', label: 'Log 3 meals', done: d.meals.length >= 3, progress: `${Math.min(d.meals.length, 3)} / 3` },
+    { id: 'sleep', label: 'Sleep 7 hours or more', done: d.sleepHours >= 7, progress: `${d.sleepHours} / 7 h` },
   ];
 }
 
@@ -41,7 +41,29 @@ export function scoreDay(d: DayLog): DayScore {
   return { steps, sleep, water, workout, meals, quests, total: steps + sleep + water + workout + meals + quests };
 }
 
-export const STAGE_XP: Record<Stage, number> = { baby: 0, teen: 300, adult: 1000 };
+/* ---------- Levels ---------- */
+
+/** Total XP needed to reach a level: Lv2 50, Lv3 150, Lv4 300, Lv5 500, Lv7 1,050, Lv10 2,250. */
+export const xpForLevel = (level: number) => 25 * level * (level - 1);
+export const MAX_LEVEL = 50;
+
+export function levelFor(xp: number): number {
+  let level = 1;
+  while (level < MAX_LEVEL && xp >= xpForLevel(level + 1)) level++;
+  return level;
+}
+
+/** Where a pet is inside its current level, for the XP bar. */
+export function levelProgress(xp: number): { level: number; into: number; need: number; max: boolean } {
+  const level = levelFor(xp);
+  if (level >= MAX_LEVEL) return { level, into: 1, need: 1, max: true };
+  const from = xpForLevel(level);
+  return { level, into: xp - from, need: xpForLevel(level + 1) - from, max: false };
+}
+
+/** Pets grow into a teen at level 4 and an adult at level 7. */
+export const STAGE_LEVEL: Record<Stage, number> = { baby: 1, teen: 4, adult: 7 };
+export const STAGE_XP: Record<Stage, number> = { baby: 0, teen: xpForLevel(STAGE_LEVEL.teen), adult: xpForLevel(STAGE_LEVEL.adult) };
 
 export function stageFor(xp: number): Stage {
   if (xp >= STAGE_XP.adult) return 'adult';

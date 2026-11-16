@@ -20,8 +20,19 @@ export interface DayLog {
   steps: number;
   sleepHours: number;
   water: number;
+  /** Hidden for now (kept so goal-based nutrition and workouts can come back later). */
   workoutMinutes: number;
   meals: Meal[];
+  /** Today's pet care. Each completed care task boosts today's XP. */
+  care?: DayCare;
+}
+
+export interface DayCare {
+  fed?: boolean;
+  /** Play sessions today (3 completes the task). */
+  played?: number;
+  /** A trinket from your bag was given as a treat. */
+  treat?: boolean;
 }
 
 export interface OwnedPet {

@@ -6,7 +6,7 @@ import PetSprite from '../components/PetSprite';
 import { colors, font, space } from '../theme';
 import { SPECIES, SPECIES_BY_ID } from '../game/species';
 import { RARITIES, RARITY_INFO } from '../game/rarity';
-import { stageFor } from '../game/scoring';
+import { levelFor, stageFor } from '../game/scoring';
 import * as A from '../game/actions';
 
 export default function DexScreen() {
@@ -24,13 +24,14 @@ export default function DexScreen() {
             return (
               <Pressable key={p.id} onPress={() => apply((s) => A.setActivePet(s, p.id))} style={[styles.tile, active && styles.active]} accessibilityLabel={`Make ${p.nickname} active`}>
                 <PetSprite species={sp} stage={stageFor(p.xp)} size={86} shiny={p.shiny} />
+                <View style={styles.lv}><Text style={styles.lvText}>Lv {levelFor(p.xp)}</Text></View>
                 <Text style={styles.name} numberOfLines={1}>{p.nickname}</Text>
                 {active ? <Chip label="Active" /> : <RarityBadge rarity={sp.rarity} />}
               </Pressable>
             );
           })}
         </View>
-        <Text style={font.tiny}>Tap a pet to make it your active pet. Your active pet earns today's XP.</Text>
+        <Text style={font.tiny}>Tap a pet to make it your active pet. Your active pet earns today’s XP and levels up.</Text>
       </Card>
 
       <Card>
@@ -61,5 +62,7 @@ const styles = StyleSheet.create({
   tile: { width: '30%', minWidth: 96, flexGrow: 1, maxWidth: 140, alignItems: 'center', gap: 4, padding: space.sm, borderRadius: 16, borderWidth: 1, borderColor: colors.line, backgroundColor: '#FAFCFB' },
   active: { borderColor: colors.mint, backgroundColor: colors.mintSoft },
   name: { fontWeight: '800', fontSize: 13, color: colors.ink },
+  lv: { position: 'absolute', top: 6, left: 6, backgroundColor: colors.ink, borderRadius: 8, paddingHorizontal: 6, paddingVertical: 2 },
+  lvText: { color: '#fff', fontWeight: '900', fontSize: 11 },
   tier: { fontSize: 12, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.8, marginTop: space.sm },
 });
