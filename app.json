@@ -10,7 +10,7 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.sproutlingapp.sproutling",
       "infoPlist": {
-        "NSHealthShareUsageDescription": "Sproutling reads your steps and sleep so your pet can grow from your real healthy habits.",
+        "NSHealthShareUsageDescription": "Sproutling reads your steps, sleep, water, activity rings and mindful minutes so your pet can grow from your real healthy habits.",
         "ITSAppUsesNonExemptEncryption": false
       }
     },
@@ -33,7 +33,7 @@
       [
         "@kingstinct/react-native-healthkit",
         {
-          "NSHealthShareUsageDescription": "Sproutling reads your steps and sleep so your pet can grow from your real healthy habits.",
+          "NSHealthShareUsageDescription": "Sproutling reads your steps, sleep, water, activity rings and mindful minutes so your pet can grow from your real healthy habits.",
           "NSHealthUpdateUsageDescription": false,
           "background": false
         }

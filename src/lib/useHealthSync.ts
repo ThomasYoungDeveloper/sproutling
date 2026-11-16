@@ -36,6 +36,9 @@ export function useHealthSync() {
           let next = s;
           if (day.steps > d.steps) next = A.addSteps(next, day.steps - d.steps);
           if (day.sleepHours > 0 && day.sleepHours !== d.sleepHours) next = A.setSleep(next, day.sleepHours);
+          if (day.rings || day.exerciseMin !== undefined || day.mindfulMin !== undefined || day.water !== undefined) {
+            next = A.setHealthExtras(next, { rings: day.rings, exerciseMin: day.exerciseMin, mindfulMin: day.mindfulMin, water: day.water });
+          }
           return next;
         });
       } finally {

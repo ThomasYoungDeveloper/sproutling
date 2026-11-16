@@ -88,6 +88,16 @@ export function applyShields(s: GameState): { state: GameState; used: number; sa
   return { state: next, used, saved: used ? streak(next) : 0 };
 }
 
+/** Apple Health extras for today: activity rings, exercise and mindful minutes. Water only ever goes up. */
+export const setHealthExtras = (s: GameState, x: { rings?: { move: number; exercise: number; stand: number }; exerciseMin?: number; mindfulMin?: number; water?: number }) =>
+  updateToday(s, (d) => ({
+    ...d,
+    ...(x.rings ? { rings: x.rings } : {}),
+    ...(x.exerciseMin !== undefined ? { exerciseMin: x.exerciseMin } : {}),
+    ...(x.mindfulMin !== undefined ? { mindfulMin: x.mindfulMin } : {}),
+    ...(x.water !== undefined && x.water > d.water ? { water: Math.min(20, x.water) } : {}),
+  }));
+
 export const addSteps = (s: GameState, n: number) => updateToday(s, (d) => ({ ...d, steps: Math.max(0, d.steps + n) }));
 export const setSleep = (s: GameState, h: number) => updateToday(s, (d) => ({ ...d, sleepHours: Math.min(14, Math.max(0, h)) }));
 export const setWater = (s: GameState, n: number) => updateToday(s, (d) => ({ ...d, water: Math.min(12, Math.max(0, n)) }));

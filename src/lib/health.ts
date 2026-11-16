@@ -15,6 +15,12 @@ export type HealthSource = 'manual' | 'apple-health' | 'health-connect';
 export interface HealthDay {
   steps: number;
   sleepHours: number;
+  /** Glasses of water logged in Apple Health (250 ml each), if any. */
+  water?: number;
+  /** Activity rings as a fraction of each goal (1 = closed). */
+  rings?: { move: number; exercise: number; stand: number };
+  exerciseMin?: number;
+  mindfulMin?: number;
 }
 
 export interface HealthProvider {

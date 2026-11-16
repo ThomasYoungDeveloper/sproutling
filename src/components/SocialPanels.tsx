@@ -12,6 +12,7 @@ import { colors, font, space } from '../theme';
 import { SPECIES_BY_ID } from '../game/species';
 import { levelFor, stageFor } from '../game/scoring';
 import * as B from '../game/battle';
+import { healthProvider, isVerified } from '../lib/health';
 import * as T from '../game/trade';
 import type { TradePet } from '../game/trade';
 
@@ -109,6 +110,13 @@ export function ArenaCard() {
           { id: 'hydrated', emoji: '💧', label: 'Hydrated', hint: '6 glasses' },
           { id: 'energized', emoji: '👟', label: 'Energized', hint: '8k steps' },
           { id: 'cared', emoji: '💖', label: 'Cared for', hint: 'Pet care' },
+          ...(isVerified(healthProvider())
+            ? [
+                { id: 'trained', emoji: '🏋️', label: 'Trained', hint: '30 min exercise' },
+                { id: 'calm', emoji: '🧘', label: 'Calm', hint: '5 mindful min' },
+                { id: 'rings', emoji: '⭕', label: 'Rings Closed', hint: 'Close 3 rings' },
+              ]
+            : []),
         ].map((b) => (
           <View key={b.id} style={[styles.buff, has(b.id) && styles.buffOn]}>
             <Text style={{ fontSize: 16, opacity: has(b.id) ? 1 : 0.5 }}>{b.emoji}</Text>

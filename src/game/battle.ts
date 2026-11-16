@@ -1,5 +1,5 @@
 import type { Element, GameState, Rarity, Skin } from './types';
-import { levelFor, xpForLevel } from './scoring';
+import { EXERCISE_MINUTES, MINDFUL_MINUTES, levelFor, ringsClosed, xpForLevel } from './scoring';
 import { SPECIES, SPECIES_BY_ID } from './species';
 import { careMultiplier } from './care';
 import { pickOne, randInt, type Rng, defaultRng } from './random';
@@ -43,7 +43,7 @@ export const BUFF_INFO: Record<Buff, { label: string; emoji: string }> = {
 /* ---------------- Habit buffs ---------------- */
 
 export interface HabitBuff {
-  id: 'rested' | 'hydrated' | 'energized' | 'cared' | 'streak';
+  id: 'rested' | 'hydrated' | 'energized' | 'cared' | 'streak' | 'trained' | 'calm' | 'rings';
   label: string;
   emoji: string;
   text: string;
@@ -58,6 +58,9 @@ export function habitBuffs(s: GameState): HabitBuff[] {
   if (d.steps >= 8000) out.push({ id: 'energized', label: 'Energized', emoji: '👟', text: 'Start with +1 ⚡ (8,000+ steps)' });
   const care = careMultiplier(d);
   if (care > 1) out.push({ id: 'cared', label: 'Well Cared For', emoji: '💖', text: `+${Math.round(((care - 1) / 2) * 100)}% Attack (pet care today)` });
+  if ((d.exerciseMin ?? 0) >= EXERCISE_MINUTES || (d.rings?.exercise ?? 0) >= 1) out.push({ id: 'trained', label: 'Trained', emoji: '🏋️', text: '+8% Attack (30+ exercise minutes)' });
+  if ((d.mindfulMin ?? 0) >= MINDFUL_MINUTES) out.push({ id: 'calm', label: 'Calm', emoji: '🧘', text: "Can't be made drowsy (5+ mindful minutes)" });
+  if (ringsClosed(d) === 3) out.push({ id: 'rings', label: 'Rings Closed', emoji: '⭕', text: '+5% to all stats (all 3 activity rings)' });
   const st = Math.min(A.streak(s), 10);
   if (st > 0) out.push({ id: 'streak', label: `${st}-Day Streak`, emoji: '⭐', text: `+${Math.round(st / 2)}% to all stats` });
   return out;
@@ -70,6 +73,8 @@ function applyHabitBuffs(b: StatBlock, buffs: HabitBuff[], care = 1, streak = 0)
   if (buffs.some((x) => x.id === 'rested')) out.spd *= 1.08;
   if (buffs.some((x) => x.id === 'hydrated')) out.def *= 1.08;
   if (buffs.some((x) => x.id === 'cared')) out.atk *= 1 + (care - 1) / 2;
+  if (buffs.some((x) => x.id === 'trained')) out.atk *= 1.08;
+  if (buffs.some((x) => x.id === 'rings')) STATS.forEach((k) => (out[k] *= 1.05));
   STATS.forEach((k) => (out[k] = Math.round(out[k])));
   return out;
 }
@@ -109,6 +114,8 @@ export interface Fighter {
   moves: MoveDef[];
   status?: { type: Status; turns: number };
   buffs: Partial<Record<Buff, number>>;
+  /** Mindful minutes today: this fighter can't be made drowsy. */
+  calm?: boolean;
 }
 
 export function makeFighter(p: PetLike, key: string, buffs: HabitBuff[] = [], care = 1, streak = 0): Fighter {
@@ -133,6 +140,7 @@ export function makeFighter(p: PetLike, key: string, buffs: HabitBuff[] = [], ca
     energy: 1 + (buffs.some((x) => x.id === 'energized') ? 1 : 0),
     moves: equippedMoves(p),
     buffs: {},
+    ...(buffs.some((x) => x.id === 'calm') ? { calm: true } : {}),
   };
 }
 
@@ -338,7 +346,7 @@ export function playTurn(b0: Battle, myAction: Action, theirAction: Action, rng:
         push({ side, kind: 'heal', move, healed, text: `${actor.nickname} drained ${healed} HP!` });
       }
     }
-    if (move.status && alive(foe) && !foe.status && rng() < move.status.chance) {
+    if (move.status && alive(foe) && !foe.status && !(foe.calm && move.status.type === 'drowsy') && rng() < move.status.chance) {
       foe.status = { type: move.status.type, turns: STATUS_INFO[move.status.type].turns };
       push({ side: other(side), kind: 'status', text: `${foe.nickname} is ${STATUS_INFO[move.status.type].label.toLowerCase()}! ${STATUS_INFO[move.status.type].emoji}` });
     }

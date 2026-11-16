@@ -27,6 +27,12 @@ export interface DayLog {
   shielded?: boolean;
   /** Today's pet care. Each completed care task boosts today's XP. */
   care?: DayCare;
+  /** Apple Watch / iPhone activity rings as a fraction of each goal (1 = closed). Only from Apple Health. */
+  rings?: { move: number; exercise: number; stand: number };
+  /** Exercise minutes (any kind of workout counts). Only from Apple Health. */
+  exerciseMin?: number;
+  /** Mindful minutes (meditation, breathing). Only from Apple Health. */
+  mindfulMin?: number;
 }
 
 export interface DayCare {

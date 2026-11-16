@@ -331,4 +331,24 @@ ok(A.applyShields(shielded.state).used === 0, 'shields are not used twice');
   const got = T.applyTrade(g0, 'tr1', 'give', tp, rq)!.received;
   ok(got.ivs?.def === 3 && got.id !== old.id, 'traded pets keep their grade');
 }
+// Apple Health extras: rings, exercise, mindful, water
+{
+  const Sc = require('../src/game/scoring');
+  let H = A.setHealthExtras(newGame(), { rings: { move: 1.2, exercise: 1, stand: 0.6 }, exerciseMin: 34, mindfulMin: 6, water: 7 });
+  const dH = A.today(H);
+  ok(Sc.ringsClosed(dH) === 2 && Sc.scoreDay(dH).rings === 30, 'two closed rings = 30 XP');
+  ok(Sc.scoreDay(dH).mindful === 10, '5+ mindful minutes = 10 XP');
+  ok(dH.water === 7, 'water syncs from Apple Health');
+  ok(A.today(A.setHealthExtras(H, { water: 3 })).water === 7, 'synced water never lowers what you logged');
+  const ids = B.habitBuffs(H).map((b: any) => b.id);
+  ok(ids.includes('trained') && ids.includes('calm') && !ids.includes('rings'), 'trained and calm buffs; rings needs all 3');
+  const H3 = A.setHealthExtras(H, { rings: { move: 1, exercise: 1, stand: 1 } });
+  ok(Sc.scoreDay(A.today(H3)).rings === 60 && B.habitBuffs(H3).some((b: any) => b.id === 'rings'), 'all three rings: 60 XP and the Rings Closed buff');
+  const pet = { speciesId: 'p15', nickname: 'X', xp: 3000, shiny: false };
+  const calmF = B.makeFighter(pet, 'm0', [{ id: 'calm', label: '', emoji: '', text: '' }]);
+  ok(calmF.calm === true, 'calm fighters are marked');
+  const plain = B.makeFighter(pet, 'a').stats.atk;
+  const tr = B.makeFighter(pet, 'b', [{ id: 'trained', label: '', emoji: '', text: '' }]).stats.atk;
+  ok(tr > plain, 'trained raises attack');
+}
 console.log(fails ? `${fails} FAILED` : 'ALL PASSED'); process.exit(fails ? 1 : 0);

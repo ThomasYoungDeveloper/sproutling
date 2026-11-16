@@ -11,6 +11,10 @@ export interface DayScore {
   quests: number;
   /** Extra XP from the active pet's element. */
   bonus: number;
+  /** XP from closed activity rings (Apple Health). */
+  rings: number;
+  /** XP from mindful minutes (Apple Health). */
+  mindful: number;
   total: number;
 }
 
@@ -38,6 +42,18 @@ export const ELEMENT_HABIT: Record<Element, { habit: 'steps' | 'sleep' | 'water'
   flower: { habit: 'quests', mult: 2, label: 'Double quest XP', emoji: '🌸' },
 };
 
+/** Activity rings: each closed ring earns XP, and closing all three earns one more ring's worth. */
+export const RING_XP = 15;
+export const MINDFUL_MINUTES = 5;
+export const MINDFUL_XP = 10;
+export const EXERCISE_MINUTES = 30;
+
+export function ringsClosed(d: DayLog): number {
+  const r = d.rings;
+  if (!r) return 0;
+  return [r.move, r.exercise, r.stand].filter((x) => x >= 1).length;
+}
+
 export function scoreDay(d: DayLog, element?: Element): DayScore {
   let steps = Math.min(Math.floor(d.steps / 100), 120) + (d.steps >= 8000 ? 20 : 0);
   let sleep = 0;
@@ -58,7 +74,10 @@ export function scoreDay(d: DayLog, element?: Element): DayScore {
     if (eb.habit === 'water') water += bonus;
     if (eb.habit === 'quests') quests += bonus;
   }
-  return { steps, sleep, water, workout, meals, quests, bonus, total: steps + sleep + water + workout + meals + quests };
+  const closed = ringsClosed(d);
+  const rings = closed * RING_XP + (closed === 3 ? RING_XP : 0);
+  const mindful = (d.mindfulMin ?? 0) >= MINDFUL_MINUTES ? MINDFUL_XP : 0;
+  return { steps, sleep, water, workout, meals, quests, bonus, rings, mindful, total: steps + sleep + water + workout + meals + quests + rings + mindful };
 }
 
 /* ---------- Levels ---------- */

@@ -6,7 +6,7 @@ import { useOverlay } from './Overlay';
 import { Button, Card } from './ui';
 import { buzz, PopIn } from './fx';
 import { colors, font, space } from '../theme';
-import { dailyQuests, ELEMENT_HABIT, scoreDay } from '../game/scoring';
+import { dailyQuests, ELEMENT_HABIT, EXERCISE_MINUTES, MINDFUL_MINUTES, RING_XP, ringsClosed, scoreDay } from '../game/scoring';
 import * as A from '../game/actions';
 import * as C from '../game/care';
 import { healthProvider, isVerified } from '../lib/health';
@@ -71,7 +71,48 @@ export default function TodayCard() {
           );
         })}
       </View>
+      {d.rings || d.mindfulMin !== undefined ? <ActivityRow d={d} /> : null}
     </Card>
+  );
+}
+
+const RING_COLORS = { move: '#FA114F', exercise: '#7ED321', stand: '#1EC8E6' };
+
+/** Apple Health extras: activity rings and mindful minutes, each with what it earns. */
+function ActivityRow({ d }: { d: ReturnType<typeof A.today> }) {
+  const r = d.rings ?? { move: 0, exercise: 0, stand: 0 };
+  const closed = ringsClosed(d);
+  const mindful = d.mindfulMin ?? 0;
+  return (
+    <View style={styles.activity} accessibilityLabel={`Activity rings: ${closed} of 3 closed. Mindful minutes: ${mindful}.`}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+        {(['move', 'exercise', 'stand'] as const).map((k) => (
+          <MiniRing key={k} frac={r[k]} color={RING_COLORS[k]} />
+        ))}
+      </View>
+      <View style={{ flex: 1 }}>
+        <Text style={styles.actTitle}>{closed === 3 ? 'All rings closed!' : `${closed} of 3 rings closed`}</Text>
+        <Text style={styles.actSub}>
+          {closed === 3 ? 'Rings Closed buff: +5% all stats' : `+${RING_XP} XP per ring, bonus for all 3`}
+          {(d.exerciseMin ?? 0) >= EXERCISE_MINUTES || r.exercise >= 1 ? ' · 🏋️ Trained' : ''}
+        </Text>
+      </View>
+      <View style={[styles.mindful, mindful >= MINDFUL_MINUTES && styles.mindfulOn]}>
+        <Text style={[styles.mindfulText, mindful >= MINDFUL_MINUTES && { color: '#5B3FA8' }]}>🧘 {mindful} min</Text>
+      </View>
+    </View>
+  );
+}
+
+function MiniRing({ frac, color }: { frac: number; color: string }) {
+  const r = 9;
+  const len = 2 * Math.PI * r;
+  const f = Math.max(0, Math.min(1, frac));
+  return (
+    <Svg width={24} height={24} viewBox="0 0 24 24">
+      <Circle cx={12} cy={12} r={r} fill="none" stroke={color} strokeOpacity={0.2} strokeWidth={4} />
+      {f > 0 ? <Circle cx={12} cy={12} r={r} fill="none" stroke={color} strokeWidth={4} strokeDasharray={`${len * f} ${len}`} strokeLinecap="round" transform="rotate(-90 12 12)" /> : null}
+    </Svg>
   );
 }
 
@@ -172,6 +213,12 @@ function Glass({ on, index, onPress }: { on: boolean; index: number; onPress: ()
 }
 
 const styles = StyleSheet.create({
+  activity: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: '#F6FAF8', borderRadius: 14, borderWidth: 1, borderColor: colors.line, padding: 10 },
+  actTitle: { fontSize: 14, fontWeight: '900', color: colors.ink },
+  actSub: { fontSize: 12, fontWeight: '800', color: colors.muted },
+  mindful: { borderRadius: 999, paddingHorizontal: 9, paddingVertical: 4, backgroundColor: '#EFEDF6' },
+  mindfulOn: { backgroundColor: '#E4DCFA' },
+  mindfulText: { fontSize: 12, fontWeight: '900', color: colors.muted },
   head: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   title: { fontSize: 19, fontWeight: '900', color: colors.ink },
   subtitle: { fontSize: 12, fontWeight: '800', color: colors.muted },
