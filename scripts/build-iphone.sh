@@ -94,7 +94,7 @@ cat <<TXT
 Apple now processes the build (usually 10–30 minutes). Then:
   1. Install the "TestFlight" app from the App Store on your iPhone.
   2. Open it (same Apple ID) and install Sproutling.
-  3. When Sproutling asks for Apple Health access, turn on Steps and Sleep.
+  3. When Sproutling asks for Apple Health access, tap "Turn On All".
 
 Send Claude this project ID so future builds stay linked: $PROJECT_ID
 TXT
