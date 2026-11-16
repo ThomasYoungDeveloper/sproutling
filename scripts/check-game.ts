@@ -9,6 +9,7 @@ import * as T from '../src/game/trade';
 import * as B from '../src/game/battle';
 import * as Cos from '../src/game/cosmetics';
 import * as Team from '../src/game/team';
+import * as Ex from '../src/game/expedition';
 import { levelFor, levelProgress, stageFor } from '../src/game/scoring';
 import type { ChestKind, GameState } from '../src/game/types';
 
@@ -165,4 +166,20 @@ let WS = { ...newGame(), dayOffset: 0, days: {} } as GameState;
 const todayK = A.todayKey(WS); const mon = Team.weekStart(todayK);
 WS = { ...WS, days: { [todayK]: { ...A.today(WS), steps: 4000 }, ...(mon < todayK ? { [mon]: { ...A.today(WS), steps: 3000 } } : {}), '2000-01-03': { ...A.today(WS), steps: 99999 } } };
 ok(Team.weekSteps(WS) === (mon < todayK ? 7000 : 4000), 'week steps only count this week');
+// Expeditions
+let E = { ...t, expedition: undefined, pets: [...t.pets.map((p) => ({ ...p, xp: 50 }))] } as GameState;
+const epet = E.pets[0];
+ok(!Ex.canStart(E, epet.id, 'caves').ok, 'locked places need a higher level');
+const T0 = 1_000_000_000_000;
+E = Ex.start(E, epet.id, 'meadow', T0);
+ok(!!E.expedition && !Ex.canStart(E, epet.id, 'meadow').ok, 'one expedition at a time');
+ok(!Ex.progress(E, T0)!.done && Ex.finish(E, rr, T0) === null, 'not done right away');
+ok(Math.abs(Ex.progress(E, T0 + 30 * 60_000)!.pct - 0.5) < 0.01, 'half the time is half done');
+const Ewalk = A.addSteps(E, 1500); ok(Ex.progress(Ewalk, T0)!.done, 'walking the steps brings the pet home early');
+ok(Ex.progress(A.addSteps(E, 750), T0 + 15 * 60_000)!.stepsLeft === 750, 'walking and waiting both count');
+ok(Ex.progress(E, T0 + 3_600_000)!.done, 'the timer brings the pet home too');
+const fin = Ex.finish(Ewalk, () => 0.01, T0)!;
+ok(!fin.state.expedition && fin.loot.coins >= 15 && fin.loot.story.includes(epet.nickname), 'returning pet brings coins and a story');
+ok(fin.state.pets.find((p) => p.id === epet.id)!.xp === Ewalk.pets.find((p) => p.id === epet.id)!.xp + 30, 'expedition XP comes from the steps walked');
+ok(!Ex.recall(E).expedition, 'you can call a pet home early');
 console.log(fails ? `${fails} FAILED` : 'ALL PASSED'); process.exit(fails ? 1 : 0);

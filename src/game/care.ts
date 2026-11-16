@@ -2,6 +2,7 @@ import type { DayLog, GameState } from './types';
 import { scoreDay } from './scoring';
 import { stepsToHatch, RARITY_INFO } from './rarity';
 import * as A from './actions';
+import { progress } from './expedition';
 
 /** Each care task adds +10% to today's XP. Pets are never punished for being left alone. */
 export const CARE_BONUS = 0.1;
@@ -100,6 +101,8 @@ export function reminders(s: GameState): Reminder[] {
   const c = d.care ?? {};
   const out: Reminder[] = [];
   const ready = s.eggs.filter(A.isReady).length;
+  const ex = progress(s);
+  if (ex?.done) out.push({ id: 'expedition', icon: '🎒', text: `Your pet is back from ${ex.place.name}!` });
   if (ready) out.push({ id: 'ready', icon: '🥚', text: ready === 1 ? 'An egg is ready to hatch!' : `${ready} eggs are ready to hatch!`, action: 'eggs' });
   if (!c.fed) out.push({ id: 'feed', icon: '🍙', text: `Feed ${name} for +10% XP today`, action: 'feed' });
   if ((c.played ?? 0) < PLAYS_NEEDED) out.push({ id: 'play', icon: '🎾', text: `Play with ${name} (${Math.min(c.played ?? 0, PLAYS_NEEDED)}/${PLAYS_NEEDED}) for +10% XP`, action: 'play' });

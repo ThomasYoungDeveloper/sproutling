@@ -6,6 +6,7 @@ import { Card, SectionHead, Button, Chip } from '../components/ui';
 import PetScene from '../components/PetScene';
 import { useOverlay } from '../components/Overlay';
 import { ShopSheet, WardrobeSheet } from '../components/ShopSheets';
+import ExpeditionCard from '../components/ExpeditionCard';
 import { buzz, PopIn } from '../components/fx';
 import { colors, font, space } from '../theme';
 import { scoreDay, dailyQuests } from '../game/scoring';
@@ -50,6 +51,8 @@ export default function HomeScreen({ onNavigate }: { onNavigate?: (tab: 'eggs' |
           })}
         </Card>
       )}
+
+      <ExpeditionCard />
 
       <Card>
         <SectionHead title="Daily quests" meta="+15 XP each" />

@@ -82,6 +82,8 @@ export interface GameState {
   dayOffset: number;
   /** Daily login rewards: last day claimed and how many claimed in total. */
   login?: { last: string; count: number };
+  /** A pet out exploring. */
+  expedition?: { petId: string; placeId: string; startedAt: number; startSteps: number };
   /** Cosmetics you own. */
   wardrobe?: Record<string, true>;
   /** The scene behind your pet (cosmetic id); the home meadow when unset. */
