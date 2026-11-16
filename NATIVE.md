@@ -24,6 +24,15 @@ The web app at sproutling.vercel.app is the same code that becomes the iPhone an
 
 ## First iPhone build (run on your own computer)
 
+Easiest: open Terminal on the Mac and paste
+
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/ThomasYoungDeveloper/sproutling/main/scripts/build-iphone.sh)
+```
+
+It does every step below and tells you how to answer each question. The manual steps:
+
+
 You need Node.js 20 or newer (https://nodejs.org) and git. EAS builds in the cloud, so no Mac or Xcode is needed.
 
 ```bash
