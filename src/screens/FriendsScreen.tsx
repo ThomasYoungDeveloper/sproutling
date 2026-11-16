@@ -23,7 +23,7 @@ const SECTIONS = [
   { id: 'show', label: 'Show', icon: '🎀' },
 ] as const;
 
-export default function FriendsScreen({ initialAdd, onUsedInitialAdd }: { initialAdd?: string | null; onUsedInitialAdd?: () => void }) {
+export default function FriendsScreen({ initialAdd, onUsedInitialAdd, initialGuild, onUsedInitialGuild }: { initialAdd?: string | null; onUsedInitialAdd?: () => void; initialGuild?: string | null; onUsedInitialGuild?: () => void }) {
   const { myCode, friends, incoming, outgoing, loading, error, addFriend, respond, remove, gift, giftsLeft, refresh, tradesForMe } = useFriends();
   const [target, setTarget] = useState('');
   const [busy, setBusy] = useState(false);
@@ -32,7 +32,7 @@ export default function FriendsScreen({ initialAdd, onUsedInitialAdd }: { initia
   const overlay = useOverlay();
   const openFriend = (f: Friend) => overlay.open(<FriendSheet friend={f} onClose={overlay.close} />);
   const [inviteTop, setInviteTop] = useState(false);
-  const [section, setSection] = useState<'friends' | 'team' | 'battle' | 'show'>('friends');
+  const [section, setSection] = useState<'friends' | 'team' | 'battle' | 'show'>(initialGuild ? 'team' : 'friends');
 
   useEffect(() => {
     refresh();
@@ -131,7 +131,7 @@ export default function FriendsScreen({ initialAdd, onUsedInitialAdd }: { initia
           </Pressable>
         ))}
       </View>
-      {section === 'team' && <TeamCard />}
+      {section === 'team' && <TeamCard initialJoin={initialGuild} onUsedInitialJoin={onUsedInitialGuild} />}
       {section === 'battle' && <ArenaCard />}
       {section === 'battle' && <RankedCard />}
       {section === 'show' && <FashionShow />}
@@ -230,7 +230,7 @@ function Avatar({ t }: { t: Trainer }) {
   const sp = p ? SPECIES_BY_ID[p.speciesId] : undefined;
   return (
     <View style={styles.avatar}>
-      {sp && p ? <PetSprite species={sp} stage={stageFor(p.xp)} size={48} shiny={p.shiny} skin={p.skin} /> : <Text style={{ fontSize: 24 }}>🥚</Text>}
+      {sp && p ? <PetSprite species={sp} stage={stageFor(p.xp)} size={48} shiny={p.shiny} skin={p.skin} hat={(p as any).hat} aura={(p as any).aura} /> : <Text style={{ fontSize: 24 }}>🥚</Text>}
       {sp && p ? <View style={styles.lv}><Text style={styles.lvText}>{levelFor(p.xp)}</Text></View> : null}
     </View>
   );

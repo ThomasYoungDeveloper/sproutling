@@ -88,8 +88,9 @@ export interface PetLike {
   xp: number;
   shiny: boolean;
   hat?: string;
+  aura?: string;
   skin?: Skin;
-  look?: { hat?: string };
+  look?: { hat?: string; aura?: string };
   personality?: Personality;
   train?: Training;
   moves?: string[];
@@ -101,6 +102,7 @@ export interface Fighter {
   nickname: string;
   shiny: boolean;
   hat?: string;
+  aura?: string;
   skin?: Skin;
   xp: number;
   level: number;
@@ -128,6 +130,7 @@ export function makeFighter(p: PetLike, key: string, buffs: HabitBuff[] = [], ca
     nickname: p.nickname || sp.name,
     shiny: p.shiny,
     hat: p.hat ?? p.look?.hat,
+    aura: p.aura ?? p.look?.aura,
     skin: p.skin,
     xp: p.xp,
     level: levelFor(p.xp),

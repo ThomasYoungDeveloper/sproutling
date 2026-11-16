@@ -1,11 +1,10 @@
 import React, { forwardRef } from 'react';
-import { Image, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle, Defs, LinearGradient, RadialGradient, Rect, Stop } from 'react-native-svg';
-import { PET_IMAGES } from './petImages';
-import { SKIN_IMAGES } from './skinImages';
+import PetSprite from './PetSprite';
 import { SPECIES_BY_ID } from '../game/species';
 import { RARITY_INFO } from '../game/rarity';
-import { levelFor } from '../game/scoring';
+import { levelFor, stageFor } from '../game/scoring';
 import { SKIN_INFO } from '../game/skins';
 import { ELEMENT_COLOR, ELEMENT_LABEL } from '../game/battle';
 import { PERSONALITIES, gradeInfo, gradeOf, personalityOf, statsFor } from '../game/stats';
@@ -24,7 +23,6 @@ export const ShareCardView = forwardRef<any, { pet: OwnedPet; trainer: string; f
   const grade = gradeOf(pet);
   const st = statsFor(pet);
   const glow = pet.skin || pet.shiny || sp.rarity === 'legendary' || sp.rarity === 'epic';
-  const img = (pet.skin && SKIN_IMAGES[pet.skin]?.[pet.speciesId]) || PET_IMAGES[pet.speciesId];
   const badges: { text: string; color: string }[] = [
     { text: rarity.label.toUpperCase(), color: rarity.color },
     { text: ELEMENT_LABEL[sp.element].toUpperCase(), color: el },
@@ -62,7 +60,7 @@ export const ShareCardView = forwardRef<any, { pet: OwnedPet; trainer: string; f
               <Rect width="100%" height="100%" fill="url(#gl)" />
             </Svg>
           ) : null}
-          {img ? <Image source={img} style={{ width: s(180), height: s(180) }} resizeMode="contain" /> : null}
+          <PetSprite species={sp} stage={stageFor(pet.xp)} size={s(185)} shiny={false} skin={pet.skin} hat={pet.look?.hat} aura={pet.look?.aura} />
           {pet.shiny ? <Text style={{ position: 'absolute', top: s(8), right: s(18), fontSize: s(21), color: '#E3A81E', fontWeight: '900' }}>✦</Text> : null}
         </View>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: s(5), marginTop: s(9) }}>

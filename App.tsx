@@ -13,13 +13,14 @@ import StarterScreen from './src/screens/StarterScreen';
 import FriendsScreen from './src/screens/FriendsScreen';
 import DailyLoginSheet from './src/components/DailyLoginSheet';
 import { FriendsProvider, useFriends } from './src/state/FriendsContext';
-import { OverlayProvider } from './src/components/Overlay';
+import { OverlayProvider, useOverlay } from './src/components/Overlay';
 import { TeamProvider } from './src/state/TeamContext';
 import { RankedProvider } from './src/state/RankedContext';
 import { useHealthSync } from './src/lib/useHealthSync';
 import { useReminders } from './src/lib/useReminders';
 import { useWalkFinds } from './src/lib/useWalkFinds';
 import Tutorial from './src/components/Tutorial';
+import { DayComplete, QuestBanner, useCelebrations } from './src/components/Celebrations';
 import * as Ach from './src/game/achievements';
 import LabScreen from './src/screens/LabScreen';
 import { FadeSwitch, PopIn, RollingNumber } from './src/components/fx';
@@ -39,12 +40,12 @@ const TABS: { id: Tab; label: string }[] = [
 ];
 
 /** A friend code from an invite link (sproutling.app/?add=CODE), read once and removed from the address bar. */
-function takeInviteCode(): string | null {
+function takeInviteCode(param = 'add'): string | null {
   if (Platform.OS !== 'web' || typeof window === 'undefined') return null;
   const url = new URL(window.location.href);
-  const code = url.searchParams.get('add');
+  const code = url.searchParams.get(param);
   if (!code) return null;
-  url.searchParams.delete('add');
+  url.searchParams.delete(param);
   window.history.replaceState(null, '', url.pathname + url.search + url.hash);
   return code.slice(0, 20);
 }
@@ -55,6 +56,7 @@ function Shell() {
   useReminders();
   const { incoming, tradesForMe, notice, dismissNotice } = useFriends();
   const [invite, setInvite] = useState<string | null>(null);
+  const [guildInvite, setGuildInvite] = useState<string | null>(null);
   const [showLogin, setShowLogin] = useState(false);
   const loginShownFor = useRef<string | null>(null);
   const { user, username } = useAuth();
@@ -74,6 +76,11 @@ function Shell() {
       setInvite(code);
       setTab('friends');
     }
+    const guild = takeInviteCode('guild');
+    if (guild) {
+      setGuildInvite(guild.toUpperCase());
+      setTab('friends');
+    }
   }, []);
 
   // Pop up the daily reward once a day, after the save has synced (so it isn't shown twice across devices).
@@ -81,6 +88,18 @@ function Shell() {
 
   // Every 1,000 steps your pet might find a chest (or, with Apple Health, an egg).
   const [walkNote, dismissWalkNote] = useWalkFinds(settled && !starter);
+  // Confetti and banners when quests and care are finished.
+  const cheer = useCelebrations(settled && !starter && !!state.tutorialDone);
+  const layers = useOverlay();
+  useEffect(() => {
+    layers.setTop(
+      cheer.big ? (
+        <DayComplete onClose={cheer.dismissBig} onChests={() => { layers.close(); setTab('chests'); }} />
+      ) : cheer.banner ? (
+        <QuestBanner key={cheer.banner.id} banner={cheer.banner} onDone={cheer.dismissBanner} />
+      ) : null,
+    );
+  }, [cheer.big, cheer.banner?.id]);
 
   // Once a day, let streak shields cover any missed day.
   const [shieldNote, setShieldNote] = useState<string | null>(null);
@@ -158,7 +177,7 @@ function Shell() {
         {tab === 'eggs' && <EggsScreen />}
         {tab === 'chests' && <ChestsScreen />}
         {tab === 'dex' && <DexScreen />}
-        {tab === 'friends' && <FriendsScreen initialAdd={invite} onUsedInitialAdd={() => setInvite(null)} />}
+        {tab === 'friends' && <FriendsScreen initialAdd={invite} onUsedInitialAdd={() => setInvite(null)} initialGuild={guildInvite} onUsedInitialGuild={() => setGuildInvite(null)} />}
             </View>
           </FadeSwitch>
         )}

@@ -24,7 +24,7 @@ function Slot({ petId, label, onPress }: { petId: string | null; label: string; 
     <Pressable onPress={onPress} style={({ pressed }) => [styles.slot, pet && styles.slotFull, pressed && { transform: [{ scale: 0.97 }] }]} accessibilityRole="button" accessibilityLabel={pet ? `${label}: ${pet.nickname}, tap to change` : `Choose ${label}`}>
       {pet && sp ? (
         <>
-          <PetSprite species={sp} stage={stageFor(pet.xp)} size={86} shiny={pet.shiny} skin={pet.skin} />
+          <PetSprite species={sp} stage={stageFor(pet.xp)} size={86} shiny={pet.shiny} skin={pet.skin} hat={pet.look?.hat} aura={pet.look?.aura} />
           <Text style={styles.slotName} numberOfLines={1}>{pet.nickname}</Text>
           <Text style={styles.slotSub}>Lv {levelFor(pet.xp)}{pet.skin ? ` · ${SKIN_INFO[pet.skin].emoji}` : ''}</Text>
         </>

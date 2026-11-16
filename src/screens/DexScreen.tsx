@@ -84,7 +84,7 @@ export default function DexScreen() {
             const active = p.id === state.activePetId;
             return (
               <Pressable key={p.id} onPress={() => overlay.open(<PetSheet petId={p.id} onClose={overlay.close} />)} style={[styles.tile, active && styles.active]} accessibilityLabel={`Open ${p.nickname}`}>
-                <PetSprite species={sp} stage={stageFor(p.xp)} size={86} shiny={p.shiny} skin={p.skin} hat={p.look?.hat} />
+                <PetSprite species={sp} stage={stageFor(p.xp)} size={86} shiny={p.shiny} skin={p.skin} hat={p.look?.hat} aura={p.look?.aura} />
                 <View style={styles.lv}><Text style={styles.lvText}>Lv {levelFor(p.xp)}</Text></View>
                 {p.skin ? <Text style={[styles.skinBadge, { color: SKIN_INFO[p.skin].color }]}>{SKIN_INFO[p.skin].emoji}</Text> : null}
                 {pointsLeft(p) > 0 ? <View style={styles.pts}><Text style={styles.ptsText}>+{pointsLeft(p)}</Text></View> : null}

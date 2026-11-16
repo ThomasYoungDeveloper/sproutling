@@ -180,7 +180,7 @@ export default function BattleScreen({ opponent, onClose, onResult }: { opponent
   return (
     <View style={styles.full}>
       <View style={styles.arena}>
-        <Backdrop element={me.element} sky={sky} />
+        <Backdrop element={me.element} sky={sky} scene={state.scene} />
         <TeamDots fighters={battle.theirs} index={battle.ti} style={{ top: 10, right: 12 }} />
         <TeamDots fighters={battle.mine} index={battle.mi} style={{ bottom: 32, left: 16 }} />
         <FighterCard f={them} label={opponent.name} style={{ top: 34, left: 12 }} />
@@ -394,7 +394,7 @@ function FighterSprite({ f, side, lunge, hit, faint, style, glow = 0 }: { f: B.F
     >
       <PowerGlow count={glow} size={side === 'me' ? 150 : 128} />
       <PopIn key={f.key}>
-        <PetSprite species={sp} stage={stageFor(f.xp)} size={side === 'me' ? 150 : 128} shiny={f.shiny} skin={f.skin} hat={f.hat} mood={f.status?.type === 'drowsy' ? 'sleepy' : 'happy'} />
+        <PetSprite species={sp} stage={stageFor(f.xp)} size={side === 'me' ? 150 : 128} shiny={f.shiny} skin={f.skin} hat={f.hat} aura={f.aura} mood={f.status?.type === 'drowsy' ? 'sleepy' : 'happy'} />
       </PopIn>
     </Animated.View>
   );

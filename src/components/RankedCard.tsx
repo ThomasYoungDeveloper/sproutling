@@ -85,7 +85,7 @@ export default function RankedCard() {
           return (
             <View key={r.username + i} style={[styles.row, r.me && styles.rowMe]}>
               <Text style={styles.place}>{i + 1}</Text>
-              <View style={styles.avatar}>{sp && p ? <PetSprite species={sp} stage={stageFor(p.xp)} size={32} skin={p.skin} /> : <Text>🥚</Text>}</View>
+              <View style={styles.avatar}>{sp && p ? <PetSprite species={sp} stage={stageFor(p.xp)} size={32} skin={p.skin} hat={(p as any).hat} /> : <Text>🥚</Text>}</View>
               <Text style={styles.name} numberOfLines={1}>{r.username}{r.me ? ' (you)' : ''}</Text>
               <Text style={[styles.pts, { color: t.color }]}>{t.emoji} {r.points}</Text>
             </View>

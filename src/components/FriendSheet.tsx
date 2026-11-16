@@ -11,6 +11,7 @@ import { gradeOf } from '../game/stats';
 import { GIFT_COINS, GIFTS_PER_DAY } from '../game/actions';
 import { lastSeen } from '../screens/friendsShared';
 import { Backdrop } from './PetScene';
+import PetZoom from './PetZoom';
 import { friendOpponent, useBattle, useTradeOffer } from './SocialPanels';
 
 export default function FriendSheet({ friend, onClose }: { friend: Friend; onClose: () => void }) {
@@ -20,6 +21,7 @@ export default function FriendSheet({ friend, onClose }: { friend: Friend; onClo
   const live = friends.find((f) => f.id === friend.id) ?? friend;
   const [confirmRemove, setConfirmRemove] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
+  const [zoom, setZoom] = useState(false);
   const card = live.card;
   const active = card?.active;
   const activeSpecies = active ? SPECIES_BY_ID[active.speciesId] : undefined;
@@ -28,12 +30,17 @@ export default function FriendSheet({ friend, onClose }: { friend: Friend; onClo
     <View style={styles.backdrop}>
       <Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessibilityLabel="Close" />
       <View style={styles.sheet}>
+        <Pressable onPress={onClose} style={styles.back} accessibilityRole="button" accessibilityLabel="Back">
+          <Text style={styles.backText}>‹ Back</Text>
+        </Pressable>
         <ScrollView contentContainerStyle={{ gap: space.sm }}>
           <View style={styles.hero}>
             {activeSpecies ? <Backdrop element={activeSpecies.element} sky="day" scene={card?.scene} /> : null}
             {activeSpecies && active ? (
               <PopIn>
-                <PetSprite species={activeSpecies} stage={stageFor(active.xp)} size={150} shiny={active.shiny} skin={active.skin} hat={active.hat} aura={active.aura} />
+                <Pressable onPress={() => setZoom(true)} accessibilityRole="button" accessibilityLabel={`See ${active.nickname} up close`}>
+                  <PetSprite species={activeSpecies} stage={stageFor(active.xp)} size={150} shiny={active.shiny} skin={active.skin} hat={active.hat} aura={active.aura} />
+                </Pressable>
               </PopIn>
             ) : (
               <Text style={{ fontSize: 64 }}>🥚</Text>
@@ -65,7 +72,7 @@ export default function FriendSheet({ friend, onClose }: { friend: Friend; onClo
                   if (!sp) return null;
                   return (
                     <View key={i} style={styles.tile}>
-                      <PetSprite species={sp} stage={stageFor(p.xp)} size={64} shiny={p.shiny} skin={p.skin} hat={p.hat} />
+                      <PetSprite species={sp} stage={stageFor(p.xp)} size={64} shiny={p.shiny} skin={p.skin} hat={p.hat} aura={p.aura} />
                       <View style={styles.lv}><Text style={styles.lvText}>Lv {levelFor(p.xp)} · {gradeOf(p)}%</Text></View>
                       <Text style={styles.name} numberOfLines={1}>{p.nickname}</Text>
                       <RarityBadge rarity={sp.rarity} />
@@ -136,6 +143,7 @@ export default function FriendSheet({ friend, onClose }: { friend: Friend; onClo
           </View>
         </ScrollView>
       </View>
+      {zoom && active ? <PetZoom pet={active} scene={card?.scene} onClose={() => setZoom(false)} /> : null}
     </View>
   );
 }
@@ -150,6 +158,8 @@ function Stat({ label, value }: { label: string; value: string }) {
 }
 
 const styles = StyleSheet.create({
+  back: { alignSelf: 'flex-start', minHeight: 40, paddingHorizontal: 10, marginLeft: -8, marginTop: -6, marginBottom: 4, justifyContent: 'center' },
+  backText: { fontSize: 16, fontWeight: '900', color: colors.mintDark },
   backdrop: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(24,30,48,0.55)', justifyContent: 'center', alignItems: 'center', padding: space.lg, zIndex: 50 },
   sheet: { backgroundColor: '#FFFFFF', borderRadius: 22, padding: space.lg, width: '100%', maxWidth: 420, maxHeight: '92%' },
   hero: { alignItems: 'center', gap: 2, backgroundColor: colors.sky, borderRadius: 18, paddingVertical: space.md, overflow: 'hidden' },

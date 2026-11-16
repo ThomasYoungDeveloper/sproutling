@@ -6,6 +6,9 @@ import { readCard, type PublicCard } from '../game/card';
 import * as A from '../game/actions';
 import * as T from '../game/trade';
 import { useReveal } from '../components/RevealOverlay';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { play } from '../lib/sound';
+import { buzz } from '../components/fx';
 
 export interface Trainer {
   id: string;
@@ -109,6 +112,33 @@ export function FriendsProvider({ children }: { children: React.ReactNode }) {
 
   const say = useCallback((text: string) => setNotice({ id: Date.now(), text }), []);
 
+  /**
+   * Tells you when someone accepts a request you sent, or sends you a new one.
+   * Remembers what it has already told you (per account), so it also catches what happened while you were away.
+   */
+  const announce = useCallback(async (me: string, sent: { id: string; accepted: boolean; name: string }[], incomingNow: { id: string; name: string }[]) => {
+    const key = `sproutling/friendseen/${me}`;
+    let seen: { pending: string[]; incoming: string[] } | null = null;
+    try {
+      const raw = await AsyncStorage.getItem(key);
+      seen = raw ? JSON.parse(raw) : null;
+    } catch {}
+    const next = { pending: sent.filter((r) => !r.accepted).map((r) => r.id), incoming: incomingNow.map((r) => r.id) };
+    AsyncStorage.setItem(key, JSON.stringify(next)).catch(() => {});
+    if (!seen) return; // First time on this device: just remember, don't replay old news.
+    const accepted = sent.filter((r) => r.accepted && seen!.pending.includes(r.id)).map((r) => r.name);
+    const fresh = incomingNow.filter((r) => !seen!.incoming.includes(r.id)).map((r) => r.name);
+    const list = (n: string[]) => (n.length === 1 ? n[0] : n.length === 2 ? `${n[0]} and ${n[1]}` : `${n[0]} and ${n.length - 1} others`);
+    if (accepted.length) {
+      say(`🎉 ${list(accepted)} accepted your friend request! You can battle, trade and send gifts now.`);
+      play('chime');
+      buzz('success', 'none');
+    } else if (fresh.length) {
+      say(`👋 ${list(fresh)} sent you a friend request. Check the Friends tab!`);
+      play('pop');
+    }
+  }, [say]);
+
   const refresh = useCallback(async () => {
     if (!user) return;
     const me = user.id;
@@ -147,6 +177,7 @@ export function FriendsProvider({ children }: { children: React.ReactNode }) {
       else if (r.addressee === me) inc.push({ id: r.id, from: t });
       else out.push({ id: r.id, to: t });
     });
+    announce(me, rows.filter((r) => r.requester === me).map((r) => ({ id: r.id, accepted: r.status === 'accepted', name: (people[r.addressee] ?? { username: 'A trainer' }).username })), inc.map((r) => ({ id: r.id, name: r.from.username })));
     // Friends who played today first (most XP first), then everyone else by name.
     const today = new Date().toDateString();
     const xpToday = (t: Trainer) => (t.cardUpdatedAt && new Date(t.cardUpdatedAt).toDateString() === today ? (t.card?.todayXp ?? 0) + 1 : 0);

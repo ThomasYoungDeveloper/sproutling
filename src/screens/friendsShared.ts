@@ -8,10 +8,22 @@ export function inviteLink(code: string): string {
   return `${origin}/?add=${code}`;
 }
 
+export function guildLink(code: string): string {
+  const origin = Platform.OS === 'web' && typeof window !== 'undefined' ? window.location.origin : SITE;
+  return `${origin}/?guild=${code}`;
+}
+
+/** Shares an invite to your guild: a link that opens the join screen with the code filled in. */
+export function shareGuildInvite(code: string, name: string) {
+  return shareText(`Join my guild "${name}" on Sproutling! We walk toward a weekly goal together and fight a raid boss. Guild code: ${code}.`, guildLink(code));
+}
+
 /** Opens the share sheet where there is one, otherwise copies the invite. */
-export async function shareInvite(code: string): Promise<'shared' | 'copied' | 'cancelled' | 'failed'> {
-  const url = inviteLink(code);
-  const text = `Be my friend on Sproutling! My friend code is ${code}.`;
+export function shareInvite(code: string) {
+  return shareText(`Be my friend on Sproutling! My friend code is ${code}.`, inviteLink(code));
+}
+
+async function shareText(text: string, url: string): Promise<'shared' | 'copied' | 'cancelled' | 'failed'> {
   if (Platform.OS === 'web') {
     const nav: any = typeof navigator !== 'undefined' ? navigator : null;
     if (nav?.share) {

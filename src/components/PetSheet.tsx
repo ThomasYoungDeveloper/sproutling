@@ -14,6 +14,7 @@ import * as A from '../game/actions';
 import type { OwnedPet } from '../game/types';
 import { sharePetCard } from '../lib/shareCapture';
 import { ShareCardView } from './ShareCardView';
+import PetZoom from './PetZoom';
 import { useAuth } from '../state/AuthContext';
 import { useFriends } from '../state/FriendsContext';
 
@@ -25,6 +26,7 @@ export default function PetSheet({ petId, onClose }: { petId: string; onClose: (
   const [msg, setMsg] = useState<string | null>(null);
   const [sharing, setSharing] = useState(false);
   const [preview, setPreview] = useState(false);
+  const [zoom, setZoom] = useState(false);
   const [cardW, setCardW] = useState(0);
   const cardRef = useRef<any>(null);
   const { username } = useAuth();
@@ -48,11 +50,17 @@ export default function PetSheet({ petId, onClose }: { petId: string; onClose: (
     <View style={styles.backdrop}>
       <Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessibilityLabel="Close" />
       <View style={styles.sheet}>
+        <View style={styles.topBar}>
+          <Pressable onPress={onClose} style={styles.back} accessibilityRole="button" accessibilityLabel="Back">
+            <Text style={styles.backText}>‹ Back</Text>
+          </Pressable>
+        </View>
         <ScrollView contentContainerStyle={{ gap: space.sm }}>
           <View style={styles.head}>
-            <View style={styles.art}>
-              <PetSprite species={sp} stage={stageFor(pet.xp)} size={110} shiny={pet.shiny} skin={pet.skin} hat={pet.look?.hat} />
-            </View>
+            <Pressable onPress={() => setZoom(true)} style={({ pressed }) => [styles.art, pressed && { transform: [{ scale: 0.95 }] }]} accessibilityRole="button" accessibilityLabel={`See ${pet.nickname} up close`}>
+              <PetSprite species={sp} stage={stageFor(pet.xp)} size={110} shiny={pet.shiny} skin={pet.skin} hat={pet.look?.hat} aura={pet.look?.aura} />
+              <View style={styles.zoomBadge}><Text style={styles.zoomText}>🔍</Text></View>
+            </Pressable>
             <View style={{ flex: 1, gap: 4 }}>
               <Text style={font.title} numberOfLines={1}>{pet.nickname}</Text>
               <Text style={font.small}>Lv {lv} {sp.name}{pet.skin ? ` · ${SKIN_INFO[pet.skin].emoji} ${SKIN_INFO[pet.skin].label}` : ''}{pet.shiny ? ' · ✦ Shiny' : ''}</Text>
@@ -189,6 +197,7 @@ export default function PetSheet({ petId, onClose }: { petId: string; onClose: (
           <Button primary label="Done" onPress={onClose} />
         </ScrollView>
       </View>
+      {zoom ? <PetZoom pet={{ ...pet, hat: pet.look?.hat, aura: pet.look?.aura }} scene={isActive ? state.scene : undefined} onClose={() => setZoom(false)} /> : null}
       {preview ? (
         <View style={styles.backdrop}>
           <View style={[styles.sheet, { alignItems: 'center', gap: space.sm }]} onLayout={(e) => setCardW(Math.min(360, e.nativeEvent.layout.width - space.lg * 2))}>
@@ -228,6 +237,11 @@ const styles = StyleSheet.create({
   backdrop: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(24,30,48,0.6)', justifyContent: 'center', alignItems: 'center', padding: space.md, zIndex: 80 },
   sheet: { backgroundColor: '#FFFFFF', borderRadius: 22, padding: space.lg, width: '100%', maxWidth: 460, maxHeight: '96%' },
   head: { flexDirection: 'row', gap: space.sm, alignItems: 'center' },
+  topBar: { flexDirection: 'row', marginTop: -6, marginBottom: 4 },
+  back: { minHeight: 40, paddingHorizontal: 10, marginLeft: -8, borderRadius: 999, justifyContent: 'center' },
+  backText: { fontSize: 16, fontWeight: '900', color: colors.mintDark },
+  zoomBadge: { position: 'absolute', right: 4, bottom: 4, backgroundColor: '#FFFFFF', borderRadius: 999, width: 26, height: 26, alignItems: 'center', justifyContent: 'center' },
+  zoomText: { fontSize: 13 },
   art: { width: 116, height: 116, borderRadius: 20, backgroundColor: colors.sky, alignItems: 'center', justifyContent: 'center' },
   chip: { borderRadius: 999, paddingHorizontal: 8, paddingVertical: 2 },
   chipText: { color: '#FFFFFF', fontWeight: '900', fontSize: 11 },

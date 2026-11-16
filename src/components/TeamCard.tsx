@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useTeam, type TeamMember } from '../state/TeamContext';
 import { Button, Card, ProgressBar } from './ui';
@@ -8,7 +8,7 @@ import { colors, font, space } from '../theme';
 import { SPECIES_BY_ID } from '../game/species';
 import { stageFor } from '../game/scoring';
 import { TEAM_EMOJIS, raidBoss, RAID_HITS_PER_DAY } from '../game/team';
-import { copyText } from '../screens/friendsShared';
+import { copyText, shareGuildInvite } from '../screens/friendsShared';
 
 function daysLeftInWeek(): number {
   const d = new Date().getUTCDay();
@@ -21,7 +21,7 @@ function MemberRow({ m, top }: { m: TeamMember; top: number }) {
   return (
     <View style={styles.member}>
       <View style={styles.avatar}>
-        {sp && p ? <PetSprite species={sp} stage={stageFor(p.xp)} size={40} shiny={p.shiny} skin={p.skin} hat={p.hat} /> : <Text style={{ fontSize: 20 }}>🥚</Text>}
+        {sp && p ? <PetSprite species={sp} stage={stageFor(p.xp)} size={40} shiny={p.shiny} skin={p.skin} hat={p.hat} aura={p.aura} /> : <Text style={{ fontSize: 20 }}>🥚</Text>}
       </View>
       <View style={{ flex: 1, gap: 3 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
@@ -92,7 +92,7 @@ function RaidBox({ onWin, onMsg }: { onWin: () => void; onMsg: (m: { ok: boolean
   );
 }
 
-export default function TeamCard() {
+export default function TeamCard({ initialJoin, onUsedInitialJoin }: { initialJoin?: string | null; onUsedInitialJoin?: () => void } = {}) {
   const { team, loading, create, join, leave, claim } = useTeam();
   const [mode, setMode] = useState<'none' | 'create' | 'join'>('none');
   const [name, setName] = useState('');
@@ -102,6 +102,17 @@ export default function TeamCard() {
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [confirmLeave, setConfirmLeave] = useState(false);
   const [party, setParty] = useState(0);
+
+  // Opened from a friend's guild invite link: open the join form with their code.
+  useEffect(() => {
+    if (!initialJoin || loading) return;
+    if (team) setMsg({ ok: false, text: team.code === initialJoin ? 'You’re already in this guild!' : 'You’re already in a guild. Leave it first to join your friend’s.' });
+    else {
+      setMode('join');
+      setCode(initialJoin);
+    }
+    onUsedInitialJoin?.();
+  }, [initialJoin, loading]);
 
   if (loading) return null;
 
@@ -211,6 +222,15 @@ export default function TeamCard() {
           <Text style={styles.codeText}>{team.code}</Text>
         </Pressable>
       </View>
+
+      <Button
+        label="📣 Invite friends to the guild"
+        onPress={async () => {
+          const r = await shareGuildInvite(team.code, team.name);
+          if (r === 'copied') setMsg({ ok: true, text: 'Invite link copied! Paste it in a text or group chat.' });
+          else if (r === 'failed') setMsg({ ok: true, text: `Send friends your guild code: ${team.code}` });
+        }}
+      />
 
       <View style={styles.goalBox}>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
