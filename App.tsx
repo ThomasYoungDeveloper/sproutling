@@ -16,6 +16,7 @@ import { FriendsProvider, useFriends } from './src/state/FriendsContext';
 import { OverlayProvider } from './src/components/Overlay';
 import { TeamProvider } from './src/state/TeamContext';
 import { RankedProvider } from './src/state/RankedContext';
+import { useHealthSync } from './src/lib/useHealthSync';
 import * as Ach from './src/game/achievements';
 import LabScreen from './src/screens/LabScreen';
 import { FadeSwitch, PopIn, RollingNumber } from './src/components/fx';
@@ -47,6 +48,7 @@ function takeInviteCode(): string | null {
 
 function Shell() {
   const { state, apply, reset, sync, loaded } = useGame();
+  useHealthSync();
   const { incoming, tradesForMe, notice, dismissNotice } = useFriends();
   const [invite, setInvite] = useState<string | null>(null);
   const [showLogin, setShowLogin] = useState(false);

@@ -9,6 +9,7 @@ import { colors, font, space } from '../theme';
 import { dailyQuests, ELEMENT_HABIT, scoreDay } from '../game/scoring';
 import * as A from '../game/actions';
 import * as C from '../game/care';
+import { healthProvider, isVerified } from '../lib/health';
 
 type Habit = 'steps' | 'water' | 'sleep';
 
@@ -120,7 +121,11 @@ function LogSheet({ habit, onClose }: { habit: Habit; onClose: () => void }) {
         </View>
         <Text style={[font.body, { fontWeight: '800', color: colors.muted }]}>{line}</Text>
 
-        {habit === 'steps' ? (
+        {habit !== 'water' && isVerified(healthProvider()) ? (
+          <View style={styles.goal}>
+            <Text style={styles.goalText}>❤️ Synced from Apple Health. Walk and sleep with your phone or watch and it fills in by itself.</Text>
+          </View>
+        ) : habit === 'steps' ? (
           <View style={styles.controls}>
             {[500, 1000, 5000].map((n) => (
               <Button key={n} label={`+${n.toLocaleString()}`} onPress={() => { buzz(); apply((s) => A.addSteps(s, n)); }} style={{ flex: 1 }} />
@@ -142,7 +147,7 @@ function LogSheet({ habit, onClose }: { habit: Habit; onClose: () => void }) {
         <View style={[styles.goal, questDone && { backgroundColor: colors.mintSoft }]}>
           <Text style={[styles.goalText, questDone && { color: colors.mintDark }]}>{questDone ? `✓ ${goal} Keep going for more XP.` : goal}</Text>
         </View>
-        <Text style={font.tiny}>Preview build: you log habits by hand. The phone app fills in steps and sleep from Apple Health or Health Connect.</Text>
+        {isVerified(healthProvider()) ? null : <Text style={font.tiny}>Preview build: you log habits by hand. The phone app fills in steps and sleep from Apple Health or Health Connect.</Text>}
         <Button primary label="Done" onPress={onClose} />
       </View>
     </View>

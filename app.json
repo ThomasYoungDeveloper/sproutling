@@ -28,6 +28,16 @@
       "favicon": "./assets/favicon.png",
       "name": "Sproutling"
     },
-    "scheme": "sproutling"
+    "scheme": "sproutling",
+    "plugins": [
+      [
+        "@kingstinct/react-native-healthkit",
+        {
+          "NSHealthShareUsageDescription": "Sproutling reads your steps and sleep so your pet can grow from your real healthy habits.",
+          "NSHealthUpdateUsageDescription": false,
+          "background": false
+        }
+      ]
+    ]
   }
 }

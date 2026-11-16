@@ -1,4 +1,5 @@
 import { Platform } from 'react-native';
+import { nativeProvider } from './healthNative';
 
 /**
  * Where the game gets steps and sleep from.
@@ -30,10 +31,10 @@ const manual: HealthProvider = {
   readDay: async () => null,
 };
 
-/** The provider for this device. Native providers plug in here once the phone build adds them. */
+/** The provider for this device: Apple Health on iPhone, manual everywhere else (for now). */
 export function healthProvider(): HealthProvider {
-  if (Platform.OS === 'web') return manual;
-  return manual;
+  if (Platform.OS === 'web' || !nativeProvider) return manual;
+  return nativeProvider;
 }
 
 export const isVerified = (p: HealthProvider) => p.source !== 'manual';

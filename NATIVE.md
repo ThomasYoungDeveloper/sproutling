@@ -9,20 +9,43 @@ The web app at sproutling.vercel.app is the same code that becomes the iPhone an
 - Health permission text for iOS in `app.json`.
 - `src/lib/health.ts`: one place the game reads steps and sleep from. On the web it stays manual; the phone build plugs in the native readers here.
 
-## What Tom needs to do (one time)
+## Accounts
 
 1. Apple Developer account: done.
-2. Create a free Expo account at https://expo.dev (this builds the app in the cloud, no Mac needed).
+2. Expo account: done.
 3. Google Play developer account ($25 one-time) when we're ready for Android.
 
-## First iPhone build (we do this together)
+## Apple Health: done in code
 
-1. Install the health libraries (only work in a real phone build, not Expo Go):
-   - iOS: `@kingstinct/react-native-healthkit` (with its Expo config plugin)
-   - Android: `react-native-health-connect` v4 (config plugin included; needs `minSdkVersion` 26 via `expo-build-properties`)
-2. Fill in the native providers in `src/lib/health.ts` (steps and sleep for a day).
-3. Run `npx eas-cli@latest build --profile preview --platform ios` and sign in with the Expo account; EAS asks to log in to Apple and creates the certificates.
-4. Install on your iPhone through TestFlight (`npx eas-cli@latest submit --platform ios`).
+- `@kingstinct/react-native-healthkit` is installed with its config plugin in `app.json` (read-only access to steps and sleep, no background delivery).
+- `src/lib/healthNative.ios.ts` reads today's steps (midnight to midnight, iPhone + Watch merged) and last night's sleep (6 pm to noon, only "asleep" stages, overlaps merged).
+- `src/lib/useHealthSync.ts` syncs when the app opens, when it comes back to the front, and every 5 minutes. Steps only go up; sleep uses the verified number.
+- The web version stays manual (`src/lib/healthNative.ts`).
+
+## First iPhone build (run on your own computer)
+
+You need Node.js 20 or newer (https://nodejs.org) and git. EAS builds in the cloud, so no Mac or Xcode is needed.
+
+```bash
+git clone https://github.com/ThomasYoungDeveloper/sproutling.git
+cd sproutling
+npm install
+npx eas-cli@latest login                 # your Expo account
+npx eas-cli@latest init                  # links the project to your Expo account (adds a projectId to app.json)
+npx eas-cli@latest build --platform ios --profile production
+```
+
+During the build command, answer yes when it offers to log in to your Apple account and to create the certificates and provisioning profile. It also turns on the HealthKit capability for the app ID. The build runs in Expo's cloud (about 15–25 minutes) and you get a link when it's done.
+
+Then send it to TestFlight:
+
+```bash
+npx eas-cli@latest submit --platform ios --latest
+```
+
+This uploads to App Store Connect (it can create the app record for you). Apple takes about 10–30 minutes to process it. Then install the TestFlight app on your iPhone, open it, and install Sproutling. Your account in App Store Connect is automatically an internal tester.
+
+After `eas init`, commit and push the `app.json` change (or tell Claude the projectId) so future builds use the same project.
 
 ## Later
 
