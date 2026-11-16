@@ -4,12 +4,14 @@ import { useFriends, type Friend, type Trainer } from '../state/FriendsContext';
 import { Button, Card, SectionHead } from '../components/ui';
 import PetSprite from '../components/PetSprite';
 import FriendSheet from '../components/FriendSheet';
+import { useOverlay } from '../components/Overlay';
 import { buzz } from '../components/fx';
 import { colors, font, space } from '../theme';
 import { SPECIES_BY_ID } from '../game/species';
 import { levelFor, stageFor } from '../game/scoring';
 import { GIFTS_PER_DAY } from '../game/actions';
 import { activeToday, copyText, lastSeen, shareInvite } from './friendsShared';
+import { ArenaCard, TradesCard } from '../components/SocialPanels';
 
 export default function FriendsScreen({ initialAdd, onUsedInitialAdd }: { initialAdd?: string | null; onUsedInitialAdd?: () => void }) {
   const { myCode, friends, incoming, outgoing, loading, error, addFriend, respond, remove, gift, giftsLeft, refresh } = useFriends();
@@ -17,7 +19,9 @@ export default function FriendsScreen({ initialAdd, onUsedInitialAdd }: { initia
   const [busy, setBusy] = useState(false);
   const [addMsg, setAddMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [codeMsg, setCodeMsg] = useState<string | null>(null);
-  const [open, setOpen] = useState<Friend | null>(null);
+  const overlay = useOverlay();
+  const openFriend = (f: Friend) => overlay.open(<FriendSheet friend={f} onClose={overlay.close} />);
+  const [inviteTop, setInviteTop] = useState(false);
 
   useEffect(() => {
     refresh();
@@ -27,6 +31,7 @@ export default function FriendsScreen({ initialAdd, onUsedInitialAdd }: { initia
   useEffect(() => {
     if (initialAdd) {
       setTarget(initialAdd);
+      setInviteTop(true);
       setAddMsg({ ok: true, text: 'Tap Add to send your friend request.' });
       onUsedInitialAdd?.();
     }
@@ -43,8 +48,8 @@ export default function FriendsScreen({ initialAdd, onUsedInitialAdd }: { initia
     setBusy(false);
   };
 
-  return (
-    <View style={{ gap: space.md }}>
+  const invite = (
+    <>
       <Card style={{ backgroundColor: colors.mintSoft, borderColor: '#BFE8D6' }}>
         <Text style={font.small}>Your friend code</Text>
         <View style={styles.codeRow}>
@@ -102,6 +107,12 @@ export default function FriendsScreen({ initialAdd, onUsedInitialAdd }: { initia
         {addMsg ? <Text style={[styles.msg, addMsg.ok && styles.ok]}>{addMsg.text}</Text> : null}
       </Card>
 
+    </>
+  );
+
+  return (
+    <View style={{ gap: space.md }}>
+      {(friends.length === 0 || inviteTop) && invite}
       {incoming.length > 0 && (
         <Card style={{ borderColor: colors.peach }}>
           <SectionHead title="Friend requests" meta={`${incoming.length} new`} />
@@ -127,6 +138,9 @@ export default function FriendsScreen({ initialAdd, onUsedInitialAdd }: { initia
         </Card>
       )}
 
+      <TradesCard />
+      <ArenaCard />
+
       <Card>
         <SectionHead title="Friends" meta={friends.length ? `🎁 ${giftsLeft} of ${GIFTS_PER_DAY} gifts left today` : undefined} />
         {error ? <Text style={styles.msg}>{error}</Text> : null}
@@ -140,7 +154,7 @@ export default function FriendsScreen({ initialAdd, onUsedInitialAdd }: { initia
           </View>
         ) : null}
         {friends.map((f) => (
-          <Pressable key={f.id} onPress={() => setOpen(f)} style={({ pressed }) => [styles.person, pressed && { opacity: 0.7 }]} accessibilityRole="button" accessibilityLabel={`Open ${f.username}'s profile`}>
+          <Pressable key={f.id} onPress={() => openFriend(f)} style={({ pressed }) => [styles.person, pressed && { opacity: 0.7 }]} accessibilityRole="button" accessibilityLabel={`Open ${f.username}'s profile`}>
             <Avatar t={f} />
             <View style={{ flex: 1 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
@@ -166,6 +180,8 @@ export default function FriendsScreen({ initialAdd, onUsedInitialAdd }: { initia
         {friends.length > 0 ? <Text style={font.tiny}>Send up to 3 gifts a day, one per friend. Each gift holds 20 coins, and sometimes a surprise chest.</Text> : null}
       </Card>
 
+      {friends.length > 0 && !inviteTop && invite}
+
       {outgoing.length > 0 && (
         <Card>
           <SectionHead title="Waiting on" meta={`${outgoing.length}`} />
@@ -179,7 +195,6 @@ export default function FriendsScreen({ initialAdd, onUsedInitialAdd }: { initia
         </Card>
       )}
 
-      {open && <FriendSheet friend={open} onClose={() => setOpen(null)} />}
     </View>
   );
 }

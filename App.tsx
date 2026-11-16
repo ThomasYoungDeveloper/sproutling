@@ -13,6 +13,7 @@ import StarterScreen from './src/screens/StarterScreen';
 import FriendsScreen from './src/screens/FriendsScreen';
 import DailyLoginSheet from './src/components/DailyLoginSheet';
 import { FriendsProvider, useFriends } from './src/state/FriendsContext';
+import { OverlayProvider } from './src/components/Overlay';
 import { FadeSwitch, PopIn, RollingNumber } from './src/components/fx';
 import { RevealProvider, useReveal } from './src/components/RevealOverlay';
 import { stageFor } from './src/game/scoring';
@@ -42,7 +43,7 @@ function takeInviteCode(): string | null {
 
 function Shell() {
   const { state, apply, reset, sync, loaded } = useGame();
-  const { incoming, notice, dismissNotice } = useFriends();
+  const { incoming, tradesForMe, notice, dismissNotice } = useFriends();
   const [invite, setInvite] = useState<string | null>(null);
   const [showLogin, setShowLogin] = useState(false);
   const loginShownFor = useRef<string | null>(null);
@@ -148,7 +149,7 @@ function Shell() {
       </ScrollView>
       {!starter && <View style={styles.nav}>
         {TABS.map((t) => {
-          const badge = t.id === 'eggs' ? readyEggs : t.id === 'chests' ? state.chests.length : t.id === 'friends' ? incoming.length : 0;
+          const badge = t.id === 'eggs' ? readyEggs : t.id === 'chests' ? state.chests.length : t.id === 'friends' ? incoming.length + tradesForMe : 0;
           return (
             <Pressable key={t.id} onPress={() => setTab(t.id)} style={[styles.navBtn, tab === t.id && styles.navActive]} accessibilityRole="tab" accessibilityState={{ selected: tab === t.id }}>
               <Text style={[styles.navText, tab === t.id && { color: colors.mintDark }]}>{t.label}</Text>
@@ -193,7 +194,9 @@ function Gate() {
     <GameProvider key={user.id}>
       <RevealProvider>
         <FriendsProvider>
-          <Shell />
+          <OverlayProvider>
+            <Shell />
+          </OverlayProvider>
         </FriendsProvider>
       </RevealProvider>
     </GameProvider>

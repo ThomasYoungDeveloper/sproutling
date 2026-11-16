@@ -5,6 +5,8 @@ import { SPECIES, speciesOfRarity } from '../src/game/species';
 import { RARITIES, stepsToHatch } from '../src/game/rarity';
 import { buildCard, readCard } from '../src/game/card';
 import * as C from '../src/game/care';
+import * as T from '../src/game/trade';
+import * as B from '../src/game/battle';
 import { levelFor, levelProgress, stageFor } from '../src/game/scoring';
 import type { ChestKind, GameState } from '../src/game/types';
 
@@ -91,4 +93,45 @@ ok(C.treat(K) === K, 'only one treat per day');
 const noBag = { ...t, days: {}, items: {} } as GameState; ok(C.treat(noBag) === noBag, 'no trinkets, no treat');
 const K2 = A.nextDay(K); ok(C.careMultiplier(A.today(K2)) === 1 && A.activePet(K2)!.xp === A.activePet(K)!.xp, 'next day care resets but XP is kept');
 ok(C.reminders(noBag).some((r) => r.id === 'feed') && !C.reminders(K).some((r) => r.id === 'feed'), 'reminders follow care');
+// Trading
+let TR = { ...t, pets: [...t.pets, { id: 'extra1', speciesId: 'p02', nickname: 'Extra', xp: 60, shiny: false, hatchedOn: '' }] } as GameState;
+const notActive = TR.pets.find((p) => p.id !== TR.activePetId)!;
+ok(!T.canOffer(TR, TR.activePetId!, new Set()).ok, 'active pet cannot be traded');
+ok(T.canOffer(TR, notActive.id, new Set()).ok && !T.canOffer(TR, notActive.id, new Set([notActive.id])).ok, 'pet in another trade cannot be offered');
+ok(!T.canOffer({ ...TR, pets: [TR.pets[0]] }, TR.pets[0].id, new Set()).ok, 'cannot trade your only pet');
+const incoming: T.TradePet = { id: 'theirs', speciesId: 'p15', nickname: 'Foxy', xp: 1200, shiny: true };
+const ap = T.applyTrade(TR, 'trade1', notActive.id, incoming)!;
+ok(ap.state.pets.length === TR.pets.length && !ap.state.pets.some((p) => p.id === notActive.id) && ap.state.pets.some((p) => p.speciesId === 'p15' && p.xp === 1200 && p.shiny), 'trade swaps the pets, keeping level and shine');
+ok(ap.received.id !== 'theirs' && ap.state.dex['p15'] === true, 'received pet gets a fresh id and joins the Pet-dex');
+ok(T.applyTrade(ap.state, 'trade1', notActive.id, incoming) === null, 'a trade is applied only once');
+const ap2 = T.applyTrade(TR, 'trade2', TR.activePetId!, incoming)!; ok(ap2.state.activePetId === ap2.received.id, 'if your active pet left, the new pet becomes active');
+// Battles
+ok(B.effectiveness('flower', 'tide') === 1.5 && B.effectiveness('tide', 'flower') === 0.75 && B.effectiveness('flower', 'ember') === 1, 'element strengths');
+const mk = (id: string, lv: number): B.PetLike => ({ speciesId: id, nickname: id, xp: 25 * lv * (lv - 1), shiny: false });
+let seed = 7; const rr = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+const sim = (a: B.PetLike[], b: B.PetLike[], pa = 1, pb = 1) => { let bt = B.startBattle(a, b, pa, pb); let n = 0; while (!bt.over && n < 200) { bt = B.playTurn(bt, B.aiMove(bt.mine[bt.mi], rr), B.aiMove(bt.theirs[bt.ti], rr), rr).battle; n++; } return { over: bt.over, n }; };
+const commons = SPECIES.filter((x) => x.rarity === 'common').map((x) => x.id);
+let even = 0, strong = 0, maxTurns = 0, powered = 0;
+for (let i = 0; i < 400; i++) {
+  const team = () => [0, 1, 2].map(() => mk(commons[Math.floor(rr() * commons.length)], 5));
+  const r1 = sim(team(), team()); if (r1.over === 'win') even++; maxTurns = Math.max(maxTurns, r1.n);
+  const r2 = sim([0, 1, 2].map(() => mk(commons[Math.floor(rr() * commons.length)], 9)), team()); if (r2.over === 'win') strong++;
+  const r3 = sim(team(), team(), 1.3, 1); if (r3.over === 'win') powered++;
+}
+ok(even > 130 && even < 270, `even teams are balanced (${Math.round(even / 4)}% wins)`);
+ok(strong > 340, `higher-level team usually wins (${Math.round(strong / 4)}%)`);
+ok(powered > even, `healthy-habit power-up helps (${Math.round(powered / 4)}% vs ${Math.round(even / 4)}%)`);
+ok(maxTurns < 60, `battles always end quickly (longest ${maxTurns} rounds)`);
+const g = B.startBattle([mk('p02', 5)], [mk('p03', 5)]);
+const myHit = (m: B.Move, th: B.Move) => B.playTurn(g, m, th, () => 0.5).events.find((e) => e.side === 'me')!;
+const hitGuarded = myHit('attack', 'guard').damage, hitOpen = myHit('attack', 'attack').damage;
+ok(hitGuarded < hitOpen && Math.abs(hitGuarded * 2 - hitOpen) <= 1, 'guarding halves damage');
+ok(myHit('special', 'attack').move === 'attack', 'special needs charge');
+let R = { ...t, battle: undefined } as GameState; const coins0b = R.coins;
+const f1 = B.finishBattle(R, true, true); ok(f1.reward.coins === 30 && f1.reward.chest && f1.state.chests.length === R.chests.length + 1, 'first win: 30 coins and a Bronze chest');
+R = f1.state; const f2 = B.finishBattle(R, true, false); ok(f2.reward.coins === 20 && !f2.reward.chest, 'later wins: coins only');
+R = f2.state; for (let i = 0; i < 3; i++) R = B.finishBattle(R, false, true).state;
+const f6 = B.finishBattle(R, true, true); ok(f6.reward.coins === 0 && !f6.reward.rewarded && B.battlesLeftToday(R) === 0, 'only 5 rewarded battles a day');
+ok(B.finishBattle(A.nextDay(R), true, true).reward.chest, 'rewards reset the next day');
+ok(f6.state.battle!.wins === 3 && f6.state.battle!.losses === 3, 'battle record is kept');
 console.log(fails ? `${fails} FAILED` : 'ALL PASSED'); process.exit(fails ? 1 : 0);

@@ -4,6 +4,8 @@ import { useAuth } from './AuthContext';
 import { useGame } from './GameContext';
 import { readCard, type PublicCard } from '../game/card';
 import * as A from '../game/actions';
+import * as T from '../game/trade';
+import { useReveal } from '../components/RevealOverlay';
 
 export interface Trainer {
   id: string;
@@ -27,6 +29,19 @@ export interface SentRequest {
   to: Trainer;
 }
 
+export type TradeStatus = 'offered' | 'countered' | 'completed' | 'declined' | 'cancelled';
+
+export interface Trade {
+  id: string;
+  fromMe: boolean;
+  friendId: string;
+  friendName: string;
+  status: TradeStatus;
+  offer: T.TradePet;
+  counter: T.TradePet | null;
+  updatedAt: string;
+}
+
 export interface Notice {
   id: number;
   text: string;
@@ -47,6 +62,16 @@ interface Ctx {
   giftsLeft: number;
   notice: Notice | null;
   dismissNotice: () => void;
+  trades: Trade[];
+  /** Your pets that are in an open trade. */
+  busyPetIds: Set<string>;
+  /** Trades waiting on you (an offer to answer, or a counter-offer to confirm). */
+  tradesForMe: number;
+  offerTrade: (friendId: string, petId: string) => Promise<{ ok: boolean; text: string }>;
+  counterTrade: (tradeId: string, petId: string) => Promise<{ ok: boolean; text: string }>;
+  confirmTrade: (tradeId: string) => Promise<{ ok: boolean; text: string }>;
+  cancelTrade: (tradeId: string) => Promise<void>;
+  recordBattle: (friendId: string, won: boolean) => void;
 }
 
 const FriendsCtx = createContext<Ctx | null>(null);
@@ -67,7 +92,9 @@ const ADD_MESSAGES: Record<string, { ok: boolean; text: string }> = {
 /** Lives inside GameProvider so opened gifts can pay coins straight into the save. */
 export function FriendsProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
-  const { state, apply, loaded } = useGame();
+  const { state, apply, loaded, sync } = useGame();
+  const reveal = useReveal();
+  const [trades, setTrades] = useState<Trade[]>([]);
   const stateRef = useRef(state);
   stateRef.current = state;
   const [myCode, setMyCode] = useState<string | null>(null);
@@ -85,10 +112,11 @@ export function FriendsProvider({ children }: { children: React.ReactNode }) {
   const refresh = useCallback(async () => {
     if (!user) return;
     const me = user.id;
-    const [mine, links, sent] = await Promise.all([
+    const [mine, links, sent, tradeRows] = await Promise.all([
       supabase.from('profiles').select('friend_code').eq('id', me).maybeSingle(),
       supabase.from('friendships').select('id, requester, addressee, status, created_at').order('created_at', { ascending: false }),
       supabase.from('gifts').select('recipient').eq('sender', me).eq('day', utcDay()),
+      supabase.from('trades').select('id, from_user, to_user, status, offer_pet, counter_pet, updated_at').order('updated_at', { ascending: false }).limit(60),
     ]);
     if (links.error) {
       setError('Couldn’t load your friends. Try again in a moment.');
@@ -98,7 +126,8 @@ export function FriendsProvider({ children }: { children: React.ReactNode }) {
     setError(null);
     if (mine.data?.friend_code) setMyCode(mine.data.friend_code);
     const rows = links.data ?? [];
-    const otherIds = [...new Set(rows.map((r) => (r.requester === me ? r.addressee : r.requester)))];
+    const tRows = tradeRows.data ?? [];
+    const otherIds = [...new Set([...rows.map((r) => (r.requester === me ? r.addressee : r.requester)), ...tRows.map((t) => (t.from_user === me ? t.to_user : t.from_user))])];
     const people: Record<string, Trainer> = {};
     if (otherIds.length) {
       const { data } = await supabase.from('profiles').select('id, username, card, card_updated_at').in('id', otherIds);
@@ -122,6 +151,25 @@ export function FriendsProvider({ children }: { children: React.ReactNode }) {
     const today = new Date().toDateString();
     const xpToday = (t: Trainer) => (t.cardUpdatedAt && new Date(t.cardUpdatedAt).toDateString() === today ? (t.card?.todayXp ?? 0) + 1 : 0);
     f.sort((a, b) => xpToday(b) - xpToday(a) || a.username.localeCompare(b.username));
+    // Keep open trades, finished trades that may still need swapping in, and recent declines for a day.
+    const dayAgo = Date.now() - 86_400_000;
+    setTrades(
+      tRows
+        .map((t) => {
+          const otherId = t.from_user === me ? t.to_user : t.from_user;
+          return {
+            id: t.id,
+            fromMe: t.from_user === me,
+            friendId: otherId,
+            friendName: people[otherId]?.username ?? 'A friend',
+            status: t.status as TradeStatus,
+            offer: t.offer_pet as T.TradePet,
+            counter: (t.counter_pet as T.TradePet | null) ?? null,
+            updatedAt: t.updated_at,
+          };
+        })
+        .filter((t) => t.status === 'offered' || t.status === 'countered' || t.status === 'completed' || new Date(t.updatedAt).getTime() > dayAgo),
+    );
     setFriends(f);
     setIncoming(inc);
     setOutgoing(out);
@@ -133,7 +181,14 @@ export function FriendsProvider({ children }: { children: React.ReactNode }) {
     if (!user || !loaded || claiming.current) return;
     claiming.current = true;
     const { data, error: err } = await supabase.rpc('claim_gifts');
+    const news = await supabase.rpc('claim_battle_news');
     claiming.current = false;
+    const battles = ((news.error ? [] : news.data) as { name: string; theyWon: boolean }[] | null) ?? [];
+    if (battles.length) {
+      const b = battles[battles.length - 1];
+      const more = battles.length > 1 ? ` (+${battles.length - 1} more battle${battles.length > 2 ? 's' : ''})` : '';
+      say(b.theyWon ? `⚔ ${b.name} battled your team and won! Time for a rematch?${more}` : `🛡 ${b.name} battled your team and your pets won!${more}`);
+    }
     const names = (err ? [] : (data as string[] | null)) ?? [];
     if (!names.length) return;
     const opened = A.openGifts(stateRef.current, names.length);
@@ -195,9 +250,104 @@ export function FriendsProvider({ children }: { children: React.ReactNode }) {
     return data as string;
   }, [refresh]);
 
+  // While a trade is open, check more often so the other player's move shows up quickly.
+  const openTrades = trades.some((t) => t.status === 'offered' || t.status === 'countered');
+  useEffect(() => {
+    if (!openTrades) return;
+    const t = setInterval(refresh, 15_000);
+    return () => clearInterval(t);
+  }, [openTrades, refresh]);
+
+  // Swap in any finished trades this save hasn't applied yet (after the cloud save has loaded).
+  const settled = loaded && (sync === 'saved' || sync === 'error');
+  useEffect(() => {
+    if (!settled) return;
+    let s = stateRef.current;
+    const done: { gave: T.TradePet | null; got: ReturnType<typeof T.applyTrade> & {}; friend: string }[] = [];
+    trades
+      .filter((t) => t.status === 'completed' && t.counter && !s.appliedTrades?.[t.id])
+      .reverse()
+      .forEach((t) => {
+        const give = t.fromMe ? t.offer : t.counter!;
+        const get = t.fromMe ? t.counter! : t.offer;
+        const r = T.applyTrade(s, t.id, give.id, get);
+        if (r) {
+          s = r.state;
+          done.push({ gave: give, got: r, friend: t.friendName });
+        }
+      });
+    if (!done.length) return;
+    apply(() => s);
+    done.forEach((d) => reveal({ kind: 'trade', gave: d.gave, got: d.got.received, isNew: d.got.isNew, friend: d.friend }));
+  }, [trades, settled]);
+
+  const busyPetIds = new Set(
+    trades.filter((t) => t.status === 'offered' || t.status === 'countered').flatMap((t) => (t.fromMe ? [t.offer.id] : t.counter ? [t.counter.id] : [])),
+  );
+  const tradesForMe = trades.filter((t) => (t.status === 'offered' && !t.fromMe) || (t.status === 'countered' && t.fromMe)).length;
+
+  const TRADE_MESSAGES: Record<string, string> = {
+    not_friends: 'You can only trade with friends.',
+    bad_pet: 'That pet can’t be traded.',
+    too_many: 'You have 5 open trades. Finish or cancel one first.',
+    pet_busy: 'That pet is already in another trade.',
+    not_found: 'That trade isn’t open anymore.',
+  };
+
+  const offerTrade = useCallback(
+    async (friendId: string, petId: string) => {
+      const s = stateRef.current;
+      const check = T.canOffer(s, petId, busyPetIds);
+      if (!check.ok) return { ok: false, text: check.reason };
+      const pet = s.pets.find((p) => p.id === petId)!;
+      const { data, error: err } = await supabase.rpc('create_trade', { friend: friendId, pet: T.toTradePet(pet) });
+      await refresh();
+      if (err) return { ok: false, text: 'Couldn’t reach Sproutling. Try again in a moment.' };
+      return data === 'sent' ? { ok: true, text: 'Trade offer sent! They’ll pick a pet to offer back.' } : { ok: false, text: TRADE_MESSAGES[data as string] ?? 'Something went wrong.' };
+    },
+    [refresh, busyPetIds],
+  );
+
+  const counterTrade = useCallback(
+    async (tradeId: string, petId: string) => {
+      const s = stateRef.current;
+      const check = T.canOffer(s, petId, busyPetIds);
+      if (!check.ok) return { ok: false, text: check.reason };
+      const pet = s.pets.find((p) => p.id === petId)!;
+      const { data, error: err } = await supabase.rpc('counter_trade', { trade_id: tradeId, pet: T.toTradePet(pet) });
+      await refresh();
+      if (err) return { ok: false, text: 'Couldn’t reach Sproutling. Try again in a moment.' };
+      return data === 'ok' ? { ok: true, text: 'Offer sent back! The trade happens when they confirm.' } : { ok: false, text: TRADE_MESSAGES[data as string] ?? 'Something went wrong.' };
+    },
+    [refresh, busyPetIds],
+  );
+
+  const confirmTrade = useCallback(
+    async (tradeId: string) => {
+      const { data, error: err } = await supabase.rpc('confirm_trade', { trade_id: tradeId });
+      await refresh();
+      if (err) return { ok: false, text: 'Couldn’t reach Sproutling. Try again in a moment.' };
+      return data === 'ok' ? { ok: true, text: 'Trade complete!' } : { ok: false, text: TRADE_MESSAGES[data as string] ?? 'Something went wrong.' };
+    },
+    [refresh],
+  );
+
+  const cancelTrade = useCallback(
+    async (tradeId: string) => {
+      setTrades((list) => list.filter((t) => t.id !== tradeId));
+      await supabase.rpc('cancel_trade', { trade_id: tradeId });
+      await refresh();
+    },
+    [refresh],
+  );
+
+  const recordBattle = useCallback((friendId: string, won: boolean) => {
+    supabase.rpc('record_battle', { friend: friendId, won }).then(() => {});
+  }, []);
+
   return (
     <FriendsCtx.Provider
-      value={{ myCode, friends, incoming, outgoing, loading, error, refresh, addFriend, respond, remove, gift, giftsLeft, notice, dismissNotice: () => setNotice(null) }}
+      value={{ myCode, friends, incoming, outgoing, loading, error, refresh, addFriend, respond, remove, gift, giftsLeft, notice, dismissNotice: () => setNotice(null), trades, busyPetIds, tradesForMe, offerTrade, counterTrade, confirmTrade, cancelTrade, recordBattle }}
     >
       {children}
     </FriendsCtx.Provider>

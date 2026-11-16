@@ -6,6 +6,7 @@ import type { ChestResult } from '../game/loot';
 import { CHESTS } from '../game/loot';
 import { RARITY_INFO } from '../game/rarity';
 import { SPECIES_BY_ID } from '../game/species';
+import { levelFor } from '../game/scoring';
 import EggSprite from './EggSprite';
 import PetSprite from './PetSprite';
 import { Button } from './ui';
@@ -14,7 +15,8 @@ import { Confetti, Flash, PopIn, Rays, buzz, useCountUp, useIdleWobble, useShake
 export type Reveal =
   | { kind: 'egg'; rarity: Rarity; pet: OwnedPet; isNew: boolean; title?: string; eggColor?: string; eggSpots?: string[]; onMakeActive?: () => void }
   | { kind: 'chest'; chest: ChestKind; result: ChestResult }
-  | { kind: 'grow'; pet: OwnedPet; stage: Stage };
+  | { kind: 'grow'; pet: OwnedPet; stage: Stage }
+  | { kind: 'trade'; gave: { speciesId: string; nickname: string; shiny: boolean } | null; got: OwnedPet; isNew: boolean; friend: string };
 
 const Ctx = createContext<(r: Reveal) => void>(() => {});
 export const useReveal = () => useContext(Ctx);
@@ -40,6 +42,7 @@ function Overlay({ reveal, onClose }: { reveal: Reveal; onClose: () => void }) {
       {reveal.kind === 'egg' && <EggReveal r={reveal} onClose={onClose} />}
       {reveal.kind === 'chest' && <ChestReveal r={reveal} onClose={onClose} />}
       {reveal.kind === 'grow' && <GrowReveal r={reveal} onClose={onClose} />}
+      {reveal.kind === 'trade' && <TradeReveal r={reveal} onClose={onClose} />}
     </View>
   );
 }
@@ -116,6 +119,72 @@ function EggReveal({ r, onClose }: { r: Extract<Reveal, { kind: 'egg' }>; onClos
         </View>
       )}
       {phase === 'flash' && <Flash onDone={() => setPhase('reveal')} />}
+    </View>
+  );
+}
+
+/* ---------------- Trade: your pet waves goodbye, theirs pops in ---------------- */
+function TradeReveal({ r, onClose }: { r: Extract<Reveal, { kind: 'trade' }>; onClose: () => void }) {
+  const { width, height } = useWindowDimensions();
+  const [phase, setPhase] = useState<'swap' | 'reveal'>('swap');
+  const out = React.useRef(new Animated.Value(0)).current;
+  const got = SPECIES_BY_ID[r.got.speciesId];
+  const gave = r.gave ? SPECIES_BY_ID[r.gave.speciesId] : null;
+  const info = RARITY_INFO[got.rarity];
+  useEffect(() => {
+    buzz('medium');
+    Animated.sequence([
+      Animated.delay(700),
+      Animated.timing(out, { toValue: 1, duration: 650, useNativeDriver: true }),
+    ]).start(() => {
+      buzz('success');
+      setPhase('reveal');
+    });
+  }, []);
+  const level = levelFor(r.got.xp);
+  return (
+    <View style={styles.stage}>
+      {phase === 'swap' ? (
+        <View style={styles.center}>
+          <Text style={styles.kicker}>Trading with {r.friend}…</Text>
+          {gave && r.gave ? (
+            <Animated.View style={{ opacity: out.interpolate({ inputRange: [0, 1], outputRange: [1, 0] }), transform: [{ translateX: out.interpolate({ inputRange: [0, 1], outputRange: [0, 260] }) }, { rotate: out.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '25deg'] }) }] }}>
+              <PetSprite species={gave} stage="adult" size={180} shiny={r.gave.shiny} />
+            </Animated.View>
+          ) : (
+            <Text style={{ fontSize: 80 }}>⇄</Text>
+          )}
+          <Text style={styles.hint}>{gave && r.gave ? `Bye, ${r.gave.nickname}! Have fun with ${r.friend}!` : 'Swapping…'}</Text>
+        </View>
+      ) : (
+        <View style={styles.center}>
+          <Rays color={info.color} size={360} />
+          <Confetti amount={70} width={width} height={height} />
+          <Text style={styles.kicker}>Trade complete!</Text>
+          <PopIn from={0.1}>
+            <PetSprite species={got} stage="adult" size={210} shiny={r.got.shiny} mood="joy" />
+          </PopIn>
+          <PopIn delay={200}>
+            <View style={[styles.banner, { backgroundColor: info.color }]}>
+              <Text style={styles.bannerText}>{info.label.toUpperCase()} · LV {level}</Text>
+            </View>
+          </PopIn>
+          <PopIn delay={350}>
+            <Text style={styles.name}>{r.got.nickname}{r.got.shiny ? ' ✦ Shiny!' : ''}</Text>
+          </PopIn>
+          <PopIn delay={450}>
+            <Text style={styles.blurb}>Say hi to your new {got.name} from {r.friend}!</Text>
+          </PopIn>
+          {r.isNew && (
+            <PopIn delay={600}>
+              <View style={styles.newTag}><Text style={styles.newText}>NEW! Added to your Pet-dex</Text></View>
+            </PopIn>
+          )}
+          <PopIn delay={750}>
+            <Button primary label="Yay!" onPress={onClose} />
+          </PopIn>
+        </View>
+      )}
     </View>
   );
 }

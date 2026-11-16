@@ -14,8 +14,8 @@ import type { Element } from '../game/types';
 
 const STAGE_LABEL = { baby: 'Baby', teen: 'Teen', adult: 'Adult' } as const;
 
-type Sky = 'dawn' | 'day' | 'dusk' | 'night';
-function skyNow(): Sky {
+export type Sky = 'dawn' | 'day' | 'dusk' | 'night';
+export function skyNow(): Sky {
   const h = new Date().getHours();
   if (h >= 5 && h < 8) return 'dawn';
   if (h >= 8 && h < 17) return 'day';
@@ -53,7 +53,7 @@ function Cloud({ width, top, duration, delay, scale }: { width: number; top: num
   );
 }
 
-function Backdrop({ element, sky }: { element: Element; sky: Sky }) {
+export function Backdrop({ element, sky }: { element: Element; sky: Sky }) {
   const [top, bottom] = SKY[sky];
   const [h1, h2, h3] = HILLS[element];
   const night = sky === 'night';

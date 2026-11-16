@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useFriends, type Friend } from '../state/FriendsContext';
-import { Button, Chip, RarityBadge } from './ui';
+import { Button, RarityBadge } from './ui';
 import PetSprite from './PetSprite';
 import { buzz, PopIn } from './fx';
 import { colors, font, space } from '../theme';
@@ -9,9 +9,12 @@ import { SPECIES, SPECIES_BY_ID } from '../game/species';
 import { levelFor, stageFor } from '../game/scoring';
 import { GIFT_COINS, GIFTS_PER_DAY } from '../game/actions';
 import { lastSeen } from '../screens/friendsShared';
+import { friendOpponent, useBattle, useTradeOffer } from './SocialPanels';
 
 export default function FriendSheet({ friend, onClose }: { friend: Friend; onClose: () => void }) {
   const { gift, giftsLeft, remove, friends } = useFriends();
+  const battle = useBattle();
+  const tradeOffer = useTradeOffer();
   const live = friends.find((f) => f.id === friend.id) ?? friend;
   const [confirmRemove, setConfirmRemove] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
@@ -89,10 +92,28 @@ export default function FriendSheet({ friend, onClose }: { friend: Friend; onClo
           {!live.giftedToday && giftsLeft > 0 ? <Text style={[font.tiny, { textAlign: 'center' }]}>{giftsLeft} of {GIFTS_PER_DAY} gifts left today</Text> : null}
           {msg ? <Text style={[font.small, { textAlign: 'center', color: colors.mintDark }]}>{msg}</Text> : null}
 
-          <View style={styles.soon}>
-            <Chip label="⚔ Battles: coming soon" tone="muted" />
-            <Chip label="⇄ Trading: coming soon" tone="muted" />
+          <View style={styles.row2}>
+            <Button
+              label="⚔️ Battle"
+              disabled={!friendOpponent(live)}
+              style={{ flex: 1 }}
+              onPress={() => {
+                const opp = friendOpponent(live);
+                if (!opp) return;
+                onClose();
+                battle(opp);
+              }}
+            />
+            <Button
+              label="⇄ Trade"
+              style={{ flex: 1 }}
+              onPress={() => {
+                onClose();
+                tradeOffer(live);
+              }}
+            />
           </View>
+          {!friendOpponent(live) ? <Text style={[font.tiny, { textAlign: 'center' }]}>{live.username} needs to hatch a pet before you can battle.</Text> : null}
 
           <View style={styles.row}>
             <Button
@@ -136,6 +157,7 @@ const styles = StyleSheet.create({
   name: { fontWeight: '800', fontSize: 12, color: colors.ink },
   lv: { position: 'absolute', top: 4, left: 4, backgroundColor: colors.ink, borderRadius: 7, paddingHorizontal: 5, paddingVertical: 1 },
   lvText: { color: '#fff', fontWeight: '900', fontSize: 10 },
+  row2: { flexDirection: 'row', gap: space.sm, marginTop: space.xs },
   soon: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, justifyContent: 'center', marginTop: space.xs },
   row: { flexDirection: 'row', gap: space.sm, alignItems: 'center', marginTop: space.md },
 });

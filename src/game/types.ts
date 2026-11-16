@@ -80,4 +80,8 @@ export interface GameState {
   dayOffset: number;
   /** Daily login rewards: last day claimed and how many claimed in total. */
   login?: { last: string; count: number };
+  /** Completed trades already swapped into this save. */
+  appliedTrades?: Record<string, true>;
+  /** Battle record and today's rewarded battles. */
+  battle?: { day: string; rewarded: number; wonToday: boolean; wins: number; losses: number };
 }
