@@ -18,6 +18,7 @@ import { TeamProvider } from './src/state/TeamContext';
 import { RankedProvider } from './src/state/RankedContext';
 import { useHealthSync } from './src/lib/useHealthSync';
 import { useReminders } from './src/lib/useReminders';
+import { useWalkFinds } from './src/lib/useWalkFinds';
 import Tutorial from './src/components/Tutorial';
 import * as Ach from './src/game/achievements';
 import LabScreen from './src/screens/LabScreen';
@@ -77,6 +78,9 @@ function Shell() {
 
   // Pop up the daily reward once a day, after the save has synced (so it isn't shown twice across devices).
   const settled = loaded && (sync === 'saved' || sync === 'error');
+
+  // Every 1,000 steps your pet might find a chest (or, with Apple Health, an egg).
+  const [walkNote, dismissWalkNote] = useWalkFinds(settled && !starter);
 
   // Once a day, let streak shields cover any missed day.
   const [shieldNote, setShieldNote] = useState<string | null>(null);
@@ -173,7 +177,16 @@ function Shell() {
       {settled && !starter && !state.tutorialDone ? <Tutorial /> : null}
       {showAccount && <AccountSheet onClose={() => setShowAccount(false)} />}
       {showLogin && !starter && <DailyLoginSheet onClose={() => setShowLogin(false)} />}
-      {shieldNote && !notice ? (
+      {walkNote && !notice ? (
+        <View style={styles.toastWrap} pointerEvents="box-none">
+          <PopIn>
+            <Pressable onPress={dismissWalkNote} style={styles.toast} accessibilityRole="alert">
+              <Text style={styles.toastText}>{walkNote}</Text>
+            </Pressable>
+          </PopIn>
+        </View>
+      ) : null}
+      {shieldNote && !notice && !walkNote ? (
         <View style={styles.toastWrap} pointerEvents="box-none">
           <PopIn>
             <Pressable onPress={() => setShieldNote(null)} style={styles.toast} accessibilityRole="alert">

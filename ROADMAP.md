@@ -2,12 +2,9 @@
 
 Ideas Tom wants later. Most need the native app with real health data and location first.
 
-## 1. Walking finds (needs native app + health data)
-While you walk, you randomly find an egg or a chest, with a push notification ("Your pet found something on your walk!").
-- Base it on real step data only (HealthKit / Health Connect), never on manual entry, so it can't be cheated.
-- Roll a find every ~1,000 verified steps (e.g. 8% egg, 12% chest), capped per day so it stays special.
-- Background step updates + `expo-notifications` for the push. Store the last processed step count so a find is only rolled once.
-- Effort: small once health data and push notifications are in place.
+## 1. Walking finds (built: Nov 2026)
+Every 1,000 steps rolls a find: 12% chest everywhere, plus 8% egg with Apple Health steps. Max 3 finds a day; each 1,000-step mark has one fixed roll.
+- Still to do: background step updates so a find can push a notification while the app is closed ("Foxy found something on your walk!").
 
 ## 2. Gyms (needs location + a server)
 Pokémon GO style: place your pet in a gym to claim an area. The longer you hold it, the more you earn.

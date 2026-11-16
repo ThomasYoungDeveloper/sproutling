@@ -368,4 +368,23 @@ ok(A.applyShields(shielded.state).used === 0, 'shields are not used twice');
   ok(!R.planReminders(S0, { now: morning.getTime(), inGuild: true, raidHitsLeft: 0 }).some((r: any) => r.id === 'raid'), 'no raid reminder when out of hits');
   ok(R.planReminders({ ...S0, pets: [], activePetId: null }, { now: morning.getTime() }).length === 0, 'no reminders before you have a pet');
 }
+// Walking finds
+{
+  const W = require('../src/game/walkFinds');
+  const base = { ...newGame(), pets: [{ id: 'w', speciesId: 'p1', nickname: 'W', xp: 0, shiny: false, hatchedOn: '' }], activePetId: 'w' };
+  const hit = () => () => 0.1; // 0.1*100 = 10: a chest when unverified (<12), a chest when verified (8..20)
+  const eggRoll = () => () => 0.01;
+  const walked = A.addSteps(base, 5400);
+  const r1 = W.rollWalkFinds(walked, false, hit);
+  ok(r1.finds.length === W.MAX_FINDS_PER_DAY && r1.finds.every((f: any) => f.kind === 'chest'), 'finds are capped at 3 a day');
+  ok(r1.state.chests.length === walked.chests.length + 3, 'found chests land in your chest list');
+  ok(W.rollWalkFinds(r1.state, false, hit).finds.length === 0, 'the same steps never roll twice');
+  ok(W.rollWalkFinds(walked, false, eggRoll).finds.every((f: any) => f.kind === 'chest'), 'typed-in steps never find eggs');
+  ok(W.rollWalkFinds(walked, true, eggRoll).finds.every((f: any) => f.kind === 'egg'), 'Apple Health steps can find eggs');
+  ok(W.rollWalkFinds(A.addSteps(base, 900), false, hit).finds.length === 0, 'nothing before the first 1,000 steps');
+  const a = W.rollWalkFinds(walked, true), b = W.rollWalkFinds(walked, true);
+  ok(JSON.stringify(a.finds) === JSON.stringify(b.finds), 'each 1,000-step mark has one fixed roll');
+  let found = 0; for (let d = 0; d < 400; d++) { let g = A.addSteps({ ...base, pets: [{ ...base.pets[0], id: 'x' + d }] }, 10000); found += W.rollWalkFinds(g, true).finds.length; }
+  ok(found / 400 > 1 && found / 400 < 3, `about 1.5–2 finds on a 10k-step day (got ${(found / 400).toFixed(2)})`);
+}
 console.log(fails ? `${fails} FAILED` : 'ALL PASSED'); process.exit(fails ? 1 : 0);
