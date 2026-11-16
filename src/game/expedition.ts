@@ -116,7 +116,7 @@ export function finish(s: GameState, rng: Rng = defaultRng, now = Date.now()): {
   const chest = place.chest && rng() * 100 < place.chest.chance ? place.chest.kind : null;
   const egg = place.egg && rng() * 100 < place.egg.chance ? (pickWeighted(place.egg.rarity as Record<Rarity, number>, rng) as Rarity) : null;
   const item = rng() * 100 < place.itemChance ? pickOne(COLLECTIBLES, rng) : null;
-  let next: GameState = { ...s, expedition: undefined, coins: s.coins + coins };
+  let next: GameState = A.bump({ ...s, expedition: undefined, coins: s.coins + coins }, 'expeditions');
   const cosmetic = place.cosmeticChance && rng() * 100 < place.cosmeticChance ? rollChestCosmetic(next, 'gold', () => 0) : null;
   if (pet) next = { ...next, pets: next.pets.map((x) => (x.id === pet.id ? { ...x, xp: x.xp + xp } : x)) };
   if (chest) next = A.grantChest(next, chest, `Found at ${place.name}`, rng);

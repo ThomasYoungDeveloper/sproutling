@@ -82,6 +82,10 @@ export interface GameState {
   dayOffset: number;
   /** Daily login rewards: last day claimed and how many claimed in total. */
   login?: { last: string; count: number };
+  /** Lifetime counters for achievements. */
+  stats?: { hatched?: number; chests?: number; expeditions?: number; toys?: number };
+  /** Achievements whose rewards you've claimed. */
+  achievements?: Record<string, true>;
   /** A pet out exploring. */
   expedition?: { petId: string; placeId: string; startedAt: number; startSteps: number };
   /** Cosmetics you own. */

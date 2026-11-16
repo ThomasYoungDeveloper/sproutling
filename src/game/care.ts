@@ -3,6 +3,7 @@ import { scoreDay } from './scoring';
 import { stepsToHatch, RARITY_INFO } from './rarity';
 import * as A from './actions';
 import { progress } from './expedition';
+import { claimable } from './achievements';
 
 /** Each care task adds +10% to today's XP. Pets are never punished for being left alone. */
 export const CARE_BONUS = 0.1;
@@ -71,6 +72,9 @@ export function moodLine(mood: Mood, name: string): string {
 /* ---------- Care actions ---------- */
 
 export const feed = (s: GameState) => A.updateToday(s, (d) => ({ ...d, care: { ...d.care, fed: true } }));
+/** Playing with a toy counts as play and toward the toy-lover badge. */
+export const playToy = (s: GameState) => A.bump(play(s), 'toys');
+
 export const play = (s: GameState) => A.updateToday(s, (d) => ({ ...d, care: { ...d.care, played: (d.care?.played ?? 0) + 1 } }));
 
 export const trinketCount = (s: GameState) => Object.values(s.items).reduce((a, n) => a + n, 0);
@@ -90,7 +94,7 @@ export interface Reminder {
   id: string;
   icon: string;
   text: string;
-  action?: 'feed' | 'play' | 'treat' | 'eggs' | 'chests' | 'water' | 'steps' | 'sleep';
+  action?: 'feed' | 'play' | 'treat' | 'eggs' | 'chests' | 'water' | 'steps' | 'sleep' | 'badges';
 }
 
 /** Friendly nudges, most useful first. On the phone app these become notifications. */
@@ -102,6 +106,8 @@ export function reminders(s: GameState): Reminder[] {
   const out: Reminder[] = [];
   const ready = s.eggs.filter(A.isReady).length;
   const ex = progress(s);
+  const badges = claimable(s).length;
+  if (badges) out.push({ id: 'badges', icon: '🏅', text: badges === 1 ? 'You earned a new badge! Claim your reward' : `You earned ${badges} new badges! Claim your rewards`, action: 'badges' });
   if (ex?.done) out.push({ id: 'expedition', icon: '🎒', text: `Your pet is back from ${ex.place.name}!` });
   if (ready) out.push({ id: 'ready', icon: '🥚', text: ready === 1 ? 'An egg is ready to hatch!' : `${ready} eggs are ready to hatch!`, action: 'eggs' });
   if (!c.fed) out.push({ id: 'feed', icon: '🍙', text: `Feed ${name} for +10% XP today`, action: 'feed' });

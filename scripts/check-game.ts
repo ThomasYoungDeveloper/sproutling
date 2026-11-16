@@ -10,6 +10,7 @@ import * as B from '../src/game/battle';
 import * as Cos from '../src/game/cosmetics';
 import * as Team from '../src/game/team';
 import * as Ex from '../src/game/expedition';
+import * as Ach from '../src/game/achievements';
 import { levelFor, levelProgress, stageFor } from '../src/game/scoring';
 import type { ChestKind, GameState } from '../src/game/types';
 
@@ -182,4 +183,16 @@ const fin = Ex.finish(Ewalk, () => 0.01, T0)!;
 ok(!fin.state.expedition && fin.loot.coins >= 15 && fin.loot.story.includes(epet.nickname), 'returning pet brings coins and a story');
 ok(fin.state.pets.find((p) => p.id === epet.id)!.xp === Ewalk.pets.find((p) => p.id === epet.id)!.xp + 30, 'expedition XP comes from the steps walked');
 ok(!Ex.recall(E).expedition, 'you can call a pet home early');
+// Achievements
+let H = { ...t, achievements: {}, stats: {}, battle: undefined, wardrobe: {} } as GameState;
+ok(!Ach.claimable(H).some((x) => x.a.id === 'win1') && Ach.claim(H, 'win1') === null, 'unfinished badges cannot be claimed');
+H = B.finishBattle(H, true, false).state;
+ok(Ach.claimable(H).some((x) => x.a.id === 'win1'), 'winning a battle unlocks First Victory');
+const Hc = Ach.claim(H, 'win1')!; ok(Hc.coins === H.coins + 30 && Ach.badgeCount(Hc) === 1, 'claiming pays the reward and adds a badge');
+ok(Ach.claim(Hc, 'win1') === null, 'a badge is claimed only once');
+H = A.addSteps(Hc, 12000); ok(Ach.claimable(H).some((x) => x.a.id === 'steps10k'), 'walking unlocks step badges');
+const Hch = Ach.claim(H, 'steps10k')!; ok(Hch.coins === H.coins + 30, 'step badge reward');
+const fullDex = { ...H, dex: Object.fromEntries(SPECIES.map((x) => [x.id, true])) } as GameState;
+const Hd = Ach.claim(fullDex, 'dexall')!; ok(!!Hd && Cos.owns(Hd, 'trophy') && Hd.chests.length === fullDex.chests.length + 1, 'completing the Pet-dex gives the Champion Laurel');
+ok(Ach.ACHIEVEMENTS.length >= 25 && new Set(Ach.ACHIEVEMENTS.map((a) => a.id)).size === Ach.ACHIEVEMENTS.length, 'badge ids are unique');
 console.log(fails ? `${fails} FAILED` : 'ALL PASSED'); process.exit(fails ? 1 : 0);

@@ -23,6 +23,7 @@ export interface PublicCard {
   todayXp: number;
   day: string;
   scene?: string;
+  badges?: number;
 }
 
 const toCardPet = (p: { speciesId: string; nickname: string; xp: number; shiny: boolean; look?: { hat?: string; aura?: string } }): CardPet => ({
@@ -52,6 +53,7 @@ export function buildCard(s: GameState): PublicCard {
     todayXp: scoreDay(A.today(s)).total,
     day: A.todayKey(s),
     ...(s.scene ? { scene: s.scene } : {}),
+    badges: Object.keys(s.achievements ?? {}).length,
   };
 }
 

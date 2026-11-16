@@ -51,6 +51,7 @@ export default function FriendSheet({ friend, onClose }: { friend: Friend; onClo
             <Stat label="Streak" value={`▲ ${card?.streak ?? 0}`} />
             <Stat label="Pets" value={`${card?.pets ?? 0}`} />
             <Stat label="Pet-dex" value={`${card?.dex ?? 0}/${SPECIES.length}`} />
+            <Stat label="Badges" value={`🏅 ${card?.badges ?? 0}`} />
           </View>
           <Text style={[font.small, { textAlign: 'center' }]}>{lastSeen(live)}</Text>
 

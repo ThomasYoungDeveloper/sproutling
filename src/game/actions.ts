@@ -87,6 +87,7 @@ export function openChestById(s: GameState, chestId: string, rng: Rng = defaultR
   if (result.item) next = { ...next, items: { ...next.items, [result.item]: (next.items[result.item] ?? 0) + 1 } };
   const cosmetic = rollChestCosmetic(next, chest.kind, rng);
   if (cosmetic) next = grantCosmetic(next, cosmetic);
+  next = bump(next, 'chests');
   return { state: next, result: { ...result, cosmetic } };
 }
 
@@ -127,6 +128,7 @@ export function hatch(s: GameState, eggId: string, rng: Rng = defaultRng): Hatch
       pets: [...s.pets, pet],
       dex: { ...s.dex, [species.id]: true },
       activePetId: s.activePetId ?? pet.id,
+      stats: { ...s.stats, hatched: (s.stats?.hatched ?? 0) + 1 },
     },
   };
 }
@@ -205,3 +207,6 @@ export function openGifts(s: GameState, count: number, rng: Rng = defaultRng): {
   const coins = count * GIFT_COINS;
   return { state: { ...next, coins: next.coins + coins }, coins, chests };
 }
+
+/** Adds to a lifetime counter (used by achievements). */
+export const bump = (s: GameState, key: keyof NonNullable<GameState['stats']>, by = 1): GameState => ({ ...s, stats: { ...s.stats, [key]: (s.stats?.[key] ?? 0) + by } });

@@ -15,6 +15,7 @@ import DailyLoginSheet from './src/components/DailyLoginSheet';
 import { FriendsProvider, useFriends } from './src/state/FriendsContext';
 import { OverlayProvider } from './src/components/Overlay';
 import { TeamProvider } from './src/state/TeamContext';
+import * as Ach from './src/game/achievements';
 import LabScreen from './src/screens/LabScreen';
 import { FadeSwitch, PopIn, RollingNumber } from './src/components/fx';
 import { RevealProvider, useReveal } from './src/components/RevealOverlay';
@@ -151,7 +152,7 @@ function Shell() {
       </ScrollView>
       {!starter && <View style={styles.nav}>
         {TABS.map((t) => {
-          const badge = t.id === 'eggs' ? readyEggs : t.id === 'chests' ? state.chests.length : t.id === 'friends' ? incoming.length + tradesForMe : 0;
+          const badge = t.id === 'eggs' ? readyEggs : t.id === 'chests' ? state.chests.length : t.id === 'friends' ? incoming.length + tradesForMe : t.id === 'dex' ? Ach.claimable(state).length : 0;
           return (
             <Pressable key={t.id} onPress={() => setTab(t.id)} style={[styles.navBtn, tab === t.id && styles.navActive]} accessibilityRole="tab" accessibilityState={{ selected: tab === t.id }}>
               <Text style={[styles.navText, tab === t.id && { color: colors.mintDark }]}>{t.label}</Text>

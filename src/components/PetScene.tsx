@@ -292,7 +292,7 @@ export default function PetScene({ onTrinketsEmpty, onDressUp, onShop }: { onTri
         Animated.spring(hop, { toValue: 0, friction: 3.5, tension: 120, useNativeDriver: true }),
       ]).start();
     }
-    apply(C.play);
+    apply(C.playToy);
   };
 
   // Drop test: is the finger over the pet?

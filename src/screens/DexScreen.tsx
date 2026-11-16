@@ -7,7 +7,41 @@ import { colors, font, space } from '../theme';
 import { SPECIES, SPECIES_BY_ID } from '../game/species';
 import { RARITIES, RARITY_INFO } from '../game/rarity';
 import { levelFor, stageFor } from '../game/scoring';
+import * as Ach from '../game/achievements';
+import { useOverlay } from '../components/Overlay';
+import AchievementsSheet from '../components/AchievementsSheet';
 import * as A from '../game/actions';
+
+function BadgeBanner() {
+  const { state } = useGame();
+  const overlay = useOverlay();
+  const ready = Ach.claimable(state).length;
+  const earned = Ach.badgeCount(state);
+  return (
+    <Pressable onPress={() => overlay.open(<AchievementsSheet onClose={overlay.close} />)} style={({ pressed }) => [badgeStyles.banner, ready > 0 && badgeStyles.ready, pressed && { transform: [{ scale: 0.98 }] }]} accessibilityRole="button" accessibilityLabel="Badges">
+      <Text style={{ fontSize: 28 }}>🏅</Text>
+      <View style={{ flex: 1 }}>
+        <Text style={badgeStyles.title}>Badges</Text>
+        <Text style={badgeStyles.sub}>{earned} of {Ach.ACHIEVEMENTS.length} earned</Text>
+      </View>
+      {ready > 0 ? (
+        <View style={badgeStyles.pill}><Text style={badgeStyles.pillText}>{ready} to claim!</Text></View>
+      ) : (
+        <Text style={badgeStyles.go}>See all ›</Text>
+      )}
+    </Pressable>
+  );
+}
+
+const badgeStyles = StyleSheet.create({
+  banner: { flexDirection: 'row', alignItems: 'center', gap: space.md, backgroundColor: '#FFFFFF', borderRadius: 18, borderWidth: 1, borderColor: colors.line, paddingVertical: space.sm, paddingHorizontal: space.md },
+  ready: { backgroundColor: '#FFF6DD', borderColor: colors.gold },
+  title: { fontWeight: '900', fontSize: 16, color: colors.ink },
+  sub: { fontWeight: '700', fontSize: 12, color: colors.muted },
+  pill: { backgroundColor: colors.gold, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4 },
+  pillText: { fontWeight: '900', fontSize: 12, color: '#5A3E00' },
+  go: { fontWeight: '900', fontSize: 13, color: colors.mintDark },
+});
 
 export default function DexScreen() {
   const { state, apply } = useGame();
@@ -15,6 +49,7 @@ export default function DexScreen() {
 
   return (
     <View style={{ gap: space.md }}>
+      <BadgeBanner />
       <Card>
         <SectionHead title="Your team" meta={`${state.pets.length} pets`} />
         <View style={styles.grid}>
