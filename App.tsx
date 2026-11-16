@@ -2,6 +2,8 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Pressable, SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { GameProvider, useGame } from './src/state/GameContext';
+import { AuthProvider, useAuth } from './src/state/AuthContext';
+import AccountSheet from './src/components/AccountSheet';
 import HomeScreen from './src/screens/HomeScreen';
 import EggsScreen from './src/screens/EggsScreen';
 import ChestsScreen from './src/screens/ChestsScreen';
@@ -22,7 +24,9 @@ const TABS: { id: Tab; label: string }[] = [
 ];
 
 function Shell() {
-  const { state, apply, reset } = useGame();
+  const { state, apply, reset, sync } = useGame();
+  const { user } = useAuth();
+  const [showAccount, setShowAccount] = useState(false);
   const [tab, setTab] = useState<Tab>('home');
   const [confirmReset, setConfirmReset] = useState(false);
   const readyEggs = state.eggs.filter(A.isReady).length;
@@ -49,6 +53,9 @@ function Shell() {
         <View style={styles.pills}>
           <View style={styles.pill}><Text style={styles.pillText}>▲ {A.streak(state)}-day</Text></View>
           <View style={styles.pill}><Text style={styles.pillText}>● {state.coins.toLocaleString()}</Text></View>
+          <Pressable onPress={() => setShowAccount(true)} style={[styles.pill, user ? null : styles.signIn]} accessibilityRole="button" accessibilityLabel={user ? 'Account' : 'Sign in to save your pets'}>
+            <Text style={[styles.pillText, !user && { color: '#fff' }]}>{user ? (sync === 'error' ? '⚠ Account' : '☁ Saved') : 'Sign in'}</Text>
+          </Pressable>
         </View>
       </View>
       <ScrollView contentContainerStyle={styles.scroll}>
@@ -58,7 +65,7 @@ function Shell() {
         {!starter && tab === 'chests' && <ChestsScreen />}
         {!starter && tab === 'dex' && <DexScreen />}
         <View style={styles.demo}>
-          <Text style={[font.tiny, { flex: 1 }]}>Preview build. Progress saves in this browser only.</Text>
+          <Text style={[font.tiny, { flex: 1 }]}>{user ? 'Preview build. Your progress saves to your account.' : 'Preview build. Sign in to save your pets to the cloud.'}</Text>
           <Button small label="Skip to tomorrow" onPress={() => apply(A.nextDay)} />
           <Button
             small
@@ -86,17 +93,20 @@ function Shell() {
           );
         })}
       </View>}
+      {showAccount && <AccountSheet onClose={() => setShowAccount(false)} />}
     </SafeAreaView>
   );
 }
 
 export default function App() {
   return (
-    <GameProvider>
-      <RevealProvider>
-        <Shell />
-      </RevealProvider>
-    </GameProvider>
+    <AuthProvider>
+      <GameProvider>
+        <RevealProvider>
+          <Shell />
+        </RevealProvider>
+      </GameProvider>
+    </AuthProvider>
   );
 }
 
@@ -107,6 +117,7 @@ const styles = StyleSheet.create({
   pills: { flexDirection: 'row', gap: 6 },
   pill: { backgroundColor: '#fff', borderWidth: 1, borderColor: colors.line, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4 },
   pillText: { fontWeight: '800', fontSize: 13, color: colors.ink },
+  signIn: { backgroundColor: colors.mint, borderColor: colors.mint },
   scroll: { padding: space.lg, paddingTop: space.sm, paddingBottom: 40, gap: space.md, maxWidth: 520, width: '100%', alignSelf: 'center' },
   demo: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: space.sm, marginTop: space.md },
   nav: { flexDirection: 'row', borderTopWidth: 1, borderTopColor: colors.line, backgroundColor: '#fff', paddingHorizontal: space.sm, paddingVertical: 6 },
