@@ -44,6 +44,12 @@ export interface OwnedPet {
   hatchedOn: string;
   /** A rare color variant, if this pet has one. */
   skin?: Skin;
+  /** Battle personality (older pets get one worked out from their id). */
+  personality?: import('./stats').Personality;
+  /** Stat points spent through training. */
+  train?: import('./stats').Training;
+  /** The moves this pet brings to battle (up to 4). */
+  moves?: string[];
   /** Game time (ms) until this pet can breed again. */
   restUntil?: number;
   /** What this pet is wearing (cosmetic ids). */

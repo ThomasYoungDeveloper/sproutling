@@ -4,6 +4,7 @@ import { stepsToHatch, RARITY_INFO } from './rarity';
 import * as A from './actions';
 import { progress } from './expedition';
 import { claimable } from './achievements';
+import { pointsLeft } from './stats';
 
 /** Each care task adds +10% to today's XP. Pets are never punished for being left alone. */
 export const CARE_BONUS = 0.1;
@@ -94,7 +95,8 @@ export interface Reminder {
   id: string;
   icon: string;
   text: string;
-  action?: 'feed' | 'play' | 'treat' | 'eggs' | 'chests' | 'water' | 'steps' | 'sleep' | 'badges';
+  action?: 'feed' | 'play' | 'treat' | 'eggs' | 'chests' | 'water' | 'steps' | 'sleep' | 'badges' | 'train';
+  petId?: string;
 }
 
 /** Friendly nudges, most useful first. On the phone app these become notifications. */
@@ -106,6 +108,8 @@ export function reminders(s: GameState): Reminder[] {
   const out: Reminder[] = [];
   const ready = s.eggs.filter(A.isReady).length;
   const ex = progress(s);
+  const trainee = s.pets.find((p) => pointsLeft(p) > 0);
+  if (trainee) out.push({ id: 'train', icon: '💪', text: `${trainee.nickname} has ${pointsLeft(trainee)} stat point${pointsLeft(trainee) === 1 ? '' : 's'} to spend`, action: 'train', petId: trainee.id });
   const badges = claimable(s).length;
   if (badges) out.push({ id: 'badges', icon: '🏅', text: badges === 1 ? 'You earned a new badge! Claim your reward' : `You earned ${badges} new badges! Claim your rewards`, action: 'badges' });
   if (ex?.done) out.push({ id: 'expedition', icon: '🎒', text: `Your pet is back from ${ex.place.name}!` });

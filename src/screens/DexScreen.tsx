@@ -12,6 +12,8 @@ import { SKINS, SKIN_INFO, skinDexCount, skinKey } from '../game/skins';
 import { useOverlay } from '../components/Overlay';
 import AchievementsSheet from '../components/AchievementsSheet';
 import NurseryCard from '../components/NurseryCard';
+import PetSheet from '../components/PetSheet';
+import { pointsLeft } from '../game/stats';
 import * as A from '../game/actions';
 
 function BadgeBanner() {
@@ -48,6 +50,7 @@ const badgeStyles = StyleSheet.create({
 export default function DexScreen() {
   const { state, apply } = useGame();
   const found = Object.keys(state.dex).length;
+  const overlay = useOverlay();
 
   return (
     <View style={{ gap: space.md }}>
@@ -60,17 +63,18 @@ export default function DexScreen() {
             const sp = SPECIES_BY_ID[p.speciesId];
             const active = p.id === state.activePetId;
             return (
-              <Pressable key={p.id} onPress={() => apply((s) => A.setActivePet(s, p.id))} style={[styles.tile, active && styles.active]} accessibilityLabel={`Make ${p.nickname} active`}>
+              <Pressable key={p.id} onPress={() => overlay.open(<PetSheet petId={p.id} onClose={overlay.close} />)} style={[styles.tile, active && styles.active]} accessibilityLabel={`Open ${p.nickname}`}>
                 <PetSprite species={sp} stage={stageFor(p.xp)} size={86} shiny={p.shiny} skin={p.skin} hat={p.look?.hat} />
                 <View style={styles.lv}><Text style={styles.lvText}>Lv {levelFor(p.xp)}</Text></View>
                 {p.skin ? <Text style={[styles.skinBadge, { color: SKIN_INFO[p.skin].color }]}>{SKIN_INFO[p.skin].emoji}</Text> : null}
+                {pointsLeft(p) > 0 ? <View style={styles.pts}><Text style={styles.ptsText}>+{pointsLeft(p)}</Text></View> : null}
                 <Text style={styles.name} numberOfLines={1}>{p.nickname}</Text>
                 {active ? <Chip label="Active" /> : <RarityBadge rarity={sp.rarity} />}
               </Pressable>
             );
           })}
         </View>
-        <Text style={font.tiny}>Tap a pet to make it your active pet. Your active pet earns today’s XP and levels up.</Text>
+        <Text style={font.tiny}>Tap a pet to train it, pick its battle moves or make it your active pet. Your active pet earns today’s XP.</Text>
       </Card>
 
       <Card>
@@ -118,6 +122,8 @@ const styles = StyleSheet.create({
   active: { borderColor: colors.mint, backgroundColor: colors.mintSoft },
   name: { fontWeight: '800', fontSize: 13, color: colors.ink },
   lv: { position: 'absolute', top: 6, left: 6, backgroundColor: colors.ink, borderRadius: 8, paddingHorizontal: 6, paddingVertical: 2 },
+  pts: { position: 'absolute', bottom: 58, right: 8, backgroundColor: colors.gold, borderRadius: 999, paddingHorizontal: 7, paddingVertical: 1 },
+  ptsText: { fontWeight: '900', fontSize: 11, color: '#5A3E00' },
   skinBadge: { position: 'absolute', top: 4, right: 8, fontSize: 16 },
   lvText: { color: '#fff', fontWeight: '900', fontSize: 11 },
   skinRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, alignItems: 'center' },

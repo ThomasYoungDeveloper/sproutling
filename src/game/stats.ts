@@ -1,0 +1,188 @@
+import type { Element, OwnedPet, Rarity } from './types';
+import { SPECIES_BY_ID } from './species';
+import { levelFor } from './scoring';
+
+/**
+ * Battle stats. Every pet has HP, Attack, Defense and Speed from its species, rarity and element.
+ * Each level gives one stat point to train, and a personality nudges one stat.
+ */
+
+export type Stat = 'hp' | 'atk' | 'def' | 'spd';
+export const STATS: Stat[] = ['hp', 'atk', 'def', 'spd'];
+export const STAT_INFO: Record<Stat, { label: string; short: string; emoji: string; color: string; perPoint: number }> = {
+  hp: { label: 'Health', short: 'HP', emoji: '❤️', color: '#2FB58A', perPoint: 10 },
+  atk: { label: 'Attack', short: 'ATK', emoji: '⚔️', color: '#E5484D', perPoint: 3 },
+  def: { label: 'Defense', short: 'DEF', emoji: '🛡️', color: '#3D8FD6', perPoint: 3 },
+  spd: { label: 'Speed', short: 'SPD', emoji: '💨', color: '#E5A800', perPoint: 3 },
+};
+
+export type Personality = 'brave' | 'sturdy' | 'swift' | 'hardy' | 'lucky' | 'gentle';
+export const PERSONALITIES: Record<Personality, { label: string; emoji: string; text: string }> = {
+  brave: { label: 'Brave', emoji: '🦁', text: '+10% Attack' },
+  sturdy: { label: 'Sturdy', emoji: '🪨', text: '+10% Defense' },
+  swift: { label: 'Swift', emoji: '⚡', text: '+10% Speed' },
+  hardy: { label: 'Hardy', emoji: '💪', text: '+10% Health' },
+  lucky: { label: 'Lucky', emoji: '🍀', text: 'More critical hits' },
+  gentle: { label: 'Gentle', emoji: '🌷', text: 'Heals 25% more' },
+};
+const PERSONALITY_IDS = Object.keys(PERSONALITIES) as Personality[];
+
+function hash(str: string): number {
+  let h = 2166136261;
+  for (let i = 0; i < str.length; i++) h = Math.imul(h ^ str.charCodeAt(i), 16777619);
+  return h >>> 0;
+}
+
+/** A pet's personality: stored when hatched, or worked out from its id for older pets so it never changes. */
+export function personalityOf(p: Pick<OwnedPet, 'id' | 'personality'> & { speciesId?: string; nickname?: string }): Personality {
+  if (p.personality && PERSONALITIES[p.personality]) return p.personality;
+  return PERSONALITY_IDS[hash(p.id || `${p.speciesId}${p.nickname}`) % PERSONALITY_IDS.length];
+}
+
+export const randomPersonality = (rng: () => number): Personality => PERSONALITY_IDS[Math.floor(rng() * PERSONALITY_IDS.length)];
+
+export type Training = Partial<Record<Stat, number>>;
+
+const RARITY_TIER: Record<Rarity, number> = { common: 0, uncommon: 1, rare: 2, epic: 3, legendary: 4 };
+const ELEMENT_BONUS: Record<Element, Partial<Record<Stat, number>>> = {
+  ember: { atk: 3 },
+  tide: { def: 3 },
+  moon: { spd: 3 },
+  flower: { hp: 15 },
+};
+
+export const pointsEarned = (xp: number) => levelFor(xp) - 1;
+export const pointsSpent = (t?: Training) => STATS.reduce((a, s) => a + (t?.[s] ?? 0), 0);
+export const pointsLeft = (p: Pick<OwnedPet, 'xp' | 'train'>) => Math.max(0, pointsEarned(p.xp) - pointsSpent(p.train));
+
+export interface StatBlock {
+  hp: number;
+  atk: number;
+  def: number;
+  spd: number;
+}
+
+/** Final battle stats for a pet. */
+export function statsFor(p: { speciesId: string; xp: number; train?: Training; personality?: Personality; id?: string; nickname?: string }): StatBlock {
+  const sp = SPECIES_BY_ID[p.speciesId];
+  const tier = RARITY_TIER[sp.rarity];
+  const lv = levelFor(p.xp);
+  const el = ELEMENT_BONUS[sp.element];
+  const t = p.train ?? {};
+  const raw: StatBlock = {
+    hp: 60 + tier * 12 + (el.hp ?? 0) + (lv - 1) * 8 + (t.hp ?? 0) * STAT_INFO.hp.perPoint,
+    atk: 12 + tier * 3 + (el.atk ?? 0) + (lv - 1) * 2 + (t.atk ?? 0) * STAT_INFO.atk.perPoint,
+    def: 10 + tier * 2 + (el.def ?? 0) + (lv - 1) * 1.5 + (t.def ?? 0) * STAT_INFO.def.perPoint,
+    spd: 10 + tier * 2 + (el.spd ?? 0) + (lv - 1) * 1.5 + (t.spd ?? 0) * STAT_INFO.spd.perPoint,
+  };
+  const pers = personalityOf({ id: p.id ?? '', personality: p.personality, speciesId: p.speciesId, nickname: p.nickname });
+  if (pers === 'brave') raw.atk *= 1.1;
+  if (pers === 'sturdy') raw.def *= 1.1;
+  if (pers === 'swift') raw.spd *= 1.1;
+  if (pers === 'hardy') raw.hp *= 1.1;
+  return { hp: Math.round(raw.hp), atk: Math.round(raw.atk), def: Math.round(raw.def), spd: Math.round(raw.spd) };
+}
+
+/** Spends one stat point. Returns the pet unchanged if it has none left. */
+export function train(p: OwnedPet, stat: Stat): OwnedPet {
+  if (pointsLeft(p) <= 0) return p;
+  return { ...p, train: { ...p.train, [stat]: (p.train?.[stat] ?? 0) + 1 } };
+}
+
+export const RESPEC_COST = 100;
+
+/* ====================== Moves ====================== */
+
+export type MoveKind = 'attack' | 'heal' | 'buff' | 'energy';
+export type Status = 'burn' | 'soak' | 'drowsy';
+export type Buff = 'atkUp' | 'defUp' | 'dodgeUp';
+
+export interface MoveDef {
+  id: string;
+  name: string;
+  emoji: string;
+  element: Element | 'normal';
+  kind: MoveKind;
+  /** Energy it costs. */
+  cost: number;
+  power?: number;
+  /** Goes before normal moves. */
+  priority?: boolean;
+  status?: { type: Status; chance: number };
+  /** Heals this share of the damage dealt. */
+  drain?: number;
+  /** Heals this share of max HP. */
+  heal?: number;
+  buff?: Buff;
+  energy?: number;
+  learn: number;
+  desc: string;
+}
+
+export const MOVES: Record<string, MoveDef> = {
+  tackle: { id: 'tackle', name: 'Tackle', emoji: '💥', element: 'normal', kind: 'attack', cost: 0, power: 40, learn: 1, desc: 'A solid hit. Free to use.' },
+  focus: { id: 'focus', name: 'Focus', emoji: '🧘', element: 'normal', kind: 'energy', cost: 0, energy: 2, learn: 3, desc: 'Skip attacking to gain 2 extra ⚡.' },
+  quick: { id: 'quick', name: 'Quick Jab', emoji: '👊', element: 'normal', kind: 'attack', cost: 0, power: 28, priority: true, learn: 5, desc: 'Weaker, but always goes first.' },
+  cry: { id: 'cry', name: 'Battle Cry', emoji: '📣', element: 'normal', kind: 'buff', cost: 1, buff: 'atkUp', learn: 9, desc: 'Attack up for 3 turns.' },
+  snack: { id: 'snack', name: 'Snack Break', emoji: '🍙', element: 'normal', kind: 'heal', cost: 2, heal: 0.3, learn: 12, desc: 'Heal 30% of max HP.' },
+
+  spark: { id: 'spark', name: 'Ember Spark', emoji: '🔥', element: 'ember', kind: 'attack', cost: 1, power: 50, status: { type: 'burn', chance: 0.3 }, learn: 1, desc: '30% chance to burn.' },
+  dash: { id: 'dash', name: 'Flame Dash', emoji: '☄️', element: 'ember', kind: 'attack', cost: 2, power: 75, priority: true, learn: 7, desc: 'Strong and goes first.' },
+  inferno: { id: 'inferno', name: 'Inferno', emoji: '🌋', element: 'ember', kind: 'attack', cost: 3, power: 115, status: { type: 'burn', chance: 0.5 }, learn: 15, desc: 'Huge damage, 50% burn.' },
+
+  bubble: { id: 'bubble', name: 'Bubble Blast', emoji: '🫧', element: 'tide', kind: 'attack', cost: 1, power: 50, status: { type: 'soak', chance: 0.35 }, learn: 1, desc: '35% chance to soak (slows).' },
+  wall: { id: 'wall', name: 'Splash Wall', emoji: '🌊', element: 'tide', kind: 'buff', cost: 1, buff: 'defUp', learn: 7, desc: 'Defense way up for 3 turns.' },
+  tidal: { id: 'tidal', name: 'Tidal Wave', emoji: '🌀', element: 'tide', kind: 'attack', cost: 3, power: 115, status: { type: 'soak', chance: 0.5 }, learn: 15, desc: 'Huge damage, 50% soak.' },
+
+  beam: { id: 'beam', name: 'Moon Beam', emoji: '🌙', element: 'moon', kind: 'attack', cost: 1, power: 50, status: { type: 'drowsy', chance: 0.25 }, learn: 1, desc: '25% chance to make drowsy.' },
+  veil: { id: 'veil', name: 'Night Veil', emoji: '🌫️', element: 'moon', kind: 'buff', cost: 1, buff: 'dodgeUp', learn: 7, desc: 'Much harder to hit for 3 turns.' },
+  eclipse: { id: 'eclipse', name: 'Eclipse', emoji: '🌑', element: 'moon', kind: 'attack', cost: 3, power: 115, status: { type: 'drowsy', chance: 0.4 }, learn: 15, desc: 'Huge damage, 40% drowsy.' },
+
+  vine: { id: 'vine', name: 'Vine Whip', emoji: '🌿', element: 'flower', kind: 'attack', cost: 1, power: 50, drain: 0.3, learn: 1, desc: 'Heals you for 30% of the damage.' },
+  bloom: { id: 'bloom', name: 'Bloom', emoji: '🌸', element: 'flower', kind: 'heal', cost: 2, heal: 0.35, learn: 7, desc: 'Heal 35% and cure status.' },
+  petal: { id: 'petal', name: 'Petal Storm', emoji: '💮', element: 'flower', kind: 'attack', cost: 3, power: 110, drain: 0.25, learn: 15, desc: 'Huge damage that heals you.' },
+};
+
+const ELEMENT_MOVES: Record<Element, string[]> = {
+  ember: ['spark', 'dash', 'inferno'],
+  tide: ['bubble', 'wall', 'tidal'],
+  moon: ['beam', 'veil', 'eclipse'],
+  flower: ['vine', 'bloom', 'petal'],
+};
+
+/** Every move a species can learn, in level order. */
+export function learnset(speciesId: string): MoveDef[] {
+  const el = SPECIES_BY_ID[speciesId].element;
+  return [...['tackle', 'focus', 'quick', 'cry', 'snack'], ...ELEMENT_MOVES[el]].map((id) => MOVES[id]).sort((a, b) => a.learn - b.learn);
+}
+
+export const learned = (speciesId: string, xp: number) => learnset(speciesId).filter((m) => m.learn <= levelFor(xp));
+
+export const MAX_MOVES = 4;
+
+/** The four moves a pet brings to battle: its own picks, or the best ones it knows. */
+export function equippedMoves(p: { speciesId: string; xp: number; moves?: string[] }): MoveDef[] {
+  const known = learned(p.speciesId, p.xp);
+  const knownIds = new Set(known.map((m) => m.id));
+  const chosen = (p.moves ?? []).filter((id) => knownIds.has(id)).slice(0, MAX_MOVES);
+  if (chosen.length) return chosen.map((id) => MOVES[id]);
+  // Default kit: strongest element attack, element basic, a free move, then a support move.
+  const el = SPECIES_BY_ID[p.speciesId].element;
+  const order = [ELEMENT_MOVES[el][2], ELEMENT_MOVES[el][0], 'quick', 'tackle', ELEMENT_MOVES[el][1], 'snack', 'cry', 'focus'];
+  return order.filter((id) => knownIds.has(id)).slice(0, MAX_MOVES).map((id) => MOVES[id]);
+}
+
+/** Toggles a move in or out of a pet's four. */
+export function toggleMove(p: OwnedPet, moveId: string): OwnedPet {
+  const current = equippedMoves(p).map((m) => m.id);
+  if (current.includes(moveId)) {
+    if (current.length <= 1) return p;
+    return { ...p, moves: current.filter((id) => id !== moveId) };
+  }
+  if (!learned(p.speciesId, p.xp).some((m) => m.id === moveId)) return p;
+  if (current.length >= MAX_MOVES) return p;
+  return { ...p, moves: [...current, moveId] };
+}
+
+/** Moves newly learned at exactly this level (for "learned a new move!" messages). */
+export const movesLearnedAt = (speciesId: string, level: number) => learnset(speciesId).filter((m) => m.learn === level);

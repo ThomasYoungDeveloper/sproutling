@@ -8,6 +8,7 @@ import { useOverlay } from '../components/Overlay';
 import { ShopSheet, WardrobeSheet } from '../components/ShopSheets';
 import ExpeditionCard from '../components/ExpeditionCard';
 import AchievementsSheet from '../components/AchievementsSheet';
+import PetSheet from '../components/PetSheet';
 import { buzz, PopIn } from '../components/fx';
 import { colors, font, space } from '../theme';
 import { scoreDay, dailyQuests } from '../game/scoring';
@@ -32,6 +33,7 @@ export default function HomeScreen({ onNavigate }: { onNavigate?: (tab: 'eggs' |
     else if (r.action === 'treat') apply(C.treat);
     else if (r.action === 'eggs' || r.action === 'chests') onNavigate?.(r.action);
     else if (r.action === 'badges') overlay.open(<AchievementsSheet onClose={overlay.close} />);
+    else if (r.action === 'train' && r.petId) overlay.open(<PetSheet petId={r.petId} onClose={overlay.close} />);
   };
 
   return (
@@ -42,12 +44,12 @@ export default function HomeScreen({ onNavigate }: { onNavigate?: (tab: 'eggs' |
         <Card>
           <SectionHead title="Reminders" meta={pet ? `${pet.nickname}’s wishes` : undefined} />
           {todo.map((r) => {
-            const tappable = ['feed', 'play', 'treat', 'eggs', 'chests', 'badges'].includes(r.action ?? '');
+            const tappable = ['feed', 'play', 'treat', 'eggs', 'chests', 'badges', 'train'].includes(r.action ?? '');
             return (
               <Pressable key={r.id} onPress={tappable ? () => act(r) : undefined} style={({ pressed }) => [styles.reminder, pressed && tappable && { transform: [{ scale: 0.98 }] }]} accessibilityRole={tappable ? 'button' : undefined}>
                 <Text style={{ fontSize: 20 }}>{r.icon}</Text>
                 <Text style={[font.body, { flex: 1, fontWeight: '700' }]}>{r.text}</Text>
-                {tappable ? <Text style={styles.go}>{r.action === 'eggs' || r.action === 'chests' ? 'Go ›' : r.action === 'badges' ? 'Claim ›' : 'Do it'}</Text> : null}
+                {tappable ? <Text style={styles.go}>{r.action === 'eggs' || r.action === 'chests' ? 'Go ›' : r.action === 'badges' ? 'Claim ›' : r.action === 'train' ? 'Train ›' : 'Do it'}</Text> : null}
               </Pressable>
             );
           })}

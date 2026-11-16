@@ -1,4 +1,5 @@
 import type { GameState, Skin } from './types';
+import { equippedMoves, personalityOf, type Personality, type Training } from './stats';
 import * as A from './actions';
 import { scoreDay } from './scoring';
 
@@ -11,6 +12,9 @@ export interface CardPet {
   hat?: string;
   aura?: string;
   skin?: Skin;
+  personality?: Personality;
+  train?: Training;
+  moves?: string[];
 }
 
 /** The public snapshot of a player that friends can see. Never includes meals, sleep or other health details. */
@@ -27,12 +31,15 @@ export interface PublicCard {
   badges?: number;
 }
 
-const toCardPet = (p: { speciesId: string; nickname: string; xp: number; shiny: boolean; skin?: Skin; look?: { hat?: string; aura?: string } }): CardPet => ({
+const toCardPet = (p: { id: string; speciesId: string; nickname: string; xp: number; shiny: boolean; skin?: Skin; look?: { hat?: string; aura?: string }; personality?: Personality; train?: Training; moves?: string[] }): CardPet => ({
   speciesId: p.speciesId,
   nickname: p.nickname.slice(0, 24),
   xp: p.xp,
   shiny: p.shiny,
   ...(p.skin ? { skin: p.skin } : {}),
+  personality: personalityOf(p),
+  ...(p.train ? { train: p.train } : {}),
+  moves: equippedMoves(p).map((m) => m.id),
   ...(p.look?.hat ? { hat: p.look.hat } : {}),
   ...(p.look?.aura ? { aura: p.look.aura } : {}),
 });

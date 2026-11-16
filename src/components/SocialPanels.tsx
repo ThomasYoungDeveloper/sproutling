@@ -86,7 +86,8 @@ export function friendOpponent(f: Friend): Opponent | null {
 export function ArenaCard() {
   const { state } = useGame();
   const battle = useBattle();
-  const power = B.battlePower(state);
+  const buffs = B.habitBuffs(state);
+  const has = (id: string) => buffs.some((b) => b.id === id);
   const left = B.battlesLeftToday(state);
   const rec = state.battle;
   return (
@@ -99,13 +100,24 @@ export function ArenaCard() {
             {rec ? `${rec.wins} wins · ${rec.losses} losses` : 'Battle wild pets or a friend’s team'}
           </Text>
         </View>
-        <View style={styles.power}>
-          <Text style={styles.powerText}>×{power.toFixed(2)}</Text>
-          <Text style={styles.powerSub}>power</Text>
-        </View>
+
+      </View>
+      <Text style={[font.small, { color: '#D6DCF5', fontWeight: '800' }]}>Today’s habit buffs</Text>
+      <View style={styles.buffs}>
+        {[
+          { id: 'rested', emoji: '😴', label: 'Rested', hint: 'Sleep 7+ h' },
+          { id: 'hydrated', emoji: '💧', label: 'Hydrated', hint: '6 glasses' },
+          { id: 'energized', emoji: '👟', label: 'Energized', hint: '8k steps' },
+          { id: 'cared', emoji: '💖', label: 'Cared for', hint: 'Pet care' },
+        ].map((b) => (
+          <View key={b.id} style={[styles.buff, has(b.id) && styles.buffOn]}>
+            <Text style={{ fontSize: 16, opacity: has(b.id) ? 1 : 0.5 }}>{b.emoji}</Text>
+            <Text style={[styles.buffText, has(b.id) && { color: '#1B2240' }]}>{has(b.id) ? b.label : b.hint}</Text>
+          </View>
+        ))}
       </View>
       <Text style={[font.small, { color: '#D6DCF5' }]}>
-        Your streak and today’s pet care power up your team. {left > 0 ? `${left} rewarded battle${left === 1 ? '' : 's'} left today (first win gets a chest!).` : 'Rewards are used up for today, but you can still battle for fun.'}
+        {left > 0 ? `${left} rewarded battle${left === 1 ? '' : 's'} left today (first win gets a chest!).` : 'Rewards are used up for today, but you can still battle for fun.'} Train pets and pick moves on the Pets tab.
       </Text>
       <View style={{ flexDirection: 'row', gap: space.sm }}>
         <Button
@@ -232,9 +244,10 @@ export function TradesCard() {
 
 const styles = StyleSheet.create({
   arena: { backgroundColor: '#2A3366', borderColor: '#2A3366' },
-  power: { alignItems: 'center', backgroundColor: colors.gold, borderRadius: 14, paddingHorizontal: 10, paddingVertical: 4 },
-  powerText: { fontWeight: '900', fontSize: 16, color: '#5A3E00' },
-  powerSub: { fontWeight: '800', fontSize: 10, color: '#5A3E00' },
+  buffs: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  buff: { flexDirection: 'row', alignItems: 'center', gap: 4, borderRadius: 999, paddingHorizontal: 9, paddingVertical: 4, backgroundColor: 'rgba(255,255,255,0.12)' },
+  buffOn: { backgroundColor: colors.gold },
+  buffText: { fontWeight: '900', fontSize: 11, color: '#D6DCF5' },
   trade: { borderTopWidth: 1, borderTopColor: colors.line, paddingTop: space.sm, gap: 6 },
   swap: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: space.sm },
   arrow: { fontSize: 26, fontWeight: '900', color: colors.mintDark },

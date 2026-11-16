@@ -13,6 +13,7 @@ import * as Ex from '../src/game/expedition';
 import * as Ach from '../src/game/achievements';
 import * as Sk from '../src/game/skins';
 import * as Br from '../src/game/breeding';
+import * as St from '../src/game/stats';
 import { levelFor, levelProgress, stageFor } from '../src/game/scoring';
 import type { ChestKind, GameState } from '../src/game/types';
 
@@ -113,26 +114,51 @@ ok(T.applyTrade(ap.state, 'trade1', notActive.id, incoming) === null, 'a trade i
 const ap2 = T.applyTrade(TR, 'trade2', TR.activePetId!, incoming)!; ok(ap2.state.activePetId === ap2.received.id, 'if your active pet left, the new pet becomes active');
 // Battles
 ok(B.effectiveness('flower', 'tide') === 1.5 && B.effectiveness('tide', 'flower') === 0.75 && B.effectiveness('flower', 'ember') === 1, 'element strengths');
-const mk = (id: string, lv: number): B.PetLike => ({ speciesId: id, nickname: id, xp: 25 * lv * (lv - 1), shiny: false });
 let seed = 7; const rr = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
-const sim = (a: B.PetLike[], b: B.PetLike[], pa = 1, pb = 1) => { let bt = B.startBattle(a, b, pa, pb); let n = 0; while (!bt.over && n < 200) { bt = B.playTurn(bt, B.aiMove(bt.mine[bt.mi], rr), B.aiMove(bt.theirs[bt.ti], rr), rr).battle; n++; } return { over: bt.over, n }; };
+const mk = (id: string, lv: number, extra: Partial<B.PetLike> = {}): B.PetLike => ({ id: id + lv + rr(), speciesId: id, nickname: id, xp: 25 * lv * (lv - 1), shiny: false, ...extra });
+const sim = (a: B.PetLike[], b: B.PetLike[], buffs: B.HabitBuff[] = [], opts = {}) => { const r = B.simulate(B.startBattle(a, b, buffs, opts), rr); return { over: r.battle.over, n: r.turns }; };
 const commons = SPECIES.filter((x) => x.rarity === 'common').map((x) => x.id);
-let even = 0, strong = 0, maxTurns = 0, powered = 0;
-for (let i = 0; i < 400; i++) {
-  const team = () => [0, 1, 2].map(() => mk(commons[Math.floor(rr() * commons.length)], 5));
-  const r1 = sim(team(), team()); if (r1.over === 'win') even++; maxTurns = Math.max(maxTurns, r1.n);
-  const r2 = sim([0, 1, 2].map(() => mk(commons[Math.floor(rr() * commons.length)], 9)), team()); if (r2.over === 'win') strong++;
-  const r3 = sim(team(), team(), 1.3, 1); if (r3.over === 'win') powered++;
+const spread = (lv: number) => { const t: Record<string, number> = {}; for (let k = 1; k < lv; k++) { const st = ['hp', 'atk', 'def', 'spd'][Math.floor(rr() * 4)]; t[st] = (t[st] ?? 0) + 1; } return t; };
+let even = 0, strong = 0, maxTurns = 0, totalTurns = 0, powered = 0, trained = 0;
+const allBuffs: B.HabitBuff[] = [{ id: 'rested', label: '', emoji: '', text: '' }, { id: 'hydrated', label: '', emoji: '', text: '' }, { id: 'energized', label: '', emoji: '', text: '' }, { id: 'cared', label: '', emoji: '', text: '' }];
+for (let i = 0; i < 300; i++) {
+  const team = (lv = 6) => [0, 1, 2].map(() => mk(commons[Math.floor(rr() * commons.length)], lv, { train: spread(lv) }));
+  const r1 = sim(team(), team()); if (r1.over === 'win') even++; maxTurns = Math.max(maxTurns, r1.n); totalTurns += r1.n;
+  const r2 = sim(team(10), team(6)); if (r2.over === 'win') strong++;
+  const r3 = sim(team(), team(), allBuffs, { care: 1.3, streak: 7 }); if (r3.over === 'win') powered++;
+  const untrained = [0, 1, 2].map(() => mk(commons[Math.floor(rr() * commons.length)], 6));
+  const r4 = sim(team(), untrained); if (r4.over === 'win') trained++;
 }
-ok(even > 130 && even < 270, `even teams are balanced (${Math.round(even / 4)}% wins)`);
-ok(strong > 340, `higher-level team usually wins (${Math.round(strong / 4)}%)`);
-ok(powered > even, `healthy-habit power-up helps (${Math.round(powered / 4)}% vs ${Math.round(even / 4)}%)`);
-ok(maxTurns < 60, `battles always end quickly (longest ${maxTurns} rounds)`);
-const g = B.startBattle([mk('p02', 5)], [mk('p03', 5)]);
-const myHit = (m: B.Move, th: B.Move) => B.playTurn(g, m, th, () => 0.5).events.find((e) => e.side === 'me')!;
-const hitGuarded = myHit('attack', 'guard').damage, hitOpen = myHit('attack', 'attack').damage;
-ok(hitGuarded < hitOpen && Math.abs(hitGuarded * 2 - hitOpen) <= 1, 'guarding halves damage');
-ok(myHit('special', 'attack').move === 'attack', 'special needs charge');
+ok(even > 110 && even < 190, `even teams are balanced (${Math.round(even / 3)}% wins)`);
+ok(strong > 255, `higher-level team usually wins (${Math.round(strong / 3)}%)`);
+ok(powered > even + 20 && powered < 270, `healthy-habit buffs help (${Math.round(powered / 3)}% vs ${Math.round(even / 3)}%)`);
+ok(trained > 160, `spending stat points makes pets stronger (${Math.round(trained / 3)}% vs untrained)`);
+ok(maxTurns < 45 && totalTurns / 300 > 5, `battles last a good while but end (avg ${Math.round(totalTurns / 300)} turns, longest ${maxTurns})`);
+// Moves, energy, statuses
+const g = B.startBattle([mk('p02', 15)], [mk('p03', 15)]);
+const tide = SPECIES.find((x) => x.id === 'p02')!.element;
+ok(g.mine[0].moves.length === 4 && g.mine[0].energy === 1, 'pets bring 4 moves and start with 1 energy');
+const big = g.mine[0].moves.find((m) => m.cost === 3)!;
+const f0 = B.playTurn(g, { type: 'move', moveId: big.id }, { type: 'move', moveId: 'tackle' }, () => 0.5);
+ok(f0.some((f) => f.event.side === 'me' && f.event.move?.id === 'tackle'), 'not enough energy falls back to Tackle');
+ok(f0[f0.length - 1].battle.mine[0].energy === 2, 'energy builds up every turn');
+const swapB = B.startBattle([mk('p02', 5), mk('p03', 5)], [mk('p04', 5)]);
+const sw = B.playTurn(swapB, { type: 'switch', index: 1 }, { type: 'move', moveId: 'tackle' }, () => 0.5);
+ok(sw[0].event.kind === 'switch' && sw[sw.length - 1].battle.mi === 1, 'you can switch pets');
+const quickB = B.startBattle([mk('p02', 6, { train: { spd: 0 } })], [mk('p03', 6, { train: { spd: 5 } })]);
+const qf = B.playTurn(quickB, { type: 'move', moveId: 'quick' }, { type: 'move', moveId: 'tackle' }, () => 0.5);
+ok(qf.find((f) => f.event.kind === 'move' || f.event.kind === 'miss')!.event.side === 'me', 'Quick Jab goes first even against a faster pet');
+const burnTest = B.startBattle([mk('p02', 5)], [mk('p03', 5)]); burnTest.theirs[0].status = { type: 'burn', turns: 3 };
+const bf = B.playTurn(burnTest, { type: 'move', moveId: 'tackle' }, { type: 'move', moveId: 'tackle' }, () => 0.5);
+ok(bf.some((f) => f.event.kind === 'burn'), 'burns hurt at the end of the turn');
+// Stats and training
+const pet0 = { id: 'tr1', speciesId: 'p02', nickname: 'T', xp: 25 * 6 * 5, shiny: false, hatchedOn: '' } as any;
+ok(St.pointsLeft(pet0) === 5, 'one stat point per level');
+const pet1 = St.train(pet0, 'atk'); ok(St.statsFor(pet1).atk > St.statsFor(pet0).atk && St.pointsLeft(pet1) === 4, 'training raises a stat');
+let pet2 = pet1; for (let i = 0; i < 10; i++) pet2 = St.train(pet2, 'hp'); ok(St.pointsLeft(pet2) === 0 && pet2.train?.hp === 4, 'cannot spend more points than earned');
+ok(St.personalityOf(pet0) === St.personalityOf({ ...pet0 }), 'older pets get a stable personality');
+ok(St.equippedMoves({ speciesId: 'p02', xp: 0 }).length === 2 && St.equippedMoves({ speciesId: 'p02', xp: 25 * 15 * 14 }).length === 4, 'pets learn more moves as they level');
+const tog = St.toggleMove({ ...pet0, xp: 25 * 15 * 14 }, 'tackle'); ok(St.equippedMoves(tog).length >= 1, 'moves can be swapped');
 let R = { ...t, battle: undefined } as GameState; const coins0b = R.coins;
 const f1 = B.finishBattle(R, true, true); ok(f1.reward.coins === 30 && f1.reward.chest && f1.state.chests.length === R.chests.length + 1, 'first win: 30 coins and a Bronze chest');
 R = f1.state; const f2 = B.finishBattle(R, true, false); ok(f2.reward.coins === 20 && !f2.reward.chest, 'later wins: coins only');

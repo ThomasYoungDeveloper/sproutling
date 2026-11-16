@@ -395,6 +395,7 @@ export default function PetScene({ onTrinketsEmpty, onDressUp, onShop }: { onTri
               <PopIn key={levelUp}>
                 <View style={styles.levelUp}>
                   <Text style={styles.levelUpText}>LEVEL UP! Lv {levelUp}</Text>
+                  <Text style={styles.levelUpSub}>+1 stat point to train</Text>
                 </View>
               </PopIn>
             </View>
@@ -510,6 +511,7 @@ const styles = StyleSheet.create({
   xpFloatText: { fontWeight: '900', color: '#5A3E00', fontSize: 15 },
   levelUpWrap: { position: 'absolute', top: 10, left: 0, right: 0, alignItems: 'center' },
   levelUp: { backgroundColor: colors.ink, borderRadius: 999, paddingHorizontal: 18, paddingVertical: 8, borderWidth: 3, borderColor: colors.gold },
+  levelUpSub: { color: '#FFFFFF', fontWeight: '800', fontSize: 12, textAlign: 'center' },
   levelUpText: { color: colors.gold, fontWeight: '900', fontSize: 18, letterSpacing: 1 },
   footer: { padding: space.lg, paddingTop: space.md, gap: 6 },
   xpRow: { flexDirection: 'row', justifyContent: 'space-between' },
