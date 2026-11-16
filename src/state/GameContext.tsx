@@ -3,7 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { GameState } from '../game/types';
 import { newGame } from '../game/seed';
 
-const KEY = 'sproutling/game/v1';
+const KEY = 'sproutling/game/v2';
 
 interface Ctx {
   state: GameState;

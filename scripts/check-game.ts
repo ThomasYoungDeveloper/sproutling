@@ -16,7 +16,12 @@ const ok = (c: boolean, m: string) => { console.log((c ? 'PASS ' : 'FAIL ') + m)
 RARITIES.forEach((r) => ok(speciesOfRarity(r).length > 0, `${r} has species (${speciesOfRarity(r).length})`));
 ok(new Set(SPECIES.map((s) => s.id)).size === SPECIES.length, 'species ids unique');
 
-let s = newGame();
+let s0 = newGame();
+ok(A.needsStarter(s0), 'new players must pick a starter egg');
+const st = A.chooseStarter(s0, 'tide', () => 0.3);
+ok(st.state.pets.length === 1 && SPECIES.find((x) => x.id === st.pet.speciesId)!.rarity === 'common' && SPECIES.find((x) => x.id === st.pet.speciesId)!.element === 'tide', 'starter is a Common of the chosen element');
+ok(st.state.chests.length === 1, 'starter comes with a welcome chest');
+let s = st.state; s = { ...s, eggs: [{ id: 'egg1', rarity: 'common', stepsWalked: 2100, incubating: true, foundOn: '' }, { id: 'egg2', rarity: 'rare', stepsWalked: 0, incubating: false, foundOn: '' }], days: { [A.todayKey(s)]: { steps: 4200, sleepHours: 7.5, water: 3, workoutMinutes: 0, meals: [{ name: 'Oats', calories: 320, veggies: true }] } } };
 const xp0 = A.activePet(s)!.xp, coins0 = s.coins;
 s = A.addSteps(s, 1000);
 ok(A.activePet(s)!.xp === xp0 + 10, 'steps give XP to active pet');
@@ -41,6 +46,6 @@ const before = A.activePet(s)!.xp; s = A.setWater(s, 5);
 ok(A.activePet(s)!.xp === before - 4 - 15, 'undoing a habit removes its XP (and the quest bonus)');
 s = A.incubate(A.incubate(s, s.eggs[0].id), 'nope');
 ok(A.incubatingCount(s) <= s.incubatorSlots, 'incubator slots respected');
-let t = newGame(); const c0 = t.coins; for (let i = 0; i < 20; i++) { t = A.setWater(t, 4); t = A.setWater(t, 3); }
+let t = A.setWater(s, 3); const c0 = t.coins; for (let i = 0; i < 20; i++) { t = A.setWater(t, 4); t = A.setWater(t, 3); }
 ok(t.coins === c0, 'toggling a habit up and down cannot farm coins');
 console.log(fails ? `${fails} FAILED` : 'ALL PASSED'); process.exit(fails ? 1 : 0);

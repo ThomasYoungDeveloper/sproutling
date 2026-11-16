@@ -3,8 +3,8 @@ import Svg, { Circle, Ellipse, Path } from 'react-native-svg';
 import type { Rarity } from '../game/types';
 import { RARITY_INFO } from '../game/rarity';
 
-export default function EggSprite({ rarity, size = 80, cracked = false }: { rarity: Rarity; size?: number; cracked?: boolean }) {
-  const c = RARITY_INFO[rarity].color;
+export default function EggSprite({ rarity, size = 80, cracked = false, color }: { rarity: Rarity; size?: number; cracked?: boolean; color?: string }) {
+  const c = color ?? RARITY_INFO[rarity].color;
   return (
     <Svg width={size} height={size} viewBox="0 0 100 100">
       <Ellipse cx={50} cy={92} rx={24} ry={4} fill="rgba(36,50,58,0.12)" />

@@ -1,8 +1,8 @@
-import type { ChestKind, DayLog, Egg, GameState, Meal, OwnedPet, Rarity } from './types';
+import type { ChestKind, DayLog, Egg, Element, GameState, Meal, OwnedPet, Rarity } from './types';
 import { dateKey } from './dates';
 import { emptyDay, scoreDay, dailyQuests, streakFrom, COINS_PER_XP } from './scoring';
 import { openChest, type ChestResult } from './loot';
-import { speciesOfRarity, SPECIES_BY_ID } from './species';
+import { speciesOfRarity, SPECIES, SPECIES_BY_ID } from './species';
 import { SHINY_CHANCE, stepsToHatch } from './rarity';
 import { makeId, pickOne, type Rng, defaultRng } from './random';
 
@@ -132,3 +132,15 @@ export const renamePet = (s: GameState, id: string, name: string): GameState => 
   pets: s.pets.map((p) => (p.id === id ? { ...p, nickname: name.trim().slice(0, 14) || SPECIES_BY_ID[p.speciesId].name } : p)),
 });
 export const nextDay = (s: GameState): GameState => ({ ...s, dayOffset: s.dayOffset + 1 });
+
+/** Brand-new players pick an element egg; it hatches a random Common of that element, plus a welcome chest. */
+export function chooseStarter(s: GameState, element: Element, rng: Rng = defaultRng): Hatched {
+  const pool = SPECIES.filter((x) => x.rarity === 'common' && x.element === element);
+  const species = pickOne(pool, rng);
+  const pet: OwnedPet = { id: makeId(rng), speciesId: species.id, nickname: species.name, xp: 0, shiny: rng() < SHINY_CHANCE, hatchedOn: todayKey(s) };
+  let next: GameState = { ...s, pets: [pet], activePetId: pet.id, dex: { ...s.dex, [species.id]: true } };
+  next = grantChest(next, 'bronze', 'Welcome gift', rng);
+  return { state: next, pet, isNew: true };
+}
+
+export const needsStarter = (s: GameState) => s.pets.length === 0;

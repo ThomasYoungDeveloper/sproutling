@@ -1,37 +1,22 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { useGame } from '../state/GameContext';
 import { Card, SectionHead, Button, ProgressBar, RarityBadge } from '../components/ui';
 import EggSprite from '../components/EggSprite';
-import PetSprite from '../components/PetSprite';
+import { useReveal } from '../components/RevealOverlay';
 import { colors, font, space } from '../theme';
 import { RARITY_INFO, STEPS_PER_KM, stepsToHatch } from '../game/rarity';
-import { SPECIES_BY_ID } from '../game/species';
 import * as A from '../game/actions';
-import type { OwnedPet } from '../game/types';
 
 export default function EggsScreen() {
   const { state, apply } = useGame();
-  const [hatched, setHatched] = useState<{ pet: OwnedPet; isNew: boolean } | null>(null);
+  const reveal = useReveal();
   const incubating = state.eggs.filter((e) => e.incubating);
   const waiting = state.eggs.filter((e) => !e.incubating);
   const free = state.incubatorSlots - incubating.length;
 
   return (
     <View style={{ gap: space.md }}>
-      {hatched ? (
-        <Card style={{ alignItems: 'center', backgroundColor: RARITY_INFO[SPECIES_BY_ID[hatched.pet.speciesId].rarity].soft }}>
-          <Text style={font.h2}>It hatched!</Text>
-          <PetSprite species={SPECIES_BY_ID[hatched.pet.speciesId]} stage="baby" size={170} shiny={hatched.pet.shiny} mood="joy" />
-          <Text style={[font.title, { fontSize: 20 }]}>{SPECIES_BY_ID[hatched.pet.speciesId].name}{hatched.pet.shiny ? ' (Shiny!)' : ''}</Text>
-          <RarityBadge rarity={SPECIES_BY_ID[hatched.pet.speciesId].rarity} />
-          <Text style={font.small}>{hatched.isNew ? 'New to your Pet-dex!' : 'Another one for your team.'}</Text>
-          <View style={{ flexDirection: 'row', gap: 8 }}>
-            <Button label="Make active" primary onPress={() => { apply((s) => A.setActivePet(s, hatched.pet.id)); setHatched(null); }} />
-            <Button label="Nice!" onPress={() => setHatched(null)} />
-          </View>
-        </Card>
-      ) : null}
 
       <Card>
         <SectionHead title="Incubators" meta={`${incubating.length} of ${state.incubatorSlots} in use`} />
@@ -58,7 +43,8 @@ export default function EggsScreen() {
                     const r = A.hatch(state, e.id);
                     if (!r) return;
                     apply(() => r.state);
-                    setHatched({ pet: r.pet, isNew: r.isNew });
+                    const petId = r.pet.id;
+                    reveal({ kind: 'egg', rarity: e.rarity, pet: r.pet, isNew: r.isNew, onMakeActive: r.state.activePetId === petId ? undefined : () => apply((s) => A.setActivePet(s, petId)) });
                   }}
                 />
               ) : null}

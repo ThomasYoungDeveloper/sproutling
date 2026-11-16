@@ -3,9 +3,9 @@ import { StyleSheet, Text, View } from 'react-native';
 import Svg, { Path, Rect } from 'react-native-svg';
 import { useGame } from '../state/GameContext';
 import { Card, SectionHead, Button, RarityBadge } from '../components/ui';
-import EggSprite from '../components/EggSprite';
+import { useReveal } from '../components/RevealOverlay';
 import { colors, font, space } from '../theme';
-import { CHESTS, oddsFor, type ChestResult } from '../game/loot';
+import { CHESTS, oddsFor } from '../game/loot';
 import { RARITIES, RARITY_INFO } from '../game/rarity';
 import * as A from '../game/actions';
 import type { ChestKind } from '../game/types';
@@ -29,28 +29,11 @@ function ChestArt({ kind, size = 64 }: { kind: ChestKind; size?: number }) {
 
 export default function ChestsScreen() {
   const { state, apply } = useGame();
-  const [opened, setOpened] = useState<ChestResult | null>(null);
+  const reveal = useReveal();
   const [showOdds, setShowOdds] = useState<ChestKind | null>(null);
 
   return (
     <View style={{ gap: space.md }}>
-      {opened ? (
-        <Card style={{ alignItems: 'center', backgroundColor: '#FFF8E6' }}>
-          <Text style={font.h2}>Chest opened!</Text>
-          <Text style={[font.body, { fontWeight: '800' }]}>+{opened.coins} coins</Text>
-          {opened.eggRarity ? (
-            <View style={{ alignItems: 'center', gap: 4 }}>
-              <EggSprite rarity={opened.eggRarity} size={84} />
-              <RarityBadge rarity={opened.eggRarity} />
-              <Text style={font.small}>Find it on the Eggs tab.</Text>
-            </View>
-          ) : (
-            <Text style={font.small}>No egg this time.</Text>
-          )}
-          {opened.item ? <Text style={font.body}>Bonus item: {opened.item}</Text> : null}
-          <Button label="Collect" primary onPress={() => setOpened(null)} />
-        </Card>
-      ) : null}
 
       <Card>
         <SectionHead title="Your chests" meta={`${state.chests.length} unopened`} />
@@ -69,7 +52,7 @@ export default function ChestsScreen() {
                 const r = A.openChestById(state, c.id);
                 if (!r) return;
                 apply(() => r.state);
-                setOpened(r.result);
+                reveal({ kind: 'chest', chest: c.kind, result: r.result });
               }}
             />
           </View>
