@@ -13,9 +13,17 @@ import { GIFTS_PER_DAY } from '../game/actions';
 import { activeToday, copyText, lastSeen, shareInvite } from './friendsShared';
 import { ArenaCard, TradesCard } from '../components/SocialPanels';
 import TeamCard from '../components/TeamCard';
+import FashionShow from '../components/FashionShow';
+
+const SECTIONS = [
+  { id: 'friends', label: 'Friends', icon: '👋' },
+  { id: 'team', label: 'Team', icon: '🏡' },
+  { id: 'battle', label: 'Battle', icon: '⚔️' },
+  { id: 'show', label: 'Show', icon: '🎀' },
+] as const;
 
 export default function FriendsScreen({ initialAdd, onUsedInitialAdd }: { initialAdd?: string | null; onUsedInitialAdd?: () => void }) {
-  const { myCode, friends, incoming, outgoing, loading, error, addFriend, respond, remove, gift, giftsLeft, refresh } = useFriends();
+  const { myCode, friends, incoming, outgoing, loading, error, addFriend, respond, remove, gift, giftsLeft, refresh, tradesForMe } = useFriends();
   const [target, setTarget] = useState('');
   const [busy, setBusy] = useState(false);
   const [addMsg, setAddMsg] = useState<{ ok: boolean; text: string } | null>(null);
@@ -23,6 +31,7 @@ export default function FriendsScreen({ initialAdd, onUsedInitialAdd }: { initia
   const overlay = useOverlay();
   const openFriend = (f: Friend) => overlay.open(<FriendSheet friend={f} onClose={overlay.close} />);
   const [inviteTop, setInviteTop] = useState(false);
+  const [section, setSection] = useState<'friends' | 'team' | 'battle' | 'show'>('friends');
 
   useEffect(() => {
     refresh();
@@ -113,6 +122,19 @@ export default function FriendsScreen({ initialAdd, onUsedInitialAdd }: { initia
 
   return (
     <View style={{ gap: space.md }}>
+      <View style={styles.segs}>
+        {SECTIONS.map((sec) => (
+          <Pressable key={sec.id} onPress={() => setSection(sec.id)} style={[styles.seg, section === sec.id && styles.segOn]} accessibilityRole="tab" accessibilityState={{ selected: section === sec.id }} accessibilityLabel={sec.label}>
+            <Text style={[styles.segText, section === sec.id && { color: '#fff' }]}>{sec.icon} {sec.label}</Text>
+            {sec.id === 'friends' && incoming.length + tradesForMe > 0 ? <View style={styles.segDot} /> : null}
+          </Pressable>
+        ))}
+      </View>
+      {section === 'team' && <TeamCard />}
+      {section === 'battle' && <ArenaCard />}
+      {section === 'show' && <FashionShow />}
+      {section === 'friends' && (
+        <>
       {(friends.length === 0 || inviteTop) && invite}
       {incoming.length > 0 && (
         <Card style={{ borderColor: colors.peach }}>
@@ -139,9 +161,7 @@ export default function FriendsScreen({ initialAdd, onUsedInitialAdd }: { initia
         </Card>
       )}
 
-      <TeamCard />
       <TradesCard />
-      <ArenaCard />
 
       <Card>
         <SectionHead title="Friends" meta={friends.length ? `🎁 ${giftsLeft} of ${GIFTS_PER_DAY} gifts left today` : undefined} />
@@ -197,6 +217,8 @@ export default function FriendsScreen({ initialAdd, onUsedInitialAdd }: { initia
         </Card>
       )}
 
+        </>
+      )}
     </View>
   );
 }
@@ -213,6 +235,11 @@ function Avatar({ t }: { t: Trainer }) {
 }
 
 const styles = StyleSheet.create({
+  segs: { flexDirection: 'row', gap: 4, backgroundColor: '#FFFFFF', borderRadius: 999, padding: 4, borderWidth: 1, borderColor: colors.line },
+  seg: { flex: 1, alignItems: 'center', paddingVertical: 8, borderRadius: 999 },
+  segOn: { backgroundColor: colors.mint },
+  segText: { fontWeight: '900', fontSize: 12, color: colors.ink },
+  segDot: { position: 'absolute', top: 4, right: 8, width: 8, height: 8, borderRadius: 4, backgroundColor: colors.peach },
   row: { flexDirection: 'row', gap: space.sm, alignItems: 'center' },
   codeRow: { flexDirection: 'row', gap: 6, justifyContent: 'center', marginVertical: space.xs },
   codeChar: { width: 40, height: 50, borderRadius: 12, backgroundColor: '#fff', borderWidth: 1, borderColor: '#BFE8D6', alignItems: 'center', justifyContent: 'center' },
