@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Pressable, SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Platform, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { GameProvider, useGame } from './src/state/GameContext';
 import { AuthProvider, useAuth } from './src/state/AuthContext';
@@ -10,22 +10,42 @@ import EggsScreen from './src/screens/EggsScreen';
 import ChestsScreen from './src/screens/ChestsScreen';
 import DexScreen from './src/screens/DexScreen';
 import StarterScreen from './src/screens/StarterScreen';
+import FriendsScreen from './src/screens/FriendsScreen';
+import DailyLoginSheet from './src/components/DailyLoginSheet';
+import { FriendsProvider, useFriends } from './src/state/FriendsContext';
+import { PopIn } from './src/components/fx';
 import { RevealProvider, useReveal } from './src/components/RevealOverlay';
 import { stageFor } from './src/game/scoring';
 import { Button } from './src/components/ui';
 import { colors, font, space } from './src/theme';
 import * as A from './src/game/actions';
 
-type Tab = 'home' | 'eggs' | 'chests' | 'dex';
+type Tab = 'home' | 'eggs' | 'chests' | 'dex' | 'friends';
 const TABS: { id: Tab; label: string }[] = [
   { id: 'home', label: 'Home' },
   { id: 'eggs', label: 'Eggs' },
   { id: 'chests', label: 'Chests' },
   { id: 'dex', label: 'Pets' },
+  { id: 'friends', label: 'Friends' },
 ];
 
+/** A friend code from an invite link (sproutling.app/?add=CODE), read once and removed from the address bar. */
+function takeInviteCode(): string | null {
+  if (Platform.OS !== 'web' || typeof window === 'undefined') return null;
+  const url = new URL(window.location.href);
+  const code = url.searchParams.get('add');
+  if (!code) return null;
+  url.searchParams.delete('add');
+  window.history.replaceState(null, '', url.pathname + url.search + url.hash);
+  return code.slice(0, 20);
+}
+
 function Shell() {
-  const { state, apply, reset, sync } = useGame();
+  const { state, apply, reset, sync, loaded } = useGame();
+  const { incoming, notice, dismissNotice } = useFriends();
+  const [invite, setInvite] = useState<string | null>(null);
+  const [showLogin, setShowLogin] = useState(false);
+  const loginShownFor = useRef<string | null>(null);
   const { user, username } = useAuth();
   const [showAccount, setShowAccount] = useState(false);
   const [tab, setTab] = useState<Tab>('home');
@@ -33,6 +53,33 @@ function Shell() {
   const readyEggs = state.eggs.filter(A.isReady).length;
   const reveal = useReveal();
   const starter = A.needsStarter(state);
+  const login = A.loginStatus(state);
+  const today = A.todayKey(state);
+
+  // Opened from a friend's invite link: jump to Friends with their code filled in.
+  useEffect(() => {
+    const code = takeInviteCode();
+    if (code) {
+      setInvite(code);
+      setTab('friends');
+    }
+  }, []);
+
+  // Pop up the daily reward once a day, after the save has synced (so it isn't shown twice across devices).
+  const settled = loaded && (sync === 'saved' || sync === 'error');
+  useEffect(() => {
+    if (settled && !starter && login.canClaim && loginShownFor.current !== today) {
+      loginShownFor.current = today;
+      setShowLogin(true);
+    }
+  }, [settled, starter, login.canClaim, today]);
+
+  // Notices (like opened gifts) fade away on their own.
+  useEffect(() => {
+    if (!notice) return;
+    const t = setTimeout(dismissNotice, 5000);
+    return () => clearTimeout(t);
+  }, [notice?.id]);
 
   // Celebrate when the active pet reaches a new growth stage.
   const pet = A.activePet(state);
@@ -61,10 +108,20 @@ function Shell() {
       </View>
       <ScrollView contentContainerStyle={styles.scroll}>
         {starter ? <StarterScreen /> : null}
+        {!starter && tab === 'home' && (
+          <Pressable onPress={() => setShowLogin(true)} style={[styles.daily, login.canClaim && styles.dailyReady]} accessibilityRole="button" accessibilityLabel="Daily rewards">
+            <Text style={{ fontSize: 22 }}>{login.canClaim ? '🎁' : '✅'}</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.dailyTitle}>{login.canClaim ? `Day ${login.index + 1} reward is ready!` : `Day ${login.index + 1} reward collected`}</Text>
+              <Text style={font.small}>{login.canClaim ? 'Tap to collect' : 'Come back tomorrow for the next one'}</Text>
+            </View>
+          </Pressable>
+        )}
         {!starter && tab === 'home' && <HomeScreen />}
         {!starter && tab === 'eggs' && <EggsScreen />}
         {!starter && tab === 'chests' && <ChestsScreen />}
         {!starter && tab === 'dex' && <DexScreen />}
+        {!starter && tab === 'friends' && <FriendsScreen initialAdd={invite} onUsedInitialAdd={() => setInvite(null)} />}
         <View style={styles.demo}>
           <Text style={[font.tiny, { flex: 1 }]}>Preview build. Your progress saves to your account.</Text>
           <Button small label="Skip to tomorrow" onPress={() => apply(A.nextDay)} />
@@ -85,7 +142,7 @@ function Shell() {
       </ScrollView>
       {!starter && <View style={styles.nav}>
         {TABS.map((t) => {
-          const badge = t.id === 'eggs' ? readyEggs : t.id === 'chests' ? state.chests.length : 0;
+          const badge = t.id === 'eggs' ? readyEggs : t.id === 'chests' ? state.chests.length : t.id === 'friends' ? incoming.length : 0;
           return (
             <Pressable key={t.id} onPress={() => setTab(t.id)} style={[styles.navBtn, tab === t.id && styles.navActive]} accessibilityRole="tab" accessibilityState={{ selected: tab === t.id }}>
               <Text style={[styles.navText, tab === t.id && { color: colors.mintDark }]}>{t.label}</Text>
@@ -95,6 +152,16 @@ function Shell() {
         })}
       </View>}
       {showAccount && <AccountSheet onClose={() => setShowAccount(false)} />}
+      {showLogin && !starter && <DailyLoginSheet onClose={() => setShowLogin(false)} />}
+      {notice && (
+        <View style={styles.toastWrap} pointerEvents="box-none">
+          <PopIn key={notice.id}>
+            <Pressable onPress={dismissNotice} style={styles.toast} accessibilityRole="alert">
+              <Text style={styles.toastText}>{notice.text}</Text>
+            </Pressable>
+          </PopIn>
+        </View>
+      )}
     </SafeAreaView>
   );
 }
@@ -119,7 +186,9 @@ function Gate() {
   return (
     <GameProvider key={user.id}>
       <RevealProvider>
-        <Shell />
+        <FriendsProvider>
+          <Shell />
+        </FriendsProvider>
       </RevealProvider>
     </GameProvider>
   );
@@ -149,4 +218,10 @@ const styles = StyleSheet.create({
   navText: { fontWeight: '800', color: colors.muted, fontSize: 14 },
   dot: { backgroundColor: colors.peach, borderRadius: 999, minWidth: 18, height: 18, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 5 },
   dotText: { color: '#fff', fontWeight: '900', fontSize: 11 },
+  daily: { flexDirection: 'row', alignItems: 'center', gap: space.md, backgroundColor: '#fff', borderRadius: 18, borderWidth: 1, borderColor: colors.line, paddingVertical: space.sm, paddingHorizontal: space.md },
+  dailyReady: { backgroundColor: '#FFF6DD', borderColor: colors.gold },
+  dailyTitle: { fontWeight: '900', fontSize: 15, color: colors.ink },
+  toastWrap: { position: 'absolute', top: 64, left: 0, right: 0, alignItems: 'center', paddingHorizontal: space.lg, zIndex: 70 },
+  toast: { backgroundColor: colors.ink, borderRadius: 16, paddingVertical: 12, paddingHorizontal: 16, maxWidth: 420 },
+  toastText: { color: '#fff', fontWeight: '800', fontSize: 14, textAlign: 'center' },
 });

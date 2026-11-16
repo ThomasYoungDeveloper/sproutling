@@ -4,6 +4,7 @@ import type { GameState } from '../game/types';
 import { newGame } from '../game/seed';
 import { supabase } from '../lib/supabase';
 import { useAuth } from './AuthContext';
+import { buildCard } from '../game/card';
 
 const keyFor = (userId: string) => `sproutling/game/v3/${userId}`;
 
@@ -100,6 +101,21 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     }, 1500);
     return () => clearTimeout(t);
   }, [state, user?.id]);
+
+  // Publish the trainer card friends see, only when something on it changed.
+  const cardJson = JSON.stringify(buildCard(state));
+  const lastCard = useRef<string | null>(null);
+  useEffect(() => {
+    if (!user || cloudReady.current !== user.id || cardJson === lastCard.current) return;
+    const t = setTimeout(async () => {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ card: JSON.parse(cardJson), card_updated_at: new Date().toISOString() })
+        .eq('id', user.id);
+      if (!error) lastCard.current = cardJson;
+    }, 2000);
+    return () => clearTimeout(t);
+  }, [cardJson, user?.id, sync === 'saved']);
 
   const apply = useCallback((fn: (s: GameState) => GameState) => setState((s) => fn(s)), []);
   const reset = useCallback(() => setState(newGame()), []);

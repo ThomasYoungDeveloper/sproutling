@@ -12,7 +12,7 @@ import { Button } from './ui';
 import { Confetti, Flash, PopIn, Rays, buzz, useCountUp, useIdleWobble, useShake } from './fx';
 
 export type Reveal =
-  | { kind: 'egg'; rarity: Rarity; pet: OwnedPet; isNew: boolean; title?: string; eggColor?: string; onMakeActive?: () => void }
+  | { kind: 'egg'; rarity: Rarity; pet: OwnedPet; isNew: boolean; title?: string; eggColor?: string; eggSpots?: string[]; onMakeActive?: () => void }
   | { kind: 'chest'; chest: ChestKind; result: ChestResult }
   | { kind: 'grow'; pet: OwnedPet; stage: Stage };
 
@@ -73,7 +73,7 @@ function EggReveal({ r, onClose }: { r: Extract<Reveal, { kind: 'egg' }>; onClos
           <Text style={styles.kicker}>{r.title ?? 'Your egg is hatching!'}</Text>
           <Pressable onPress={tap} accessibilityRole="button" accessibilityLabel="Tap the egg to crack it">
             <Animated.View style={taps ? shake : idle}>
-              <EggSprite rarity={r.rarity} color={r.eggColor} size={190} cracked={taps >= 1} />
+              <EggSprite rarity={r.rarity} color={r.eggColor} spots={r.eggSpots} size={190} cracked={taps >= 1} />
             </Animated.View>
           </Pressable>
           <Text style={styles.hint}>{['Tap to crack it!', 'Keep going!', 'One more!', '…'][taps]}</Text>

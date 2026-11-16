@@ -67,4 +67,6 @@ export interface GameState {
   questChestDays: Record<string, true>;
   /** Demo-only: shift "today" forward to test multi-day play. */
   dayOffset: number;
+  /** Daily login rewards: last day claimed and how many claimed in total. */
+  login?: { last: string; count: number };
 }

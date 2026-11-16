@@ -133,9 +133,9 @@ export const renamePet = (s: GameState, id: string, name: string): GameState => 
 });
 export const nextDay = (s: GameState): GameState => ({ ...s, dayOffset: s.dayOffset + 1 });
 
-/** Brand-new players pick an element egg; it hatches a random Common of that element, plus a welcome chest. */
-export function chooseStarter(s: GameState, element: Element, rng: Rng = defaultRng): Hatched {
-  const pool = SPECIES.filter((x) => x.rarity === 'common' && x.element === element);
+/** Brand-new players get one mystery egg: it hatches a random Common of any element, plus a welcome chest. */
+export function chooseStarter(s: GameState, rng: Rng = defaultRng): Hatched {
+  const pool = SPECIES.filter((x) => x.rarity === 'common');
   const species = pickOne(pool, rng);
   const pet: OwnedPet = { id: makeId(rng), speciesId: species.id, nickname: species.name, xp: 0, shiny: rng() < SHINY_CHANCE, hatchedOn: todayKey(s) };
   let next: GameState = { ...s, pets: [pet], activePetId: pet.id, dex: { ...s.dex, [species.id]: true } };
@@ -144,3 +144,59 @@ export function chooseStarter(s: GameState, element: Element, rng: Rng = default
 }
 
 export const needsStarter = (s: GameState) => s.pets.length === 0;
+
+/* ---------- Daily login rewards ---------- */
+
+export interface LoginReward {
+  coins: number;
+  chest?: ChestKind;
+}
+
+/** A 7-day calendar that loops. Missing a day doesn't reset it: you pick up where you left off. */
+export const LOGIN_REWARDS: LoginReward[] = [
+  { coins: 25 },
+  { coins: 40 },
+  { coins: 0, chest: 'bronze' },
+  { coins: 60 },
+  { coins: 80 },
+  { coins: 50, chest: 'bronze' },
+  { coins: 100, chest: 'silver' },
+];
+
+/** Which calendar day (0-6) the next claim pays out, and whether today's is still waiting. */
+export function loginStatus(s: GameState): { index: number; canClaim: boolean; claimedTotal: number } {
+  const claimedTotal = s.login?.count ?? 0;
+  const canClaim = s.login?.last !== todayKey(s);
+  const index = canClaim ? claimedTotal % LOGIN_REWARDS.length : (claimedTotal - 1 + LOGIN_REWARDS.length) % LOGIN_REWARDS.length;
+  return { index, canClaim, claimedTotal };
+}
+
+export function claimLogin(s: GameState, rng: Rng = defaultRng): { state: GameState; reward: LoginReward; day: number } | null {
+  const st = loginStatus(s);
+  if (!st.canClaim) return null;
+  const reward = LOGIN_REWARDS[st.index];
+  let next: GameState = { ...s, coins: s.coins + reward.coins, login: { last: todayKey(s), count: st.claimedTotal + 1 } };
+  if (reward.chest) next = grantChest(next, reward.chest, `Day ${st.index + 1} login reward`, rng);
+  return { state: next, reward, day: st.index + 1 };
+}
+
+/* ---------- Friend gifts ---------- */
+
+/** What one friend gift holds: coins, with a small chance of a surprise Bronze chest. */
+export const GIFT_COINS = 20;
+export const GIFT_CHEST_CHANCE = 0.1;
+/** How many gifts a player can send per day (one per friend). */
+export const GIFTS_PER_DAY = 3;
+
+export function openGifts(s: GameState, count: number, rng: Rng = defaultRng): { state: GameState; coins: number; chests: number } {
+  let next = s;
+  let chests = 0;
+  for (let i = 0; i < count; i++) {
+    if (rng() < GIFT_CHEST_CHANCE) {
+      next = grantChest(next, 'bronze', 'Surprise in a friend’s gift', rng);
+      chests++;
+    }
+  }
+  const coins = count * GIFT_COINS;
+  return { state: { ...next, coins: next.coins + coins }, coins, chests };
+}
