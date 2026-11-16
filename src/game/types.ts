@@ -1,8 +1,5 @@
 export type Element = 'flower' | 'moon' | 'ember' | 'tide';
 export type Rarity = 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary';
-export type BodyShape = 'round' | 'tall' | 'blob' | 'wide';
-export type Ears = 'none' | 'cat' | 'bunny' | 'fox' | 'bear' | 'antenna' | 'horns' | 'fins' | 'tufts';
-export type Topper = 'none' | 'sprout' | 'flower' | 'moon' | 'flame' | 'drop' | 'star' | 'crystal' | 'mushroom';
 export type Stage = 'baby' | 'teen' | 'adult';
 
 export interface Species {
@@ -10,10 +7,6 @@ export interface Species {
   name: string;
   rarity: Rarity;
   element: Element;
-  body: BodyShape;
-  ears: Ears;
-  topper: Topper;
-  colors: { body: string; belly: string; accent: string };
   blurb: string;
 }
 

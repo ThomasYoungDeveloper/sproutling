@@ -16,7 +16,7 @@ export function newGame(): GameState {
     version: 1,
     coins: 120,
     activePetId: 'starter',
-    pets: [{ id: 'starter', speciesId: 'mochi', nickname: 'Mochi', xp: 240, shiny: false, hatchedOn: dateKey(-3) }],
+    pets: [{ id: 'starter', speciesId: 'p82', nickname: 'Omu', xp: 240, shiny: false, hatchedOn: dateKey(-3) }],
     eggs: [
       { id: 'egg1', rarity: 'common', stepsWalked: 2100, incubating: true, foundOn: dateKey(-1) },
       { id: 'egg2', rarity: 'rare', stepsWalked: 0, incubating: false, foundOn: dateKey(0) },
@@ -24,7 +24,7 @@ export function newGame(): GameState {
     chests: [{ id: 'chest1', kind: 'bronze', earnedOn: dateKey(-1), reason: 'Finished all daily quests' }],
     incubatorSlots: 1,
     items: { 'Moon Seed': 1 },
-    dex: { mochi: true },
+    dex: { p82: true },
     days,
     questChestDays: { [dateKey(-1)]: true, [dateKey(-3)]: true },
     dayOffset: 0,
