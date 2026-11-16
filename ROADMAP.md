@@ -24,6 +24,23 @@ A big boss appears at a gym for a limited time; nearby players team up to beat i
 - Raid pets hatch with a high grade floor (e.g. every stat at least 10, like Pokémon GO).
 - Effort: medium once gyms exist.
 
+## 4. Train together (heart rate + Apple Watch)
+
+**Part A: Workout training XP (iPhone only)**
+- Read workouts saved in Apple Health, with their heart rate. Read heart rate only during workouts, never all day.
+- XP depends on effort, not workout type, so lifting, running, cycling and classes all count the same.
+- Use personal heart rate zones based on each player's own resting and max heart rate, so beginners can earn as much as athletes.
+  - Example: 40 min workout with 25 min in a hard zone gives about +80 training XP.
+- Daily cap so very long sessions can't flood the ranked leaderboard.
+- "Trained together" moment: the next time you open the app, your pet is sweaty and proud. Show a short training animation and a line like "+80 XP · trained with you for 40 min".
+- Permission prompt adds Heart Rate and Workouts, with clear wording about why.
+
+**Part B: Live Apple Watch mode (bigger project)**
+- A separate watchOS app shows your pet on your wrist during a workout.
+- Your pet reacts live as your heart rate climbs: warm-up, working hard, beast mode.
+- Live XP counter, and a celebration when you finish.
+- Needs: a watchOS target in the Expo build (or a native Swift Watch app), a workout session on the watch, and syncing between the watch and the phone.
+
 ## Other
 - Native push notifications (expo-notifications) for reminders, trades, gifts, raids.
 - In-app purchases for Premium (RevenueCat).
