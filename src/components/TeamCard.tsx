@@ -7,7 +7,7 @@ import { buzz, Confetti, PopIn } from './fx';
 import { colors, font, space } from '../theme';
 import { SPECIES_BY_ID } from '../game/species';
 import { stageFor } from '../game/scoring';
-import { TEAM_EMOJIS } from '../game/team';
+import { TEAM_EMOJIS, raidBoss, RAID_HITS_PER_DAY } from '../game/team';
 import { copyText } from '../screens/friendsShared';
 
 function daysLeftInWeek(): number {
@@ -31,6 +31,63 @@ function MemberRow({ m, top }: { m: TeamMember; top: number }) {
         <ProgressBar value={top ? m.steps / top : 0} height={7} color={m.me ? colors.mint : '#8FC9F0'} />
       </View>
       <Text style={styles.memberSteps}>{m.steps.toLocaleString()}</Text>
+    </View>
+  );
+}
+
+function RaidBox({ onWin, onMsg }: { onWin: () => void; onMsg: (m: { ok: boolean; text: string }) => void }) {
+  const { team, claimRaid } = useTeam();
+  if (!team) return null;
+  const boss = raidBoss(team.week);
+  const sp = SPECIES_BY_ID[boss.speciesId];
+  const { hp, damage, hits_left } = team.raid;
+  const left = Math.max(0, hp - damage);
+  const beaten = left === 0;
+  const claimed = team.claimed.includes('raid');
+  const mine = team.members.find((m) => m.me)?.raid ?? 0;
+  return (
+    <View style={styles.raidBox}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.sm }}>
+        <View style={[styles.bossArt, beaten && { opacity: 0.45 }]}>
+          {sp ? <PetSprite species={sp} stage="adult" size={78} /> : null}
+          {beaten ? <Text style={styles.bossKo}>KO!</Text> : null}
+        </View>
+        <View style={{ flex: 1, gap: 4 }}>
+          <Text style={styles.raidLabel}>🐉 WEEKLY GUILD BOSS</Text>
+          <Text style={styles.bossName} numberOfLines={1}>{boss.name}</Text>
+          <Text style={styles.bossTitle}>{boss.title}</Text>
+        </View>
+      </View>
+      <View style={{ gap: 4 }}>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+          <Text style={styles.raidHp}>{beaten ? 'Defeated!' : `❤️ ${left.toLocaleString()} / ${hp.toLocaleString()} HP`}</Text>
+          <Text style={styles.raidMine}>You: {mine.toLocaleString()} dmg</Text>
+        </View>
+        <ProgressBar value={hp ? left / hp : 0} height={14} color="#E5484D" />
+      </View>
+      <Text style={styles.raidHelp}>
+        {beaten
+          ? claimed
+            ? 'Your guild beat this week’s boss. A new one appears Monday!'
+            : 'Your guild beat the boss! Everyone gets a Gold chest and 150 coins.'
+          : `Every 10 steps hits the boss for 1. Battles hit it too: ${hits_left} of ${RAID_HITS_PER_DAY} battle hits left today.`}
+      </Text>
+      {beaten && !claimed ? (
+        <PopIn>
+          <Button
+            primary
+            label="🏆 Claim raid loot"
+            onPress={async () => {
+              const r = await claimRaid();
+              onMsg(r);
+              if (r.ok) {
+                buzz('success', 'win');
+                onWin();
+              }
+            }}
+          />
+        </PopIn>
+      ) : null}
     </View>
   );
 }
@@ -182,6 +239,8 @@ export default function TeamCard() {
         ) : null}
       </View>
 
+      <RaidBox onWin={() => setParty((p) => p + 1)} onMsg={setMsg} />
+
       <View style={{ gap: 6 }}>
         {team.members.map((m) => (
           <MemberRow key={m.id} m={m} top={top} />
@@ -217,6 +276,15 @@ const styles = StyleSheet.create({
   code: { backgroundColor: '#FFFFFF', borderRadius: 12, paddingHorizontal: 10, paddingVertical: 4, alignItems: 'center' },
   codeLabel: { fontSize: 9, fontWeight: '900', color: colors.muted, letterSpacing: 1 },
   codeText: { fontSize: 16, fontWeight: '900', color: colors.mintDark, letterSpacing: 1.5 },
+  raidBox: { backgroundColor: '#2A1E3D', borderRadius: 16, padding: space.md, gap: 8 },
+  bossArt: { width: 86, height: 86, borderRadius: 18, backgroundColor: '#463066', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
+  bossKo: { position: 'absolute', fontSize: 26, fontWeight: '900', color: '#FFD84D', transform: [{ rotate: '-12deg' }] },
+  raidLabel: { fontSize: 11, fontWeight: '900', color: '#C9B4F2', letterSpacing: 1 },
+  bossName: { fontSize: 19, fontWeight: '900', color: '#FFFFFF' },
+  bossTitle: { fontSize: 13, fontWeight: '700', color: '#C9B4F2' },
+  raidHp: { fontSize: 13, fontWeight: '900', color: '#FFFFFF' },
+  raidMine: { fontSize: 12, fontWeight: '800', color: '#C9B4F2' },
+  raidHelp: { fontSize: 12, fontWeight: '700', color: '#DCD0F2' },
   goalBox: { backgroundColor: '#FFFFFF', borderRadius: 16, padding: space.md, gap: 8 },
   goalTitle: { fontWeight: '900', fontSize: 15, color: colors.ink },
   goalNum: { fontWeight: '800', fontSize: 13, color: colors.muted },

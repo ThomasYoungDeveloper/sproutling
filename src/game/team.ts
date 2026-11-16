@@ -23,3 +23,18 @@ export function weekSteps(s: GameState): number {
 }
 
 export const TEAM_EMOJIS = ['🌱', '🦊', '🐉', '⭐', '🌸', '🚀', '🐼', '🍙'];
+
+/** The weekly guild boss: a giant legendary, rotating each week. */
+export const RAID_BOSSES = [
+  { speciesId: 'p29', name: 'Giant Komainu', title: 'Shrine Guardian' },
+  { speciesId: 'p31', name: 'Giant Void Wraith', title: 'Starlight Terror' },
+  { speciesId: 'p62', name: 'Giant Torii Spirit', title: 'Gate of Trials' },
+  { speciesId: 'p15', name: 'Giant Kitsune', title: 'Nine-Tailed Trickster' },
+] as const;
+export const RAID_HITS_PER_DAY = 5;
+export const RAID_MAX_HIT = 400;
+
+export function raidBoss(week: string) {
+  const n = Math.floor(Date.parse(week + 'T12:00:00Z') / (7 * 86400000));
+  return RAID_BOSSES[((n % RAID_BOSSES.length) + RAID_BOSSES.length) % RAID_BOSSES.length];
+}

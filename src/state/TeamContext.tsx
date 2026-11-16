@@ -13,6 +13,7 @@ export interface TeamMember {
   steps: number;
   card: PublicCard | null;
   me: boolean;
+  raid: number;
 }
 
 export interface TeamInfo {
@@ -22,7 +23,8 @@ export interface TeamInfo {
   code: string;
   week: string;
   members: TeamMember[];
-  claimed: ('goal' | 'super')[];
+  claimed: ('goal' | 'super' | 'raid')[];
+  raid: { hp: number; damage: number; hits_left: number };
   total: number;
   goal: number;
 }
@@ -35,6 +37,8 @@ interface Ctx {
   join: (code: string) => Promise<{ ok: boolean; text: string }>;
   leave: () => Promise<void>;
   claim: (tier: 'goal' | 'super') => Promise<{ ok: boolean; text: string }>;
+  raidHit: (amount: number) => Promise<'ok' | 'limit' | 'none'>;
+  claimRaid: () => Promise<{ ok: boolean; text: string }>;
 }
 
 const TeamCtx = createContext<Ctx | null>(null);
@@ -69,7 +73,7 @@ export function TeamProvider({ children }: { children: React.ReactNode }) {
     const raw = data as any;
     const members: TeamMember[] = (raw.members ?? []).map((m: any) => ({ ...m, card: readCard(m.card) }));
     const total = members.reduce((a, m) => a + (m.steps || 0), 0);
-    setTeam({ ...raw, members, total, goal: Team.teamGoal(members.length), claimed: raw.claimed ?? [] });
+    setTeam({ ...raw, members, total, goal: Team.teamGoal(members.length), claimed: raw.claimed ?? [], raid: raw.raid ?? { hp: 5000, damage: 0, hits_left: 5 } });
   }, [user?.id]);
 
   // Send your weekly steps to the team when they change (and you're on a team).
@@ -131,7 +135,27 @@ export function TeamProvider({ children }: { children: React.ReactNode }) {
     [refresh, apply],
   );
 
-  return <TeamCtx.Provider value={{ team, loading, refresh, create, join, leave, claim }}>{children}</TeamCtx.Provider>;
+  const raidHit = useCallback(
+    async (amount: number) => {
+      if (!team || amount <= 0) return 'none' as const;
+      const { data, error } = await supabase.rpc('raid_hit', { amount: Math.round(amount) });
+      if (error || (data !== 'ok' && data !== 'limit')) return 'none' as const;
+      refresh();
+      return data as 'ok' | 'limit';
+    },
+    [team?.id, refresh],
+  );
+
+  const claimRaid = useCallback(async () => {
+    const { data, error } = await supabase.rpc('claim_raid_chest');
+    if (error) return { ok: false, text: 'Couldn’t reach Sproutling. Try again in a moment.' };
+    if (data !== 'ok') return { ok: false, text: data === 'already' ? 'You already opened this week’s raid chest.' : MESSAGES[data as string] ?? 'Something went wrong.' };
+    apply((s) => { const n = A.grantChest(s, 'gold', 'Guild boss raid'); return { ...n, coins: n.coins + 150 }; });
+    await refresh();
+    return { ok: true, text: 'Boss defeated! A Gold chest and 150 coins are yours.' };
+  }, [refresh, apply]);
+
+  return <TeamCtx.Provider value={{ team, loading, refresh, create, join, leave, claim, raidHit, claimRaid }}>{children}</TeamCtx.Provider>;
 }
 
 export function useTeam(): Ctx {

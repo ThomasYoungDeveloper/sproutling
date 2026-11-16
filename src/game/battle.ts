@@ -441,3 +441,9 @@ export function battlesLeftToday(s: GameState): number {
   const day = A.todayKey(s);
   return Math.max(0, REWARDED_PER_DAY - (s.battle && s.battle.day === day ? s.battle.rewarded : 0));
 }
+
+/** Damage your team dealt in a finished battle, sent to your guild's boss (wins count 1.5×, max 400 a hit). */
+export function raidDamage(b: Battle): number {
+  const dealt = b.theirs.reduce((a, f) => a + (f.maxHp - Math.max(0, f.hp)), 0);
+  return Math.min(400, Math.round(dealt * (b.over === 'win' ? 1.5 : 1)));
+}

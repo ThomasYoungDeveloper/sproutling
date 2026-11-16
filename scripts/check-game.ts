@@ -266,4 +266,16 @@ ok(A.streak(SH) === 0, 'missing a day breaks the streak without a shield');
 const shielded = A.applyShields(SH);
 ok(shielded.used === 1 && shielded.state.shields === 0 && A.streak(shielded.state) === 8, 'a shield saves the streak');
 ok(A.applyShields(shielded.state).used === 0, 'shields are not used twice');
+// Guild raids
+{
+  const Tm = require('../src/game/team');
+  const bosses = new Set(['2026-11-02', '2026-11-09', '2026-11-16', '2026-11-23'].map((w: string) => Tm.raidBoss(w).name));
+  ok(bosses.size === 4, 'a different guild boss each week for 4 weeks');
+  const RB = B.startBattle([t.pets[0]], [t.pets[0]]);
+  ok(B.raidDamage(RB) === 0, 'no raid damage before any hits');
+  RB.theirs[0].hp = RB.theirs[0].maxHp - 30; RB.over = 'win';
+  ok(B.raidDamage(RB) === 45, 'a win counts raid damage 1.5×');
+  RB.theirs[0].hp = -999;
+  ok(B.raidDamage(RB) <= 400, 'raid hits are capped at 400');
+}
 console.log(fails ? `${fails} FAILED` : 'ALL PASSED'); process.exit(fails ? 1 : 0);
