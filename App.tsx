@@ -14,6 +14,7 @@ import FriendsScreen from './src/screens/FriendsScreen';
 import DailyLoginSheet from './src/components/DailyLoginSheet';
 import { FriendsProvider, useFriends } from './src/state/FriendsContext';
 import { OverlayProvider } from './src/components/Overlay';
+import { TeamProvider } from './src/state/TeamContext';
 import LabScreen from './src/screens/LabScreen';
 import { FadeSwitch, PopIn, RollingNumber } from './src/components/fx';
 import { RevealProvider, useReveal } from './src/components/RevealOverlay';
@@ -195,9 +196,11 @@ function Gate() {
     <GameProvider key={user.id}>
       <RevealProvider>
         <FriendsProvider>
-          <OverlayProvider>
-            <Shell />
-          </OverlayProvider>
+          <TeamProvider>
+            <OverlayProvider>
+              <Shell />
+            </OverlayProvider>
+          </TeamProvider>
         </FriendsProvider>
       </RevealProvider>
     </GameProvider>

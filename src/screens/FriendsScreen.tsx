@@ -12,6 +12,7 @@ import { levelFor, stageFor } from '../game/scoring';
 import { GIFTS_PER_DAY } from '../game/actions';
 import { activeToday, copyText, lastSeen, shareInvite } from './friendsShared';
 import { ArenaCard, TradesCard } from '../components/SocialPanels';
+import TeamCard from '../components/TeamCard';
 
 export default function FriendsScreen({ initialAdd, onUsedInitialAdd }: { initialAdd?: string | null; onUsedInitialAdd?: () => void }) {
   const { myCode, friends, incoming, outgoing, loading, error, addFriend, respond, remove, gift, giftsLeft, refresh } = useFriends();
@@ -138,6 +139,7 @@ export default function FriendsScreen({ initialAdd, onUsedInitialAdd }: { initia
         </Card>
       )}
 
+      <TeamCard />
       <TradesCard />
       <ArenaCard />
 

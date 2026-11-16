@@ -8,6 +8,7 @@ import * as C from '../src/game/care';
 import * as T from '../src/game/trade';
 import * as B from '../src/game/battle';
 import * as Cos from '../src/game/cosmetics';
+import * as Team from '../src/game/team';
 import { levelFor, levelProgress, stageFor } from '../src/game/scoring';
 import type { ChestKind, GameState } from '../src/game/types';
 
@@ -157,4 +158,11 @@ ok(gotCos > 90 && gotCos < 150, `gold chests often hold a cosmetic (${gotCos}/20
 const withChest = A.grantChest(W, 'gold', 'test', () => 0.5); const op = A.openChestById(withChest, withChest.chests.slice(-1)[0].id, () => 0.01)!;
 ok(!!op.result.cosmetic && Cos.owns(op.state, op.result.cosmetic!), 'chest cosmetics land in your wardrobe');
 const tp = T.toTradePet({ ...A.activePet(W)!, look: { hat: 'party' } }); ok(!('look' in tp), 'outfits stay with you when trading a pet');
+// Teams
+ok(Team.weekStart('2026-11-16') === '2026-11-16' && Team.weekStart('2026-11-22') === '2026-11-16' && Team.weekStart('2026-11-23') === '2026-11-23', 'weeks start on Monday');
+ok(Team.teamGoal(4) === 100000 && Team.teamGoal(0) === 25000, 'team goal scales with members');
+let WS = { ...newGame(), dayOffset: 0, days: {} } as GameState;
+const todayK = A.todayKey(WS); const mon = Team.weekStart(todayK);
+WS = { ...WS, days: { [todayK]: { ...A.today(WS), steps: 4000 }, ...(mon < todayK ? { [mon]: { ...A.today(WS), steps: 3000 } } : {}), '2000-01-03': { ...A.today(WS), steps: 99999 } } };
+ok(Team.weekSteps(WS) === (mon < todayK ? 7000 : 4000), 'week steps only count this week');
 console.log(fails ? `${fails} FAILED` : 'ALL PASSED'); process.exit(fails ? 1 : 0);
