@@ -23,6 +23,8 @@ export interface DayLog {
   /** Hidden for now (kept so goal-based nutrition and workouts can come back later). */
   workoutMinutes: number;
   meals: Meal[];
+  /** A streak shield saved this day. */
+  shielded?: boolean;
   /** Today's pet care. Each completed care task boosts today's XP. */
   care?: DayCare;
 }
@@ -97,6 +99,10 @@ export interface GameState {
   dayOffset: number;
   /** Daily login rewards: last day claimed and how many claimed in total. */
   login?: { last: string; count: number };
+  /** Streak shields ready to protect a missed day (up to 2). */
+  shields?: number;
+  /** The last day a shield was earned (one per 7-day streak). */
+  shieldEarnedOn?: string;
   /** Lifetime counters for achievements. */
   stats?: { hatched?: number; chests?: number; expeditions?: number; toys?: number; bred?: number };
   /** Every pet-and-skin combination you've ever owned, keyed "p15:gold". */

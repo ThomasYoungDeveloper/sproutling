@@ -14,7 +14,7 @@ import * as Ach from '../src/game/achievements';
 import * as Sk from '../src/game/skins';
 import * as Br from '../src/game/breeding';
 import * as St from '../src/game/stats';
-import { levelFor, levelProgress, stageFor } from '../src/game/scoring';
+import { levelFor, levelProgress, stageFor, scoreDay } from '../src/game/scoring';
 import type { ChestKind, GameState } from '../src/game/types';
 
 let fails = 0;
@@ -251,4 +251,19 @@ let HB = { ...br.state, eggs: br.state.eggs.map((e) => ({ ...e, incubating: true
 const hb = A.hatch(HB, HB.eggs[0].id, () => 0.001)!;
 ok(hb.pet.speciesId === br.egg.bred!.speciesId, 'the nursery egg hatches the promised species');
 ok(hb.pet.skin === "gold" && !!hb.state.skinDex?.[`${hb.pet.speciesId}:gold`], 'lucky babies inherit a parent skin and fill the Skin-dex');
+// Element habit bonuses
+const dEl = { ...A.today(t), steps: 5000, water: 6, sleepHours: 8 };
+ok(scoreDay(dEl, 'tide').water === scoreDay(dEl).water * 2, 'Tide pets double water XP');
+ok(scoreDay(dEl, 'moon').sleep === scoreDay(dEl).sleep * 2, 'Moon pets double sleep XP');
+ok(scoreDay(dEl, 'ember').steps === Math.floor(scoreDay(dEl).steps * 1.5), 'Ember pets give +50% walking XP');
+ok(scoreDay(dEl, 'flower').bonus === scoreDay(dEl).quests, 'Flower pets double quest XP');
+// Streak shields
+let SH = { ...newGame(), dayOffset: 0, days: {}, pets: t.pets, activePetId: t.activePetId } as GameState;
+for (let i = 0; i < 7; i++) { SH = A.setSleep(A.setWater(A.addSteps(SH, 9000), 6), 8); if (i < 6) SH = A.nextDay(SH); }
+ok(A.streak(SH) === 7 && SH.shields === 1, 'a 7-day streak earns a shield');
+SH = A.nextDay(A.nextDay(SH));
+ok(A.streak(SH) === 0, 'missing a day breaks the streak without a shield');
+const shielded = A.applyShields(SH);
+ok(shielded.used === 1 && shielded.state.shields === 0 && A.streak(shielded.state) === 8, 'a shield saves the streak');
+ok(A.applyShields(shielded.state).used === 0, 'shields are not used twice');
 console.log(fails ? `${fails} FAILED` : 'ALL PASSED'); process.exit(fails ? 1 : 0);

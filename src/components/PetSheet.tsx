@@ -6,7 +6,7 @@ import { Button, RarityBadge } from './ui';
 import { buzz, PopIn } from './fx';
 import { colors, font, space } from '../theme';
 import { SPECIES_BY_ID } from '../game/species';
-import { levelFor, stageFor } from '../game/scoring';
+import { levelFor, stageFor, ELEMENT_HABIT } from '../game/scoring';
 import { SKIN_INFO } from '../game/skins';
 import { ELEMENT_COLOR, ELEMENT_LABEL, NORMAL_COLOR } from '../game/battle';
 import * as St from '../game/stats';
@@ -48,6 +48,7 @@ export default function PetSheet({ petId, onClose }: { petId: string; onClose: (
                 <View style={[styles.chip, { backgroundColor: ELEMENT_COLOR[sp.element] }]}><Text style={styles.chipText}>{ELEMENT_LABEL[sp.element]}</Text></View>
                 <View style={[styles.chip, { backgroundColor: '#F1EAFB' }]}><Text style={[styles.chipText, { color: '#6E56CF' }]}>{pers.emoji} {pers.label}: {pers.text}</Text></View>
               </View>
+              <Text style={[font.tiny, { fontWeight: '800' }]}>{ELEMENT_HABIT[sp.element].emoji} While active: {ELEMENT_HABIT[sp.element].label}</Text>
               {isActive ? (
                 <Text style={[font.small, { color: colors.mintDark, fontWeight: '900' }]}>★ Your active pet</Text>
               ) : (

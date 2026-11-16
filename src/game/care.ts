@@ -1,4 +1,4 @@
-import type { DayLog, GameState } from './types';
+import type { DayLog, Element, GameState } from './types';
 import { scoreDay } from './scoring';
 import { stepsToHatch, RARITY_INFO } from './rarity';
 import * as A from './actions';
@@ -33,8 +33,8 @@ export function careMultiplier(d: DayLog): number {
 }
 
 /** Today's XP after the care boost. This is what pets and coins actually receive. */
-export function boostedTotal(d: DayLog): number {
-  return Math.round(scoreDay(d).total * careMultiplier(d));
+export function boostedTotal(d: DayLog, element?: Element): number {
+  return Math.round(scoreDay(d, element).total * careMultiplier(d));
 }
 
 export type Mood = 'joy' | 'happy' | 'sleepy' | 'hungry' | 'thirsty' | 'bored';

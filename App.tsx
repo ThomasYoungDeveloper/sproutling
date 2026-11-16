@@ -71,6 +71,20 @@ function Shell() {
 
   // Pop up the daily reward once a day, after the save has synced (so it isn't shown twice across devices).
   const settled = loaded && (sync === 'saved' || sync === 'error');
+
+  // Once a day, let streak shields cover any missed day.
+  const [shieldNote, setShieldNote] = useState<string | null>(null);
+  const shieldsCheckedFor = useRef<string | null>(null);
+  useEffect(() => {
+    if (!settled || shieldsCheckedFor.current === today) return;
+    shieldsCheckedFor.current = today;
+    const r = A.applyShields(state);
+    if (r.used) {
+      apply(() => r.state);
+      setShieldNote(`🛡️ A streak shield saved your ${r.saved}-day streak!`);
+      setTimeout(() => setShieldNote(null), 6000);
+    }
+  }, [settled, today]);
   useEffect(() => {
     if (settled && !starter && login.canClaim && loginShownFor.current !== today) {
       loginShownFor.current = today;
@@ -103,7 +117,7 @@ function Shell() {
       <View style={styles.top}>
         <Text style={styles.brand}>Sprout<Text style={{ color: colors.mint }}>ling</Text></Text>
         <View style={styles.pills}>
-          <View style={styles.pill}><Text style={styles.pillText}>▲ {A.streak(state)}-day</Text></View>
+          <View style={styles.pill}><Text style={styles.pillText}>▲ {A.streak(state)}-day{state.shields ? ` 🛡️${state.shields}` : ''}</Text></View>
           <View style={styles.pill}><RollingNumber value={state.coins} prefix="● " style={styles.pillText} /></View>
           <Pressable onPress={() => setShowAccount(true)} style={[styles.pill, user ? null : styles.signIn]} accessibilityRole="button" accessibilityLabel={user ? 'Account' : 'Sign in to save your pets'}>
             <Text style={[styles.pillText, !user && { color: '#fff' }]} numberOfLines={1}>{sync === 'error' ? '⚠ Offline' : `☁ ${username ?? 'Me'}`}</Text>
@@ -163,6 +177,15 @@ function Shell() {
       </View>}
       {showAccount && <AccountSheet onClose={() => setShowAccount(false)} />}
       {showLogin && !starter && <DailyLoginSheet onClose={() => setShowLogin(false)} />}
+      {shieldNote && !notice ? (
+        <View style={styles.toastWrap} pointerEvents="box-none">
+          <PopIn>
+            <Pressable onPress={() => setShieldNote(null)} style={styles.toast} accessibilityRole="alert">
+              <Text style={styles.toastText}>{shieldNote}</Text>
+            </Pressable>
+          </PopIn>
+        </View>
+      ) : null}
       {notice && (
         <View style={styles.toastWrap} pointerEvents="box-none">
           <PopIn key={notice.id}>

@@ -20,14 +20,16 @@ export const getDay = (s: GameState, offset = 0): DayLog | undefined => s.days[d
 export const today = (s: GameState): DayLog => getDay(s) ?? emptyDay();
 export const streak = (s: GameState) => streakFrom((o) => getDay(s, o));
 export const activePet = (s: GameState): OwnedPet | undefined => s.pets.find((p) => p.id === s.activePetId);
+export const activeElement = (s: GameState) => { const p = activePet(s); return p ? SPECIES_BY_ID[p.speciesId]?.element : undefined; };
 
 /** Apply a change to today's log and pay out any XP/coins gained by the change. */
 export function updateToday(s: GameState, change: (d: DayLog) => DayLog): GameState {
   const key = todayKey(s);
   const before = today(s);
   const after = change({ ...before, meals: [...before.meals] });
-  // XP includes today's care boost, so caring for your pet later in the day boosts earlier habits too.
-  const gained = boostedTotal(after) - boostedTotal(before);
+  // XP includes today's care boost and the active pet's element bonus.
+  const el = activeElement(s);
+  const gained = boostedTotal(after, el) - boostedTotal(before, el);
 
   let next: GameState = { ...s, days: { ...s.days, [key]: after } };
 
@@ -40,7 +42,7 @@ export function updateToday(s: GameState, change: (d: DayLog) => DayLog): GameSt
   if (gained !== 0) {
     next.pets = next.pets.map((p) => (p.id === next.activePetId ? { ...p, xp: Math.max(0, p.xp + gained) } : p));
     // Coins follow the day's total XP, so undoing a habit takes its coins back (no farming by toggling).
-    const coinDelta = Math.floor(boostedTotal(after) * COINS_PER_XP) - Math.floor(boostedTotal(before) * COINS_PER_XP);
+    const coinDelta = Math.floor(boostedTotal(after, el) * COINS_PER_XP) - Math.floor(boostedTotal(before, el) * COINS_PER_XP);
     next.coins = Math.max(0, next.coins + coinDelta);
   }
 
@@ -56,8 +58,34 @@ export function updateToday(s: GameState, change: (d: DayLog) => DayLog): GameSt
   if (st > 0 && st % 7 === 0 && !next.questChestDays[silverKey] && scoreDay(after).total >= 50) {
     next = grantChest(next, 'silver', `${st}-day streak`);
     next.questChestDays = { ...next.questChestDays, [silverKey]: true };
+    // Every 7 days of streak also earns a streak shield (you can hold 2).
+    if (next.shieldEarnedOn !== key) next = { ...next, shields: Math.min(MAX_SHIELDS, (next.shields ?? 0) + 1), shieldEarnedOn: key };
   }
   return next;
+}
+
+export const MAX_SHIELDS = 2;
+
+/**
+ * Streak shields: if you missed a day while on a streak, a shield covers it automatically.
+ * Checks the last couple of days; returns how many shields were used.
+ */
+export function applyShields(s: GameState): { state: GameState; used: number; saved: number } {
+  let next = s;
+  let used = 0;
+  for (let off = -1; off >= -2; off--) {
+    if ((next.shields ?? 0) <= 0) break;
+    const day = getDay(next, off);
+    const missed = !day || (!day.shielded && scoreDay(day).total < 50);
+    if (!missed) break;
+    // Only worth saving if there was a streak going before the missed day.
+    const before = getDay(next, off - 1);
+    if (!before || !(before.shielded || scoreDay(before).total >= 50)) break;
+    const key = dateKey(next.dayOffset + off);
+    next = { ...next, shields: (next.shields ?? 0) - 1, days: { ...next.days, [key]: { ...(day ?? emptyDay()), shielded: true } } };
+    used++;
+  }
+  return { state: next, used, saved: used ? streak(next) : 0 };
 }
 
 export const addSteps = (s: GameState, n: number) => updateToday(s, (d) => ({ ...d, steps: Math.max(0, d.steps + n) }));

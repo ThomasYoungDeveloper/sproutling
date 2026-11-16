@@ -1,4 +1,4 @@
-import type { DayLog, Stage } from './types';
+import type { DayLog, Element, Stage } from './types';
 
 export const emptyDay = (): DayLog => ({ steps: 0, sleepHours: 0, water: 0, workoutMinutes: 0, meals: [] });
 
@@ -9,6 +9,8 @@ export interface DayScore {
   workout: number;
   meals: number;
   quests: number;
+  /** Extra XP from the active pet's element. */
+  bonus: number;
   total: number;
 }
 
@@ -28,17 +30,35 @@ export function dailyQuests(d: DayLog): Quest[] {
 }
 
 /** XP is capped per habit so steady days beat one extreme day. */
-export function scoreDay(d: DayLog): DayScore {
-  const steps = Math.min(Math.floor(d.steps / 100), 120) + (d.steps >= 8000 ? 20 : 0);
+/** Your active pet's element doubles the XP from one habit (Ember gives +50% walking). */
+export const ELEMENT_HABIT: Record<Element, { habit: 'steps' | 'sleep' | 'water' | 'quests'; mult: number; label: string; emoji: string }> = {
+  ember: { habit: 'steps', mult: 1.5, label: '+50% walking XP', emoji: '🔥' },
+  tide: { habit: 'water', mult: 2, label: 'Double water XP', emoji: '🌊' },
+  moon: { habit: 'sleep', mult: 2, label: 'Double sleep XP', emoji: '🌙' },
+  flower: { habit: 'quests', mult: 2, label: 'Double quest XP', emoji: '🌸' },
+};
+
+export function scoreDay(d: DayLog, element?: Element): DayScore {
+  let steps = Math.min(Math.floor(d.steps / 100), 120) + (d.steps >= 8000 ? 20 : 0);
   let sleep = 0;
   if (d.sleepHours >= 7 && d.sleepHours <= 9) sleep = 30;
   else if ((d.sleepHours >= 6 && d.sleepHours < 7) || (d.sleepHours > 9 && d.sleepHours <= 10)) sleep = 15;
-  const water = Math.min(d.water, 8) * 4;
+  let water = Math.min(d.water, 8) * 4;
   const workout = Math.min(d.workoutMinutes, 60);
   const logged = d.meals.slice(0, 4);
   const meals = logged.length * 5 + logged.filter((m) => m.veggies).length * 5;
-  const quests = dailyQuests(d).filter((q) => q.done).length * 15;
-  return { steps, sleep, water, workout, meals, quests, total: steps + sleep + water + workout + meals + quests };
+  let quests = dailyQuests(d).filter((q) => q.done).length * 15;
+  let bonus = 0;
+  if (element) {
+    const eb = ELEMENT_HABIT[element];
+    const base = { steps, sleep, water, quests }[eb.habit];
+    bonus = Math.floor(base * (eb.mult - 1));
+    if (eb.habit === 'steps') steps += bonus;
+    if (eb.habit === 'sleep') sleep += bonus;
+    if (eb.habit === 'water') water += bonus;
+    if (eb.habit === 'quests') quests += bonus;
+  }
+  return { steps, sleep, water, workout, meals, quests, bonus, total: steps + sleep + water + workout + meals + quests };
 }
 
 /* ---------- Levels ---------- */
@@ -81,9 +101,10 @@ export const COINS_PER_XP = 1 / 4;
 /** Consecutive days (ending today, or yesterday if today has no activity yet) with 50+ XP. */
 export function streakFrom(getDay: (offset: number) => DayLog | undefined): number {
   let offset = 0;
-  if (scoreDay(getDay(0) ?? emptyDay()).total < 50) offset = -1;
+  const counts = (d?: DayLog) => !!d && (d.shielded || scoreDay(d).total >= 50);
+  if (!counts(getDay(0))) offset = -1;
   let n = 0;
-  while (scoreDay(getDay(offset) ?? emptyDay()).total >= 50) {
+  while (counts(getDay(offset))) {
     n++;
     offset--;
   }

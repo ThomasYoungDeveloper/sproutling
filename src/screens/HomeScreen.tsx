@@ -11,14 +11,16 @@ import AchievementsSheet from '../components/AchievementsSheet';
 import PetSheet from '../components/PetSheet';
 import { buzz, PopIn } from '../components/fx';
 import { colors, font, space } from '../theme';
-import { scoreDay, dailyQuests } from '../game/scoring';
+import { scoreDay, dailyQuests, ELEMENT_HABIT } from '../game/scoring';
 import * as A from '../game/actions';
 import * as C from '../game/care';
 
 export default function HomeScreen({ onNavigate }: { onNavigate?: (tab: 'eggs' | 'chests') => void }) {
   const { state, apply } = useGame();
   const d = A.today(state);
-  const score = scoreDay(d);
+  const el = A.activeElement(state);
+  const score = scoreDay(d, el);
+  const eb = el ? ELEMENT_HABIT[el] : null;
   const pet = A.activePet(state);
   const mult = C.careMultiplier(d);
   const todo = C.reminders(state).slice(0, 4);
@@ -77,7 +79,13 @@ export default function HomeScreen({ onNavigate }: { onNavigate?: (tab: 'eggs' |
       </Card>
 
       <Card>
-        <SectionHead title="Today" meta={mult > 1 ? `+${C.boostedTotal(d)} XP (×${mult.toFixed(1)})` : `+${score.total} XP`} />
+        <SectionHead title="Today" meta={mult > 1 ? `+${C.boostedTotal(d, el)} XP (×${mult.toFixed(1)})` : `+${score.total} XP`} />
+        {eb && pet ? (
+          <View style={styles.elBonus}>
+            <Text style={{ fontSize: 18 }}>{eb.emoji}</Text>
+            <Text style={[font.small, { flex: 1, color: colors.ink, fontWeight: '800' }]}>{pet.nickname}’s element bonus: {eb.label}</Text>
+          </View>
+        ) : null}
 
         <Habit icon="👟" label={`${d.steps.toLocaleString()} steps`} sub="Also warms your eggs" xp={score.steps}>
           <Button small label="+500" onPress={() => { buzz(); apply((s) => A.addSteps(s, 500)); }} />
@@ -137,6 +145,7 @@ function Habit({ icon, label, sub, xp, children }: { icon: string; label: string
 }
 
 const styles = StyleSheet.create({
+  elBonus: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#FFF6DD', borderRadius: 12, paddingHorizontal: 10, paddingVertical: 6 },
   reminder: { flexDirection: 'row', alignItems: 'center', gap: space.sm, paddingVertical: 8, borderTopWidth: 1, borderTopColor: colors.line },
   go: { fontWeight: '900', fontSize: 13, color: colors.mintDark },
   petCard: { backgroundColor: colors.sky, borderRadius: 24, borderWidth: 1, borderColor: colors.line, padding: space.lg, overflow: 'hidden' },
