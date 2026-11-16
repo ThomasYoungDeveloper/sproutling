@@ -63,7 +63,7 @@ export default function BattleScreen({ opponent, onClose, onResult }: { opponent
     const name = attacker.nickname;
     if (ev.move === 'guard') {
       setLine(`${name} is guarding and charging up! ⚡`);
-      buzz('light');
+      buzz('light', 'guard');
       setPops((p) => [...p, { id: Date.now() + Math.random(), side: att, text: '🛡 +⚡', color: '#2E9BD6' }]);
       await wait(750);
       return;
@@ -74,7 +74,7 @@ export default function BattleScreen({ opponent, onClose, onResult }: { opponent
       Animated.timing(lunge[att], { toValue: 0, duration: 220, useNativeDriver: true }),
     ]).start();
     await wait(150);
-    buzz(ev.move === 'special' || ev.crit ? 'heavy' : 'medium');
+    buzz(ev.move === 'special' || ev.crit ? 'heavy' : 'medium', ev.move === 'special' ? 'special' : 'hit');
     hit[def].setValue(0);
     Animated.timing(hit[def], { toValue: 1, duration: 420, useNativeDriver: true }).start();
     setPops((p) => [...p, { id: Date.now() + Math.random(), side: def, text: `-${ev.damage}`, color: ev.effect > 1 || ev.crit ? '#FF5A36' : '#FFFFFF' }]);
@@ -119,7 +119,7 @@ export default function BattleScreen({ opponent, onClose, onResult }: { opponent
       apply(() => r.state);
       setReward(r.reward);
       onResult?.(won);
-      buzz(won ? 'success' : 'medium');
+      buzz(won ? 'success' : 'medium', won ? 'win' : 'lose');
       await wait(400);
       setPhase('result');
     } else {

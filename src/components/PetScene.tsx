@@ -236,7 +236,7 @@ export default function PetScene({ onTrinketsEmpty, onDressUp, onShop }: { onTri
   const [burst, setBurst] = useState(0);
 
   const doPlay = () => {
-    buzz('light');
+    buzz('light', 'pop');
     setBurst((b) => b + 1);
     hop.setValue(0);
     Animated.sequence([
@@ -261,7 +261,8 @@ export default function PetScene({ onTrinketsEmpty, onDressUp, onShop }: { onTri
   const toys = ownedToys(state);
 
   const react = (toy: Cosmetic) => {
-    buzz('success');
+    const sounds = { munch: 'munch', bubbles: 'bubbles', notes: 'notes', rocket: 'whoosh', spin: 'whoosh', hop: toy.id === 'duck' ? 'squeak' : 'pop' } as const;
+    buzz('success', sounds[toy.reaction ?? 'hop']);
     const sets: Record<string, string[]> = {
       munch: ['😋', '✨', '💛'],
       bubbles: ['🫧', '🫧', '✨', '🫧'],
@@ -319,7 +320,7 @@ export default function PetScene({ onTrinketsEmpty, onDressUp, onShop }: { onTri
   }, [total]);
   useEffect(() => {
     if (lp.level > lastLevel.current) {
-      buzz('success');
+      buzz('success', 'levelup');
       setLevelUp(lp.level);
       setTimeout(() => setLevelUp(null), 2600);
     }

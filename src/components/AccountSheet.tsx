@@ -1,9 +1,38 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useAuth } from '../state/AuthContext';
 import { useGame } from '../state/GameContext';
 import { Button } from './ui';
+import { isMuted, onMuteChange, play, setMuted } from '../lib/sound';
 import { colors, font, space } from '../theme';
+
+function SoundToggle() {
+  const [muted, setM] = useState(isMuted());
+  useEffect(() => {
+    const off = onMuteChange(setM);
+    return () => {
+      off();
+    };
+  }, []);
+  return (
+    <Pressable
+      onPress={() => {
+        setMuted(!muted);
+        if (muted) setTimeout(() => play('chime'), 50);
+      }}
+      style={styles.soundRow}
+      accessibilityRole="switch"
+      accessibilityState={{ checked: !muted }}
+      accessibilityLabel="Sound effects"
+    >
+      <Text style={{ fontSize: 20 }}>{muted ? '🔇' : '🔊'}</Text>
+      <Text style={[font.body, { flex: 1, fontWeight: '800' }]}>Sound effects</Text>
+      <View style={[styles.switch, !muted && styles.switchOn]}>
+        <View style={[styles.knob, !muted && { alignSelf: 'flex-end' }]} />
+      </View>
+    </Pressable>
+  );
+}
 
 export default function AccountSheet({ onClose }: { onClose: () => void }) {
   const { user, username, signOut, saveUsername } = useAuth();
@@ -42,6 +71,7 @@ export default function AccountSheet({ onClose }: { onClose: () => void }) {
               />
             </View>
             {msg ? <Text style={[styles.msg, msg.ok && styles.ok]}>{msg.text}</Text> : null}
+            <SoundToggle />
             <View style={[styles.row, { marginTop: space.md }]}>
               <Button label="Sign out" onPress={signOut} />
               <Button primary label="Done" onPress={onClose} style={{ flex: 1 }} />
@@ -54,6 +84,10 @@ export default function AccountSheet({ onClose }: { onClose: () => void }) {
 }
 
 const styles = StyleSheet.create({
+  soundRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 8 },
+  switch: { width: 46, height: 26, borderRadius: 13, backgroundColor: '#D6DEDA', padding: 3, justifyContent: 'center' },
+  switchOn: { backgroundColor: colors.mint },
+  knob: { width: 20, height: 20, borderRadius: 10, backgroundColor: '#FFFFFF' },
   backdrop: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(24,30,48,0.55)', justifyContent: 'center', alignItems: 'center', padding: space.lg, zIndex: 50 },
   sheet: { backgroundColor: '#FFFFFF', borderRadius: 22, padding: space.lg, gap: space.sm, width: '100%', maxWidth: 420 },
   input: { borderWidth: 1, borderColor: colors.line, borderRadius: 12, paddingVertical: 10, paddingHorizontal: 12, fontSize: 16, color: colors.ink, backgroundColor: '#FAFCFB' },

@@ -1,9 +1,14 @@
 import React, { useEffect, useMemo, useRef } from 'react';
 import { Animated, Easing, StyleSheet, View } from 'react-native';
 import * as Haptics from 'expo-haptics';
+import { play, type SoundName } from '../lib/sound';
 
 /** A short buzz. Works on phones, and on the web wherever the browser supports vibration. */
-export function buzz(kind: 'light' | 'medium' | 'heavy' | 'success' = 'light') {
+const DEFAULT_SOUND = { light: 'tap', medium: 'pop', heavy: 'thud', success: 'chime' } as const;
+
+/** A little vibration plus a matching sound. Pass a sound name to use a special one, or 'none'. */
+export function buzz(kind: 'light' | 'medium' | 'heavy' | 'success' = 'light', sound?: SoundName | 'none') {
+  if (sound !== 'none') play(sound ?? DEFAULT_SOUND[kind]);
   try {
     const p =
       kind === 'success'
@@ -193,6 +198,7 @@ export function RollingNumber({ value, style, prefix = '' }: { value: number; st
     const start = from.current;
     if (start === value) return;
     if (value > start) {
+      play('coin');
       bump.setValue(0);
       Animated.sequence([
         Animated.timing(bump, { toValue: 1, duration: 140, useNativeDriver: true }),

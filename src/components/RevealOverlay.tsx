@@ -64,11 +64,11 @@ function EggReveal({ r, onClose }: { r: Extract<Reveal, { kind: 'egg' }>; onClos
     if (phase !== 'tap') return;
     const n = taps + 1;
     setTaps(n);
-    buzz(n < 3 ? 'light' : 'heavy');
+    buzz(n < 3 ? 'light' : 'heavy', 'crack');
     if (n >= 3) setTimeout(() => setPhase('flash'), 260);
   };
   useEffect(() => {
-    if (phase === 'reveal') buzz('success');
+    if (phase === 'reveal') buzz('success', 'hatch');
   }, [phase]);
 
   return (
@@ -134,12 +134,12 @@ function TradeReveal({ r, onClose }: { r: Extract<Reveal, { kind: 'trade' }>; on
   const gave = r.gave ? SPECIES_BY_ID[r.gave.speciesId] : null;
   const info = RARITY_INFO[got.rarity];
   useEffect(() => {
-    buzz('medium');
+    buzz('medium', 'whoosh');
     Animated.sequence([
       Animated.delay(700),
       Animated.timing(out, { toValue: 1, duration: 650, useNativeDriver: true }),
     ]).start(() => {
-      buzz('success');
+      buzz('success', 'hatch');
       setPhase('reveal');
     });
   }, []);
@@ -223,11 +223,11 @@ function ChestReveal({ r, onClose }: { r: Extract<Reveal, { kind: 'chest' }>; on
     if (phase !== 'tap') return;
     const n = taps + 1;
     setTaps(n);
-    buzz(n < 2 ? 'medium' : 'heavy');
+    buzz(n < 2 ? 'medium' : 'heavy', n < 2 ? 'thud' : 'whoosh');
     if (n >= 2) setTimeout(() => setPhase('flash'), 240);
   };
   useEffect(() => {
-    if (phase === 'loot') buzz('success');
+    if (phase === 'loot') buzz('success', 'chest');
   }, [phase]);
 
   return (
@@ -301,7 +301,7 @@ function ChestReveal({ r, onClose }: { r: Extract<Reveal, { kind: 'chest' }>; on
 function GrowReveal({ r, onClose }: { r: Extract<Reveal, { kind: 'grow' }>; onClose: () => void }) {
   const { width, height } = useWindowDimensions();
   const sp = SPECIES_BY_ID[r.pet.speciesId];
-  useEffect(() => buzz('success'), []);
+  useEffect(() => buzz('success', 'levelup'), []);
   return (
     <View style={styles.stage}>
       <View style={styles.center}>
