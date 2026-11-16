@@ -387,4 +387,15 @@ ok(A.applyShields(shielded.state).used === 0, 'shields are not used twice');
   let found = 0; for (let d = 0; d < 400; d++) { let g = A.addSteps({ ...base, pets: [{ ...base.pets[0], id: 'x' + d }] }, 10000); found += W.rollWalkFinds(g, true).finds.length; }
   ok(found / 400 > 1 && found / 400 < 3, `about 1.5–2 finds on a 10k-step day (got ${(found / 400).toFixed(2)})`);
 }
+// Incubators
+{
+  const I = require('../src/game/incubators');
+  let g = { ...newGame(), coins: 5000 };
+  ok(I.nextIncubatorPrice(g) === 500, 'second incubator costs 500');
+  const r1 = I.buyIncubator(g); ok(r1.ok && r1.state.incubatorSlots === 2 && r1.state.coins === 4500, 'buying adds a slot and takes the coins');
+  const r2 = I.buyIncubator(r1.state); const r3 = I.buyIncubator(r2.state);
+  ok(r3.ok && r3.state.incubatorSlots === 4 && r3.state.coins === 1000, 'prices climb 500, 1,000, 2,500');
+  ok(!I.buyIncubator(r3.state).ok && I.nextIncubatorPrice(r3.state) === null, 'no more than 4 incubators');
+  ok(!I.buyIncubator({ ...newGame(), coins: 100 }).ok, 'cannot buy without enough coins');
+}
 console.log(fails ? `${fails} FAILED` : 'ALL PASSED'); process.exit(fails ? 1 : 0);

@@ -189,6 +189,12 @@ export function useIdleWobble() {
   return { transform: [{ rotate: v.interpolate({ inputRange: [-1, 1], outputRange: ['-5deg', '5deg'] }) }] };
 }
 
+/** Wraps children in the idle wobble (for eggs that are ready to hatch). */
+export function Wobble({ children }: { children: React.ReactNode }) {
+  const style = useIdleWobble();
+  return <Animated.View style={style}>{children}</Animated.View>;
+}
+
 /** A pill number that rolls from its old value to its new one and bumps when it goes up. */
 export function RollingNumber({ value, style, prefix = '' }: { value: number; style?: any; prefix?: string }) {
   const [shown, setShown] = React.useState(value);

@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useGame } from '../state/GameContext';
-import { Card, SectionHead, RarityBadge, Chip, GradeChip } from '../components/ui';
+import { Card, SectionHead, RarityBadge, Chip, GradeChip, ProgressBar } from '../components/ui';
 import PetSprite from '../components/PetSprite';
 import { colors, font, space } from '../theme';
 import { SPECIES, SPECIES_BY_ID } from '../game/species';
@@ -16,6 +16,7 @@ import NurseryCard from '../components/NurseryCard';
 import PetSheet from '../components/PetSheet';
 import { pointsLeft } from '../game/stats';
 import * as A from '../game/actions';
+import type { Skin } from '../game/types';
 
 function BadgeBanner() {
   const { state } = useGame();
@@ -48,10 +49,28 @@ const badgeStyles = StyleSheet.create({
   go: { fontWeight: '900', fontSize: 13, color: colors.mintDark },
 });
 
+type DexFilter = 'all' | Skin | 'shiny';
+const FILTERS: DexFilter[] = ['all', 'mono', 'silver', 'gold', 'rainbow', 'shiny'];
+const FILTER_LABEL: Record<DexFilter, string> = { all: 'All', mono: 'Black & White', silver: 'Silver', gold: 'Gold', rainbow: 'Rainbow', shiny: 'Shiny' };
+const FILTER_DOT: Record<DexFilter, string> = { all: '#FFFFFF', mono: SKIN_INFO.mono.color, silver: SKIN_INFO.silver.color, gold: SKIN_INFO.gold.color, rainbow: SKIN_INFO.rainbow.color, shiny: '#F2C230' };
+/** Darker tag colors so white text stays readable. */
+const FILTER_TAG: Record<DexFilter, string> = { all: colors.mintDark, mono: '#3B3B4F', silver: '#5F7385', gold: '#9A6F00', rainbow: '#8A3DB8', shiny: '#9A6F00' };
+const FILTER_HINT: Record<DexFilter, string> = {
+  all: '',
+  mono: 'Black & White hatches from about 1 in 20 eggs.',
+  silver: 'Silver hatches from about 1 in 33 eggs. Nursery eggs make it more likely.',
+  gold: 'Gold hatches from about 1 in 67 eggs. Breed two skinned pets for better odds.',
+  rainbow: 'The rarest style: about 1 in 200 eggs.',
+  shiny: 'Shiny pets sparkle. Keep hatching!',
+};
+
 export default function DexScreen() {
   const { state, apply } = useGame();
   const found = Object.keys(state.dex).length;
   const overlay = useOverlay();
+  const [filter, setFilter] = useState<DexFilter>('all');
+  const shinyIds = [...new Set(state.pets.filter((p) => p.shiny).map((p) => p.speciesId))];
+  const filtered = filter === 'all' ? [] : filter === 'shiny' ? SPECIES.filter((sp) => shinyIds.includes(sp.id)) : SPECIES.filter((sp) => state.skinDex?.[skinKey(sp.id, filter)]);
 
   return (
     <View style={{ gap: space.md }}>
@@ -82,39 +101,70 @@ export default function DexScreen() {
       </Card>
 
       <Card>
-        <SectionHead title="Pet-dex" meta={`${found} of ${SPECIES.length} found`} />
-        <View style={styles.skinRow}>
-          {SKINS.map((k) => (
-            <View key={k} style={styles.skinLegend}>
-              <View style={[styles.skinDot, { backgroundColor: SKIN_INFO[k].color }]} />
-              <Text style={font.tiny}>{SKIN_INFO[k].label}</Text>
-            </View>
-          ))}
-          <Text style={[font.tiny, { fontWeight: '900' }]}>Skins: {skinDexCount(state)} / {SPECIES.length * SKINS.length}</Text>
+        <SectionHead title="Pet-dex" meta={filter === 'all' ? `${found} of ${SPECIES.length} found` : `${filtered.length} of ${SPECIES.length} ${FILTER_LABEL[filter]}`} />
+        <View style={styles.chips} accessibilityRole="radiogroup" accessibilityLabel="Show style">
+          {FILTERS.map((f) => {
+            const on = filter === f;
+            const n = f === 'all' ? found : f === 'shiny' ? shinyIds.length : SPECIES.filter((sp) => state.skinDex?.[skinKey(sp.id, f)]).length;
+            return (
+              <Pressable key={f} onPress={() => setFilter(f)} style={[styles.chip, on && styles.chipOn]} accessibilityRole="radio" accessibilityState={{ checked: on }} accessibilityLabel={`${FILTER_LABEL[f]}, ${n}`}>
+                <View style={[styles.chipDot, { backgroundColor: FILTER_DOT[f] }, f === 'all' && { borderWidth: 1.5, borderColor: on ? '#fff' : colors.muted }]} />
+                <Text style={[styles.chipText, on && { color: '#fff' }]}>{FILTER_LABEL[f]} <Text style={{ opacity: 0.7 }}>{n}</Text></Text>
+              </Pressable>
+            );
+          })}
         </View>
-        {RARITIES.map((r) => (
-          <View key={r} style={{ gap: 6 }}>
-            <Text style={[styles.tier, { color: RARITY_INFO[r].color }]}>{RARITY_INFO[r].label}</Text>
-            <View style={styles.grid}>
-              {SPECIES.filter((s) => s.rarity === r).map((s) => {
-                const seen = !!state.dex[s.id];
-                return (
-                  <View key={s.id} style={styles.tile}>
-                    <PetSprite species={s} stage="adult" size={76} silhouette={!seen} />
-                    <Text style={styles.name} numberOfLines={1}>{seen ? s.name : '???'}</Text>
-                    {seen ? (
-                      <View style={{ flexDirection: 'row', gap: 4 }} accessibilityLabel={`${SKINS.filter((k) => state.skinDex?.[skinKey(s.id, k)]).length} of 4 skins`}>
-                        {SKINS.map((k) => (
-                          <View key={k} style={[styles.skinDot, state.skinDex?.[skinKey(s.id, k)] ? { backgroundColor: SKIN_INFO[k].color } : styles.skinEmpty]} />
-                        ))}
+        {filter === 'all' ? (
+          <>
+            <Text style={[font.tiny, { fontWeight: '900' }]}>Skins collected: {skinDexCount(state)} / {SPECIES.length * SKINS.length}</Text>
+            {RARITIES.map((r) => (
+              <View key={r} style={{ gap: 6 }}>
+                <Text style={[styles.tier, { color: RARITY_INFO[r].color }]}>{RARITY_INFO[r].label}</Text>
+                <View style={styles.grid}>
+                  {SPECIES.filter((s) => s.rarity === r).map((s) => {
+                    const seen = !!state.dex[s.id];
+                    return (
+                      <View key={s.id} style={styles.tile}>
+                        <PetSprite species={s} stage="adult" size={76} silhouette={!seen} />
+                        <Text style={styles.name} numberOfLines={1}>{seen ? s.name : '???'}</Text>
+                        {seen ? (
+                          <View style={{ flexDirection: 'row', gap: 4 }} accessibilityLabel={`${SKINS.filter((k) => state.skinDex?.[skinKey(s.id, k)]).length} of 4 skins`}>
+                            {SKINS.map((k) => (
+                              <View key={k} style={[styles.skinDot, state.skinDex?.[skinKey(s.id, k)] ? { backgroundColor: SKIN_INFO[k].color } : styles.skinEmpty]} />
+                            ))}
+                          </View>
+                        ) : null}
                       </View>
-                    ) : null}
-                  </View>
-                );
-              })}
+                    );
+                  })}
+                </View>
+              </View>
+            ))}
+          </>
+        ) : (
+          <>
+            <View style={{ gap: 4 }}>
+              <ProgressBar value={filtered.length / SPECIES.length} color={FILTER_DOT[filter]} />
+              <Text style={font.tiny}>{filtered.length} of {SPECIES.length} {FILTER_LABEL[filter]} collected</Text>
             </View>
-          </View>
-        ))}
+            {filtered.length ? (
+              <View style={styles.grid}>
+                {filtered.map((s) => (
+                  <View key={s.id} style={styles.tile}>
+                    <PetSprite species={s} stage="adult" size={76} skin={filter === 'shiny' ? undefined : filter} shiny={filter === 'shiny'} />
+                    <Text style={styles.name} numberOfLines={1}>{s.name}</Text>
+                    <View style={[styles.styleTag, { backgroundColor: FILTER_TAG[filter] }]}><Text style={styles.styleTagText}>{FILTER_LABEL[filter]}</Text></View>
+                  </View>
+                ))}
+              </View>
+            ) : (
+              <View style={styles.empty}>
+                <Text style={[font.body, { fontWeight: '900' }]}>No {FILTER_LABEL[filter]} pets yet</Text>
+                <Text style={[font.small, { textAlign: 'center' }]}>{FILTER_HINT[filter]}</Text>
+              </View>
+            )}
+          </>
+        )}
       </Card>
     </View>
   );
@@ -134,5 +184,13 @@ const styles = StyleSheet.create({
   skinLegend: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   skinDot: { width: 9, height: 9, borderRadius: 5 },
   skinEmpty: { borderWidth: 1.5, borderColor: '#C9D3D0' },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  chip: { flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 40, paddingHorizontal: 12, borderRadius: 999, borderWidth: 2, borderColor: colors.line, backgroundColor: '#FFFFFF' },
+  chipOn: { backgroundColor: colors.ink, borderColor: colors.ink },
+  chipDot: { width: 12, height: 12, borderRadius: 6 },
+  chipText: { fontSize: 13, fontWeight: '900', color: colors.ink },
+  styleTag: { borderRadius: 999, paddingHorizontal: 8, paddingVertical: 2 },
+  styleTagText: { color: '#fff', fontWeight: '900', fontSize: 10 },
+  empty: { borderWidth: 2, borderStyle: 'dashed', borderColor: colors.line, borderRadius: 16, padding: space.lg, alignItems: 'center', gap: 4 },
   tier: { fontSize: 12, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.8, marginTop: space.sm },
 });

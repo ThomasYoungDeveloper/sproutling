@@ -6,6 +6,7 @@ import { Backdrop, skyNow } from './PetScene';
 import { ItemIcon } from './Cosmetics';
 import { useOverlay } from './Overlay';
 import PremiumSheet from './PremiumSheet';
+import { IncubatorOffer } from './Incubator';
 import { Button } from './ui';
 import { buzz, PopIn } from './fx';
 import { colors, font, space } from '../theme';
@@ -122,6 +123,10 @@ export function ShopSheet({ onClose, onWardrobe }: { onClose: () => void; onWard
               </View>
             );
           })}
+          <View style={{ gap: 6 }}>
+            <Text style={styles.section}>🥚 Incubators</Text>
+            <IncubatorOffer />
+          </View>
           <View style={{ gap: 6 }}>
             <Text style={styles.section}>⭐ Premium (coming soon)</Text>
             <View style={styles.grid}>
