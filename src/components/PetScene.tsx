@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Animated, Easing, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Animated, Easing, PanResponder, Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import Svg, { Circle, Defs, Ellipse, LinearGradient, Path, Rect, Stop } from 'react-native-svg';
 import { useGame } from '../state/GameContext';
 import PetSprite from './PetSprite';
@@ -11,6 +11,8 @@ import { levelProgress, stageFor } from '../game/scoring';
 import * as A from '../game/actions';
 import * as C from '../game/care';
 import type { Element } from '../game/types';
+import { SCENES } from './Cosmetics';
+import { COSMETIC_BY_ID, ownedToys, type Cosmetic } from '../game/cosmetics';
 
 const STAGE_LABEL = { baby: 'Baby', teen: 'Teen', adult: 'Adult' } as const;
 
@@ -53,20 +55,24 @@ function Cloud({ width, top, duration, delay, scale }: { width: number; top: num
   );
 }
 
-export function Backdrop({ element, sky }: { element: Element; sky: Sky }) {
-  const [top, bottom] = SKY[sky];
-  const [h1, h2, h3] = HILLS[element];
-  const night = sky === 'night';
+export function Backdrop({ element, sky, scene }: { element: Element; sky: Sky; scene?: string }) {
+  const theme = scene ? SCENES[scene] : undefined;
+  const [top, bottom] = theme ? theme.sky : SKY[sky];
+  const [h1, h2, h3] = theme ? theme.hills : HILLS[element];
+  const night = theme ? !!theme.dark : sky === 'night';
+  const dim = theme ? 1 : night ? 0.75 : 1;
   return (
     <Svg style={StyleSheet.absoluteFill} width="100%" height="100%" viewBox="0 0 400 300" preserveAspectRatio="xMidYMax slice">
       <Defs>
-        <LinearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+        <LinearGradient id={`sky-${scene ?? sky}`} x1="0" y1="0" x2="0" y2="1">
           <Stop offset="0" stopColor={top} />
           <Stop offset="1" stopColor={bottom} />
         </LinearGradient>
       </Defs>
-      <Rect x={0} y={0} width={400} height={300} fill="url(#sky)" />
-      {night ? (
+      <Rect x={0} y={0} width={400} height={300} fill={`url(#sky-${scene ?? sky})`} />
+      {theme ? (
+        theme.extras
+      ) : night ? (
         <>
           {[[40, 30], [90, 60], [150, 22], [230, 48], [300, 26], [350, 70], [200, 80], [60, 95]].map(([x, y], i) => (
             <Circle key={i} cx={x} cy={y} r={i % 3 === 0 ? 1.8 : 1.2} fill="#FFFFFF" opacity={0.85} />
@@ -80,26 +86,28 @@ export function Backdrop({ element, sky }: { element: Element; sky: Sky }) {
           <Circle cx={sky === 'dusk' ? 70 : 335} cy={sky === 'day' ? 50 : 82} r={20} fill={sky === 'day' ? '#FFD84D' : '#FFB347'} />
         </>
       )}
-      <Path d="M0 210 Q80 160 170 195 T400 180 V300 H0 Z" fill={h1} opacity={night ? 0.7 : 1} />
-      <Path d="M0 235 Q120 195 220 228 T400 220 V300 H0 Z" fill={h2} opacity={night ? 0.75 : 1} />
-      <Path d="M0 262 Q200 238 400 262 V300 H0 Z" fill={h3} opacity={night ? 0.8 : 1} />
-      {[[40, 266], [120, 258], [300, 262], [365, 270], [210, 255]].map(([x, y], i) => (
-        <Path key={i} d={`M${x} ${y} l-3 -9 M${x} ${y} l0 -11 M${x} ${y} l3 -9`} stroke={h3} strokeWidth={2.5} strokeLinecap="round" opacity={0.9} />
-      ))}
-      {[[70, 250, '#FFFFFF'], [330, 248, '#FFE27A'], [260, 270, '#FF9EB5']].map(([x, y, c], i) => (
-        <Circle key={'f' + i} cx={x as number} cy={y as number} r={3.2} fill={c as string} />
-      ))}
+      <Path d="M0 210 Q80 160 170 195 T400 180 V300 H0 Z" fill={h1} opacity={dim} />
+      <Path d="M0 235 Q120 195 220 228 T400 220 V300 H0 Z" fill={h2} opacity={dim} />
+      <Path d="M0 262 Q200 238 400 262 V300 H0 Z" fill={h3} opacity={dim} />
+      {!theme &&
+        [[40, 266], [120, 258], [300, 262], [365, 270], [210, 255]].map(([x, y], i) => (
+          <Path key={i} d={`M${x} ${y} l-3 -9 M${x} ${y} l0 -11 M${x} ${y} l3 -9`} stroke={h3} strokeWidth={2.5} strokeLinecap="round" opacity={0.9} />
+        ))}
+      {!theme &&
+        [[70, 250, '#FFFFFF'], [330, 248, '#FFE27A'], [260, 270, '#FF9EB5']].map(([x, y, c], i) => (
+          <Circle key={'f' + i} cx={x as number} cy={y as number} r={3.2} fill={c as string} />
+        ))}
       <Ellipse cx={200} cy={268} rx={70} ry={9} fill="rgba(20,40,40,0.12)" />
     </Svg>
   );
 }
 
 /** Hearts that float up when you tap your pet. */
-function Hearts({ burst }: { burst: number }) {
+function Hearts({ burst, set = ['💖', '💛', '✨', '💚', '💜'] }: { burst: number; set?: string[] }) {
   const [hearts, setHearts] = useState<{ id: number; x: number; v: Animated.Value; emoji: string }[]>([]);
   useEffect(() => {
     if (!burst) return;
-    const made = Array.from({ length: 5 }, (_, i) => ({ id: burst * 10 + i, x: (Math.random() - 0.5) * 120, v: new Animated.Value(0), emoji: ['💖', '💛', '✨', '💚', '💜'][i] }));
+    const made = Array.from({ length: 5 }, (_, i) => ({ id: burst * 10 + i, x: (Math.random() - 0.5) * 120, v: new Animated.Value(0), emoji: set[i % set.length] }));
     setHearts((h) => [...h, ...made]);
     made.forEach((h, i) => Animated.timing(h.v, { toValue: 1, duration: 900 + i * 90, easing: Easing.out(Easing.quad), useNativeDriver: true }).start());
     const t = setTimeout(() => setHearts((list) => list.filter((h) => !made.includes(h))), 1400);
@@ -143,7 +151,61 @@ function XpFloat({ amount, id }: { amount: number; id: number }) {
   );
 }
 
-export default function PetScene({ onTrinketsEmpty }: { onTrinketsEmpty?: () => void }) {
+/** A toy you drag from the tray and drop on your pet (like Toca Boca). */
+function DraggableToy({ toy, onDrop, onTap, onGrab, small }: { toy: Cosmetic; onDrop: (x: number, y: number) => boolean; onTap: () => void; onGrab: () => void; small?: boolean }) {
+  const pos = useRef(new Animated.ValueXY()).current;
+  const lift = useRef(new Animated.Value(0)).current;
+  const moved = useRef(false);
+  const cb = useRef({ onDrop, onTap, onGrab });
+  cb.current = { onDrop, onTap, onGrab };
+  const pan = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: () => true,
+      onPanResponderTerminationRequest: () => false,
+      onPanResponderGrant: () => {
+        moved.current = false;
+        cb.current.onGrab();
+        Animated.spring(lift, { toValue: 1, friction: 5, useNativeDriver: false }).start();
+      },
+      onPanResponderMove: (e, g) => {
+        if (Math.abs(g.dx) + Math.abs(g.dy) > 6) moved.current = true;
+        pos.setValue({ x: g.dx, y: g.dy });
+      },
+      onPanResponderRelease: (e, g) => {
+        Animated.spring(lift, { toValue: 0, friction: 5, useNativeDriver: false }).start();
+        if (!moved.current) {
+          pos.setValue({ x: 0, y: 0 });
+          cb.current.onTap();
+          return;
+        }
+        if (cb.current.onDrop(g.moveX, g.moveY)) {
+          // Eaten or played with: vanish, then pop back into the tray.
+          lift.setValue(0);
+          pos.setValue({ x: 0, y: 0 });
+          return;
+        }
+        Animated.spring(pos, { toValue: { x: 0, y: 0 }, friction: 6, tension: 80, useNativeDriver: false }).start();
+      },
+    }),
+  ).current;
+  return (
+    <Animated.View
+      {...pan.panHandlers}
+      accessibilityLabel={`${toy.name}: drag onto your pet`}
+      style={[
+        styles.toy,
+        small && { width: 34, height: 34, borderRadius: 11 },
+        Platform.OS === 'web' ? ({ cursor: 'grab', touchAction: 'none', userSelect: 'none' } as any) : null,
+        { zIndex: 20, transform: [{ translateX: pos.x }, { translateY: pos.y }, { scale: lift.interpolate({ inputRange: [0, 1], outputRange: [1, 1.35] }) }] },
+      ]}
+    >
+      <Text style={[styles.toyEmoji, small && { fontSize: 19 }]} selectable={false}>{toy.emoji}</Text>
+    </Animated.View>
+  );
+}
+
+export default function PetScene({ onTrinketsEmpty, onDressUp, onShop }: { onTrinketsEmpty?: () => void; onDressUp?: () => void; onShop?: () => void }) {
   const { state, apply } = useGame();
   const pet = A.activePet(state)!;
   const sp = SPECIES_BY_ID[pet.speciesId];
@@ -184,6 +246,62 @@ export default function PetScene({ onTrinketsEmpty }: { onTrinketsEmpty?: () => 
     apply(C.play);
   };
 
+  // Toy reactions.
+  const spin = useRef(new Animated.Value(0)).current;
+  const squash = useRef(new Animated.Value(0)).current;
+  const [toyLine, setToyLine] = useState<{ id: number; text: string } | null>(null);
+  const [burstSet, setBurstSet] = useState<string[] | undefined>(undefined);
+  const [toyHint, setToyHint] = useState(false);
+  const petBox = useRef<any>(null);
+  const petRect = useRef<{ x: number; y: number; w: number; h: number } | null>(null);
+  const measurePet = () =>
+    petBox.current?.measureInWindow?.((x: number, y: number, w: number, h: number) => {
+      petRect.current = { x, y, w, h };
+    });
+  const toys = ownedToys(state);
+
+  const react = (toy: Cosmetic) => {
+    buzz('success');
+    const sets: Record<string, string[]> = {
+      munch: ['😋', '✨', '💛'],
+      bubbles: ['🫧', '🫧', '✨', '🫧'],
+      notes: ['🎵', '🎶', '🎵', '🎶'],
+      rocket: ['⭐', '🌟', '✨', '⭐'],
+      spin: ['💫', '✨', '💖'],
+      hop: ['💖', '💛', '✨', '💚', '💜'],
+    };
+    setBurstSet(sets[toy.reaction ?? 'hop']);
+    setBurst((b) => b + 1);
+    setToyLine({ id: Date.now(), text: toy.line ?? 'Yay!' });
+    setTimeout(() => setToyLine((l) => (l && Date.now() - l.id >= 2200 ? null : l)), 2300);
+    if (toy.reaction === 'munch') {
+      squash.setValue(0);
+      Animated.sequence([0, 1, 2].flatMap(() => [
+        Animated.timing(squash, { toValue: 1, duration: 120, useNativeDriver: true }),
+        Animated.timing(squash, { toValue: 0, duration: 140, useNativeDriver: true }),
+      ])).start();
+    } else if (toy.reaction === 'spin') {
+      spin.setValue(0);
+      Animated.timing(spin, { toValue: 1, duration: 700, easing: Easing.inOut(Easing.cubic), useNativeDriver: true }).start();
+    } else {
+      const high = toy.reaction === 'rocket' ? 1 : 0.6;
+      hop.setValue(0);
+      Animated.sequence([
+        Animated.timing(hop, { toValue: high * (toy.reaction === 'rocket' ? 3 : 1), duration: toy.reaction === 'rocket' ? 420 : 180, easing: Easing.out(Easing.quad), useNativeDriver: true }),
+        Animated.spring(hop, { toValue: 0, friction: 3.5, tension: 120, useNativeDriver: true }),
+      ]).start();
+    }
+    apply(C.play);
+  };
+
+  // Drop test: is the finger over the pet?
+  const dropOnPet = (toy: Cosmetic) => (x: number, y: number) => {
+    const r = petRect.current;
+    const hit = !!r && x >= r.x - 30 && x <= r.x + r.w + 30 && y >= r.y - 30 && y <= r.y + r.h + 30;
+    if (hit) react(toy);
+    return hit;
+  };
+
   // Floating XP and level-up banners.
   const total = C.boostedTotal(d);
   const lastTotal = useRef(total);
@@ -214,16 +332,17 @@ export default function PetScene({ onTrinketsEmpty }: { onTrinketsEmpty?: () => 
 
   const petTransform = [
     { translateY: Animated.add(bob.interpolate({ inputRange: [0, 1], outputRange: [0, -7] }), hop.interpolate({ inputRange: [0, 1], outputRange: [0, -38] })) },
-    { scaleY: bob.interpolate({ inputRange: [0, 1], outputRange: [1, 1.03] }) },
-    { scaleX: bob.interpolate({ inputRange: [0, 1], outputRange: [1, 0.985] }) },
+    { rotate: spin.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '360deg'] }) },
+    { scaleY: Animated.add(bob.interpolate({ inputRange: [0, 1], outputRange: [1, 1.03] }), squash.interpolate({ inputRange: [0, 1], outputRange: [0, -0.14] })) },
+    { scaleX: Animated.add(bob.interpolate({ inputRange: [0, 1], outputRange: [1, 0.985] }), squash.interpolate({ inputRange: [0, 1], outputRange: [0, 0.1] })) },
   ];
-  const night = sky === 'night';
+  const night = state.scene && SCENES[state.scene] ? !!SCENES[state.scene].dark : sky === 'night';
   const ink = night ? '#FFFFFF' : colors.ink;
 
   return (
     <View style={styles.card}>
       <View style={styles.scene} onLayout={(e) => setWidth(e.nativeEvent.layout.width)}>
-        <Backdrop element={sp.element} sky={sky} />
+        <Backdrop element={sp.element} sky={sky} scene={state.scene} />
         <Cloud width={width} top={18} duration={38000} delay={0} scale={1} />
         <Cloud width={width} top={58} duration={52000} delay={9000} scale={0.7} />
 
@@ -255,19 +374,19 @@ export default function PetScene({ onTrinketsEmpty }: { onTrinketsEmpty?: () => 
 
         <View style={styles.stage}>
           <View style={styles.bubbleWrap} pointerEvents="none">
-            <PopIn key={mood}>
+            <PopIn key={toyLine ? toyLine.id : toyHint ? 'hint' : mood}>
               <View style={styles.bubble}>
-                <Text style={styles.bubbleText}>{C.moodLine(mood, pet.nickname)}</Text>
+                <Text style={styles.bubbleText}>{toyLine ? toyLine.text : toyHint ? 'Drag a toy onto me!' : C.moodLine(mood, pet.nickname)}</Text>
               </View>
             </PopIn>
           </View>
-          <Hearts burst={burst} />
+          <Hearts burst={burst} set={burstSet} />
           {floats.map((f) => (
             <XpFloat key={f.id} id={f.id} amount={f.amount} />
           ))}
           <Pressable onPress={doPlay} accessibilityRole="button" accessibilityLabel={`Play with ${pet.nickname}`}>
-            <Animated.View style={{ transform: petTransform }}>
-              <PetSprite species={sp} stage={stage} size={200} shiny={pet.shiny} mood={mood === 'sleepy' ? 'sleepy' : mood === 'joy' ? 'joy' : 'happy'} />
+            <Animated.View ref={petBox as any} style={{ transform: petTransform }}>
+              <PetSprite species={sp} stage={stage} size={200} shiny={pet.shiny} mood={mood === 'sleepy' ? 'sleepy' : mood === 'joy' ? 'joy' : 'happy'} hat={pet.look?.hat} aura={pet.look?.aura} />
             </Animated.View>
           </Pressable>
           {levelUp ? (
@@ -279,6 +398,32 @@ export default function PetScene({ onTrinketsEmpty }: { onTrinketsEmpty?: () => 
               </PopIn>
             </View>
           ) : null}
+        </View>
+
+        <View style={styles.tray}>
+          <Pressable onPress={onDressUp} style={styles.trayBtn} accessibilityRole="button" accessibilityLabel="Dress up">
+            <Text style={styles.trayIcon}>👗</Text>
+            <Text style={styles.trayLabel}>Dress</Text>
+          </Pressable>
+          <View style={styles.toys}>
+            {toys.slice(0, 7).map((t) => (
+              <DraggableToy
+                key={t.id}
+                toy={t}
+                small={toys.length > 5}
+                onDrop={dropOnPet(t)}
+                onGrab={measurePet}
+                onTap={() => {
+                  setToyHint(true);
+                  setTimeout(() => setToyHint(false), 1800);
+                }}
+              />
+            ))}
+          </View>
+          <Pressable onPress={onShop} style={styles.trayBtn} accessibilityRole="button" accessibilityLabel="Shop">
+            <Text style={styles.trayIcon}>🛍️</Text>
+            <Text style={styles.trayLabel}>Shop</Text>
+          </Pressable>
         </View>
       </View>
 
@@ -341,7 +486,14 @@ function CareButton({ icon, label, done, disabled, onPress }: { icon: string; la
 
 const styles = StyleSheet.create({
   card: { borderRadius: 26, overflow: 'hidden', backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: colors.line, shadowColor: '#2B4A40', shadowOpacity: 0.12, shadowRadius: 18, shadowOffset: { width: 0, height: 6 }, elevation: 3 },
-  scene: { height: 350, overflow: 'hidden' },
+  scene: { height: 410 },
+  tray: { position: 'absolute', left: 10, right: 10, bottom: 10, flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: 'rgba(255,255,255,0.82)', borderRadius: 20, padding: 6, zIndex: 10 },
+  trayBtn: { alignItems: 'center', width: 52, paddingVertical: 2 },
+  trayIcon: { fontSize: 22 },
+  trayLabel: { fontSize: 10, fontWeight: '900', color: colors.ink },
+  toys: { flex: 1, flexDirection: 'row', justifyContent: 'center', gap: 5 },
+  toy: { width: 42, height: 42, borderRadius: 14, backgroundColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: colors.line },
+  toyEmoji: { fontSize: 24 },
   head: { flexDirection: 'row', gap: space.sm, padding: space.lg, paddingBottom: 0 },
   level: { backgroundColor: colors.gold, borderRadius: 10, paddingHorizontal: 8, paddingVertical: 3, borderWidth: 2, borderColor: '#FFFFFF' },
   levelText: { color: '#5A3E00', fontWeight: '900', fontSize: 13 },
@@ -349,7 +501,7 @@ const styles = StyleSheet.create({
   sub: { fontSize: 12, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.8, marginTop: 2 },
   mood: { backgroundColor: 'rgba(255,255,255,0.92)', borderRadius: 999, borderWidth: 1.5, paddingHorizontal: 9, paddingVertical: 3 },
   moodText: { fontSize: 12, fontWeight: '900' },
-  stage: { flex: 1, alignItems: 'center', justifyContent: 'flex-end', paddingBottom: 14, paddingTop: 44 },
+  stage: { flex: 1, alignItems: 'center', justifyContent: 'flex-end', paddingBottom: 72, paddingTop: 44 },
   bubbleWrap: { position: 'absolute', top: 6, left: 0, right: 0, alignItems: 'center', zIndex: 3 },
   bubble: { backgroundColor: '#FFFFFF', borderRadius: 16, paddingVertical: 7, paddingHorizontal: 12, maxWidth: 230, shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 6, elevation: 2 },
   bubbleText: { fontSize: 13, fontWeight: '800', color: colors.ink, textAlign: 'center' },

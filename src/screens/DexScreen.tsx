@@ -23,7 +23,7 @@ export default function DexScreen() {
             const active = p.id === state.activePetId;
             return (
               <Pressable key={p.id} onPress={() => apply((s) => A.setActivePet(s, p.id))} style={[styles.tile, active && styles.active]} accessibilityLabel={`Make ${p.nickname} active`}>
-                <PetSprite species={sp} stage={stageFor(p.xp)} size={86} shiny={p.shiny} />
+                <PetSprite species={sp} stage={stageFor(p.xp)} size={86} shiny={p.shiny} hat={p.look?.hat} />
                 <View style={styles.lv}><Text style={styles.lvText}>Lv {levelFor(p.xp)}</Text></View>
                 <Text style={styles.name} numberOfLines={1}>{p.nickname}</Text>
                 {active ? <Chip label="Active" /> : <RarityBadge rarity={sp.rarity} />}

@@ -14,6 +14,7 @@ import FriendsScreen from './src/screens/FriendsScreen';
 import DailyLoginSheet from './src/components/DailyLoginSheet';
 import { FriendsProvider, useFriends } from './src/state/FriendsContext';
 import { OverlayProvider } from './src/components/Overlay';
+import LabScreen from './src/screens/LabScreen';
 import { FadeSwitch, PopIn, RollingNumber } from './src/components/fx';
 import { RevealProvider, useReveal } from './src/components/RevealOverlay';
 import { stageFor } from './src/game/scoring';
@@ -204,6 +205,7 @@ function Gate() {
 }
 
 export default function App() {
+  if (Platform.OS === 'web' && typeof window !== 'undefined' && window.location.search.includes('lab=hats')) return <LabScreen />;
   return (
     <AuthProvider>
       <Gate />

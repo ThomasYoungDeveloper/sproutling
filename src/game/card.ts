@@ -8,6 +8,8 @@ export interface CardPet {
   nickname: string;
   xp: number;
   shiny: boolean;
+  hat?: string;
+  aura?: string;
 }
 
 /** The public snapshot of a player that friends can see. Never includes meals, sleep or other health details. */
@@ -20,13 +22,16 @@ export interface PublicCard {
   pets: number;
   todayXp: number;
   day: string;
+  scene?: string;
 }
 
-const toCardPet = (p: { speciesId: string; nickname: string; xp: number; shiny: boolean }): CardPet => ({
+const toCardPet = (p: { speciesId: string; nickname: string; xp: number; shiny: boolean; look?: { hat?: string; aura?: string } }): CardPet => ({
   speciesId: p.speciesId,
   nickname: p.nickname.slice(0, 24),
   xp: p.xp,
   shiny: p.shiny,
+  ...(p.look?.hat ? { hat: p.look.hat } : {}),
+  ...(p.look?.aura ? { aura: p.look.aura } : {}),
 });
 
 export const TEAM_SIZE = 6;
@@ -46,6 +51,7 @@ export function buildCard(s: GameState): PublicCard {
     pets: s.pets.length,
     todayXp: scoreDay(A.today(s)).total,
     day: A.todayKey(s),
+    ...(s.scene ? { scene: s.scene } : {}),
   };
 }
 

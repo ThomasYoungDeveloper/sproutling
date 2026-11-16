@@ -4,6 +4,8 @@ import Svg, { Path } from 'react-native-svg';
 import { useGame } from '../state/GameContext';
 import { Card, SectionHead, Button, Chip } from '../components/ui';
 import PetScene from '../components/PetScene';
+import { useOverlay } from '../components/Overlay';
+import { ShopSheet, WardrobeSheet } from '../components/ShopSheets';
 import { buzz, PopIn } from '../components/fx';
 import { colors, font, space } from '../theme';
 import { scoreDay, dailyQuests } from '../game/scoring';
@@ -17,6 +19,9 @@ export default function HomeScreen({ onNavigate }: { onNavigate?: (tab: 'eggs' |
   const pet = A.activePet(state);
   const mult = C.careMultiplier(d);
   const todo = C.reminders(state).slice(0, 4);
+  const overlay = useOverlay();
+  const openShop = () => overlay.open(<ShopSheet onClose={overlay.close} onWardrobe={openWardrobe} />);
+  const openWardrobe = () => overlay.open(<WardrobeSheet onClose={overlay.close} onShop={openShop} />);
 
   const act = (r: C.Reminder) => {
     buzz('light');
@@ -28,7 +33,7 @@ export default function HomeScreen({ onNavigate }: { onNavigate?: (tab: 'eggs' |
 
   return (
     <View style={{ gap: space.md }}>
-      {pet ? <PetScene /> : null}
+      {pet ? <PetScene onShop={openShop} onDressUp={openWardrobe} /> : null}
 
       {todo.length > 0 && (
         <Card>

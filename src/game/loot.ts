@@ -50,6 +50,8 @@ export interface ChestResult {
   coins: number;
   eggRarity: Rarity | null;
   item: string | null;
+  /** A dress-up item, if the chest held one (added when opened). */
+  cosmetic?: string | null;
 }
 
 export function openChest(kind: ChestKind, rng: Rng = defaultRng): ChestResult {

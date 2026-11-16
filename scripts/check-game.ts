@@ -7,6 +7,7 @@ import { buildCard, readCard } from '../src/game/card';
 import * as C from '../src/game/care';
 import * as T from '../src/game/trade';
 import * as B from '../src/game/battle';
+import * as Cos from '../src/game/cosmetics';
 import { levelFor, levelProgress, stageFor } from '../src/game/scoring';
 import type { ChestKind, GameState } from '../src/game/types';
 
@@ -134,4 +135,26 @@ R = f2.state; for (let i = 0; i < 3; i++) R = B.finishBattle(R, false, true).sta
 const f6 = B.finishBattle(R, true, true); ok(f6.reward.coins === 0 && !f6.reward.rewarded && B.battlesLeftToday(R) === 0, 'only 5 rewarded battles a day');
 ok(B.finishBattle(A.nextDay(R), true, true).reward.chest, 'rewards reset the next day');
 ok(f6.state.battle!.wins === 3 && f6.state.battle!.losses === 3, 'battle record is kept');
+// Cosmetics, toys and the daily shop
+let W = { ...t, coins: 1000, wardrobe: {} } as GameState;
+const shop1 = Cos.shopToday(W), shop1b = Cos.shopToday(W), shop2 = Cos.shopToday(A.nextDay(W));
+ok(shop1.length === Cos.SHOP_SIZE && shop1.map((c) => c.id).join() === shop1b.map((c) => c.id).join(), 'shop is the same all day');
+ok(shop1.map((c) => c.id).join() !== shop2.map((c) => c.id).join(), 'shop changes the next day');
+ok(['toy', 'hat', 'aura', 'scene'].every((sl) => shop1.some((c) => c.slot === sl)) && shop1.filter((c) => c.slot === 'toy').length >= 2, 'shop always has toys, hats, an aura and a scene');
+ok(!shop1.some((c) => c.premium || c.special || c.price <= 0), 'shop never sells premium or special items');
+ok(Cos.owns(W, 'ball') && Cos.owns(W, 'meadow') && Cos.ownedToys(W).length === 1, 'everyone starts with a ball and the meadow');
+const item = shop1.find((c) => c.slot === 'hat')!;
+const bought = Cos.buy(W, item.id); ok(bought.ok && bought.state.coins === 1000 - item.price && Cos.owns(bought.state, item.id), 'buying takes coins and adds to wardrobe');
+ok(!Cos.buy((bought as any).state, item.id).ok, 'cannot buy twice');
+ok(!Cos.buy({ ...W, coins: 5 }, item.id).ok, 'cannot buy without enough coins');
+const notInShop = Cos.COSMETICS.find((c) => c.price > 0 && !c.premium && !c.special && !shop1.includes(c))!; ok(!Cos.buy(W, notInShop.id).ok, 'only today’s items can be bought');
+W = (bought as any).state; W = Cos.equip(W, 'hat', item.id); ok(A.activePet(W)!.look?.hat === item.id, 'hat goes on the active pet');
+ok(Cos.equip(W, 'hat', 'crown') === W || A.activePet(Cos.equip(W, 'hat', 'crown'))!.look?.hat === item.id, 'cannot wear an item you don’t own');
+W = Cos.equip(W, 'hat', null); ok(!A.activePet(W)!.look?.hat, 'hats come off');
+const sc = shop1.find((c) => c.slot === 'scene')!; const W2 = Cos.buy({ ...W }, sc.id); ok(W2.ok && Cos.equip((W2 as any).state, 'scene', sc.id).scene === sc.id, 'scenes can be bought and set');
+let gotCos = 0; for (let i = 0; i < 200; i++) if (Cos.rollChestCosmetic(W, 'gold')) gotCos++;
+ok(gotCos > 90 && gotCos < 150, `gold chests often hold a cosmetic (${gotCos}/200)`);
+const withChest = A.grantChest(W, 'gold', 'test', () => 0.5); const op = A.openChestById(withChest, withChest.chests.slice(-1)[0].id, () => 0.01)!;
+ok(!!op.result.cosmetic && Cos.owns(op.state, op.result.cosmetic!), 'chest cosmetics land in your wardrobe');
+const tp = T.toTradePet({ ...A.activePet(W)!, look: { hat: 'party' } }); ok(!('look' in tp), 'outfits stay with you when trading a pet');
 console.log(fails ? `${fails} FAILED` : 'ALL PASSED'); process.exit(fails ? 1 : 0);

@@ -29,6 +29,7 @@ export const SPECIAL_COST = 2;
 
 export interface Fighter {
   key: string;
+  hat?: string;
   speciesId: string;
   nickname: string;
   shiny: boolean;
@@ -44,6 +45,8 @@ export interface Fighter {
 
 export interface PetLike {
   id?: string;
+  hat?: string;
+  look?: { hat?: string };
   speciesId: string;
   nickname: string;
   xp: number;
@@ -57,6 +60,7 @@ export function makeFighter(p: PetLike, key: string, power = 1): Fighter {
   const maxHp = Math.round(60 + level * 8 + rb * 12);
   return {
     key,
+    hat: p.hat ?? p.look?.hat,
     speciesId: p.speciesId,
     nickname: p.nickname || sp.name,
     shiny: p.shiny,

@@ -42,6 +42,8 @@ export interface OwnedPet {
   xp: number;
   shiny: boolean;
   hatchedOn: string;
+  /** What this pet is wearing (cosmetic ids). */
+  look?: { hat?: string; aura?: string };
 }
 
 export interface Egg {
@@ -80,6 +82,10 @@ export interface GameState {
   dayOffset: number;
   /** Daily login rewards: last day claimed and how many claimed in total. */
   login?: { last: string; count: number };
+  /** Cosmetics you own. */
+  wardrobe?: Record<string, true>;
+  /** The scene behind your pet (cosmetic id); the home meadow when unset. */
+  scene?: string;
   /** Completed trades already swapped into this save. */
   appliedTrades?: Record<string, true>;
   /** Battle record and today's rewarded battles. */

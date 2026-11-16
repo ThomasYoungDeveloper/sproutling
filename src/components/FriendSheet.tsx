@@ -9,6 +9,7 @@ import { SPECIES, SPECIES_BY_ID } from '../game/species';
 import { levelFor, stageFor } from '../game/scoring';
 import { GIFT_COINS, GIFTS_PER_DAY } from '../game/actions';
 import { lastSeen } from '../screens/friendsShared';
+import { Backdrop } from './PetScene';
 import { friendOpponent, useBattle, useTradeOffer } from './SocialPanels';
 
 export default function FriendSheet({ friend, onClose }: { friend: Friend; onClose: () => void }) {
@@ -28,9 +29,10 @@ export default function FriendSheet({ friend, onClose }: { friend: Friend; onClo
       <View style={styles.sheet}>
         <ScrollView contentContainerStyle={{ gap: space.sm }}>
           <View style={styles.hero}>
+            {activeSpecies ? <Backdrop element={activeSpecies.element} sky="day" scene={card?.scene} /> : null}
             {activeSpecies && active ? (
               <PopIn>
-                <PetSprite species={activeSpecies} stage={stageFor(active.xp)} size={150} shiny={active.shiny} />
+                <PetSprite species={activeSpecies} stage={stageFor(active.xp)} size={150} shiny={active.shiny} hat={active.hat} aura={active.aura} />
               </PopIn>
             ) : (
               <Text style={{ fontSize: 64 }}>🥚</Text>
@@ -61,7 +63,7 @@ export default function FriendSheet({ friend, onClose }: { friend: Friend; onClo
                   if (!sp) return null;
                   return (
                     <View key={i} style={styles.tile}>
-                      <PetSprite species={sp} stage={stageFor(p.xp)} size={64} shiny={p.shiny} />
+                      <PetSprite species={sp} stage={stageFor(p.xp)} size={64} shiny={p.shiny} hat={p.hat} />
                       <View style={styles.lv}><Text style={styles.lvText}>Lv {levelFor(p.xp)}</Text></View>
                       <Text style={styles.name} numberOfLines={1}>{p.nickname}</Text>
                       <RarityBadge rarity={sp.rarity} />
@@ -148,7 +150,7 @@ function Stat({ label, value }: { label: string; value: string }) {
 const styles = StyleSheet.create({
   backdrop: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(24,30,48,0.55)', justifyContent: 'center', alignItems: 'center', padding: space.lg, zIndex: 50 },
   sheet: { backgroundColor: '#FFFFFF', borderRadius: 22, padding: space.lg, width: '100%', maxWidth: 420, maxHeight: '92%' },
-  hero: { alignItems: 'center', gap: 2, backgroundColor: colors.sky, borderRadius: 18, paddingVertical: space.md },
+  hero: { alignItems: 'center', gap: 2, backgroundColor: colors.sky, borderRadius: 18, paddingVertical: space.md, overflow: 'hidden' },
   stats: { flexDirection: 'row', gap: space.sm },
   stat: { flex: 1, alignItems: 'center', borderWidth: 1, borderColor: colors.line, borderRadius: 14, paddingVertical: space.sm, backgroundColor: '#FAFCFB' },
   statValue: { fontSize: 18, fontWeight: '900', color: colors.ink },

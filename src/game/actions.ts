@@ -2,6 +2,7 @@ import type { ChestKind, DayLog, Egg, Element, GameState, Meal, OwnedPet, Rarity
 import { dateKey } from './dates';
 import { emptyDay, scoreDay, dailyQuests, streakFrom, COINS_PER_XP } from './scoring';
 import { boostedTotal } from './care';
+import { grantCosmetic, rollChestCosmetic } from './cosmetics';
 import { openChest, type ChestResult } from './loot';
 import { speciesOfRarity, SPECIES, SPECIES_BY_ID } from './species';
 import { SHINY_CHANCE, stepsToHatch } from './rarity';
@@ -84,7 +85,9 @@ export function openChestById(s: GameState, chestId: string, rng: Rng = defaultR
   let next: GameState = { ...s, chests: s.chests.filter((c) => c.id !== chestId), coins: s.coins + result.coins };
   if (result.eggRarity) next = { ...next, eggs: [...next.eggs, newEgg(next, result.eggRarity, rng)] };
   if (result.item) next = { ...next, items: { ...next.items, [result.item]: (next.items[result.item] ?? 0) + 1 } };
-  return { state: next, result };
+  const cosmetic = rollChestCosmetic(next, chest.kind, rng);
+  if (cosmetic) next = grantCosmetic(next, cosmetic);
+  return { state: next, result: { ...result, cosmetic } };
 }
 
 export const incubatingCount = (s: GameState) => s.eggs.filter((e) => e.incubating).length;

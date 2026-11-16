@@ -7,6 +7,8 @@ import { CHESTS } from '../game/loot';
 import { RARITY_INFO } from '../game/rarity';
 import { SPECIES_BY_ID } from '../game/species';
 import { levelFor } from '../game/scoring';
+import { COSMETIC_BY_ID } from '../game/cosmetics';
+import { ItemIcon } from './Cosmetics';
 import EggSprite from './EggSprite';
 import PetSprite from './PetSprite';
 import { Button } from './ui';
@@ -271,6 +273,15 @@ function ChestReveal({ r, onClose }: { r: Extract<Reveal, { kind: 'chest' }>; on
                   <Text style={{ fontSize: 30 }}>✦</Text>
                   <Text style={[styles.lootBig, { fontSize: 14, textAlign: 'center' }]}>{r.result.item}</Text>
                   <Text style={styles.lootSmall}>collectible</Text>
+                </View>
+              </PopIn>
+            ) : null}
+            {r.result.cosmetic && COSMETIC_BY_ID[r.result.cosmetic] ? (
+              <PopIn delay={1100}>
+                <View style={[styles.lootCard, { borderColor: '#9C5FD8', backgroundColor: '#F4ECFF' }]}>
+                  <ItemIcon id={r.result.cosmetic} size={52} />
+                  <Text style={[styles.lootBig, { fontSize: 13, textAlign: 'center' }]}>{COSMETIC_BY_ID[r.result.cosmetic].name}</Text>
+                  <Text style={styles.lootSmall}>{COSMETIC_BY_ID[r.result.cosmetic].slot === 'toy' ? 'new toy!' : 'dress-up!'}</Text>
                 </View>
               </PopIn>
             ) : null}
