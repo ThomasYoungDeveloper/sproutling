@@ -7,6 +7,8 @@ set -euo pipefail
 APP_DIR="$HOME/Sproutling"
 ZIP_URL="https://codeload.github.com/ThomasYoungDeveloper/sproutling/zip/refs/heads/main"
 EAS="npx --yes eas-cli@latest"
+# The project folder is a plain download, not a git checkout: tell EAS not to ask for git.
+export EAS_NO_VCS=1
 
 bold() { printf "\n\033[1m%s\033[0m\n" "$1"; }
 step() { printf "\n\033[1;32m▶ %s\033[0m\n" "$1"; }
