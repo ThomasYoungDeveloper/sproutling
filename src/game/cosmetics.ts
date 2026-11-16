@@ -23,6 +23,8 @@ export interface Cosmetic {
   premium?: boolean;
   /** Can only come from contests or achievements, never the shop or chests. */
   special?: boolean;
+  /** Limited item from a seasonal event (also special). */
+  event?: string;
   /** Toys: the emoji drawn for it and how the pet reacts. */
   emoji?: string;
   reaction?: ToyReaction;
@@ -44,6 +46,8 @@ export const COSMETICS: Cosmetic[] = [
   { id: 'kabuto', name: 'Samurai Helmet', slot: 'hat', rarity: 'epic', price: 300 },
   { id: 'goldcrown', name: 'Golden Crown', slot: 'hat', rarity: 'epic', price: 0, premium: true },
   { id: 'trophy', name: 'Champion Laurel', slot: 'hat', rarity: 'epic', price: 0, special: true },
+  { id: 'acorn', name: 'Acorn Cap', slot: 'hat', rarity: 'rare', price: 0, special: true, event: 'harvest' },
+  { id: 'santa', name: 'Holiday Hat', slot: 'hat', rarity: 'rare', price: 0, special: true, event: 'winter' },
 
   { id: 'hearts', name: 'Floating Hearts', slot: 'aura', rarity: 'common', price: 80 },
   { id: 'bubbles', name: 'Bubbles', slot: 'aura', rarity: 'common', price: 80 },
@@ -53,6 +57,8 @@ export const COSMETICS: Cosmetic[] = [
   { id: 'fireflies', name: 'Fireflies', slot: 'aura', rarity: 'rare', price: 180 },
   { id: 'stars', name: 'Shooting Stars', slot: 'aura', rarity: 'epic', price: 320 },
   { id: 'galaxy', name: 'Galaxy Swirl', slot: 'aura', rarity: 'epic', price: 0, premium: true },
+  { id: 'leaves', name: 'Autumn Leaves', slot: 'aura', rarity: 'rare', price: 0, special: true, event: 'harvest' },
+  { id: 'lights', name: 'Twinkle Lights', slot: 'aura', rarity: 'epic', price: 0, special: true, event: 'winter' },
 
   { id: 'meadow', name: 'Home Meadow', slot: 'scene', rarity: 'common', price: 0 },
   { id: 'beach', name: 'Sunny Beach', slot: 'scene', rarity: 'common', price: 120 },
@@ -61,6 +67,8 @@ export const COSMETICS: Cosmetic[] = [
   { id: 'candy', name: 'Candy Land', slot: 'scene', rarity: 'rare', price: 200 },
   { id: 'space', name: 'Outer Space', slot: 'scene', rarity: 'epic', price: 400 },
   { id: 'aurora', name: 'Northern Lights', slot: 'scene', rarity: 'epic', price: 0, premium: true },
+  { id: 'autumn', name: 'Harvest Grove', slot: 'scene', rarity: 'epic', price: 0, special: true, event: 'harvest' },
+  { id: 'winterfest', name: 'Winter Festival', slot: 'scene', rarity: 'epic', price: 0, special: true, event: 'winter' },
 
   { id: 'ball', name: 'Bouncy Ball', slot: 'toy', rarity: 'common', price: 0, emoji: '⚽', reaction: 'hop', line: 'Boing! Again!' },
   { id: 'cookie', name: 'Cookie', slot: 'toy', rarity: 'common', price: 50, emoji: '🍪', reaction: 'munch', line: 'Nom nom nom!' },
@@ -72,6 +80,8 @@ export const COSMETICS: Cosmetic[] = [
   { id: 'musicbox', name: 'Music Box', slot: 'toy', rarity: 'rare', price: 150, emoji: '🎵', reaction: 'notes', line: 'La la laaa!' },
   { id: 'kite', name: 'Kite', slot: 'toy', rarity: 'rare', price: 150, emoji: '🪁', reaction: 'spin', line: 'Look how high!' },
   { id: 'rocket', name: 'Toy Rocket', slot: 'toy', rarity: 'epic', price: 250, emoji: '🚀', reaction: 'rocket', line: 'To the moon!' },
+  { id: 'pie', name: 'Pumpkin Pie', slot: 'toy', rarity: 'rare', price: 0, special: true, event: 'harvest', emoji: '🥧', reaction: 'munch', line: 'Warm and spicy!' },
+  { id: 'snowman', name: 'Mini Snowman', slot: 'toy', rarity: 'rare', price: 0, special: true, event: 'winter', emoji: '⛄', reaction: 'hop', line: 'Brrr, so cool!' },
 ];
 
 export const COSMETIC_BY_ID: Record<string, Cosmetic> = Object.fromEntries(COSMETICS.map((c) => [c.id, c]));

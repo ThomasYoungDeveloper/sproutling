@@ -7,6 +7,7 @@ import PetScene from '../components/PetScene';
 import { useOverlay } from '../components/Overlay';
 import { ShopSheet, WardrobeSheet } from '../components/ShopSheets';
 import ExpeditionCard from '../components/ExpeditionCard';
+import EventCard from '../components/EventCard';
 import AchievementsSheet from '../components/AchievementsSheet';
 import PetSheet from '../components/PetSheet';
 import { buzz, PopIn } from '../components/fx';
@@ -58,6 +59,7 @@ export default function HomeScreen({ onNavigate }: { onNavigate?: (tab: 'eggs' |
         </Card>
       )}
 
+      <EventCard />
       <ExpeditionCard />
 
       <Card>

@@ -1,3 +1,4 @@
+import { claimableCount, currentEvent } from './events';
 import type { DayLog, Element, GameState } from './types';
 import { scoreDay } from './scoring';
 import { stepsToHatch, RARITY_INFO } from './rarity';
@@ -110,6 +111,11 @@ export function reminders(s: GameState): Reminder[] {
   const ex = progress(s);
   const trainee = s.pets.find((p) => pointsLeft(p) > 0);
   if (trainee) out.push({ id: 'train', icon: '💪', text: `${trainee.nickname} has ${pointsLeft(trainee)} stat point${pointsLeft(trainee) === 1 ? '' : 's'} to spend`, action: 'train', petId: trainee.id });
+  const evReady = claimableCount(s);
+  if (evReady) {
+    const ev = currentEvent(s)!.event;
+    out.push({ id: 'event', icon: ev.emoji, text: `${ev.name} reward ready! Claim it below` });
+  }
   const badges = claimable(s).length;
   if (badges) out.push({ id: 'badges', icon: '🏅', text: badges === 1 ? 'You earned a new badge! Claim your reward' : `You earned ${badges} new badges! Claim your rewards`, action: 'badges' });
   if (ex?.done) out.push({ id: 'expedition', icon: '🎒', text: `Your pet is back from ${ex.place.name}!` });

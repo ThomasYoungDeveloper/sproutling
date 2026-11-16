@@ -19,6 +19,22 @@ export function HatArt({ id, width }: { id: string; width: number }) {
 }
 
 const HATS: Record<string, React.ReactNode> = {
+  acorn: (
+    <G>
+      <Path d="M16 58 Q14 24 50 20 Q86 24 84 58 Q50 66 16 58 Z" fill="#9A6234" stroke="#2B2B3A" strokeWidth={2.5} strokeLinejoin="round" />
+      <Path d="M24 34 L34 50 M38 26 L46 46 M54 25 L60 46 M68 30 L74 50 M30 26 L22 42 M48 22 L40 40 M62 24 L54 42 M76 34 L68 50" stroke="#7A4A22" strokeWidth={2.5} strokeLinecap="round" />
+      <Path d="M50 20 Q52 8 60 4" stroke="#5A3517" strokeWidth={5} strokeLinecap="round" fill="none" />
+      <Path d="M60 6 Q74 0 78 12 Q66 14 60 6 Z" fill="#E08A2B" stroke="#2B2B3A" strokeWidth={2} strokeLinejoin="round" />
+    </G>
+  ),
+  santa: (
+    <G>
+      <Path d="M20 56 Q26 18 52 14 Q74 12 84 30 Q88 40 86 46 Q80 34 72 30 Q78 44 80 56 Z" fill="#E5394D" stroke="#2B2B3A" strokeWidth={2.5} strokeLinejoin="round" />
+      <Path d="M36 30 Q46 24 58 24" stroke="#FF7A87" strokeWidth={4} strokeLinecap="round" fill="none" />
+      <Rect x={14} y={52} width={72} height={14} rx={7} fill="#FFFFFF" stroke="#2B2B3A" strokeWidth={2.5} />
+      <Circle cx={86} cy={48} r={8} fill="#FFFFFF" stroke="#2B2B3A" strokeWidth={2.5} />
+    </G>
+  ),
   party: (
     <G>
       <Path d="M32 64 L50 6 L68 64 Z" fill="#FF7AA8" stroke="#2B2B3A" strokeWidth={2.5} strokeLinejoin="round" />
@@ -169,6 +185,27 @@ export function hatPlacement(anchor: [number, number, number], img: number, left
 
 type Motion = 'rise' | 'fall' | 'orbit';
 const AURAS: Record<string, { motion: Motion; draw: (i: number) => React.ReactNode; count: number }> = {
+  leaves: {
+    motion: 'fall',
+    count: 7,
+    draw: (i) => (
+      <>
+        <Path d="M12 2 C20 6 22 14 12 22 C2 14 4 6 12 2 Z" fill={['#E07B2B', '#D9A23B', '#C2452D'][i % 3]} stroke="#8A3E15" strokeWidth={1} />
+        <Path d="M12 4 L12 21" stroke="#8A3E15" strokeWidth={1.2} />
+      </>
+    ),
+  },
+  lights: {
+    motion: 'orbit',
+    count: 8,
+    draw: (i) => (
+      <>
+        <Circle cx={12} cy={13} r={9} fill={['rgba(255,80,90,0.3)', 'rgba(90,220,120,0.3)', 'rgba(255,215,77,0.3)', 'rgba(110,170,255,0.3)'][i % 4]} />
+        <Path d="M12 6 C16 8 17 14 12 20 C7 14 8 8 12 6 Z" fill={['#FF505A', '#5ADC78', '#FFD74D', '#6EAAFF'][i % 4]} />
+        <Rect x={10} y={3} width={4} height={4} rx={1} fill="#5B6B70" />
+      </>
+    ),
+  },
   hearts: { motion: 'rise', count: 6, draw: (i) => <Path d="M12 21 C3 14 1 9 4 5 C7 1 11 3 12 6 C13 3 17 1 20 5 C23 9 21 14 12 21 Z" fill={i % 2 ? '#FF7AA8' : '#FF4F8B'} /> },
   bubbles: { motion: 'rise', count: 7, draw: () => <><Circle cx={12} cy={12} r={9} fill="rgba(143,211,255,0.25)" stroke="#7BD3F7" strokeWidth={2} /><Circle cx={9} cy={8} r={2.5} fill="#FFFFFF" /></> },
   snowfall: { motion: 'fall', count: 8, draw: () => <Path d="M12 2 V22 M3 7 L21 17 M3 17 L21 7" stroke="#FFFFFF" strokeWidth={2.5} strokeLinecap="round" /> },
@@ -261,6 +298,60 @@ const tree = (x: number, y: number, s: number, c: string) => (
 );
 
 export const SCENES: Record<string, ScenePalette> = {
+  autumn: {
+    sky: ['#F7B267', '#FCE8C8'],
+    hills: ['#D98C3A', '#C2702A', '#E8B04B'],
+    extras: (
+      <G>
+        <Circle cx={320} cy={70} r={26} fill="#FFE0A3" opacity={0.9} />
+        {tree(55, 214, 1.3, '#E0632B')}
+        {tree(105, 206, 1.0, '#E8A23B')}
+        {tree(300, 210, 1.1, '#C9442D')}
+        {tree(355, 218, 1.4, '#E58A2E')}
+        {[[150, 262], [250, 266]].map(([x, y]) => (
+          <G key={x}>
+            <Ellipse cx={x} cy={y} rx={14} ry={11} fill="#F28C28" stroke="#B85A12" strokeWidth={2} />
+            <Path d={`M${x} ${y - 11} Q${x + 2} ${y - 18} ${x + 6} ${y - 19}`} stroke="#5A7A2B" strokeWidth={3} fill="none" strokeLinecap="round" />
+          </G>
+        ))}
+      </G>
+    ),
+  },
+  winterfest: {
+    sky: ['#1E3566', '#4C6FA8'],
+    hills: ['#E6F0FA', '#D6E6F5', '#FFFFFF'],
+    dark: true,
+    extras: (
+      <G>
+        <Circle cx={330} cy={60} r={20} fill="#FFF6D6" />
+        {[[40, 40], [120, 70], [200, 30], [280, 90], [90, 120], [240, 130], [370, 120]].map(([x, y], i) => (
+          <Circle key={i} cx={x} cy={y} r={2.2} fill="#FFFFFF" />
+        ))}
+        <Path d="M0 30 Q50 52 100 34 T200 34 T300 34 T400 30" stroke="#2B2B3A" strokeWidth={1.5} fill="none" />
+        {[20, 60, 100, 140, 180, 220, 260, 300, 340, 380].map((x, i) => (
+          <Circle key={x} cx={x} cy={34 + (i % 2 ? 6 : 2) + (x % 100 === 60 ? 6 : 0)} r={5} fill={['#FF505A', '#5ADC78', '#FFD74D', '#6EAAFF'][i % 4]} />
+        ))}
+        {[[70, 214, 1.2], [330, 212, 1.4]].map(([x, y, k]) => (
+          <G key={x}>
+            <Polygon points={`${x},${y - 44 * k} ${x - 18 * k},${y} ${x + 18 * k},${y}`} fill="#2F7D5B" />
+            <Polygon points={`${x},${y - 56 * k} ${x - 13 * k},${y - 20 * k} ${x + 13 * k},${y - 20 * k}`} fill="#3A9A6E" />
+            <Path d={`M${x} ${y - 64 * k} L${x + 3} ${y - 58 * k} L${x - 3} ${y - 58 * k} Z`} fill="#FFD74D" stroke="#FFD74D" strokeWidth={4} strokeLinejoin="round" />
+            {[[-8, -14], [6, -26], [-4, -38], [10, -8]].map(([dx, dy], j) => (
+              <Circle key={j} cx={x + dx * k} cy={y + dy * k} r={3} fill={['#FF505A', '#FFD74D', '#6EAAFF', '#FF8FB1'][j]} />
+            ))}
+          </G>
+        ))}
+        <G>
+          <Circle cx={200} cy={258} r={14} fill="#FFFFFF" stroke="#C9D8E8" strokeWidth={2} />
+          <Circle cx={200} cy={236} r={10} fill="#FFFFFF" stroke="#C9D8E8" strokeWidth={2} />
+          <Path d="M200 236 L210 238 L200 240 Z" fill="#F28C28" />
+          <Circle cx={197} cy={232} r={1.5} fill="#2B2B3A" />
+          <Circle cx={203} cy={232} r={1.5} fill="#2B2B3A" />
+          <Rect x={190} y={242} width={20} height={4} rx={2} fill="#E5394D" />
+        </G>
+      </G>
+    ),
+  },
   beach: {
     sky: ['#7FD0FF', '#E8F7FF'],
     hills: ['#5BC0E8', '#3FA7D6', '#F4D9A0'],

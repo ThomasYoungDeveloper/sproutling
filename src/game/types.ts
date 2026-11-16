@@ -109,6 +109,8 @@ export interface GameState {
   skinDex?: Record<string, true>;
   /** Achievements whose rewards you've claimed. */
   achievements?: Record<string, true>;
+  /** Seasonal event rewards claimed, by event run (e.g. "winter-2026") → milestone indexes. */
+  events?: Record<string, number[]>;
   /** A pet out exploring. */
   expedition?: { petId: string; placeId: string; startedAt: number; startSteps: number };
   /** Cosmetics you own. */

@@ -291,4 +291,21 @@ ok(A.applyShields(shielded.state).used === 0, 'shields are not used twice');
   const br = R.seasonReward(base, 10).state;
   ok(br.coins === base.coins + 50 && br.chests.length === base.chests.length, 'bronze reward is coins only');
 }
+// Seasonal events
+{
+  const Ev = require('../src/game/events');
+  const K2 = require('../src/game/cosmetics');
+  ok(Ev.eventOn('2026-11-16').key === 'harvest-2026', 'harvest runs in November');
+  ok(Ev.eventOn('2026-12-25').key === 'winter-2026' && Ev.eventOn('2027-01-03').key === 'winter-2026', 'winter festival wraps past New Year');
+  ok(Ev.eventOn('2027-01-03').start === '2026-12-01' && Ev.eventOn('2027-01-03').end === '2027-01-06', 'winter run dates');
+  ok(Ev.eventOn('2026-02-10') === null, 'no event in February');
+  ok(Ev.nextEvent('2026-11-16').event.id === 'winter' && Ev.nextEvent('2027-02-01').start === '2027-11-01', 'next event lookup');
+  ok(K2.shopToday(newGame()).every((c: any) => !c.event), 'event items never in the shop');
+  for (const e of Ev.EVENTS) for (const m of e.milestones) if (m.item) ok(!!K2.COSMETIC_BY_ID[m.item], 'event item exists: ' + m.item);
+  // Tokens from quests during the event only
+  const run = { start: '2026-11-01', end: '2026-11-30' };
+  const full = { ...A.today(newGame()), steps: 9000, water: 6, sleepHours: 8 };
+  const ES = { ...newGame(), days: { '2026-10-31': full, '2026-11-02': full, '2026-11-03': { ...full, water: 0 } } } as GameState;
+  ok(Ev.eventTokens(ES, run) === 5, 'tokens: 3 + 2, days outside the event ignored');
+}
 console.log(fails ? `${fails} FAILED` : 'ALL PASSED'); process.exit(fails ? 1 : 0);
