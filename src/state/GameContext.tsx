@@ -5,7 +5,7 @@ import { newGame } from '../game/seed';
 import { supabase } from '../lib/supabase';
 import { useAuth } from './AuthContext';
 
-const KEY = 'sproutling/game/v2';
+const keyFor = (userId: string) => `sproutling/game/v3/${userId}`;
 
 export type SyncStatus = 'local' | 'syncing' | 'saved' | 'error';
 
@@ -25,8 +25,10 @@ function progress(s: GameState): number {
   return s.pets.length * 1000 + s.pets.reduce((a, p) => a + p.xp, 0) + Object.keys(s.dex).length * 200 + Object.keys(s.days).length * 50;
 }
 
+/** Mounted only for a signed-in player (keyed by their id), so each account has its own save. */
 export function GameProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
+  const KEY = keyFor(user?.id ?? 'none');
   const [state, setState] = useState<GameState>(newGame);
   const [loaded, setLoaded] = useState(false);
   const [sync, setSync] = useState<SyncStatus>('local');

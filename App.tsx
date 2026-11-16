@@ -4,6 +4,7 @@ import { StatusBar } from 'expo-status-bar';
 import { GameProvider, useGame } from './src/state/GameContext';
 import { AuthProvider, useAuth } from './src/state/AuthContext';
 import AccountSheet from './src/components/AccountSheet';
+import AuthFlow from './src/screens/AuthFlow';
 import HomeScreen from './src/screens/HomeScreen';
 import EggsScreen from './src/screens/EggsScreen';
 import ChestsScreen from './src/screens/ChestsScreen';
@@ -25,7 +26,7 @@ const TABS: { id: Tab; label: string }[] = [
 
 function Shell() {
   const { state, apply, reset, sync } = useGame();
-  const { user } = useAuth();
+  const { user, username } = useAuth();
   const [showAccount, setShowAccount] = useState(false);
   const [tab, setTab] = useState<Tab>('home');
   const [confirmReset, setConfirmReset] = useState(false);
@@ -54,7 +55,7 @@ function Shell() {
           <View style={styles.pill}><Text style={styles.pillText}>▲ {A.streak(state)}-day</Text></View>
           <View style={styles.pill}><Text style={styles.pillText}>● {state.coins.toLocaleString()}</Text></View>
           <Pressable onPress={() => setShowAccount(true)} style={[styles.pill, user ? null : styles.signIn]} accessibilityRole="button" accessibilityLabel={user ? 'Account' : 'Sign in to save your pets'}>
-            <Text style={[styles.pillText, !user && { color: '#fff' }]}>{user ? (sync === 'error' ? '⚠ Account' : '☁ Saved') : 'Sign in'}</Text>
+            <Text style={[styles.pillText, !user && { color: '#fff' }]} numberOfLines={1}>{sync === 'error' ? '⚠ Offline' : `☁ ${username ?? 'Me'}`}</Text>
           </Pressable>
         </View>
       </View>
@@ -65,7 +66,7 @@ function Shell() {
         {!starter && tab === 'chests' && <ChestsScreen />}
         {!starter && tab === 'dex' && <DexScreen />}
         <View style={styles.demo}>
-          <Text style={[font.tiny, { flex: 1 }]}>{user ? 'Preview build. Your progress saves to your account.' : 'Preview build. Sign in to save your pets to the cloud.'}</Text>
+          <Text style={[font.tiny, { flex: 1 }]}>Preview build. Your progress saves to your account.</Text>
           <Button small label="Skip to tomorrow" onPress={() => apply(A.nextDay)} />
           <Button
             small
@@ -98,14 +99,36 @@ function Shell() {
   );
 }
 
+function Gate() {
+  const { user, loading, recovering } = useAuth();
+  if (loading) {
+    return (
+      <View style={[styles.root, { alignItems: 'center', justifyContent: 'center' }]}>
+        <Text style={styles.brand}>Sprout<Text style={{ color: colors.mint }}>ling</Text></Text>
+      </View>
+    );
+  }
+  if (!user || recovering) {
+    return (
+      <SafeAreaView style={styles.root}>
+        <StatusBar style="dark" />
+        <AuthFlow />
+      </SafeAreaView>
+    );
+  }
+  return (
+    <GameProvider key={user.id}>
+      <RevealProvider>
+        <Shell />
+      </RevealProvider>
+    </GameProvider>
+  );
+}
+
 export default function App() {
   return (
     <AuthProvider>
-      <GameProvider>
-        <RevealProvider>
-          <Shell />
-        </RevealProvider>
-      </GameProvider>
+      <Gate />
     </AuthProvider>
   );
 }

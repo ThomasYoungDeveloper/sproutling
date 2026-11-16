@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createClient } from '@supabase/supabase-js';
+import { Platform } from 'react-native';
 
 /**
  * Supabase project "Sproutling". The URL and publishable key are meant to ship inside the app;
@@ -20,6 +21,7 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
     },
     autoRefreshToken: true,
     persistSession: true,
-    detectSessionInUrl: false,
+    // On the web, opening the confirm-email or reset-password link signs the player straight in.
+    detectSessionInUrl: Platform.OS === 'web',
   },
 });

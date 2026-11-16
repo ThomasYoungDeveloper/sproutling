@@ -6,28 +6,11 @@ import { Button } from './ui';
 import { colors, font, space } from '../theme';
 
 export default function AccountSheet({ onClose }: { onClose: () => void }) {
-  const { user, username, signIn, signUp, signOut, saveUsername } = useAuth();
+  const { user, username, signOut, saveUsername } = useAuth();
   const { sync } = useGame();
-  const [mode, setMode] = useState<'signin' | 'signup'>('signup');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [name, setName] = useState(username ?? '');
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ text: string; ok?: boolean } | null>(null);
-
-  const submit = async () => {
-    setBusy(true);
-    setMsg(null);
-    if (mode === 'signup') {
-      const r = await signUp(email, password);
-      if (r.error) setMsg({ text: r.error });
-      else if (r.needsConfirm) setMsg({ text: 'Almost there! Check your email and tap the link to confirm, then sign in here.', ok: true });
-    } else {
-      const r = await signIn(email, password);
-      if (r.error) setMsg({ text: r.error });
-    }
-    setBusy(false);
-  };
 
   const syncLabel = { local: 'Saved on this device', syncing: 'Saving to the cloud…', saved: 'Saved to the cloud', error: 'Couldn’t reach the cloud. We’ll keep trying.' }[sync];
 
@@ -64,22 +47,7 @@ export default function AccountSheet({ onClose }: { onClose: () => void }) {
               <Button primary label="Done" onPress={onClose} style={{ flex: 1 }} />
             </View>
           </>
-        ) : (
-          <>
-            <Text style={font.h2}>{mode === 'signup' ? 'Save your pets' : 'Welcome back'}</Text>
-            <Text style={font.small}>
-              {mode === 'signup' ? 'Create a free account so your pets are safe and follow you to any device.' : 'Sign in to load your pets.'}
-            </Text>
-            <TextInput style={styles.input} value={email} onChangeText={setEmail} placeholder="Email" autoCapitalize="none" keyboardType="email-address" autoComplete="email" />
-            <TextInput style={styles.input} value={password} onChangeText={setPassword} placeholder="Password (6+ characters)" secureTextEntry autoComplete={mode === 'signup' ? 'new-password' : 'current-password'} />
-            {msg ? <Text style={[styles.msg, msg.ok && styles.ok]}>{msg.text}</Text> : null}
-            <Button primary label={busy ? 'One moment…' : mode === 'signup' ? 'Create account' : 'Sign in'} disabled={busy || !email || password.length < 6} onPress={submit} />
-            <Pressable onPress={() => { setMode(mode === 'signup' ? 'signin' : 'signup'); setMsg(null); }} style={{ alignSelf: 'center', padding: 6 }}>
-              <Text style={[font.small, { color: colors.mintDark }]}>{mode === 'signup' ? 'Already have an account? Sign in' : 'New here? Create an account'}</Text>
-            </Pressable>
-            <Text style={font.tiny}>Your pets keep saving on this device either way. Players must be 13 or older.</Text>
-          </>
-        )}
+        ) : null}
       </View>
     </View>
   );
