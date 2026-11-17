@@ -16,6 +16,7 @@ import * as Br from '../src/game/breeding';
 import * as St from '../src/game/stats';
 import { levelFor, levelProgress, stageFor, scoreDay } from '../src/game/scoring';
 import type { ChestKind, GameState } from '../src/game/types';
+import { mergeSaves } from '../src/game/merge';
 
 let fails = 0;
 const ok = (c: boolean, m: string) => { console.log((c ? 'PASS ' : 'FAIL ') + m); if (!c) fails++; };
@@ -412,5 +413,27 @@ ok(A.applyShields(shielded.state).used === 0, 'shields are not used twice');
   let h = { ...newGame(), eggs: [{ id: 'e', rarity: 'common', stepsWalked: 0, incubating: true, foundOn: '' }] } as any;
   h = A.syncHealthSteps(h, 2500);
   ok(h.eggs[0].stepsWalked === 2500 && A.today(h).steps === 2500, 'first Health sync of the day counts all of it');
+}
+// Merging the phone and web saves
+{
+  const egg = (id: string, w = 0) => ({ id, rarity: 'common', stepsWalked: w, incubating: true, foundOn: '' }) as any;
+  const base = { ...newGame(), coins: 100, eggs: [egg('e1'), egg('e2')], chests: [{ id: 'c1', kind: 'bronze', earnedOn: '', reason: '' }] } as GameState;
+  // Phone: walked 3,000 steps (egg warms) and earned 50 coins.
+  const phone = { ...base, coins: 150, eggs: [egg('e1', 3000), egg('e2')] } as GameState;
+  // Web: hatched e2, opened the chest, spent 30 coins, got a new egg.
+  const web = { ...base, coins: 70, eggs: [egg('e1'), egg('e3')], chests: [] } as GameState;
+  const m = mergeSaves(base, phone, web);
+  ok(m.eggs.find((e) => e.id === 'e1')?.stepsWalked === 3000, 'merge keeps the egg steps walked on the phone');
+  ok(!m.eggs.some((e) => e.id === 'e2'), 'merge keeps an egg hatched on the other device hatched');
+  ok(m.eggs.some((e) => e.id === 'e3'), 'merge keeps a new egg from the other device');
+  ok(m.chests.length === 0, 'merge keeps an opened chest opened');
+  ok(m.coins === 120, `merge adds coin changes from both sides (got ${m.coins})`);
+  const m2 = mergeSaves(base, web, phone);
+  ok(m2.coins === 120 && m2.eggs.length === 2, 'merge gives the same result in either direction');
+  const d = '2026-11-16';
+  const a = { ...base, days: { [d]: { steps: 4000, sleepHours: 7, water: 2, workoutMinutes: 0, meals: [] } } } as GameState;
+  const b = { ...base, days: { [d]: { steps: 2500, sleepHours: 0, water: 5, workoutMinutes: 0, meals: [] } } } as GameState;
+  const md = mergeSaves(base, a, b).days[d];
+  ok(md.steps === 4000 && md.water === 5 && md.sleepHours === 7, 'merge keeps the higher value of each habit');
 }
 console.log(fails ? `${fails} FAILED` : 'ALL PASSED'); process.exit(fails ? 1 : 0);
