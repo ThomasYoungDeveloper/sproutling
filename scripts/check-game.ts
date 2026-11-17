@@ -207,7 +207,20 @@ const epet = E.pets[0];
 ok(!Ex.canStart(E, epet.id, 'caves').ok, 'locked places need a higher level');
 const T0 = 1_000_000_000_000;
 E = Ex.start(E, epet.id, 'meadow', T0);
-ok((E.expedition?.fights?.length ?? 0) >= 1, 'a trip plans its wild fights when the pet leaves');
+ok(Array.isArray(E.expedition?.fights), 'a trip plans its wild fights when the pet leaves');
+{
+  const counts = new Set<number>();
+  let inRange = true, ordered = true;
+  const strong = { ...E, pets: E.pets.map((p) => ({ ...p, xp: 90000 })) } as GameState;
+  for (let i = 0; i < 60; i++) {
+    const f = Ex.planFights(strong, epet.id, Ex.PLACE_BY_ID.mountain, 'm' + i);
+    counts.add(f.length);
+    if (f.length > 5) inRange = false;
+    if (f.some((x, j) => j > 0 && (x.at ?? 0) < (f[j - 1].at ?? 0))) ordered = false;
+  }
+  ok(inRange && counts.size >= 2, `trips have a random number of fights in range (${[...counts].join(',')})`);
+  ok(ordered, 'fights happen at random spots, in order along the way');
+}
 E = { ...E, expedition: { ...E.expedition!, fights: [{ speciesId: 'p01', name: 'Wild', won: true, hpAfter: 70 }], koAt: undefined, planned: { foods: ['carrot'], chest: null, egg: null, item: null } } };
 ok(!!E.expedition && !Ex.canStart(E, epet.id, 'meadow').ok, 'one expedition at a time');
 ok(!Ex.progress(E, T0)!.done && Ex.finish(E, rr, T0) === null, 'not done right away');

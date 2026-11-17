@@ -289,7 +289,7 @@ export default function ExpeditionCard() {
     open(
       <PetPicker
         title={`Explore ${place.name} ${place.emoji}`}
-        subtitle={`Takes ${place.hours} hour${place.hours > 1 ? 's' : ''}, or walk ${place.steps.toLocaleString()} steps to bring them home sooner. ${place.fights} wild fight${place.fights > 1 ? 's' : ''} on the way. If your pet is knocked out, it comes home early. Pets need level ${place.minLevel}+.`}
+        subtitle={`Takes ${place.hours} hour${place.hours > 1 ? 's' : ''}, or walk ${place.steps.toLocaleString()} steps to bring them home sooner. ${place.fights[0] === 0 ? 'Up to' : `${place.fights[0]} to`} ${place.fights[1]} wild fights on the way. If your pet is knocked out, it comes home early. Pets need level ${place.minLevel}+.`}
         pets={[...state.pets]
           .sort((a, b) => b.xp - a.xp)
           .map((p) => ({

@@ -32,10 +32,10 @@ const wardrobeCount = (s: GameState) => Object.keys(s.wardrobe ?? {}).length;
 const bestStreak = (s: GameState) => A.streak(s);
 
 export const ACHIEVEMENTS: Achievement[] = [
-  { id: 'steps10k', name: 'First Steps', emoji: '👟', desc: 'Walk 10,000 steps in total', group: 'Walking', goal: 10_000, value: totalSteps, reward: { coins: 30 } },
-  { id: 'steps100k', name: 'Trail Blazer', emoji: '🥾', desc: 'Walk 100,000 steps in total', group: 'Walking', goal: 100_000, value: totalSteps, reward: { chest: 'bronze', coins: 50 } },
-  { id: 'steps500k', name: 'Marathoner', emoji: '🏃', desc: 'Walk 500,000 steps in total', group: 'Walking', goal: 500_000, value: totalSteps, reward: { chest: 'silver', coins: 100 } },
-  { id: 'steps1m', name: 'Globe Trotter', emoji: '🌍', desc: 'Walk 1,000,000 steps in total', group: 'Walking', goal: 1_000_000, value: totalSteps, reward: { chest: 'gold', coins: 200 } },
+  { id: 'steps10k', name: 'First Steps', emoji: '👟', desc: 'Walk 10,000 steps in total', group: 'Walking', goal: 10_000, value: (s) => totalSteps(s), reward: { coins: 30 } },
+  { id: 'steps100k', name: 'Trail Blazer', emoji: '🥾', desc: 'Walk 100,000 steps in total', group: 'Walking', goal: 100_000, value: (s) => totalSteps(s), reward: { chest: 'bronze', coins: 50 } },
+  { id: 'steps500k', name: 'Marathoner', emoji: '🏃', desc: 'Walk 500,000 steps in total', group: 'Walking', goal: 500_000, value: (s) => totalSteps(s), reward: { chest: 'silver', coins: 100 } },
+  { id: 'steps1m', name: 'Globe Trotter', emoji: '🌍', desc: 'Walk 1,000,000 steps in total', group: 'Walking', goal: 1_000_000, value: (s) => totalSteps(s), reward: { chest: 'gold', coins: 200 } },
 
   { id: 'dex10', name: 'Collector', emoji: '📗', desc: 'Discover 10 kinds of pets', group: 'Collecting', goal: 10, value: dexCount, reward: { chest: 'bronze' } },
   { id: 'dex25', name: 'Pet Expert', emoji: '📘', desc: 'Discover 25 kinds of pets', group: 'Collecting', goal: 25, value: dexCount, reward: { chest: 'silver' } },

@@ -29,25 +29,25 @@ export interface Place {
   itemChance: number;
   cosmeticChance: number;
   events: string[];
-  /** Wild fights on the way. */
-  fights: number;
+  /** How many wild fights there can be on the way (picked at random each trip). */
+  fights: [number, number];
 }
 
 export const PLACES: Place[] = [
   {
-    id: 'meadow', fights: 1, name: 'Mossy Meadow', emoji: '🌼', minLevel: 1, hours: 1, steps: 1500, coins: [15, 30], itemChance: 50, cosmeticChance: 0,
+    id: 'meadow', fights: [0, 2], name: 'Mossy Meadow', emoji: '🌼', minLevel: 1, hours: 1, steps: 1500, coins: [15, 30], itemChance: 50, cosmeticChance: 0,
     events: ['chased a butterfly all the way across the meadow', 'made friends with a sleepy ladybug', 'rolled down the biggest hill (three times)', 'found a four-leaf clover'],
   },
   {
-    id: 'caves', fights: 2, name: 'Crystal Caves', emoji: '💎', minLevel: 3, hours: 3, steps: 4000, coins: [30, 60], chest: { kind: 'bronze', chance: 50 }, itemChance: 60, cosmeticChance: 5,
+    id: 'caves', fights: [1, 3], name: 'Crystal Caves', emoji: '💎', minLevel: 3, hours: 3, steps: 4000, coins: [30, 60], chest: { kind: 'bronze', chance: 50 }, itemChance: 60, cosmeticChance: 5,
     events: ['followed glowing crystals deep underground', 'heard a mysterious echo singing back', 'slid down a sparkly crystal slide', 'woke up a very polite bat'],
   },
   {
-    id: 'shrine', fights: 2, name: 'Sakura Shrine', emoji: '⛩️', minLevel: 5, hours: 6, steps: 7000, coins: [50, 90], chest: { kind: 'bronze', chance: 70 }, egg: { chance: 30, rarity: { common: 60, uncommon: 35, rare: 5 } }, itemChance: 60, cosmeticChance: 15,
+    id: 'shrine', fights: [2, 4], name: 'Sakura Shrine', emoji: '⛩️', minLevel: 5, hours: 6, steps: 7000, coins: [50, 90], chest: { kind: 'bronze', chance: 70 }, egg: { chance: 30, rarity: { common: 60, uncommon: 35, rare: 5 } }, itemChance: 60, cosmeticChance: 15,
     events: ['rang the shrine bell for good luck', 'caught falling cherry blossoms', 'shared mochi with a friendly fox spirit', 'climbed a thousand stone steps'],
   },
   {
-    id: 'mountain', fights: 3, name: 'Moon Mountain', emoji: '🌙', minLevel: 8, hours: 12, steps: 12000, coins: [80, 150], chest: { kind: 'silver', chance: 45 }, egg: { chance: 30, rarity: { uncommon: 50, rare: 40, epic: 10 } }, itemChance: 70, cosmeticChance: 25,
+    id: 'mountain', fights: [2, 5], name: 'Moon Mountain', emoji: '🌙', minLevel: 8, hours: 12, steps: 12000, coins: [80, 150], chest: { kind: 'silver', chance: 45 }, egg: { chance: 30, rarity: { uncommon: 50, rare: 40, epic: 10 } }, itemChance: 70, cosmeticChance: 25,
     events: ['climbed above the clouds to touch the moon', 'counted shooting stars until sunrise', 'found a cave full of moonflowers', 'surfed down the mountain on a snow cloud'],
   },
 ];
@@ -71,7 +71,7 @@ export function canStart(s: GameState, petId: string, placeId: string): StartChe
 }
 
 /** Wild pets on trips start with this share of their HP. */
-export const WILD_STRENGTH = 0.6;
+export const WILD_STRENGTH = 0.5;
 
 export interface TripFight {
   speciesId: string;
@@ -79,6 +79,8 @@ export interface TripFight {
   won: boolean;
   /** Your pet's HP (percent) after this fight. */
   hpAfter: number;
+  /** Where on the route it happens (0–1). */
+  at?: number;
 }
 
 /**
@@ -93,9 +95,13 @@ export function planFights(s: GameState, petId: string, place: Place, seed: stri
   const lv = levelFor(pet.xp);
   let hp = H.hpPct(pet);
   const out: TripFight[] = [];
-  for (let i = 0; i < place.fights; i++) {
+  // A random number of fights at random spots along the way, so no two trips feel the same.
+  const count = randInt(place.fights[0], place.fights[1], rng);
+  const spots = Array.from({ length: count }, () => 0.12 + rng() * 0.76).sort((a, b) => a - b);
+  for (let i = 0; i < count; i++) {
     // Wild pets on the way are a little below your level, untrained, and not at full strength.
-    const foeLevel = Math.max(1, Math.max(place.minLevel, lv - 2) + i);
+    // Foes match the place, not your pet: stronger pets breeze through easy places.
+    const foeLevel = Math.max(1, Math.min(lv, place.minLevel + Math.floor(i / 2)) - 1);
     const foe = { ...B.wildTeam([foeLevel], rng)[0], train: {} };
     const b0 = B.startBattle([pet], [foe], setup.buffs, { care: setup.care, streak: setup.streak });
     const t = b0.theirs[0];
@@ -106,7 +112,7 @@ export function planFights(s: GameState, petId: string, place: Place, seed: stri
     hp = f.maxHp ? Math.max(0, Math.round((Math.max(0, f.hp) / f.maxHp) * 100)) : 0;
     const won = end.over === 'win';
     if (!won) hp = 0;
-    out.push({ speciesId: foe.speciesId, name: foe.nickname, won, hpAfter: won ? Math.max(1, hp) : 0 });
+    out.push({ speciesId: foe.speciesId, name: foe.nickname, won, hpAfter: won ? Math.max(1, hp) : 0, at: Math.round(spots[i] * 1000) / 1000 });
     if (!won) break;
   }
   return out;
@@ -135,7 +141,7 @@ export function start(s: GameState, petId: string, placeId: string, now = Date.n
   };
   return {
     ...s,
-    expedition: { petId, placeId, startedAt, startSteps: totalSteps(s), fights, planned, ...(lost >= 0 ? { koAt: (lost + 1) / (place.fights + 1) } : {}) },
+    expedition: { petId, placeId, startedAt, startSteps: totalSteps(s), fights, planned, ...(lost >= 0 ? { koAt: fights[lost].at ?? 0.5 } : {}) },
   };
 }
 
@@ -155,7 +161,7 @@ export function tripStops(s: GameState): { frac: number; kind: 'fight' | 'food' 
   const fights = e.fights ?? [];
   let food = 0;
   fights.forEach((f, i) => {
-    const frac = (i + 1) / (place.fights + 1);
+    const frac = f.at ?? (i + 1) / (fights.length + 1);
     out.push({ frac, kind: 'fight', label: f.won ? 'Won' : 'Knocked out', won: f.won });
     if (f.won && e.planned?.foods[food]) out.push({ frac: frac + 0.04, kind: 'food', label: FOOD_NAME(e.planned.foods[food++]) });
   });
@@ -220,7 +226,7 @@ export function finish(s: GameState, rng: Rng = defaultRng, now = Date.now()): {
   const knockedOut = fights.some((f) => !f.won);
   const wins = fights.filter((f) => f.won).length;
   // Knocked out: keep a share of the coins and XP for each fight won before that, and nothing else.
-  const share = knockedOut ? wins / (place.fights + 1) : 1;
+  const share = knockedOut ? (s.expedition.koAt ?? 0.5) * 0.6 : 1;
   const pet = s.pets.find((x) => x.id === s.expedition!.petId);
   const name = pet?.nickname ?? 'Your pet';
   const coins = Math.round(randInt(place.coins[0], place.coins[1], rng) * share);
