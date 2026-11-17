@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from 'react';
+import { ChatList } from '../components/Chat';
+import { useChat } from '../state/ChatContext';
 import { TowerCard } from '../components/TowerScreen';
 import WildCard from '../components/WildCard';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
@@ -21,6 +23,7 @@ import FashionShow from '../components/FashionShow';
 
 const SECTIONS = [
   { id: 'friends', label: 'Friends', icon: '👋' },
+  { id: 'chat', label: 'Chat', icon: '💬' },
   { id: 'team', label: 'Guild', icon: '🛡️' },
   { id: 'battle', label: 'Battle', icon: '⚔️' },
   { id: 'show', label: 'Show', icon: '🎀' },
@@ -28,6 +31,7 @@ const SECTIONS = [
 
 export default function FriendsScreen({ initialAdd, onUsedInitialAdd, initialGuild, onUsedInitialGuild }: { initialAdd?: string | null; onUsedInitialAdd?: () => void; initialGuild?: string | null; onUsedInitialGuild?: () => void }) {
   const { waiting: liveWaiting } = useLive();
+  const { unread: chatUnread } = useChat();
   const { myCode, friends, incoming, outgoing, loading, error, addFriend, respond, remove, gift, giftsLeft, refresh, tradesForMe } = useFriends();
   const [target, setTarget] = useState('');
   const [busy, setBusy] = useState(false);
@@ -36,7 +40,7 @@ export default function FriendsScreen({ initialAdd, onUsedInitialAdd, initialGui
   const overlay = useOverlay();
   const openFriend = (f: Friend) => overlay.open(<FriendSheet friend={f} onClose={overlay.close} />);
   const [inviteTop, setInviteTop] = useState(false);
-  const [section, setSection] = useState<'friends' | 'team' | 'battle' | 'show'>(initialGuild ? 'team' : 'friends');
+  const [section, setSection] = useState<'friends' | 'chat' | 'team' | 'battle' | 'show'>(initialGuild ? 'team' : 'friends');
 
   useEffect(() => {
     refresh();
@@ -133,9 +137,11 @@ export default function FriendsScreen({ initialAdd, onUsedInitialAdd, initialGui
             <Text style={[styles.segText, section === sec.id && { color: '#fff' }]}>{sec.icon} {sec.label}</Text>
             {sec.id === 'friends' && incoming.length + tradesForMe + liveWaiting > 0 ? <View style={styles.segDot} /> : null}
             {sec.id === 'battle' && liveWaiting > 0 ? <View style={styles.segDot} /> : null}
+            {sec.id === 'chat' && chatUnread > 0 ? <View style={styles.segDot} /> : null}
           </Pressable>
         ))}
       </View>
+      {section === 'chat' && <ChatList />}
       {section === 'team' && <TeamCard initialJoin={initialGuild} onUsedInitialJoin={onUsedInitialGuild} />}
       {section === 'battle' && <WildCard />}
       {section === 'battle' && <LiveBattlesCard />}

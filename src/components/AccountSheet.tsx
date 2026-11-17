@@ -1,4 +1,5 @@
 import * as A from '../game/actions';
+import { ChatSettings } from './Chat';
 import React, { useEffect, useState } from 'react';
 import { Linking, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useAuth } from '../state/AuthContext';
@@ -142,6 +143,8 @@ export default function AccountSheet({ onClose }: { onClose: () => void }) {
             {msg ? <Text style={[styles.msg, msg.ok && styles.ok]}>{msg.text}</Text> : null}
             <SoundToggle />
             <RemindersToggle />
+            <View style={{ height: 1, backgroundColor: '#E3ECE7', marginVertical: 6 }} />
+            <ChatSettings />
             <PremiumRow />
             <View style={styles.testing}>
               <Text style={[font.small, { fontWeight: '900' }]}>Testing (preview build)</Text>

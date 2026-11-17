@@ -1,0 +1,321 @@
+import React, { useEffect, useRef, useState } from 'react';
+import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useChat, QUICK_PHRASES, type ChatMessage, type ChatRoom } from '../state/ChatContext';
+import { useFriends } from '../state/FriendsContext';
+import { useTeam } from '../state/TeamContext';
+import { useAuth } from '../state/AuthContext';
+import { useGame } from '../state/GameContext';
+import { useOverlay } from './Overlay';
+import PetSprite from './PetSprite';
+import { Button } from './ui';
+import { buzz } from './fx';
+import { colors, font, space } from '../theme';
+import { SPECIES_BY_ID } from '../game/species';
+import * as A from '../game/actions';
+
+const ago = (iso: string | null) => {
+  if (!iso) return '';
+  const m = Math.floor((Date.now() - new Date(iso).getTime()) / 60000);
+  if (m < 1) return 'now';
+  if (m < 60) return `${m}m`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h`;
+  return h < 48 ? 'Yesterday' : `${Math.floor(h / 24)}d`;
+};
+
+/** Opens a chat room full screen. */
+export function useOpenChat() {
+  const { open, close } = useOverlay();
+  return (room: string, title: string, otherId?: string) => open(<ChatRoomScreen room={room} title={title} otherId={otherId} onClose={close} />);
+}
+
+/** Social › Chat: your guild chat and friend chats, newest first. */
+export function ChatList() {
+  const { rooms, mode, refresh } = useChat();
+  const { friends } = useFriends();
+  const { team } = useTeam();
+  const { user } = useAuth();
+  const openChat = useOpenChat();
+  useEffect(() => {
+    refresh();
+  }, []);
+  const me = user?.id ?? '';
+  const otherOf = (room: string) => room.split(':').slice(1).find((x) => x !== me) ?? '';
+  const shown = rooms.filter((r) => r.room.startsWith('team:') || friends.some((f) => f.id === otherOf(r.room)));
+
+  if (mode === 'off') {
+    return (
+      <View style={styles.card}>
+        <Text style={font.h2}>Chat is off</Text>
+        <Text style={font.small}>Turn it on in your account settings (tap your picture at the top).</Text>
+      </View>
+    );
+  }
+  return (
+    <View style={{ gap: space.md }}>
+      <View style={styles.card}>
+        {shown.length === 0 ? <Text style={font.small}>No chats yet. Open a friend and tap Chat, or join a guild to chat with your guild.</Text> : null}
+        {shown.map((r, i) => {
+          const isTeam = r.room.startsWith('team:');
+          const f = isTeam ? undefined : friends.find((x) => x.id === otherOf(r.room));
+          const sp = f?.card?.active ? SPECIES_BY_ID[f.card.active.speciesId] : undefined;
+          const title = isTeam ? team?.name ?? 'Guild chat' : f?.username ?? 'Friend';
+          return (
+            <Pressable key={r.room} onPress={() => openChat(r.room, title, f?.id)} style={[styles.row, i === 0 && { borderTopWidth: 0 }]} accessibilityRole="button" accessibilityLabel={`${title}${r.unread ? `, ${r.unread} unread` : ''}`}>
+              <View style={[styles.av, { backgroundColor: isTeam ? '#2A3366' : '#E3F1FF' }]}>
+                {isTeam ? <Text style={styles.avText}>GUILD</Text> : sp ? <PetSprite species={sp} stage="adult" size={44} skin={f?.card?.active?.skin} /> : null}
+              </View>
+              <View style={{ flex: 1, minWidth: 0 }}>
+                <Text style={styles.name} numberOfLines={1}>{title}</Text>
+                <Text style={[styles.preview, r.unread ? { color: colors.ink, fontWeight: '900' } : null]} numberOfLines={1}>
+                  {r.last ? `${r.lastFrom === 'me' ? 'You: ' : isTeam && r.lastFrom ? `${r.lastFrom}: ` : ''}${r.last}` : isTeam ? 'Say hi to your guild!' : ''}
+                </Text>
+              </View>
+              <View style={{ alignItems: 'flex-end', gap: 4 }}>
+                <Text style={styles.time}>{ago(r.at)}</Text>
+                {r.unread ? <View style={styles.dot}><Text style={styles.dotText}>{r.unread}</Text></View> : null}
+              </View>
+            </Pressable>
+          );
+        })}
+      </View>
+      <Text style={[font.tiny, { textAlign: 'center' }]}>Chat is only with your friends and your guild.</Text>
+    </View>
+  );
+}
+
+function ChatRoomScreen({ room, title, otherId, onClose }: { room: string; title: string; otherId?: string; onClose: () => void }) {
+  const insets = useSafeAreaInsets();
+  const chat = useChat();
+  const { state } = useGame();
+  const { user } = useAuth();
+  const me = user?.id ?? '';
+  const isTeam = room.startsWith('team:');
+  const [text, setText] = useState('');
+  const [err, setErr] = useState<string | null>(null);
+  const [menu, setMenu] = useState<ChatMessage | null>(null);
+  const [note, setNote] = useState<string | null>(null);
+  const [stickers, setStickers] = useState(false);
+  const scroll = useRef<any>(null);
+  const msgs = chat.messages(room);
+
+  useEffect(() => {
+    chat.open(room);
+    return () => chat.close();
+  }, [room]);
+  useEffect(() => {
+    setTimeout(() => scroll.current?.scrollToEnd({ animated: true }), 50);
+  }, [msgs.length]);
+
+  const send = async (kind: 'text' | 'phrase' | 'sticker', body: string, sticker?: ChatMessage['sticker']) => {
+    if (!body.trim()) return;
+    setErr(null);
+    buzz('light', 'pop');
+    const e = await chat.send(room, kind, body.trim(), sticker);
+    if (e) setErr(e);
+    else if (kind === 'text') setText('');
+    setStickers(false);
+  };
+  const pet = A.activePet(state);
+  const sendSticker = (line: string) => pet && send('sticker', line, { speciesId: pet.speciesId, skin: pet.skin, name: pet.nickname });
+
+  return (
+    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={[styles.full, { backgroundColor: isTeam ? '#E9EEFA' : '#EAF6F0' }]}>
+      <View style={[styles.head, { paddingTop: insets.top + 8, backgroundColor: isTeam ? '#2A3366' : '#FFFBF2' }]}>
+        <Pressable onPress={onClose} accessibilityRole="button" accessibilityLabel="Back" style={{ paddingVertical: 6, paddingRight: 8 }}>
+          <Text style={[styles.back, isTeam && { color: '#BFD0FF' }]}>‹ Back</Text>
+        </Pressable>
+        <View style={{ flex: 1 }}>
+          <Text style={[styles.headTitle, isTeam && { color: '#fff' }]} numberOfLines={1}>{title}</Text>
+          <Text style={[font.tiny, isTeam && { color: '#C9D3FF' }]}>{isTeam ? 'Guild chat' : 'Friend chat'}</Text>
+        </View>
+      </View>
+
+      <ScrollView ref={scroll} style={{ flex: 1 }} contentContainerStyle={{ padding: space.md, gap: 8 }}>
+        {msgs.length === 0 ? <Text style={[font.small, { textAlign: 'center', marginTop: 20 }]}>No messages yet. Say hi!</Text> : null}
+        {msgs.map((m) => {
+          if (m.kind === 'system') {
+            return (
+              <View key={m.id} style={styles.sys}>
+                <Text style={styles.sysText}>{m.body}</Text>
+              </View>
+            );
+          }
+          const mine = m.sender === me;
+          const sp = m.sticker ? SPECIES_BY_ID[m.sticker.speciesId] : undefined;
+          return (
+            <Pressable key={m.id} onLongPress={() => !mine && setMenu(m)} delayLongPress={350} style={{ alignSelf: mine ? 'flex-end' : 'flex-start', maxWidth: '80%' }} accessibilityHint={mine ? undefined : 'Press and hold to report or block'}>
+              {isTeam && !mine ? <Text style={styles.who}>{chat.nameOf(m.sender)}</Text> : null}
+              {m.kind === 'sticker' && sp ? (
+                <View style={{ alignItems: 'center' }}>
+                  <PetSprite species={sp} stage="adult" size={90} skin={m.sticker?.skin as any} mood="joy" />
+                  <Text style={styles.stickerLine}>{m.sticker?.name ? `${m.sticker.name}: ` : ''}{m.body}</Text>
+                </View>
+              ) : (
+                <View style={[styles.bubble, mine ? [styles.mine, isTeam && { backgroundColor: '#4A8FE0' }] : styles.theirs]}>
+                  <Text style={[styles.bubbleText, mine && { color: '#fff' }]}>{m.body}</Text>
+                </View>
+              )}
+            </Pressable>
+          );
+        })}
+      </ScrollView>
+
+      {err ? <Text style={styles.err}>{err}</Text> : null}
+      {note ? <Text style={[styles.err, { color: colors.mintDark }]}>{note}</Text> : null}
+
+      {chat.mode === 'off' ? (
+        <Text style={[styles.err, { paddingBottom: insets.bottom + 12 }]}>Your chat is off. Turn it on in your account settings.</Text>
+      ) : (
+        <>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flexGrow: 0 }} contentContainerStyle={styles.phrases}>
+            {QUICK_PHRASES.map((p) => (
+              <Pressable key={p} onPress={() => (stickers ? sendSticker(p) : send('phrase', p))} style={[styles.chip, stickers && { borderColor: '#B497EA' }]} accessibilityRole="button" accessibilityLabel={stickers ? `Send a sticker: ${p}` : `Send: ${p}`}>
+                <Text style={styles.chipText}>{p}</Text>
+              </Pressable>
+            ))}
+          </ScrollView>
+          <View style={[styles.inputRow, { paddingBottom: insets.bottom + 10 }]}>
+            <Pressable onPress={() => setStickers((v) => !v)} disabled={!pet} style={[styles.petBtn, stickers && { backgroundColor: '#B497EA' }]} accessibilityRole="button" accessibilityLabel={stickers ? 'Back to phrases' : 'Send a pet sticker'}>
+              {pet && SPECIES_BY_ID[pet.speciesId] ? <PetSprite species={SPECIES_BY_ID[pet.speciesId]} stage="adult" size={30} skin={pet.skin} /> : <Text style={styles.petBtnText}>PET</Text>}
+            </Pressable>
+            {chat.mode === 'phrases' ? (
+              <Text style={[font.small, { flex: 1 }]}>{stickers ? 'Tap a phrase to send it as a pet sticker.' : 'Quick phrases and stickers only (Account › Chat).'}</Text>
+            ) : (
+              <>
+                <TextInput
+                  style={styles.input}
+                  value={text}
+                  onChangeText={setText}
+                  placeholder={stickers ? 'Tap a phrase for a sticker' : isTeam ? 'Message your guild' : `Message ${title}`}
+                  maxLength={300}
+                  returnKeyType="send"
+                  onSubmitEditing={() => send('text', text)}
+                  accessibilityLabel="Message"
+                />
+                <Pressable onPress={() => send('text', text)} style={[styles.sendBtn, isTeam && { backgroundColor: '#4A8FE0' }]} accessibilityRole="button" accessibilityLabel="Send">
+                  <Text style={styles.sendText}>›</Text>
+                </Pressable>
+              </>
+            )}
+          </View>
+        </>
+      )}
+
+      {menu ? (
+        <View style={styles.menuBack}>
+          <Pressable style={StyleSheet.absoluteFill} onPress={() => setMenu(null)} accessibilityLabel="Close" />
+          <View style={[styles.menu, { paddingBottom: insets.bottom + 16 }]}>
+            <Text style={styles.menuQuote} numberOfLines={3}>“{menu.body}”</Text>
+            <Button
+              label="Report message"
+              onPress={async () => {
+                const ok = await chat.report(menu.id, 'reported from chat');
+                setMenu(null);
+                setNote(ok ? 'Thanks. We’ll take a look.' : 'Couldn’t send the report. Try again.');
+              }}
+            />
+            {menu.sender ? (
+              <Button
+                label={`Block ${chat.nameOf(menu.sender)}`}
+                onPress={async () => {
+                  const ok = await chat.block(menu.sender!);
+                  setMenu(null);
+                  if (ok && !isTeam && menu.sender === otherId) onClose();
+                  else setNote(ok ? 'Blocked. You won’t see their messages.' : 'Couldn’t block. Try again.');
+                }}
+              />
+            ) : null}
+            <Text style={font.tiny}>Blocking removes them as a friend and hides you from each other in chat.</Text>
+            <Button primary label="Cancel" onPress={() => setMenu(null)} />
+          </View>
+        </View>
+      ) : null}
+    </KeyboardAvoidingView>
+  );
+}
+
+/** Chat settings for the account page. */
+export function ChatSettings() {
+  const chat = useChat();
+  const [list, setList] = useState<{ id: string; name: string }[] | null>(null);
+  const modes: { id: 'on' | 'phrases' | 'off'; label: string }[] = [
+    { id: 'on', label: 'On' },
+    { id: 'phrases', label: 'Phrases & stickers' },
+    { id: 'off', label: 'Off' },
+  ];
+  return (
+    <View style={{ gap: 8 }}>
+      <Text style={styles.setHead}>Chat</Text>
+      <View style={{ flexDirection: 'row', gap: 6 }}>
+        {modes.map((m) => (
+          <Pressable key={m.id} onPress={() => chat.setSettings({ mode: m.id })} style={[styles.seg, chat.mode === m.id && styles.segOn]} accessibilityRole="radio" accessibilityState={{ checked: chat.mode === m.id }}>
+            <Text style={[styles.segText, chat.mode === m.id && { color: '#fff' }]}>{m.label}</Text>
+          </Pressable>
+        ))}
+      </View>
+      <Pressable onPress={() => chat.setSettings({ push: !chat.push })} style={styles.toggleRow} accessibilityRole="switch" accessibilityState={{ checked: chat.push }}>
+        <Text style={font.body}>Message notifications</Text>
+        <View style={[styles.tog, !chat.push && styles.togOff]}><View style={[styles.knob, !chat.push && { left: 3, right: undefined }]} /></View>
+      </Pressable>
+      <Pressable onPress={async () => setList(await chat.blocked())} style={styles.toggleRow} accessibilityRole="button">
+        <Text style={font.body}>Blocked trainers</Text>
+        <Text style={font.small}>{list ? `${list.length}` : 'Show ›'}</Text>
+      </Pressable>
+      {list?.map((b) => (
+        <View key={b.id} style={styles.toggleRow}>
+          <Text style={font.small}>{b.name}</Text>
+          <Button small label="Unblock" onPress={async () => { await chat.unblock(b.id); setList(await chat.blocked()); }} />
+        </View>
+      ))}
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  card: { backgroundColor: '#FFFBF2', borderRadius: 22, padding: space.md, gap: 4 },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10, borderTopWidth: 1, borderTopColor: colors.line },
+  av: { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
+  avText: { color: '#fff', fontWeight: '900', fontSize: 11 },
+  name: { fontWeight: '900', fontSize: 16, color: colors.ink },
+  preview: { fontWeight: '700', fontSize: 13, color: colors.muted },
+  time: { fontWeight: '800', fontSize: 11, color: colors.muted },
+  dot: { minWidth: 20, height: 20, borderRadius: 10, backgroundColor: '#E0567A', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 5 },
+  dotText: { color: '#fff', fontWeight: '900', fontSize: 11 },
+  full: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 85 },
+  head: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 14, paddingBottom: 10, borderBottomWidth: 1, borderBottomColor: 'rgba(0,0,0,0.06)' },
+  back: { fontSize: 15, fontWeight: '900', color: colors.mintDark },
+  headTitle: { fontSize: 17, fontWeight: '900', color: colors.ink },
+  sys: { alignSelf: 'stretch', backgroundColor: '#2A3366', borderRadius: 12, paddingHorizontal: 12, paddingVertical: 8 },
+  sysText: { color: '#fff', fontWeight: '800', fontSize: 13 },
+  who: { fontSize: 11, fontWeight: '900', color: '#4A8FE0', marginLeft: 6, marginBottom: 2 },
+  bubble: { borderRadius: 18, paddingHorizontal: 13, paddingVertical: 9 },
+  mine: { backgroundColor: '#2EB88A', borderBottomRightRadius: 4 },
+  theirs: { backgroundColor: '#FFFFFF', borderBottomLeftRadius: 4 },
+  bubbleText: { fontSize: 15, fontWeight: '700', color: colors.ink },
+  stickerLine: { fontSize: 12, fontWeight: '900', color: colors.muted },
+  err: { textAlign: 'center', color: '#C4562F', fontWeight: '800', fontSize: 13, paddingHorizontal: 16, paddingTop: 4 },
+  phrases: { gap: 6, paddingHorizontal: 12, paddingVertical: 8 },
+  chip: { backgroundColor: '#fff', borderWidth: 2, borderColor: '#CFE6DA', borderRadius: 999, paddingHorizontal: 11, paddingVertical: 6 },
+  chipText: { fontWeight: '800', fontSize: 13, color: colors.ink },
+  inputRow: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 12, paddingTop: 8, backgroundColor: '#FFFBF2' },
+  petBtn: { width: 42, height: 42, borderRadius: 21, backgroundColor: '#F2E3FF', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
+  petBtnText: { fontSize: 11, fontWeight: '900', color: '#6A3FB5' },
+  input: { flex: 1, height: 42, borderRadius: 21, backgroundColor: '#fff', borderWidth: 2, borderColor: '#CFE6DA', paddingHorizontal: 14, fontSize: 15, fontWeight: '700', color: colors.ink },
+  sendBtn: { width: 42, height: 42, borderRadius: 21, backgroundColor: '#2EB88A', alignItems: 'center', justifyContent: 'center' },
+  sendText: { color: '#fff', fontSize: 24, fontWeight: '900', marginTop: -2 },
+  menuBack: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(20,30,28,0.5)', justifyContent: 'flex-end' },
+  menu: { backgroundColor: '#FFFBF2', borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: space.lg, gap: 10 },
+  menuQuote: { fontSize: 15, fontWeight: '700', color: colors.muted },
+  setHead: { fontSize: 16, fontWeight: '900', color: colors.ink },
+  seg: { flex: 1, borderRadius: 12, paddingVertical: 8, alignItems: 'center', backgroundColor: '#EEF3F0' },
+  segOn: { backgroundColor: colors.ink },
+  segText: { fontWeight: '900', fontSize: 12, color: colors.ink },
+  toggleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 6 },
+  tog: { width: 46, height: 28, borderRadius: 14, backgroundColor: '#2EB88A' },
+  togOff: { backgroundColor: '#C9D3CF' },
+  knob: { position: 'absolute', right: 3, top: 3, width: 22, height: 22, borderRadius: 11, backgroundColor: '#fff' },
+});
+
+export type { ChatRoom };

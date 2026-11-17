@@ -1,4 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { useOpenChat } from './Chat';
+import { useChat } from '../state/ChatContext';
 import { Animated, Easing, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useFriends, type Friend } from '../state/FriendsContext';
 import { Button, RarityBadge } from './ui';
@@ -23,6 +25,8 @@ export default function FriendSheet({ friend, onClose }: { friend: Friend; onClo
   const battle = useBattle();
   const tradeOffer = useTradeOffer();
   const liveB = useLiveBattle();
+  const chat = useChat();
+  const openChat = useOpenChat();
   const { battles } = useLive();
   const [choose, setChoose] = useState(false);
   const live = friends.find((f) => f.id === friend.id) ?? friend;
@@ -127,6 +131,17 @@ export default function FriendSheet({ friend, onClose }: { friend: Friend; onClo
               <Text style={styles.actionText}>Trade</Text>
             </Pressable>
           </View>
+          <Pressable
+            onPress={() => {
+              onClose();
+              openChat(chat.dmRoom(live.id), live.username, live.id);
+            }}
+            style={styles.chatBtn}
+            accessibilityRole="button"
+            accessibilityLabel={`Chat with ${live.username}`}
+          >
+            <Text style={styles.chatBtnText}>Chat with {live.username}</Text>
+          </Pressable>
           {choose && friendOpponent(live) ? (
             <View style={styles.choose}>
               <Pressable
@@ -258,6 +273,8 @@ function Stat({ label, value, bg, ink }: { label: string; value: string; bg: str
 }
 
 const styles = StyleSheet.create({
+  chatBtn: { borderRadius: 16, paddingVertical: 12, alignItems: 'center', backgroundColor: '#FFFFFF', borderWidth: 2, borderColor: '#CFE6DA' },
+  chatBtnText: { fontWeight: '900', fontSize: 15, color: colors.ink },
   choose: { flexDirection: 'row', gap: space.sm },
   chooseBtn: { flex: 1, borderRadius: 16, padding: 12, gap: 2 },
   chooseTitle: { color: '#fff', fontWeight: '900', fontSize: 15 },

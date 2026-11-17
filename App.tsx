@@ -18,6 +18,7 @@ import DailyLoginSheet from './src/components/DailyLoginSheet';
 import { FriendsProvider, useFriends } from './src/state/FriendsContext';
 import { LiveBattleProvider, useLive } from './src/state/LiveBattleContext';
 import { syncWidgets } from './src/lib/widgetSync';
+import { ChatProvider, useChat } from './src/state/ChatContext';
 import * as H from './src/game/hp';
 import { OverlayProvider, useOverlay } from './src/components/Overlay';
 import { TeamProvider } from './src/state/TeamContext';
@@ -82,6 +83,7 @@ function Shell() {
   useReminders();
   const { incoming, tradesForMe, notice, dismissNotice } = useFriends();
   const { waiting: liveWaiting } = useLive();
+  const { unread: chatUnread } = useChat();
   const [invite, setInvite] = useState<string | null>(null);
   const [guildInvite, setGuildInvite] = useState<string | null>(null);
   const [showLogin, setShowLogin] = useState(false);
@@ -135,6 +137,7 @@ function Shell() {
   }, [user?.id]);
   useEffect(() => onPushTap((t) => {
     if (t === 'home' || t === 'eggs' || t === 'chests' || t === 'dex' || t === 'friends') setTab(t);
+    if (t === 'chat') setTab('friends');
   }), []);
 
   // On the phone, invite links open the app directly (Universal Links): read the code from the link.
@@ -272,7 +275,7 @@ function Shell() {
           tabs={TABS}
           active={tab}
           onPick={setTab}
-          badges={{ eggs: readyEggs, chests: state.chests.length, friends: incoming.length + tradesForMe + liveWaiting, dex: Ach.claimable(state).length }}
+          badges={{ eggs: readyEggs, chests: state.chests.length, friends: incoming.length + tradesForMe + liveWaiting + chatUnread, dex: Ach.claimable(state).length }}
         />
       )}
       {settled && !starter && !state.tutorialDone ? <Tutorial /> : null}
@@ -339,11 +342,13 @@ function Gate() {
         <FriendsProvider>
           <LiveBattleProvider>
             <TeamProvider>
-              <RankedProvider>
-                <OverlayProvider>
-                  <Shell />
-                </OverlayProvider>
-              </RankedProvider>
+              <ChatProvider>
+                <RankedProvider>
+                  <OverlayProvider>
+                    <Shell />
+                  </OverlayProvider>
+                </RankedProvider>
+              </ChatProvider>
             </TeamProvider>
           </LiveBattleProvider>
         </FriendsProvider>
