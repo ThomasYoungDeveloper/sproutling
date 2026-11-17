@@ -50,12 +50,12 @@ export default function HpCard({ pet }: { pet: OwnedPet }) {
       <Text style={font.small}>
         {now} / {max} HP.{' '}
         {st === 'out'
-          ? `${pet.nickname} can’t go on trips or fight wild pets until healed.`
+          ? `${pet.nickname} is resting and wakes up tomorrow with ${H.WAKE_HP}% HP. Potions can’t wake a knocked-out pet.`
           : pct < 100
             ? 'HP only comes back with a potion.'
             : 'Fights on trips and with wild pets lower HP. Friend battles never do.'}
       </Text>
-      {pct < 100 ? (
+      {pct < 100 && pct > 0 ? (
         <View style={styles.potions}>
           {(['small', 'full'] as const).map((k) => {
             const n = H.potionsOf(state, k);

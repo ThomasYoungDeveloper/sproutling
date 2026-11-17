@@ -17,6 +17,7 @@ import DailyLoginSheet from './src/components/DailyLoginSheet';
 import { FriendsProvider, useFriends } from './src/state/FriendsContext';
 import { LiveBattleProvider, useLive } from './src/state/LiveBattleContext';
 import { syncWidgets } from './src/lib/widgetSync';
+import * as H from './src/game/hp';
 import { OverlayProvider, useOverlay } from './src/components/Overlay';
 import { TeamProvider } from './src/state/TeamContext';
 import { RankedProvider } from './src/state/RankedContext';
@@ -93,6 +94,11 @@ function Shell() {
   const starter = A.needsStarter(state);
   const login = A.loginStatus(state);
   const today = A.todayKey(state);
+
+  // Knocked-out pets wake up the next day with a little HP.
+  useEffect(() => {
+    apply((s) => H.wakeRested(s, A.todayKey(s)));
+  }, [today]);
 
   // Home screen widget + adventure Live Activity (iPhone only; a second after the save settles).
   const wildWaiting = (state.wildPending ?? []).length;

@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as H from '../game/hp';
+import PotionIcon, { POTION_COLOR } from './PotionIcon';
 import { Animated, Easing, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { useGame } from '../state/GameContext';
 import { useTeam } from '../state/TeamContext';
@@ -302,7 +303,7 @@ export default function BattleScreen({ opponent, onClose, onResult, live, specia
       <PetPicker
         title={special?.title ?? "Pick your battle team"}
         subtitle={`${(special?.teamSize ?? B.TEAM_SIZE) === 1 ? 'Pick 1 pet' : `Up to ${special?.teamSize ?? B.TEAM_SIZE} pets`} vs ${opponent.name}: ${theirNames}.${special ? ' Your pets fight with the HP they have now, and lost HP stays down until you use a potion.' : ''}${buffText}`}
-        pets={state.pets.map((p) => (special ? { pet: p, showHp: true, disabled: H.isKnockedOut(p) ? `${p.nickname} is knocked out. Use a potion from its page first.` : undefined } : { pet: p }))}
+        pets={state.pets.map((p) => (special ? { pet: p, showHp: true, disabled: H.isKnockedOut(p) ? `${p.nickname} is knocked out and resting. It wakes up tomorrow.` : undefined } : { pet: p }))}
         max={special?.teamSize ?? B.TEAM_SIZE}
         initial={special ? team.slice(0, special.teamSize ?? B.TEAM_SIZE).filter((id) => !H.isKnockedOut(state.pets.find((p) => p.id === id))) : team}
         confirmLabel={(n) => (n ? `Battle with ${n} pet${n > 1 ? 's' : ''}!` : 'Pick at least 1 pet')}
@@ -377,6 +378,33 @@ export default function BattleScreen({ opponent, onClose, onResult, live, specia
                     <MoveButton key={m.id} m={m} foe={them} energy={me.energy} disabled={busy || !!lb?.iMoved} onPress={() => act({ type: 'move', moveId: m.id })} />
                   ))}
                 </View>
+                {special ? (
+                  <View style={styles.potionRow}>
+                    {(['small', 'full'] as const).map((k) => {
+                      const n = H.potionsOf(state, k);
+                      const off = busy || !n || me.hp >= me.maxHp;
+                      return (
+                        <Pressable
+                          key={k}
+                          disabled={off}
+                          onPress={() => {
+                            const after = H.takePotion(stateRef.current, k);
+                            if (!after) return;
+                            apply(() => after);
+                            act({ type: 'potion', heal: H.POTION_HEAL[k], label: H.POTION_ITEM[k] });
+                          }}
+                          style={[styles.potionBtn, { borderColor: POTION_COLOR[k] }, off && { opacity: 0.4 }]}
+                          accessibilityRole="button"
+                          accessibilityLabel={`Drink a ${H.POTION_ITEM[k]}, ${n} left. Uses your turn.`}
+                        >
+                          <PotionIcon kind={k} size={26} />
+                          <Text style={styles.potionText}>{k === 'small' ? 'Small' : 'Full'} · {n}</Text>
+                        </Pressable>
+                      );
+                    })}
+                    <Text style={styles.potionHint}>Uses your turn</Text>
+                  </View>
+                ) : null}
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                   <Pressable onPress={() => !busy && !lb?.iMoved && battle.mine.filter((f) => f.hp > 0).length > 1 && setSwitching(true)} accessibilityRole="button" style={{ opacity: battle.mine.filter((f) => f.hp > 0).length > 1 ? 1 : 0.4 }}>
                     <Text style={styles.link}>🔄 Switch pet</Text>
@@ -643,6 +671,10 @@ function DamagePop({ side, text, color, onDone }: { side: B.Side; text: string; 
 }
 
 const styles = StyleSheet.create({
+  potionRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  potionBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, borderWidth: 2, borderRadius: 12, paddingHorizontal: 8, paddingVertical: 3, backgroundColor: '#FFFBF2' },
+  potionText: { fontWeight: '900', fontSize: 13, color: colors.ink },
+  potionHint: { fontSize: 11, fontWeight: '700', color: colors.muted, marginLeft: 'auto' },
   lines: { alignSelf: 'stretch', backgroundColor: '#F6F1E7', borderRadius: 14, padding: 12, gap: 6, minWidth: 260 },
   lineRow: { flexDirection: 'row', justifyContent: 'space-between', gap: 10 },
   lineLabel: { fontSize: 15, fontWeight: '800', color: colors.ink, flexShrink: 1 },

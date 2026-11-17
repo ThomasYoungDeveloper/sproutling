@@ -1,5 +1,8 @@
 import type { GameState, OwnedPet } from './types';
 import type { Battle, Fighter } from './battle';
+import { dateKey } from './dates';
+
+const todayOf = (s: GameState) => dateKey(s.dayOffset);
 
 /**
  * Pet HP that carries over. Fights on trips and wild pets on walks lower it; it only comes back
@@ -13,7 +16,9 @@ export type PotionKind = 'small' | 'full';
 export const POTION_ITEM: Record<PotionKind, string> = { small: SMALL, full: FULL };
 export const POTION_HEAL: Record<PotionKind, number> = { small: 50, full: 100 };
 export const POTION_PRICE: Record<PotionKind, number> = { small: 60, full: 150 };
-export const POTION_INFO: Record<PotionKind, string> = { small: 'Heals half your pet’s HP', full: 'Heals all HP, even knocked out' };
+export const POTION_INFO: Record<PotionKind, string> = { small: 'Heals half your pet’s HP', full: 'Heals all of your pet’s HP' };
+/** A knocked-out pet rests and wakes up the next day with this much HP (potions can’t wake it). */
+export const WAKE_HP = 25;
 /** Below this a pet is "hurt" and a trip is risky. */
 export const HURT_BELOW = 50;
 
@@ -32,10 +37,10 @@ export function addPotions(s: GameState, kind: PotionKind, n = 1): GameState {
 
 export function setHp(s: GameState, petId: string, pct: number): GameState {
   const v = pct > 0 ? Math.max(1, Math.min(100, Math.round(pct))) : 0;
-  return { ...s, pets: s.pets.map((p) => (p.id === petId ? (v >= 100 ? withoutHp(p) : { ...p, hpPct: v }) : p)) };
+  return { ...s, pets: s.pets.map((p) => (p.id === petId ? (v >= 100 ? withoutHp(p) : v === 0 ? { ...p, hpPct: 0, koOn: p.koOn ?? todayOf(s) } : (({ koOn: _k, ...rest }) => ({ ...rest, hpPct: v }))(p)) : p)) };
 }
 const withoutHp = (p: OwnedPet): OwnedPet => {
-  const { hpPct: _drop, ...rest } = p;
+  const { hpPct: _drop, koOn: _ko, ...rest } = p;
   return rest;
 };
 
@@ -44,6 +49,7 @@ export function usePotion(s: GameState, petId: string, kind: PotionKind): { ok: 
   if (!pet) return { ok: false, reason: 'Pick a pet.' };
   if (potionsOf(s, kind) < 1) return { ok: false, reason: `You don’t have a ${POTION_ITEM[kind]}.` };
   const before = hpPct(pet);
+  if (before <= 0) return { ok: false, reason: `Potions can’t wake a knocked-out pet. ${pet.nickname} is resting and wakes up tomorrow with ${WAKE_HP}% HP.` };
   if (before >= 100) return { ok: false, reason: `${pet.nickname} already has full HP.` };
   const after = Math.min(100, before + POTION_HEAL[kind]);
   const key = POTION_ITEM[kind];
@@ -57,12 +63,40 @@ export function usePotion(s: GameState, petId: string, kind: PotionKind): { ok: 
 /** The potion that fits best: a Small one unless the pet is knocked out or very low and you have a Full one. */
 export function bestPotion(s: GameState, pet: OwnedPet): PotionKind | null {
   const pct = hpPct(pet);
-  if (pct >= 100) return null;
-  const small = potionsOf(s, 'small') > 0;
-  const full = potionsOf(s, 'full') > 0;
-  if (pct <= 0 && full) return 'full';
-  if (small) return 'small';
-  return full ? 'full' : null;
+  if (pct >= 100 || pct <= 0) return null;
+  if (pct <= 50 && potionsOf(s, 'full') > 0 && potionsOf(s, 'small') === 0) return 'full';
+  if (potionsOf(s, 'small') > 0) return 'small';
+  return potionsOf(s, 'full') > 0 ? 'full' : null;
+}
+
+/** Uses one potion from your bag (in a battle). Returns null if you have none. */
+export function takePotion(s: GameState, kind: PotionKind): GameState | null {
+  const key = POTION_ITEM[kind];
+  const n = s.items[key] ?? 0;
+  if (n < 1) return null;
+  const items = { ...s.items };
+  if (n > 1) items[key] = n - 1;
+  else delete items[key];
+  return { ...s, items };
+}
+
+/** Knocked-out pets wake up the day after with a little HP. */
+export function wakeRested(s: GameState, today: string): GameState {
+  let changed = false;
+  const pets = s.pets.map((p) => {
+    if (hpPct(p) > 0) return p.koOn ? (({ koOn: _k, ...rest }) => ((changed = true), rest))(p) : p;
+    if (!p.koOn) {
+      changed = true;
+      return { ...p, koOn: today };
+    }
+    if (p.koOn < today) {
+      changed = true;
+      const { koOn: _k, ...rest } = p;
+      return { ...rest, hpPct: WAKE_HP };
+    }
+    return p;
+  });
+  return changed ? { ...s, pets } : s;
 }
 
 export function buyPotion(s: GameState, kind: PotionKind): GameState {

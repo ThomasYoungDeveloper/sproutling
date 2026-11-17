@@ -78,7 +78,7 @@ export const canClimb = (s: GameState) => {
   const t = towerOf(s);
   if (t.floor >= FLOORS) return { ok: false as const, reason: 'You reached the top this week! A new tower opens Monday.' };
   if (t.restDay === A.todayKey(s)) return { ok: false as const, reason: 'Your team is resting after being knocked out. Climb again tomorrow from the same floor.' };
-  if (!s.pets.some((p) => !H.isKnockedOut(p))) return { ok: false as const, reason: 'All your pets are knocked out. Use a potion first.' };
+  if (!s.pets.some((p) => !H.isKnockedOut(p))) return { ok: false as const, reason: 'All your pets are knocked out and resting. They wake up tomorrow.' };
   return { ok: true as const };
 };
 

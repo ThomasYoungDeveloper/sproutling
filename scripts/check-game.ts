@@ -231,10 +231,23 @@ ok(fin.state.pets.find((p) => p.id === epet.id)!.hpPct === 70 && fin.loot.foods.
   ok(Ex.tripStops(K).map((x) => x.kind).join(',') === 'fight,food,fight', 'a knocked-out trip shows its fights and food, but no treasure');
   ok(kf.loot.knockedOut && !kf.loot.chest && !kf.loot.egg && kf.loot.foods.length === 1, 'knocked out keeps what it found so far, but no chest or egg');
   ok(kf.state.pets.find((p) => p.id === kp.id)!.hpPct === 0 && !Ex.canStart(kf.state, kp.id, 'meadow').ok, 'a knocked-out pet can’t go on a trip');
-  const healed = Hp.usePotion(Hp.addPotions(kf.state, 'small'), kp.id, 'small');
-  ok(healed.ok && Hp.hpPct(healed.state.pets.find((p) => p.id === kp.id)) === 50 && Ex.canStart(healed.state, kp.id, 'meadow').ok, 'a Small Potion heals half and lets the pet go again');
-  const full = Hp.usePotion(Hp.addPotions(kf.state, 'full'), kp.id, 'full');
+  ok(!Hp.usePotion(Hp.addPotions(kf.state, 'full'), kp.id, 'full').ok, 'potions can’t wake a knocked-out pet');
+  const today0 = A.todayKey(kf.state);
+  const rested = Hp.wakeRested(kf.state, today0);
+  ok(Hp.isKnockedOut(rested.pets.find((p) => p.id === kp.id)), 'a knocked-out pet rests for the rest of the day');
+  const tomorrow = A.nextDay(rested);
+  const woke = Hp.wakeRested(tomorrow, A.todayKey(tomorrow));
+  ok(Hp.hpPct(woke.pets.find((p) => p.id === kp.id)) === Hp.WAKE_HP && Ex.canStart(woke, kp.id, 'meadow').ok, 'it wakes up the next day with 25% HP');
+  const healed = Hp.usePotion(Hp.addPotions(woke, 'small'), kp.id, 'small');
+  ok(healed.ok && Hp.hpPct(healed.state.pets.find((p) => p.id === kp.id)) === 75, 'a Small Potion heals half');
+  const full = Hp.usePotion(Hp.addPotions(woke, 'full'), kp.id, 'full');
   ok(full.ok && full.state.pets.find((p) => p.id === kp.id)!.hpPct === undefined, 'a Full Potion heals to full');
+  {
+    const bb = B.startBattle([kp], [kp]);
+    const hurt = { ...bb, mine: [{ ...bb.mine[0], hp: 10 }] };
+    const fr = B.playTurn(hurt, { type: 'potion', heal: 50, label: 'Small Potion' }, { type: 'move', moveId: 'focus' });
+    ok(fr[0].event.kind === 'heal' && fr[0].battle.mine[0].hp === 10 + Math.round(bb.mine[0].maxHp / 2), 'drinking a potion in battle heals and uses your turn');
+  }
   ok(!Hp.usePotion({ ...kf.state, items: {} }, kp.id, 'small').ok, 'no potion, no heal');
   // Real fights: a strong pet usually clears the Meadow; a nearly knocked-out one often doesn't.
   let wins = 0, lowWins = 0;

@@ -172,7 +172,7 @@ export function wildTeam(myLevels: number[], rng: Rng = defaultRng): PetLike[] {
 /* ---------------- Battle ---------------- */
 
 export type Side = 'me' | 'them';
-export type Action = { type: 'move'; moveId: string } | { type: 'switch'; index: number };
+export type Action = { type: 'move'; moveId: string } | { type: 'switch'; index: number } | { type: 'potion'; heal: number; label: string };
 
 export interface Battle {
   mine: Fighter[];
@@ -277,6 +277,17 @@ export function playTurn(b0: Battle, myAction: Action, theirAction: Action, rng:
     if (side === 'me') b.mi = a.index;
     else b.ti = a.index;
     push({ side, kind: 'switch', text: `${prev.nickname}, come back! Go, ${active(b, side).nickname}!` });
+  });
+
+  // Potions (trips, wild pets and the tower): drinking one uses your turn and heals the active pet.
+  (['me', 'them'] as Side[]).forEach((side) => {
+    const a = actions[side];
+    if (a.type !== 'potion') return;
+    const f = active(b, side);
+    if (!alive(f)) return;
+    const before = f.hp;
+    f.hp = Math.min(f.maxHp, f.hp + Math.round((f.maxHp * a.heal) / 100));
+    push({ side, kind: 'heal', healed: f.hp - before, text: `${f.nickname} drank a ${a.label} and healed ${f.hp - before} HP!` });
   });
 
   // Moves in order: priority first, then speed (ties are a coin flip).
