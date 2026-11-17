@@ -43,7 +43,7 @@ const PAGE: Record<Tab, { title: string; sub: (s: ReturnType<typeof useGame>['st
   eggs: { title: 'Eggs', sub: (s) => `${s.eggs.filter((e) => e.incubating).length} of ${s.incubatorSlots} incubators in use` },
   chests: { title: 'Chests', sub: (s) => (s.chests.length ? `${s.chests.length} waiting to be opened` : 'Earn more by being active') },
   dex: { title: 'Pets', sub: (s) => `${s.pets.length} pets · ${Object.keys(s.dex).length} in the Pet-dex` },
-  friends: { title: 'Friends', sub: () => 'Battle, trade and team up' },
+  friends: { title: 'Social', sub: () => 'Friends, guild, battles and trades' },
 };
 
 const TABS: { id: Tab; label: string }[] = [
@@ -51,7 +51,7 @@ const TABS: { id: Tab; label: string }[] = [
   { id: 'eggs', label: 'Eggs' },
   { id: 'chests', label: 'Chests' },
   { id: 'dex', label: 'Pets' },
-  { id: 'friends', label: 'Friends' },
+  { id: 'friends', label: 'Social' },
 ];
 
 /** A friend code from an invite link (sproutling.app/?add=CODE), read once and removed from the address bar. */
