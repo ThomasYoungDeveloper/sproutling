@@ -14,6 +14,7 @@ import { SPECIES_BY_ID } from '../game/species';
 import { stageFor } from '../game/scoring';
 import * as A from '../game/actions';
 import * as K from '../game/cosmetics';
+import * as Pw from '../game/powerups';
 import type { Cosmetic, Slot } from '../game/cosmetics';
 
 const SLOT_TITLE: Record<Slot, string> = { toy: 'Toys', hat: 'Hats', aura: 'Auras', scene: 'Scenes' };
@@ -49,6 +50,37 @@ function Tile({ c, children, selected, onPress, dim }: { c: Cosmetic; children?:
 }
 
 /* ---------------- Daily shop ---------------- */
+
+/** One Training Crystal a day: spend it on a pet's stat from its page (Grade section). */
+function CrystalOffer() {
+  const { state, apply } = useGame();
+  const today = A.todayKey(state);
+  const bought = Pw.crystalBoughtToday(state, today);
+  const [msg, setMsg] = useState<string | null>(null);
+  return (
+    <View style={styles.crystal}>
+      <Text style={{ fontSize: 34 }}>💎</Text>
+      <View style={{ flex: 1, gap: 2 }}>
+        <Text style={styles.crystalTitle}>Training Crystal</Text>
+        <Text style={styles.crystalBody}>+1 to any stat of any pet, from its page. You have {Pw.crystalsOf(state)}.</Text>
+        {msg ? <Text style={[styles.crystalBody, { color: colors.mintDark, fontWeight: '900' }]}>{msg}</Text> : null}
+      </View>
+      <Pressable
+        disabled={bought || state.coins < Pw.CRYSTAL_PRICE}
+        onPress={() => {
+          apply((s) => Pw.buyCrystal(s, today));
+          buzz('success');
+          setMsg('Got it! Open a pet and tap 💎 Crystals.');
+        }}
+        style={[styles.crystalBtn, (bought || state.coins < Pw.CRYSTAL_PRICE) && { opacity: 0.5 }]}
+        accessibilityRole="button"
+        accessibilityLabel={bought ? 'Bought today, back tomorrow' : `Buy a Training Crystal for ${Pw.CRYSTAL_PRICE} coins`}
+      >
+        <Text style={styles.crystalBtnText}>{bought ? 'Tomorrow' : `🪙 ${Pw.CRYSTAL_PRICE}`}</Text>
+      </Pressable>
+    </View>
+  );
+}
 
 export function ShopSheet({ onClose, onWardrobe }: { onClose: () => void; onWardrobe: () => void }) {
   const { state, apply } = useGame();
@@ -123,6 +155,10 @@ export function ShopSheet({ onClose, onWardrobe }: { onClose: () => void; onWard
               </View>
             );
           })}
+          <View style={{ gap: 6 }}>
+            <Text style={styles.section}>💎 Training Crystal</Text>
+            <CrystalOffer />
+          </View>
           <View style={{ gap: 6 }}>
             <Text style={styles.section}>🥚 Incubators</Text>
             <IncubatorOffer />
@@ -211,6 +247,11 @@ export function WardrobeSheet({ onClose, onShop }: { onClose: () => void; onShop
 }
 
 const styles = StyleSheet.create({
+  crystal: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: '#E9F4FF', borderRadius: 16, padding: 12 },
+  crystalTitle: { fontSize: 15, fontWeight: '900', color: colors.ink },
+  crystalBody: { fontSize: 12, fontWeight: '700', color: '#3D5A73' },
+  crystalBtn: { height: 40, minWidth: 78, borderRadius: 12, backgroundColor: '#4A8FE0', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 10 },
+  crystalBtnText: { color: '#FFFFFF', fontSize: 14, fontWeight: '900' },
   backdrop: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(24,30,48,0.6)', justifyContent: 'center', alignItems: 'center', padding: space.md, zIndex: 80 },
   sheet: { backgroundColor: '#FFFFFF', borderRadius: 22, padding: space.lg, gap: space.sm, width: '100%', maxWidth: 460, maxHeight: '96%' },
   head: { flexDirection: 'row', alignItems: 'center', gap: space.sm },

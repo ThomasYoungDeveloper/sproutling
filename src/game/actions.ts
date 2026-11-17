@@ -1,4 +1,5 @@
 import type { ChestKind, DayLog, Egg, Element, GameState, Meal, OwnedPet, Rarity } from './types';
+import { addCrystals, chestCrystals } from './powerups';
 import { dateKey } from './dates';
 import { emptyDay, scoreDay, dailyQuests, streakFrom, COINS_PER_XP } from './scoring';
 import { boostedTotal } from './care';
@@ -57,6 +58,7 @@ export function updateToday(s: GameState, change: (d: DayLog) => DayLog): GameSt
   const silverKey = `silver-${key}`;
   if (st > 0 && st % 7 === 0 && !next.questChestDays[silverKey] && scoreDay(after).total >= 50) {
     next = grantChest(next, 'silver', `${st}-day streak`);
+    next = addCrystals(next, 1); // Every 7-day streak also gives a Training Crystal.
     next.questChestDays = { ...next.questChestDays, [silverKey]: true };
     // Every 7 days of streak also earns a streak shield (you can hold 2).
     if (next.shieldEarnedOn !== key) next = { ...next, shields: Math.min(MAX_SHIELDS, (next.shields ?? 0) + 1), shieldEarnedOn: key };
@@ -159,8 +161,10 @@ export function openChestById(s: GameState, chestId: string, rng: Rng = defaultR
   if (result.item) next = { ...next, items: { ...next.items, [result.item]: (next.items[result.item] ?? 0) + 1 } };
   const cosmetic = rollChestCosmetic(next, chest.kind, rng);
   if (cosmetic) next = grantCosmetic(next, cosmetic);
+  const crystals = chestCrystals(chest.kind, rng);
+  next = addCrystals(next, crystals);
   next = bump(next, 'chests');
-  return { state: next, result: { ...result, cosmetic } };
+  return { state: next, result: { ...result, cosmetic, crystals } };
 }
 
 export const incubatingCount = (s: GameState) => s.eggs.filter((e) => e.incubating).length;

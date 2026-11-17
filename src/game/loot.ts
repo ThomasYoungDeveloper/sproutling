@@ -52,6 +52,8 @@ export interface ChestResult {
   item: string | null;
   /** A dress-up item, if the chest held one (added when opened). */
   cosmetic?: string | null;
+  /** Training Crystals in the chest (Gold always, Silver sometimes). */
+  crystals?: number;
 }
 
 export function openChest(kind: ChestKind, rng: Rng = defaultRng): ChestResult {

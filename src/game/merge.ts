@@ -68,6 +68,7 @@ export function mergeSaves(base: GameState | null, mine: GameState, theirs: Game
     events: mergeEvents(theirs.events, mine.events),
     shields: Math.min(2, counter(base.shields, mine.shields, theirs.shields)),
     shieldEarnedOn: maxStr(mine.shieldEarnedOn, theirs.shieldEarnedOn),
+    crystalShopDay: maxStr(mine.crystalShopDay, theirs.crystalShopDay),
     login: (mine.login?.count ?? 0) >= (theirs.login?.count ?? 0) ? mine.login : theirs.login,
     walkFinds: newerWalkFinds(mine.walkFinds, theirs.walkFinds),
     battle: newerBattle(mine.battle, theirs.battle),

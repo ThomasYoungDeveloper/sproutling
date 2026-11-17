@@ -15,6 +15,7 @@ import type { OwnedPet } from '../game/types';
 import { sharePetCard } from '../lib/shareCapture';
 import { ShareCardView } from './ShareCardView';
 import PetZoom from './PetZoom';
+import PowerUps from './PowerUps';
 import { useAuth } from '../state/AuthContext';
 import { useFriends } from '../state/FriendsContext';
 
@@ -84,7 +85,7 @@ export default function PetSheet({ petId, onClose }: { petId: string; onClose: (
               <Text style={[styles.gradeBig, { color: gi.color }]}>{grade >= 100 ? '💯 100%' : `${grade}%`}</Text>
             </View>
             <Text style={[font.small, { fontWeight: '800' }]}>
-              {St.gradeStars(grade)} {gi.label}. {grade >= 100 ? 'A perfect pet: the best of the best!' : 'Every pet is born with hidden quality from 0 to 15 in each stat. A perfect 15 makes that stat up to 10% stronger.'}
+              {St.gradeStars(grade)} {gi.label}. {grade >= 100 ? 'A perfect pet: the best of the best!' : 'Every pet is born with hidden quality from 0 to 15 in each stat. A perfect 15 makes that stat up to 10% stronger. Raise it with Training Crystals or by combining a spare.'}
             </Text>
             <View style={styles.ivGrid}>
               {St.STATS.map((k) => (
@@ -97,6 +98,7 @@ export default function PetSheet({ petId, onClose }: { petId: string; onClose: (
                 </View>
               ))}
             </View>
+            <PowerUps pet={pet} />
           </View>
 
           <View style={styles.section}>

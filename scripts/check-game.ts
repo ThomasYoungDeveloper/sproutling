@@ -17,6 +17,7 @@ import * as St from '../src/game/stats';
 import { levelFor, levelProgress, stageFor, scoreDay } from '../src/game/scoring';
 import type { ChestKind, GameState } from '../src/game/types';
 import { mergeSaves } from '../src/game/merge';
+import * as Pw from '../src/game/powerups';
 
 let fails = 0;
 const ok = (c: boolean, m: string) => { console.log((c ? 'PASS ' : 'FAIL ') + m); if (!c) fails++; };
@@ -428,6 +429,29 @@ ok(A.applyShields(shielded.state).used === 0, 'shields are not used twice');
   ok(lucky.hp === 15 && lucky.spd === 15 && lucky.atk === 14, 'a Lucky egg adds to every stat, capped at 15');
   const r = St.likelyGrade(strong, weak);
   ok(r.low >= 60 && r.high <= 100 && r.low < r.high, `likely grade range looks sensible (${r.low}-${r.high}%)`);
+}
+
+// Power-ups: Training Crystals and combining duplicates
+{
+  const pet = (id: string, ivs: any) => ({ id, speciesId: 'p01', nickname: id, xp: 900, shiny: false, hatchedOn: '', ivs }) as any;
+  let g = { ...newGame(), coins: 1000, pets: [pet('a', { hp: 9, atk: 12, def: 8, spd: 12 }), pet('b', { hp: 11, atk: 6, def: 10, spd: 6 }), pet('c', { hp: 15, atk: 15, def: 15, spd: 15 })], activePetId: 'a' } as GameState;
+  ok(!Pw.canUseCrystal(g, 'a', 'def').ok, 'no crystal, no power-up');
+  g = Pw.buyCrystal(g, '2026-11-17');
+  ok(Pw.crystalsOf(g) === 1 && g.coins === 1000 - Pw.CRYSTAL_PRICE, 'the shop sells a crystal');
+  ok(Pw.buyCrystal(g, '2026-11-17') === g, 'only one crystal a day from the shop');
+  g = Pw.useCrystal(g, 'a', 'def');
+  ok(St.ivsOf(g.pets[0]).def === 9 && Pw.crystalsOf(g) === 0, 'a crystal adds +1 to the chosen stat');
+  ok(!Pw.canUseCrystal(Pw.addCrystals(g, 1), 'c', 'hp').ok, 'a maxed stat cannot go higher');
+  const prev = Pw.combinePreview(g.pets[0], g.pets[1]);
+  ok(prev.after.hp === 11 && prev.after.atk === 12 && prev.bonus === 'def' && prev.after.def === 11, 'combining keeps the higher of each stat, bonus on the lowest');
+  const total = (o: Record<string, number>) => Object.values(o).reduce((x, y) => x + y, 0);
+  ok(total(prev.after) === 11 + 12 + 10 + 12 + 1, 'combining adds a +1 bonus');
+  ok(!Pw.canCombine(g, 'b', 'a').ok, 'your active pet can’t be used up as a spare');
+  const g2 = Pw.combinePets(g, 'a', 'b');
+  ok(g2.pets.length === 2 && !g2.pets.some((p) => p.id === 'b') && St.gradeOf(g2.pets[0]) > St.gradeOf(g.pets[0]), 'combining removes the spare and raises the grade');
+  const gg = A.grantChest(newGame(), 'gold', 'test');
+  const og = A.openChestById(gg, gg.chests[0].id)!;
+  ok(Pw.crystalsOf(og.state) >= 1 && (og.result.crystals ?? 0) >= 1, 'gold chests always hold a Training Crystal');
 }
 
 // Merging the phone and web saves

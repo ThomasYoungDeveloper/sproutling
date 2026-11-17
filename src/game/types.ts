@@ -131,6 +131,8 @@ export interface GameState {
   appliedTrades?: Record<string, true>;
   /** Walking finds today: how many 1,000-step marks were rolled and how many finds came up. */
   walkFinds?: { day: string; checked: number; found: number };
+  /** The day a Training Crystal was last bought in the shop (one a day). */
+  crystalShopDay?: string;
   /** The first-time walkthrough has been seen. */
   tutorialDone?: boolean;
   /** Battle record and today's rewarded battles. */
