@@ -48,7 +48,8 @@ const toCardPet = (p: { id: string; speciesId: string; nickname: string; xp: num
   ...(p.look?.aura ? { aura: p.look.aura } : {}),
 });
 
-export const TEAM_SIZE = 6;
+/** Friends see all your pets (up to 30), strongest first; battles use the first 3. */
+export const TEAM_SIZE = 30;
 
 export function buildCard(s: GameState): PublicCard {
   const active = A.activePet(s);
