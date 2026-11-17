@@ -7,7 +7,7 @@ import * as A from '../game/actions';
 /**
  * On the phone app, pulls today's steps and last night's sleep from Apple Health
  * when the app opens and every time it comes back to the foreground.
- * Steps only ever go up (so eggs keep warming); sleep is replaced with the verified number.
+ * Steps only ever go up, and steps walked since the last sync always warm incubating eggs; sleep is replaced with the verified number.
  */
 export function useHealthSync() {
   const { state, apply, loaded } = useGame();
@@ -34,7 +34,7 @@ export function useHealthSync() {
           if (A.todayKey(s) !== today) return s;
           const d = A.today(s);
           let next = s;
-          if (day.steps > d.steps) next = A.addSteps(next, day.steps - d.steps);
+          if (day.steps > 0 && day.steps !== d.healthSteps) next = A.syncHealthSteps(next, day.steps);
           if (day.sleepHours > 0 && day.sleepHours !== d.sleepHours) next = A.setSleep(next, day.sleepHours);
           if (day.rings || day.exerciseMin !== undefined || day.mindfulMin !== undefined || day.water !== undefined) {
             next = A.setHealthExtras(next, { rings: day.rings, exerciseMin: day.exerciseMin, mindfulMin: day.mindfulMin, water: day.water });

@@ -89,6 +89,23 @@ export function applyShields(s: GameState): { state: GameState; used: number; sa
 }
 
 /** Apple Health extras for today: activity rings, exercise and mindful minutes. Water only ever goes up. */
+/**
+ * Today's steps from Apple Health. The day's step count only goes up, and every step walked
+ * since the last sync warms the eggs in incubators, even when steps typed in by hand earlier
+ * already put the day's count above Health's.
+ */
+export function syncHealthSteps(s: GameState, total: number): GameState {
+  const d = today(s);
+  const base = d.healthSteps ?? Math.min(d.steps, total);
+  const walked = Math.max(0, total - base);
+  const raise = Math.max(0, total - d.steps);
+  let next = raise > 0 ? addSteps(s, raise) : s;
+  const extra = walked - raise;
+  if (extra > 0) next = { ...next, eggs: next.eggs.map((e) => (e.incubating ? { ...e, stepsWalked: e.stepsWalked + extra } : e)) };
+  const key = todayKey(next);
+  return { ...next, days: { ...next.days, [key]: { ...next.days[key], healthSteps: total } } };
+}
+
 export const setHealthExtras = (s: GameState, x: { rings?: { move: number; exercise: number; stand: number }; exerciseMin?: number; mindfulMin?: number; water?: number }) =>
   updateToday(s, (d) => ({
     ...d,

@@ -398,4 +398,19 @@ ok(A.applyShields(shielded.state).used === 0, 'shields are not used twice');
   ok(!I.buyIncubator(r3.state).ok && I.nextIncubatorPrice(r3.state) === null, 'no more than 4 incubators');
   ok(!I.buyIncubator({ ...newGame(), coins: 100 }).ok, 'cannot buy without enough coins');
 }
+// Apple Health steps warm eggs even after steps were typed in
+{
+  let g = { ...newGame(), eggs: [{ id: 'e', rarity: 'common', stepsWalked: 0, incubating: true, foundOn: '' }] } as any;
+  g = A.addSteps(g, 6000); // typed in by hand
+  const e0 = g.eggs[0].stepsWalked;
+  g = A.syncHealthSteps(g, 3500); // Health is lower: nothing new walked yet
+  ok(A.today(g).steps === 6000 && g.eggs[0].stepsWalked === e0, 'a lower Health count never lowers the day or warms eggs');
+  g = A.syncHealthSteps(g, 4200); // walked 700 more
+  ok(g.eggs[0].stepsWalked === e0 + 700 && A.today(g).steps === 6000, 'steps walked after that still warm the egg');
+  g = A.syncHealthSteps(g, 7000); // passes the typed count
+  ok(A.today(g).steps === 7000 && g.eggs[0].stepsWalked === e0 + 3500, 'passing the typed count raises the day too, no double counting');
+  let h = { ...newGame(), eggs: [{ id: 'e', rarity: 'common', stepsWalked: 0, incubating: true, foundOn: '' }] } as any;
+  h = A.syncHealthSteps(h, 2500);
+  ok(h.eggs[0].stepsWalked === 2500 && A.today(h).steps === 2500, 'first Health sync of the day counts all of it');
+}
 console.log(fails ? `${fails} FAILED` : 'ALL PASSED'); process.exit(fails ? 1 : 0);

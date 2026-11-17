@@ -29,6 +29,8 @@ export interface DayLog {
   care?: DayCare;
   /** Apple Watch / iPhone activity rings as a fraction of each goal (1 = closed). Only from Apple Health. */
   rings?: { move: number; exercise: number; stand: number };
+  /** Apple Health's step count at the last sync today, so eggs warm from real walking even if steps were also typed in. */
+  healthSteps?: number;
   /** Exercise minutes (any kind of workout counts). Only from Apple Health. */
   exerciseMin?: number;
   /** Mindful minutes (meditation, breathing). Only from Apple Health. */
