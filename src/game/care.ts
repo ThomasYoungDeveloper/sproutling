@@ -6,6 +6,7 @@ import * as A from './actions';
 import { progress } from './expedition';
 import { claimable } from './achievements';
 import { pointsLeft } from './stats';
+import { PELLETS, allFull, feedPet, funAfterPlay, needsFor } from './food';
 
 /** Each care task adds +10% to today's XP. Pets are never punished for being left alone. */
 export const CARE_BONUS = 0.1;
@@ -50,13 +51,13 @@ export const MOOD_INFO: Record<Mood, { label: string; emoji: string; color: stri
 };
 
 /** How the active pet feels right now, from your habits and its care. */
-export function moodFor(d: DayLog): Mood {
-  const c = d.care ?? {};
+export function moodFor(d: DayLog, now = Date.now()): Mood {
+  const n = needsFor(d, now);
   if (d.sleepHours > 0 && d.sleepHours < 6) return 'sleepy';
-  if (!c.fed) return 'hungry';
+  if (n.food < 35) return 'hungry';
   if (d.water < 3) return 'thirsty';
-  if ((c.played ?? 0) < PLAYS_NEEDED) return 'bored';
-  if (careMultiplier(d) >= 1 + 3 * CARE_BONUS - 1e-9 && scoreDay(d).total >= 100) return 'joy';
+  if (n.fun < 35) return 'bored';
+  if (allFull(n) || (careMultiplier(d) >= 1 + 3 * CARE_BONUS - 1e-9 && scoreDay(d).total >= 100)) return 'joy';
   return 'happy';
 }
 
@@ -73,11 +74,13 @@ export function moodLine(mood: Mood, name: string): string {
 
 /* ---------- Care actions ---------- */
 
-export const feed = (s: GameState) => A.updateToday(s, (d) => ({ ...d, care: { ...d.care, fed: true } }));
+/** Feeds the active pet (Pellets unless a food is picked). */
+export const feed = (s: GameState, foodId: string = PELLETS.id, now = Date.now()) =>
+  s.activePetId ? feedPet(s, s.activePetId, foodId, A.updateToday, A.today(s), now) : s;
 /** Playing with a toy counts as play and toward the toy-lover badge. */
 export const playToy = (s: GameState) => A.bump(play(s), 'toys');
 
-export const play = (s: GameState) => A.updateToday(s, (d) => ({ ...d, care: { ...d.care, played: (d.care?.played ?? 0) + 1 } }));
+export const play = (s: GameState, now = Date.now()) => A.updateToday(s, (d) => ({ ...d, care: { ...d.care, played: (d.care?.played ?? 0) + 1, ...funAfterPlay(d, now) } }));
 
 export const trinketCount = (s: GameState) => Object.values(s.items).reduce((a, n) => a + n, 0);
 

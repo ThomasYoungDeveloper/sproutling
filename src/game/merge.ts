@@ -27,6 +27,12 @@ export function mergeSaves(base: GameState | null, mine: GameState, theirs: Game
     if (v > 0) items[k] = v;
   }
 
+  const foods: Record<string, number> = {};
+  for (const k of new Set([...Object.keys(base.foods ?? {}), ...Object.keys(mine.foods ?? {}), ...Object.keys(theirs.foods ?? {})])) {
+    const v = counter(base.foods?.[k], mine.foods?.[k], theirs.foods?.[k]);
+    if (v > 0) foods[k] = v;
+  }
+
   const stats: NonNullable<GameState['stats']> = {};
   for (const k of ['hatched', 'chests', 'expeditions', 'toys', 'bred'] as const) {
     const v = counter(base.stats?.[k], mine.stats?.[k], theirs.stats?.[k]);
@@ -53,6 +59,7 @@ export function mergeSaves(base: GameState | null, mine: GameState, theirs: Game
     ...theirs,
     coins: counter(base.coins, mine.coins, theirs.coins),
     items,
+    foods,
     stats,
     pets,
     eggs,
@@ -126,10 +133,17 @@ function mergeDay(m: DayLog, t: DayLog): DayLog {
   if (mi !== undefined) out.mindfulMin = mi;
   if (m.shielded || t.shielded) out.shielded = true;
   if (m.care || t.care) {
+    const later = (m.care?.foodAt ?? 0) >= (t.care?.foodAt ?? 0) ? m.care : t.care;
+    const laterFun = (m.care?.funAt ?? 0) >= (t.care?.funAt ?? 0) ? m.care : t.care;
     out.care = {
       fed: !!(m.care?.fed || t.care?.fed) || undefined,
       treat: !!(m.care?.treat || t.care?.treat) || undefined,
       played: max(m.care?.played, t.care?.played),
+      food: later?.food,
+      foodAt: later?.foodAt,
+      fun: laterFun?.fun,
+      funAt: laterFun?.funAt,
+      boosts: max(m.care?.boosts, t.care?.boosts),
     };
     for (const k of Object.keys(out.care) as (keyof typeof out.care)[]) if (out.care[k] === undefined) delete out.care[k];
   }
@@ -156,7 +170,7 @@ function newerWalkFinds(m: GameState['walkFinds'], t: GameState['walkFinds']) {
   if (!m) return t;
   if (!t) return m;
   if (m.day !== t.day) return m.day > t.day ? m : t;
-  return { day: m.day, checked: Math.max(m.checked, t.checked), found: Math.max(m.found, t.found) };
+  return { day: m.day, checked: Math.max(m.checked, t.checked), found: Math.max(m.found, t.found), foraged: Math.max(m.foraged ?? 0, t.foraged ?? 0) };
 }
 
 function newerBattle(m: GameState['battle'], t: GameState['battle']) {

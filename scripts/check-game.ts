@@ -378,15 +378,16 @@ ok(A.applyShields(shielded.state).used === 0, 'shields are not used twice');
   const eggRoll = () => () => 0.01;
   const walked = A.addSteps(base, 5400);
   const r1 = W.rollWalkFinds(walked, false, hit);
-  ok(r1.finds.length === W.MAX_FINDS_PER_DAY && r1.finds.every((f: any) => f.kind === 'chest'), 'finds are capped at 3 a day');
+  const nf = (fs: any[]) => fs.filter((f: any) => f.kind !== 'food');
+  ok(nf(r1.finds).length === W.MAX_FINDS_PER_DAY && nf(r1.finds).every((f: any) => f.kind === 'chest'), 'finds are capped at 3 a day');
   ok(r1.state.chests.length === walked.chests.length + 3, 'found chests land in your chest list');
   ok(W.rollWalkFinds(r1.state, false, hit).finds.length === 0, 'the same steps never roll twice');
-  ok(W.rollWalkFinds(walked, false, eggRoll).finds.every((f: any) => f.kind === 'chest'), 'typed-in steps never find eggs');
-  ok(W.rollWalkFinds(walked, true, eggRoll).finds.every((f: any) => f.kind === 'egg'), 'Apple Health steps can find eggs');
+  ok(nf(W.rollWalkFinds(walked, false, eggRoll).finds).every((f: any) => f.kind === 'chest'), 'typed-in steps never find eggs');
+  ok(nf(W.rollWalkFinds(walked, true, eggRoll).finds).every((f: any) => f.kind === 'egg'), 'Apple Health steps can find eggs');
   ok(W.rollWalkFinds(A.addSteps(base, 900), false, hit).finds.length === 0, 'nothing before the first 1,000 steps');
   const a = W.rollWalkFinds(walked, true), b = W.rollWalkFinds(walked, true);
   ok(JSON.stringify(a.finds) === JSON.stringify(b.finds), 'each 1,000-step mark has one fixed roll');
-  let found = 0; for (let d = 0; d < 400; d++) { let g = A.addSteps({ ...base, pets: [{ ...base.pets[0], id: 'x' + d }] }, 10000); found += W.rollWalkFinds(g, true).finds.length; }
+  let found = 0; for (let d = 0; d < 400; d++) { let g = A.addSteps({ ...base, pets: [{ ...base.pets[0], id: 'x' + d }] }, 10000); found += nf(W.rollWalkFinds(g, true).finds).length; }
   ok(found / 400 > 1 && found / 400 < 3, `about 1.5–2 finds on a 10k-step day (got ${(found / 400).toFixed(2)})`);
 }
 // Incubators
@@ -452,6 +453,35 @@ ok(A.applyShields(shielded.state).used === 0, 'shields are not used twice');
   const gg = A.grantChest(newGame(), 'gold', 'test');
   const og = A.openChestById(gg, gg.chests[0].id)!;
   ok(Pw.crystalsOf(og.state) >= 1 && (og.result.crystals ?? 0) >= 1, 'gold chests always hold a Training Crystal');
+}
+
+// Food, needs and feeding
+{
+  const F = require('../src/game/food');
+  const C = require('../src/game/care');
+  const W = require('../src/game/walkFinds');
+  const pet = { id: 'fp', speciesId: 'p01', nickname: 'Fp', xp: 900, shiny: false, hatchedOn: '' } as any;
+  let g = { ...newGame(), pets: [pet], activePetId: 'fp', coins: 1000 } as GameState;
+  const t0 = Date.parse('2026-11-17T09:00:00Z');
+  g = C.feed(g, 'pellets', t0);
+  ok(!!A.today(g).care?.fed && F.needsFor(A.today(g), t0).food >= 60 && !g.pets[0].foodBoost, 'Pellets fill the food bar with no stat bonus');
+  ok(F.needsFor(A.today(g), t0 + 5 * 3600000).food < F.needsFor(A.today(g), t0).food, 'the food bar drifts down over the day');
+  ok(F.needsFor(A.today(g), t0 + 48 * 3600000).food === F.NEED_FLOOR, 'bars never go below the floor');
+  g = F.buyFood(g, 'sushi');
+  ok(F.foodCount(g, 'sushi') === 1 && g.coins === 1000 - F.FOOD_BY_ID.sushi.price, 'the shop sells food');
+  const before = St.statsFor(g.pets[0]).atk;
+  g = C.feed(g, 'sushi', t0);
+  ok(St.statsFor(g.pets[0]).atk === before + 5 && F.foodCount(g, 'sushi') === 0, 'an epic food adds +5 to its stat');
+  g = F.addFood(g, 'berries', 5);
+  g = C.feed(g, 'berries', t0); g = C.feed(g, 'berries', t0);
+  ok(g.pets[0].foodBoost?.hp === 8 && A.today(g).care?.boosts === 3, 'common HP food adds +4 HP each');
+  ok(!F.canFeed(g, A.today(g), 'fp', 'berries').ok && F.canFeed(g, A.today(g), 'fp', 'pellets').ok, 'three boosting foods a day; Pellets always work');
+  ok(F.boostFor({ ...pet, foodBoost: { atk: 29 } }, F.FOOD_BY_ID.sushi) === 1, 'food boosts stop at the cap');
+  let foodFinds = 0;
+  for (let d = 0; d < 300; d++) { const w = A.addSteps({ ...g, pets: [{ ...pet, id: 'f' + d }], walkFinds: undefined }, 10000); foodFinds += W.rollWalkFinds(w, false).finds.filter((f: any) => f.kind === 'food').length; }
+  ok(foodFinds / 300 > 2 && foodFinds / 300 <= W.MAX_FORAGE_PER_DAY, `walks turn up food (about ${(foodFinds / 300).toFixed(1)} a 10k-step day)`);
+  const played = C.play(C.play(C.play(g, t0), t0), t0);
+  ok(F.needsFor(A.today(played), t0).fun >= 80, 'playing fills the fun bar');
 }
 
 // Merging the phone and web saves

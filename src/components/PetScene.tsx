@@ -16,6 +16,9 @@ import * as C from '../game/care';
 import type { Element } from '../game/types';
 import { SCENES } from './Cosmetics';
 import PowerGlow from './PowerGlow';
+import FeedSheet, { NeedsMini, NeedsSheet } from './FeedSheet';
+import { useOverlay } from './Overlay';
+import * as F from '../game/food';
 import { habitBuffs } from '../game/battle';
 import { COSMETIC_BY_ID, ownedToys, type Cosmetic } from '../game/cosmetics';
 
@@ -442,6 +445,8 @@ export default function PetScene({ onTrinketsEmpty, onDressUp, onShop, onAccount
   const mood = C.moodFor(d);
   const mi = C.MOOD_INFO[mood];
   const tasks = C.careTasks(d);
+  const needs = F.needsFor(d);
+  const overlay = useOverlay();
   const trinkets = C.trinketCount(state);
   const [sky, setSky] = useState(skyNow);
   useEffect(() => {
@@ -618,18 +623,48 @@ export default function PetScene({ onTrinketsEmpty, onDressUp, onShop, onAccount
       say(mood === 'sleepy' || night ? 'Zzz… so cozy.' : 'My comfy bed!');
     });
   };
-  const goBowl = (fromButton = false) => {
+  /** Walk to the bowl and eat the chosen food. */
+  const eat = (foodId: string) => {
     lastAct.current = Date.now() + 4000;
     walkTo(bowl.x - 20 - width / 2, bowl.y + 40, () => {
-      if (tasks[0].done) return say(fromButton ? 'Already full, thanks!' : 'I’m full!');
+      const f = F.FOOD_BY_ID[foodId];
       buzz('success', 'munch');
       munch();
-      setBurstSet(['😋', '✨', '💛']);
+      setBurstSet(f ? [f.emoji, '✨', '💪'] : ['😋', '✨', '💛']);
       setBurst((b) => b + 1);
-      say('Yum, dinner time!');
-      apply(C.feed);
+      const gain = f ? F.boostFor(pet, f) : 0;
+      say(f ? (gain > 0 ? `Yum! +${gain} ${F.statLabel(f.stat)}!` : `Yum, ${f.name}!`) : 'Crunchy pellets, thanks!');
+      apply((s) => C.feed(s, foodId));
     });
   };
+  /** Feed opens the food picker. */
+  const goBowl = (_fromButton = false) => {
+    overlay.open(
+      <FeedSheet
+        onClose={overlay.close}
+        onFeed={(id) => {
+          overlay.close();
+          eat(id);
+        }}
+      />,
+    );
+  };
+  const openNeeds = () =>
+    overlay.open(
+      <NeedsSheet
+        name={pet.nickname}
+        needs={needs}
+        onClose={overlay.close}
+        onFeed={() => {
+          overlay.close();
+          goBowl(true);
+        }}
+        onPlay={() => {
+          overlay.close();
+          goBall();
+        }}
+      />,
+    );
   const goBall = () => {
     lastAct.current = Date.now() + 4000;
     walkTo(ball.x + 60 - width / 2, ball.y + 40, () => {
@@ -764,6 +799,9 @@ export default function PetScene({ onTrinketsEmpty, onDressUp, onShop, onAccount
           <Text style={styles.sub} numberOfLines={1}>
             {RARITY_INFO[sp.rarity].label}{pet.shiny ? ' ✦' : ''} · {gradeOf(pet)}% · <Text style={{ color: mi.color }}>{mi.emoji} {mi.label}</Text>
           </Text>
+          <Pressable onPress={openNeeds} hitSlop={6} accessibilityRole="button" accessibilityLabel={`How ${pet.nickname} feels: food ${needs.food}%, fun ${needs.fun}%, water ${needs.water}%, energy ${needs.energy}%`}>
+            <NeedsMini needs={needs} />
+          </Pressable>
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
           <View style={styles.stat} accessibilityLabel={`${streak}-day streak${state.shields ? `, ${state.shields} shields` : ''}`}>

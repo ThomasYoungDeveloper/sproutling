@@ -143,7 +143,7 @@ export interface StatBlock {
 }
 
 /** Final battle stats for a pet. */
-export function statsFor(p: { speciesId: string; xp: number; train?: Training; personality?: Personality; id?: string; nickname?: string; ivs?: Ivs }): StatBlock {
+export function statsFor(p: { speciesId: string; xp: number; train?: Training; foodBoost?: Training; personality?: Personality; id?: string; nickname?: string; ivs?: Ivs }): StatBlock {
   const sp = SPECIES_BY_ID[p.speciesId];
   const tier = RARITY_TIER[sp.rarity];
   const lv = levelFor(p.xp);
@@ -163,6 +163,9 @@ export function statsFor(p: { speciesId: string; xp: number; train?: Training; p
   // Grade: a perfect stat is up to 10% stronger.
   const iv = ivsOf(p);
   for (const k of ['hp', 'atk', 'def', 'spd'] as Stat[]) raw[k] *= 1 + iv[k] / 150;
+  // Food boosts: small, capped, added straight onto the final stat.
+  // (Capped here too, so a friend's card can't carry more than food could ever give: see game/food.ts.)
+  for (const k of ['hp', 'atk', 'def', 'spd'] as Stat[]) raw[k] += Math.max(0, Math.min(k === 'hp' ? 120 : 30, Number(p.foodBoost?.[k]) || 0));
   return { hp: Math.round(raw.hp), atk: Math.round(raw.atk), def: Math.round(raw.def), spd: Math.round(raw.spd) };
 }
 

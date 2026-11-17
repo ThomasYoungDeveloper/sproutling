@@ -15,6 +15,7 @@ export interface CardPet {
   personality?: Personality;
   ivs?: Ivs;
   train?: Training;
+  foodBoost?: Training;
   moves?: string[];
 }
 
@@ -32,7 +33,7 @@ export interface PublicCard {
   badges?: number;
 }
 
-const toCardPet = (p: { id: string; speciesId: string; nickname: string; xp: number; shiny: boolean; skin?: Skin; look?: { hat?: string; aura?: string }; personality?: Personality; train?: Training; moves?: string[]; ivs?: Ivs }): CardPet => ({
+const toCardPet = (p: { id: string; speciesId: string; nickname: string; xp: number; shiny: boolean; skin?: Skin; look?: { hat?: string; aura?: string }; personality?: Personality; train?: Training; foodBoost?: Training; moves?: string[]; ivs?: Ivs }): CardPet => ({
   speciesId: p.speciesId,
   nickname: p.nickname.slice(0, 24),
   xp: p.xp,
@@ -41,6 +42,7 @@ const toCardPet = (p: { id: string; speciesId: string; nickname: string; xp: num
   personality: personalityOf(p),
   ivs: ivsOf(p),
   ...(p.train ? { train: p.train } : {}),
+  ...(p.foodBoost ? { foodBoost: p.foodBoost } : {}),
   moves: equippedMoves(p).map((m) => m.id),
   ...(p.look?.hat ? { hat: p.look.hat } : {}),
   ...(p.look?.aura ? { aura: p.look.aura } : {}),

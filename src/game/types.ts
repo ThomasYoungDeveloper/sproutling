@@ -43,6 +43,14 @@ export interface DayCare {
   played?: number;
   /** A trinket from your bag was given as a treat. */
   treat?: boolean;
+  /** Food bar level (0–100) at the time of the last feeding; it drifts down from there. */
+  food?: number;
+  foodAt?: number;
+  /** Fun bar level at the last play. */
+  fun?: number;
+  funAt?: number;
+  /** Stat-boosting foods eaten today (Pellets don't count). */
+  boosts?: number;
 }
 
 export interface OwnedPet {
@@ -58,6 +66,8 @@ export interface OwnedPet {
   personality?: import('./stats').Personality;
   /** Stat points spent through training. */
   train?: import('./stats').Training;
+  /** Battle stat points gained from food (capped per stat). */
+  foodBoost?: import('./stats').Training;
   /** Hidden quality values (0–15 each) that make up the pet's grade. */
   ivs?: import('./stats').Ivs;
   /** The moves this pet brings to battle (up to 4). */
@@ -130,7 +140,9 @@ export interface GameState {
   /** Completed trades already swapped into this save. */
   appliedTrades?: Record<string, true>;
   /** Walking finds today: how many 1,000-step marks were rolled and how many finds came up. */
-  walkFinds?: { day: string; checked: number; found: number };
+  walkFinds?: { day: string; checked: number; found: number; foraged?: number };
+  /** Food in the pantry, by food id (see game/food.ts). */
+  foods?: Record<string, number>;
   /** The day a Training Crystal was last bought in the shop (one a day). */
   crystalShopDay?: string;
   /** The first-time walkthrough has been seen. */
