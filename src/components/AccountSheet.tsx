@@ -1,6 +1,6 @@
 import * as A from '../game/actions';
 import React, { useEffect, useState } from 'react';
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Linking, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useAuth } from '../state/AuthContext';
 import { useGame } from '../state/GameContext';
 import { Button } from './ui';
@@ -99,7 +99,10 @@ function PremiumRow() {
 }
 
 export default function AccountSheet({ onClose }: { onClose: () => void }) {
-  const { user, username, signOut, saveUsername } = useAuth();
+  const { user, username, signOut, saveUsername, deleteAccount } = useAuth();
+  const [askDelete, setAskDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteErr, setDeleteErr] = useState<string | null>(null);
   const { sync, apply, reset } = useGame();
   const [confirmReset, setConfirmReset] = useState(false);
   const [name, setName] = useState(username ?? '');
@@ -112,6 +115,7 @@ export default function AccountSheet({ onClose }: { onClose: () => void }) {
     <View style={styles.backdrop}>
       <Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessibilityLabel="Close" />
       <View style={styles.sheet}>
+        <ScrollView contentContainerStyle={{ gap: space.sm }} showsVerticalScrollIndicator={false}>
         {user ? (
           <>
             <Text style={font.h2}>Your account</Text>
@@ -164,8 +168,41 @@ export default function AccountSheet({ onClose }: { onClose: () => void }) {
               <Button label="Sign out" onPress={signOut} />
               <Button primary label="Done" onPress={onClose} style={{ flex: 1 }} />
             </View>
+            <View style={styles.footer}>
+              <Pressable onPress={() => Linking.openURL('https://sproutling.vercel.app/privacy')} hitSlop={8} accessibilityRole="link">
+                <Text style={styles.link}>Privacy policy</Text>
+              </Pressable>
+              <Pressable onPress={() => { setAskDelete(true); setDeleteErr(null); }} hitSlop={8} accessibilityRole="button">
+                <Text style={[styles.link, { color: '#C4562F' }]}>Delete account</Text>
+              </Pressable>
+            </View>
+            {askDelete ? (
+              <View style={styles.danger}>
+                <Text style={[font.body, { fontWeight: '900', color: '#A23B1B' }]}>Delete your account for good?</Text>
+                <Text style={font.small}>This removes your login, your pets and saved game, friends, trades and guild spot on every device. It can’t be undone.</Text>
+                {deleteErr ? <Text style={styles.msg}>{deleteErr}</Text> : null}
+                <View style={styles.row}>
+                  <Button label="Keep it" onPress={() => setAskDelete(false)} />
+                  <Pressable
+                    disabled={deleting}
+                    style={[styles.deleteBtn, deleting && { opacity: 0.6 }]}
+                    accessibilityRole="button"
+                    onPress={async () => {
+                      setDeleting(true);
+                      const r = await deleteAccount();
+                      setDeleting(false);
+                      if (r.error) setDeleteErr(r.error);
+                      else onClose();
+                    }}
+                  >
+                    <Text style={styles.deleteText}>{deleting ? 'Deleting…' : 'Delete forever'}</Text>
+                  </Pressable>
+                </View>
+              </View>
+            ) : null}
           </>
         ) : null}
+        </ScrollView>
       </View>
     </View>
   );
@@ -178,7 +215,12 @@ const styles = StyleSheet.create({
   switchOn: { backgroundColor: colors.mint },
   knob: { width: 20, height: 20, borderRadius: 10, backgroundColor: '#FFFFFF' },
   backdrop: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(24,30,48,0.55)', justifyContent: 'center', alignItems: 'center', padding: space.lg, zIndex: 50 },
-  sheet: { backgroundColor: '#FFFFFF', borderRadius: 22, padding: space.lg, gap: space.sm, width: '100%', maxWidth: 420 },
+  sheet: { backgroundColor: '#FFFFFF', borderRadius: 22, padding: space.lg, width: '100%', maxWidth: 420, maxHeight: '92%' },
+  footer: { flexDirection: 'row', justifyContent: 'space-between', paddingTop: space.sm },
+  link: { fontSize: 13, fontWeight: '800', color: colors.mintDark },
+  deleteBtn: { flex: 1, height: 48, borderRadius: 14, backgroundColor: '#D9483B', alignItems: 'center', justifyContent: 'center' },
+  deleteText: { color: '#FFFFFF', fontSize: 16, fontWeight: '900' },
+  danger: { backgroundColor: '#FFF1EC', borderRadius: 14, padding: 12, gap: 8 },
   input: { borderWidth: 1, borderColor: colors.line, borderRadius: 12, paddingVertical: 10, paddingHorizontal: 12, fontSize: 16, color: colors.ink, backgroundColor: '#FAFCFB' },
   row: { flexDirection: 'row', gap: space.sm, alignItems: 'center' },
   msg: { fontSize: 13, fontWeight: '700', color: '#C4562F' },

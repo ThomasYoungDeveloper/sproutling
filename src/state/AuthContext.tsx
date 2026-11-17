@@ -20,6 +20,8 @@ interface AuthCtx {
   signUp: (p: { email: string; password: string; username: string }) => Promise<Result & { needsConfirm?: boolean }>;
   signIn: (email: string, password: string) => Promise<Result>;
   signOut: () => Promise<void>;
+  /** Permanently deletes the player's account and everything saved for it. */
+  deleteAccount: () => Promise<{ error?: string }>;
   resendConfirmation: (email: string) => Promise<Result>;
   sendReset: (email: string) => Promise<Result>;
   setNewPassword: (password: string) => Promise<Result>;
@@ -115,6 +117,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await supabase.auth.signOut();
   }, []);
 
+  const deleteAccount = useCallback(async () => {
+    const id = user?.id;
+    const { error } = await supabase.rpc('delete_my_account');
+    if (error) return { error: 'We couldn’t delete your account just now. Try again, or email thomas@tywebdesign.com and we’ll do it for you.' };
+    if (id) {
+      // Clear this account's save from the device too.
+      const keys = (await AsyncStorage.getAllKeys().catch(() => [] as readonly string[])).filter((k) => k.includes(id));
+      await AsyncStorage.multiRemove(keys).catch(() => {});
+    }
+    await supabase.auth.signOut().catch(() => {});
+    return {};
+  }, [user?.id]);
+
   const resendConfirmation = useCallback(async (email: string) => {
     const { error } = await supabase.auth.resend({ type: 'signup', email: email.trim(), options: { emailRedirectTo: site() } });
     return error ? { error: friendlyAuthError(error.message) } : {};
@@ -152,7 +167,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 
   return (
-    <Ctx.Provider value={{ user, loading, username, recovering, lastEmail, signUp, signIn, signOut, resendConfirmation, sendReset, setNewPassword, saveUsername, checkUsername }}>
+    <Ctx.Provider value={{ user, loading, username, recovering, lastEmail, signUp, signIn, signOut, deleteAccount, resendConfirmation, sendReset, setNewPassword, saveUsername, checkUsername }}>
       {children}
     </Ctx.Provider>
   );
