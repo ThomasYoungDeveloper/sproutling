@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from 'react';
+import * as H from '../game/hp';
+import PotionIcon from './PotionIcon';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useGame } from '../state/GameContext';
 import PetSprite from './PetSprite';
@@ -85,6 +87,40 @@ function CrystalOffer() {
   );
 }
 
+function PotionOffer() {
+  const { state, apply } = useGame();
+  const [msg, setMsg] = useState<string | null>(null);
+  return (
+    <View style={[styles.crystal, { flexDirection: 'column', alignItems: 'stretch' }]}>
+      <Text style={styles.crystalTitle}>Potions</Text>
+      <Text style={styles.crystalBody}>Pets only get HP back with a potion. Use one from a pet’s page.</Text>
+      {(['small', 'full'] as const).map((k) => (
+        <View key={k} style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+          <PotionIcon kind={k} size={38} />
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.crystalTitle, { fontSize: 15 }]}>{H.POTION_ITEM[k]}</Text>
+            <Text style={styles.crystalBody}>{H.POTION_INFO[k]} · you have {H.potionsOf(state, k)}</Text>
+          </View>
+          <Pressable
+            disabled={state.coins < H.POTION_PRICE[k]}
+            onPress={() => {
+              apply((s) => H.buyPotion(s, k));
+              buzz('success');
+              setMsg(`Bought a ${H.POTION_ITEM[k]}.`);
+            }}
+            style={[styles.crystalBtn, state.coins < H.POTION_PRICE[k] && { opacity: 0.5 }]}
+            accessibilityRole="button"
+            accessibilityLabel={`Buy a ${H.POTION_ITEM[k]} for ${H.POTION_PRICE[k]} coins`}
+          >
+            <Text style={styles.crystalBtnText}>🪙 {H.POTION_PRICE[k]}</Text>
+          </Pressable>
+        </View>
+      ))}
+      {msg ? <Text style={[styles.crystalBody, { color: colors.mintDark, fontWeight: '900' }]}>{msg}</Text> : null}
+    </View>
+  );
+}
+
 function GeneralStore({ onClose, onWardrobe, onBack }: { onClose: () => void; onWardrobe: () => void; onBack: () => void }) {
   const { state, apply } = useGame();
   const items = K.shopToday(state);
@@ -162,6 +198,7 @@ function GeneralStore({ onClose, onWardrobe, onBack }: { onClose: () => void; on
           <View style={{ gap: 6 }}>
             <Text style={styles.section}>💎 Training Crystal</Text>
             <CrystalOffer />
+            <PotionOffer />
           </View>
           <View style={{ gap: 6 }}>
             <Text style={styles.section}>🥚 Incubators</Text>

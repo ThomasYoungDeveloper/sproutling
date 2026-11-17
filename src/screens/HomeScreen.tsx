@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import WildCard from '../components/WildCard';
 import { Animated, Easing, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useGame } from '../state/GameContext';
 import PetScene from '../components/PetScene';
@@ -85,6 +86,7 @@ export default function HomeScreen({ onNavigate, onAccount, account, banner }: {
         </View>
       ) : null}
 
+      <WildCard />
       <EventCard />
       <ExpeditionCard />
       {pet ? <TrainingCard onOpen={() => overlay.open(<PetSheet petId={pet.id} onClose={overlay.close} />)} /> : null}

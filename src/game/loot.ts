@@ -54,6 +54,8 @@ export interface ChestResult {
   cosmetic?: string | null;
   /** Training Crystals in the chest (Gold always, Silver sometimes). */
   crystals?: number;
+  /** Potions in the chest (Gold always, Silver sometimes). */
+  potions?: { small: number; full: number };
 }
 
 export function openChest(kind: ChestKind, rng: Rng = defaultRng): ChestResult {

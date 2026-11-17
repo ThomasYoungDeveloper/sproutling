@@ -16,6 +16,7 @@ import { sharePetCard } from '../lib/shareCapture';
 import { ShareCardView } from './ShareCardView';
 import PetZoom from './PetZoom';
 import PowerUps from './PowerUps';
+import HpCard from './HpCard';
 import { useAuth } from '../state/AuthContext';
 import { useFriends } from '../state/FriendsContext';
 
@@ -78,6 +79,8 @@ export default function PetSheet({ petId, onClose }: { petId: string; onClose: (
               )}
             </View>
           </View>
+
+          <HpCard pet={pet} />
 
           <View style={styles.section}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>

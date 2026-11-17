@@ -18,6 +18,9 @@ import { levelFor, levelProgress, stageFor, scoreDay } from '../src/game/scoring
 import type { ChestKind, GameState } from '../src/game/types';
 import { mergeSaves } from '../src/game/merge';
 import * as Pw from '../src/game/powerups';
+import * as Hp from '../src/game/hp';
+import * as Wd from '../src/game/wild';
+import * as Tw from '../src/game/tower';
 const F_count = (s: any, id: string) => s.foods?.[id] ?? 0;
 
 let fails = 0;
@@ -204,6 +207,8 @@ const epet = E.pets[0];
 ok(!Ex.canStart(E, epet.id, 'caves').ok, 'locked places need a higher level');
 const T0 = 1_000_000_000_000;
 E = Ex.start(E, epet.id, 'meadow', T0);
+ok((E.expedition?.fights?.length ?? 0) >= 1, 'a trip plans its wild fights when the pet leaves');
+E = { ...E, expedition: { ...E.expedition!, fights: [{ speciesId: 'p01', name: 'Wild', won: true, hpAfter: 70 }], koAt: undefined, planned: { foods: ['carrot'], chest: null, egg: null, item: null } } };
 ok(!!E.expedition && !Ex.canStart(E, epet.id, 'meadow').ok, 'one expedition at a time');
 ok(!Ex.progress(E, T0)!.done && Ex.finish(E, rr, T0) === null, 'not done right away');
 ok(Math.abs(Ex.progress(E, T0 + 30 * 60_000)!.pct - 0.5) < 0.01, 'half the time is half done');
@@ -214,6 +219,34 @@ const fin = Ex.finish(Ewalk, () => 0.01, T0)!;
 ok(!fin.state.expedition && fin.loot.coins >= 15 && fin.loot.story.includes(epet.nickname), 'returning pet brings coins and a story');
 ok(fin.state.pets.find((p) => p.id === epet.id)!.xp === Ewalk.pets.find((p) => p.id === epet.id)!.xp + 30, 'expedition XP comes from the steps walked');
 ok(!Ex.recall(E).expedition, 'you can call a pet home early');
+ok(fin.state.pets.find((p) => p.id === epet.id)!.hpPct === 70 && fin.loot.foods.length === 1, 'a won trip fight lowers HP and drops food');
+{
+  // Knocked out on the second of two fights: home early with a share and no chest.
+  let K = { ...t, expedition: undefined, pets: t.pets.map((p) => ({ ...p, xp: 5000 })) } as GameState;
+  const kp = K.pets[0];
+  K = Ex.start(K, kp.id, 'caves', T0);
+  K = { ...K, expedition: { ...K.expedition!, fights: [{ speciesId: 'p01', name: 'Wild A', won: true, hpAfter: 40 }, { speciesId: 'p02', name: 'Wild B', won: false, hpAfter: 0 }], koAt: 2 / 3, planned: { foods: ['carrot', 'berries'], chest: 'bronze', egg: null, item: null } } };
+  ok(Ex.progress(K, T0 + 2 * 3_600_000)!.done && !Ex.progress(K, T0 + 3_600_000)!.done, 'a knocked-out pet comes home early');
+  const kf = Ex.finish(K, () => 0.01, T0 + 2 * 3_600_000)!;
+  ok(Ex.tripStops(K).map((x) => x.kind).join(',') === 'fight,food,fight', 'a knocked-out trip shows its fights and food, but no treasure');
+  ok(kf.loot.knockedOut && !kf.loot.chest && !kf.loot.egg && kf.loot.foods.length === 1, 'knocked out keeps what it found so far, but no chest or egg');
+  ok(kf.state.pets.find((p) => p.id === kp.id)!.hpPct === 0 && !Ex.canStart(kf.state, kp.id, 'meadow').ok, 'a knocked-out pet can’t go on a trip');
+  const healed = Hp.usePotion(Hp.addPotions(kf.state, 'small'), kp.id, 'small');
+  ok(healed.ok && Hp.hpPct(healed.state.pets.find((p) => p.id === kp.id)) === 50 && Ex.canStart(healed.state, kp.id, 'meadow').ok, 'a Small Potion heals half and lets the pet go again');
+  const full = Hp.usePotion(Hp.addPotions(kf.state, 'full'), kp.id, 'full');
+  ok(full.ok && full.state.pets.find((p) => p.id === kp.id)!.hpPct === undefined, 'a Full Potion heals to full');
+  ok(!Hp.usePotion({ ...kf.state, items: {} }, kp.id, 'small').ok, 'no potion, no heal');
+  // Real fights: a strong pet usually clears the Meadow; a nearly knocked-out one often doesn't.
+  let wins = 0, lowWins = 0;
+  for (let i = 0; i < 40; i++) {
+    const f1 = Ex.planFights(K, kp.id, Ex.PLACE_BY_ID.meadow, 'a' + i);
+    if (f1.every((f) => f.won)) wins++;
+    const low = Hp.setHp(K, kp.id, 3);
+    if (Ex.planFights(low, kp.id, Ex.PLACE_BY_ID.meadow, 'a' + i).every((f) => f.won)) lowWins++;
+  }
+  ok(wins > 28, `a strong pet usually wins its trip fights (${wins}/40)`);
+  ok(lowWins < wins, `a hurt pet loses more often (${lowWins}/40)`);
+}
 // Achievements
 let H = { ...t, achievements: {}, stats: {}, battle: undefined, wardrobe: {} } as GameState;
 ok(!Ach.claimable(H).some((x) => x.a.id === 'win1') && Ach.claim(H, 'win1') === null, 'unfinished badges cannot be claimed');
@@ -379,7 +412,7 @@ ok(A.applyShields(shielded.state).used === 0, 'shields are not used twice');
   const eggRoll = () => () => 0.01;
   const walked = A.addSteps(base, 5400);
   const r1 = W.rollWalkFinds(walked, false, hit);
-  const nf = (fs: any[]) => fs.filter((f: any) => f.kind !== 'food');
+  const nf = (fs: any[]) => fs.filter((f: any) => f.kind === 'chest' || f.kind === 'egg');
   ok(nf(r1.finds).length === W.MAX_FINDS_PER_DAY && nf(r1.finds).every((f: any) => f.kind === 'chest'), 'finds are capped at 3 a day');
   ok(r1.state.chests.length === walked.chests.length + 3, 'found chests land in your chest list');
   ok(W.rollWalkFinds(r1.state, false, hit).finds.length === 0, 'the same steps never roll twice');
@@ -550,5 +583,53 @@ ok(A.applyShields(shielded.state).used === 0, 'shields are not used twice');
   ok(!r.last.some((x) => /They send out|Go /.test(x.event.text ?? '')), 'faint lines read the same from both sides');
   const team = B.liveTeamFrom(g, g.pets.map((p) => p.id));
   ok(team.pets.length === Math.min(3, g.pets.length) && Array.isArray(team.buffs), 'a live team is built from your pets and today\'s buffs');
+}
+// Wild pets on walks
+{
+  const W = require('../src/game/walkFinds');
+  const g0 = { ...t, wildPending: [], walkFinds: undefined, days: {} } as GameState;
+  let wilds = 0;
+  for (let d = 0; d < 200; d++) {
+    const g = A.addSteps({ ...g0, pets: [{ ...g0.pets[0], id: 'w' + d }] }, 10000);
+    wilds += W.rollWalkFinds(g, true).state.wildPending?.length ?? 0;
+  }
+  ok(wilds / 200 > 1 && wilds / 200 <= W.MAX_WILD_PER_DAY, `about 1-2 wild pets on a 10k-step day (got ${(wilds / 200).toFixed(2)})`);
+  const g = W.rollWalkFinds(A.addSteps(g0, 30000), true, () => () => 0.001).state;
+  ok((g.wildPending ?? []).length === W.MAX_WILD_PER_DAY, 'no more than 3 wild pets a day');
+  const w = g.wildPending![0];
+  const before = g.coins;
+  const win = Wd.resolveWild(g, w.id, true, () => 0.05);
+  ok(win.reward!.coins > 0 && win.state.coins === before + win.reward!.coins && !win.state.wildPending!.some((x) => x.id === w.id), 'beating a wild pet pays coins and it leaves');
+  ok(!!win.reward!.joined && win.state.pets.length === g.pets.length + 1, 'sometimes the wild pet joins your team');
+  const lose = Wd.resolveWild(g, w.id, false);
+  ok(!lose.reward && lose.state.coins === g.coins && lose.state.wildPending!.length === 2, 'losing means it runs off with nothing');
+  ok(Wd.letGo(g, w.id).wildPending!.length === 2, 'you can let a wild pet go');
+}
+// Sky Tower
+{
+  const g = { ...t, tower: undefined, chests: [], items: {} } as GameState;
+  const tw = Tw.towerOf(g);
+  ok(tw.floor === 0 && Tw.canClimb(g).ok, 'a fresh tower starts at floor 0');
+  ok(Tw.themeFor('2026-11-16').id !== Tw.themeFor('2026-11-23').id, 'the tower theme changes every week');
+  ok(Tw.floorTeam(g, 1).length === 2 && Tw.floorTeam(g, 5).length === 3 && JSON.stringify(Tw.floorTeam(g, 5)) === JSON.stringify(Tw.floorTeam(g, 5)), 'floors have fixed themed teams (2 pets low, 3 higher)');
+  ok(Tw.floorTeam(g, 10)[0].nickname.startsWith('Boss'), 'floor 10 has a boss');
+  let r = Tw.finishFloor(g, true);
+  ok(r.state.tower!.floor === 1 && !!r.state.tower!.choose && r.coins === Tw.coinsFor(1), 'clearing a floor pays coins and offers a blessing');
+  ok(Tw.blessingChoices(r.state).length === 3 && Tw.blessingChoices(r.state)[0].id === 'heal', 'three blessings to pick from, healing always one of them');
+  let g2 = Tw.chooseBlessing(r.state, 'surge');
+  ok(!g2.tower!.choose && g2.tower!.blessings.includes('surge'), 'picking a blessing keeps it for the week');
+  const b0 = B.startBattle([g.pets[0]], Tw.floorTeam(g, 2));
+  ok(Tw.bless(b0, ['surge']).mine[0].stats.atk > b0.mine[0].stats.atk, 'Power Surge raises attack');
+  g2 = { ...g2, tower: { ...g2.tower!, floor: 2 } };
+  r = Tw.finishFloor(g2, true);
+  ok(r.chest === 'bronze' && r.state.chests.length === 1, 'floor 3 gives a Bronze chest');
+  const healed = Tw.chooseBlessing(Hp.setHp(r.state, r.state.pets[0].id, 20), 'heal');
+  ok(Hp.hpPct(healed.pets[0]) === 50, 'Second Wind heals 30%');
+  const lost = Tw.finishFloor(healed, false);
+  ok(lost.state.tower!.floor === 3 && !Tw.canClimb(lost.state).ok, 'losing ends the climb for today but keeps your floor');
+  const nd = A.nextDay(lost.state);
+  ok(Tw.towerOf(nd).restDay !== A.todayKey(nd), 'the rest is over the next day');
+  const top = Tw.finishFloor({ ...healed, tower: { ...healed.tower!, floor: 9 } }, true);
+  ok(top.chest === 'gold' && top.crystals === 2 && !top.state.tower!.choose && !Tw.canClimb(top.state).ok, 'the boss gives a Gold chest and crystals, and the tower is done');
 }
 console.log(fails ? `${fails} FAILED` : 'ALL PASSED'); process.exit(fails ? 1 : 0);

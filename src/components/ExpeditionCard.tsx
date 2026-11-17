@@ -1,4 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
+import * as H from '../game/hp';
+import { FOOD_BY_ID } from '../game/food';
 import { Animated, Easing, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import Svg, { Circle, Defs, LinearGradient, Path, Rect, Stop } from 'react-native-svg';
 import { useGame } from '../state/GameContext';
@@ -134,21 +136,40 @@ function ReturnSheet({ loot, onClose }: { loot: Ex.ExpeditionLoot; onClose: () =
   const sp = SPECIES_BY_ID[loot.speciesId];
   return (
     <View style={styles.backdrop}>
-      <Confetti amount={60} width={width} height={height} />
+      {loot.knockedOut ? null : <Confetti amount={60} width={width} height={height} />}
       <View style={styles.sheet}>
-        <Text style={[font.title, { textAlign: 'center' }]}>Welcome home, {loot.petName}!</Text>
-        <View style={{ alignItems: 'center', height: 190, justifyContent: 'center' }}>
-          <Rays color={colors.gold} size={240} />
+        <Text style={[font.title, { textAlign: 'center' }]}>{loot.knockedOut ? `${loot.petName} was knocked out` : `Welcome home, ${loot.petName}!`}</Text>
+        <View style={{ alignItems: 'center', height: loot.knockedOut ? 130 : 170, justifyContent: 'center' }}>
+          {loot.knockedOut ? null : <Rays color={colors.gold} size={220} />}
           <PopIn from={0.2}>
-            <PetSprite species={sp} stage="adult" size={170} mood="joy" />
+            <View style={loot.knockedOut ? { opacity: 0.55 } : undefined}>
+              <PetSprite species={sp} stage="adult" size={loot.knockedOut ? 120 : 150} mood={loot.knockedOut ? 'sleepy' : 'joy'} />
+            </View>
           </PopIn>
         </View>
         <PopIn delay={250}>
           <Text style={styles.story}>{loot.story}</Text>
         </PopIn>
+        {loot.fights.length ? (
+          <View style={styles.fights}>
+            <Text style={styles.fightsHead}>{loot.placeName.toUpperCase()}</Text>
+            {loot.fights.map((f, i) => (
+              <View key={i} style={styles.fightRow}>
+                <Text style={styles.fightName}>Fight {i + 1} · {f.name}</Text>
+                <Text style={[styles.fightRes, { color: f.won ? colors.mintDark : '#C4562F' }]}>{f.won ? `Won · ${f.hpAfter}% HP left` : 'Knocked out'}</Text>
+              </View>
+            ))}
+            {loot.knockedOut ? (
+              <View style={styles.fightRow}>
+                <Text style={[styles.fightName, { opacity: 0.5 }]}>{loot.placeName}</Text>
+                <Text style={[styles.fightRes, { opacity: 0.5 }]}>Not reached</Text>
+              </View>
+            ) : null}
+          </View>
+        ) : null}
         <View style={styles.lootRow}>
-          <PopIn delay={400}><View style={styles.loot}><Text style={styles.lootBig}>🪙 +{loot.coins}</Text></View></PopIn>
-          <PopIn delay={500}><View style={styles.loot}><Text style={styles.lootBig}>⭐ +{loot.xp} XP</Text></View></PopIn>
+          {loot.coins > 0 ? <PopIn delay={400}><View style={styles.loot}><Text style={styles.lootBig}>🪙 +{loot.coins}</Text></View></PopIn> : null}
+          {loot.xp > 0 ? <PopIn delay={500}><View style={styles.loot}><Text style={styles.lootBig}>⭐ +{loot.xp} XP</Text></View></PopIn> : null}
           {loot.chest ? <PopIn delay={600}><View style={styles.loot}><Text style={styles.lootBig}>🎁 {loot.chest[0].toUpperCase() + loot.chest.slice(1)} chest</Text></View></PopIn> : null}
           {loot.egg ? (
             <PopIn delay={700}>
@@ -158,6 +179,9 @@ function ReturnSheet({ loot, onClose }: { loot: Ex.ExpeditionLoot; onClose: () =
               </View>
             </PopIn>
           ) : null}
+          {loot.foods.map((id, i) => (
+            <PopIn key={`f${i}`} delay={750}><View style={styles.loot}><Text style={styles.lootBig}>{FOOD_BY_ID[id]?.name ?? 'Food'}</Text></View></PopIn>
+          ))}
           {loot.item ? <PopIn delay={800}><View style={styles.loot}><Text style={styles.lootBig}>✦ {loot.item}</Text></View></PopIn> : null}
           {loot.cosmetic && COSMETIC_BY_ID[loot.cosmetic] ? (
             <PopIn delay={900}>
@@ -168,7 +192,8 @@ function ReturnSheet({ loot, onClose }: { loot: Ex.ExpeditionLoot; onClose: () =
             </PopIn>
           ) : null}
         </View>
-        <Button primary label="Yay!" onPress={onClose} />
+        {loot.knockedOut ? <Text style={[font.small, { textAlign: 'center' }]}>Give {loot.petName} a potion from its page before the next trip.</Text> : null}
+        <Button primary label={loot.knockedOut ? 'OK' : 'Yay!'} onPress={onClose} />
       </View>
     </View>
   );
@@ -264,11 +289,20 @@ export default function ExpeditionCard() {
     open(
       <PetPicker
         title={`Explore ${place.name} ${place.emoji}`}
-        subtitle={`Takes ${place.hours} hour${place.hours > 1 ? 's' : ''}, or walk ${place.steps.toLocaleString()} steps to bring them home sooner. Pets need level ${place.minLevel}+.`}
+        subtitle={`Takes ${place.hours} hour${place.hours > 1 ? 's' : ''}, or walk ${place.steps.toLocaleString()} steps to bring them home sooner. ${place.fights} wild fight${place.fights > 1 ? 's' : ''} on the way. If your pet is knocked out, it comes home early. Pets need level ${place.minLevel}+.`}
         pets={[...state.pets]
           .sort((a, b) => b.xp - a.xp)
-          .map((p) => ({ pet: p, disabled: levelFor(p.xp) < place.minLevel ? `${p.nickname} needs to be level ${place.minLevel} for ${place.name}.` : undefined }))}
-        initial={[...state.pets].sort((a, b) => b.xp - a.xp).filter((p) => levelFor(p.xp) >= place.minLevel).slice(0, 1).map((p) => p.id)}
+          .map((p) => ({
+            pet: p,
+            showHp: true,
+            disabled:
+              levelFor(p.xp) < place.minLevel
+                ? `${p.nickname} needs to be level ${place.minLevel} for ${place.name}.`
+                : H.isKnockedOut(p)
+                  ? `${p.nickname} is knocked out. Use a potion from its page first.`
+                  : undefined,
+          }))}
+        initial={[...state.pets].sort((a, b) => b.xp - a.xp).filter((p) => levelFor(p.xp) >= place.minLevel && !H.isKnockedOut(p)).sort((a, b) => H.hpPct(b) - H.hpPct(a)).slice(0, 1).map((p) => p.id)}
         confirmLabel={() => 'Off you go!'}
         onConfirm={([id]) => {
           buzz('success');
@@ -300,9 +334,9 @@ export default function ExpeditionCard() {
             hat={pet.look?.hat}
             pct={1}
             done
-            title={`${pet.nickname} is back!`}
-            pill="Open loot"
-            foot={`Home from ${prog.place.name} with treasure. Tap to see!`}
+            title={state.expedition?.koAt ? `${pet.nickname} came home early` : `${pet.nickname} is back!`}
+            pill={state.expedition?.koAt ? 'See what happened' : 'Open loot'}
+            foot={state.expedition?.koAt ? `Knocked out on the way to ${prog.place.name}. Tap to see.` : `Home from ${prog.place.name} with treasure. Tap to see!`}
             onPress={collect}
             label={`${pet.nickname} is back from ${prog.place.name}. See what they found`}
           />
@@ -369,6 +403,11 @@ const styles = StyleSheet.create({
   placeSub: { fontWeight: '700', fontSize: 11, color: colors.muted },
   backdrop: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(22,28,46,0.92)', justifyContent: 'center', alignItems: 'center', padding: space.lg },
   sheet: { backgroundColor: '#FFFFFF', borderRadius: 24, padding: space.lg, gap: space.sm, width: '100%', maxWidth: 420 },
+  fights: { alignSelf: 'stretch', backgroundColor: '#F6F1E7', borderRadius: 14, padding: 10, gap: 6 },
+  fightsHead: { fontSize: 11, fontWeight: '900', letterSpacing: 0.6, color: colors.muted },
+  fightRow: { flexDirection: 'row', justifyContent: 'space-between', gap: 8 },
+  fightName: { fontSize: 14, fontWeight: '800', color: colors.ink, flexShrink: 1 },
+  fightRes: { fontSize: 13, fontWeight: '900' },
   story: { fontSize: 16, fontWeight: '700', color: colors.ink, textAlign: 'center', lineHeight: 22 },
   lootRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, justifyContent: 'center', marginVertical: space.xs },
   loot: { backgroundColor: '#FFF6DD', borderRadius: 999, paddingHorizontal: 12, paddingVertical: 6, borderWidth: 1.5, borderColor: colors.gold },

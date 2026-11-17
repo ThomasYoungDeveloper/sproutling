@@ -81,6 +81,7 @@ Answer the questions like this:
   • "Generate a new Apple Provisioning Profile?"               → Y
   • "Would you like to set up Push Notifications?"             → Y
   • "Generate a new Apple Push Notifications service key?"     → Y   (lets friends' alerts reach your phone)
+  • Questions about "ExpoWidgetsTarget" (the home screen widget) → Y to each
 The build itself takes about 15–25 minutes. You can watch it at the link it prints.
 TXT
 $EAS build --platform ios --profile production

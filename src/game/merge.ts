@@ -41,7 +41,13 @@ export function mergeSaves(base: GameState | null, mine: GameState, theirs: Game
 
   const pets = mergeById(base.pets, mine.pets, theirs.pets, (m, t) => {
     const winner = (m.xp ?? 0) >= (t.xp ?? 0) ? m : t;
-    return { ...winner, xp: Math.max(m.xp ?? 0, t.xp ?? 0) };
+    // HP: keep whichever side changed it since the last sync (a fight or a potion).
+    const b = base.pets?.find((x) => x.id === m.id);
+    const hp = b && m.hpPct === b.hpPct ? t.hpPct : m.hpPct;
+    const out = { ...winner, xp: Math.max(m.xp ?? 0, t.xp ?? 0) };
+    if (hp == null) delete out.hpPct;
+    else out.hpPct = hp;
+    return out;
   });
   const eggs = mergeById(base.eggs, mine.eggs, theirs.eggs, (m, t): Egg => ({
     ...t,
@@ -79,7 +85,9 @@ export function mergeSaves(base: GameState | null, mine: GameState, theirs: Game
     market: mergeMarket(mine.market, theirs.market),
     login: (mine.login?.count ?? 0) >= (theirs.login?.count ?? 0) ? mine.login : theirs.login,
     walkFinds: newerWalkFinds(mine.walkFinds, theirs.walkFinds),
+    wildPending: mergeById(base.wildPending, mine.wildPending, theirs.wildPending, (m) => m),
     battle: newerBattle(mine.battle, theirs.battle),
+    tower: newerTower(mine.tower, theirs.tower),
     liveDone: Array.from(new Set([...(mine.liveDone ?? []), ...(theirs.liveDone ?? [])])).slice(-200),
     tutorialDone: !!(mine.tutorialDone || theirs.tutorialDone) || undefined,
     activePetId: activePetId && pets.some((p) => p.id === activePetId) ? activePetId : pets[0]?.id ?? null,
@@ -181,7 +189,14 @@ function newerWalkFinds(m: GameState['walkFinds'], t: GameState['walkFinds']) {
   if (!m) return t;
   if (!t) return m;
   if (m.day !== t.day) return m.day > t.day ? m : t;
-  return { day: m.day, checked: Math.max(m.checked, t.checked), found: Math.max(m.found, t.found), foraged: Math.max(m.foraged ?? 0, t.foraged ?? 0) };
+  return { day: m.day, checked: Math.max(m.checked, t.checked), found: Math.max(m.found, t.found), foraged: Math.max(m.foraged ?? 0, t.foraged ?? 0), potions: Math.max(m.potions ?? 0, t.potions ?? 0), wild: Math.max(m.wild ?? 0, t.wild ?? 0) };
+}
+
+function newerTower(m: GameState['tower'], t: GameState['tower']) {
+  if (!m) return t;
+  if (!t) return m;
+  if (m.week !== t.week) return m.week > t.week ? m : t;
+  return m.floor > t.floor || (m.floor === t.floor && m.blessings.length >= t.blessings.length) ? m : t;
 }
 
 function newerBattle(m: GameState['battle'], t: GameState['battle']) {

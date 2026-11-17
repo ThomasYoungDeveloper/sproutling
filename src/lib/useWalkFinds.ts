@@ -5,6 +5,7 @@ import * as A from '../game/actions';
 import { rollWalkFinds, type WalkFind } from '../game/walkFinds';
 import { RARITY_INFO } from '../game/rarity';
 import { FOOD_BY_ID } from '../game/food';
+import { SPECIES_BY_ID } from '../game/species';
 import { play } from './sound';
 
 const CHEST_LABEL = { bronze: 'Bronze chest', silver: 'Silver chest', gold: 'Gold chest' } as const;
@@ -24,7 +25,11 @@ export function findRows(finds: WalkFind[]): FindRow[] {
         ? { key: `food:${f.foodId}`, icon: FOOD_BY_ID[f.foodId]?.emoji ?? '🍽️', label: FOOD_BY_ID[f.foodId]?.name ?? 'Food', color: ON_DARK[FOOD_BY_ID[f.foodId]?.rarity ?? 'common'] }
         : f.kind === 'chest'
           ? { key: `chest:${f.chest}`, icon: '🎁', label: CHEST_LABEL[f.chest], color: CHEST_COLOR[f.chest] }
-          : { key: `egg:${f.rarity}`, icon: '🥚', label: `${RARITY_INFO[f.rarity].label} egg`, color: ON_DARK[f.rarity] };
+          : f.kind === 'potion'
+            ? { key: 'potion', icon: '🧪', label: 'Small Potion', color: '#FF8FB4' }
+            : f.kind === 'wild'
+              ? { key: `wild:${f.wild.id}`, icon: '⚔️', label: `Wild ${SPECIES_BY_ID[f.wild.speciesId]?.name ?? 'pet'} appeared`, color: ON_DARK[f.wild.rarity] }
+              : { key: `egg:${f.rarity}`, icon: '🥚', label: `${RARITY_INFO[f.rarity].label} egg`, color: ON_DARK[f.rarity] };
     const had = rows.get(row.key);
     rows.set(row.key, { ...row, count: (had?.count ?? 0) + 1 });
   }

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import PotionIcon from './PotionIcon';
 import { Animated, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { useGame } from '../state/GameContext';
 import { Button } from './ui';
@@ -68,6 +69,10 @@ export default function DailyLoginSheet({ onClose }: { onClose: () => void }) {
             <View style={styles.got}>
               <Text style={font.small}>Day {got.day} reward</Text>
               <RewardLabel r={got.reward} big />
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <PotionIcon kind="small" size={26} />
+                <Text style={[font.small, { fontWeight: '900' }]}>Plus your daily Small Potion</Text>
+              </View>
               {got.reward.chest ? <Text style={font.small}>Open it on the Chests tab.</Text> : null}
             </View>
           </PopIn>

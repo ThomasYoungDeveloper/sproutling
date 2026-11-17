@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
+import PotionIcon, { POTION_COLOR } from './PotionIcon';
 import { Animated, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import Svg, { Path, Rect } from 'react-native-svg';
 import type { ChestKind, OwnedPet, Rarity, Stage } from '../game/types';
@@ -309,6 +310,17 @@ function ChestReveal({ r, onClose }: { r: Extract<Reveal, { kind: 'chest' }>; on
                 </View>
               </PopIn>
             ) : null}
+            {(['small', 'full'] as const).map((k) =>
+              r.result.potions?.[k] ? (
+                <PopIn key={k} delay={1050}>
+                  <View style={[styles.lootCard, { borderColor: POTION_COLOR[k], backgroundColor: '#FFF0F5' }]}>
+                    <PotionIcon kind={k} size={40} />
+                    <Text style={[styles.lootBig, { fontSize: 14, textAlign: 'center' }]}>{k === 'small' ? 'Small Potion' : 'Full Potion'}</Text>
+                    <Text style={styles.lootSmall}>heals HP</Text>
+                  </View>
+                </PopIn>
+              ) : null,
+            )}
             {r.result.cosmetic && COSMETIC_BY_ID[r.result.cosmetic] ? (
               <PopIn delay={1100}>
                 <View style={[styles.lootCard, { borderColor: '#9C5FD8', backgroundColor: '#F4ECFF' }]}>

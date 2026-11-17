@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from 'react';
+import { TowerCard } from '../components/TowerScreen';
+import WildCard from '../components/WildCard';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useFriends, type Friend, type Trainer } from '../state/FriendsContext';
 import { Button, Card, SectionHead } from '../components/ui';
@@ -135,7 +137,9 @@ export default function FriendsScreen({ initialAdd, onUsedInitialAdd, initialGui
         ))}
       </View>
       {section === 'team' && <TeamCard initialJoin={initialGuild} onUsedInitialJoin={onUsedInitialGuild} />}
+      {section === 'battle' && <WildCard />}
       {section === 'battle' && <LiveBattlesCard />}
+      {section === 'battle' && <TowerCard />}
       {section === 'battle' && <ArenaCard />}
       {section === 'battle' && <RankedCard />}
       {section === 'show' && <FashionShow />}

@@ -76,6 +76,8 @@ export interface OwnedPet {
   restUntil?: number;
   /** What this pet is wearing (cosmetic ids). */
   look?: { hat?: string; aura?: string };
+  /** HP left after trips and wild fights, in percent (missing = full). Only potions bring it back. */
+  hpPct?: number;
 }
 
 export interface Egg {
@@ -132,7 +134,7 @@ export interface GameState {
   /** Seasonal event rewards claimed, by event run (e.g. "winter-2026") → milestone indexes. */
   events?: Record<string, number[]>;
   /** A pet out exploring. */
-  expedition?: { petId: string; placeId: string; startedAt: number; startSteps: number };
+  expedition?: { petId: string; placeId: string; startedAt: number; startSteps: number; fights?: import('./expedition').TripFight[]; koAt?: number; planned?: import('./expedition').PlannedLoot };
   /** Cosmetics you own. */
   wardrobe?: Record<string, true>;
   /** The scene behind your pet (cosmetic id); the home meadow when unset. */
@@ -140,7 +142,9 @@ export interface GameState {
   /** Completed trades already swapped into this save. */
   appliedTrades?: Record<string, true>;
   /** Walking finds today: how many 1,000-step marks were rolled and how many finds came up. */
-  walkFinds?: { day: string; checked: number; found: number; foraged?: number };
+  walkFinds?: { day: string; checked: number; found: number; foraged?: number; potions?: number; wild?: number };
+  /** Wild pets met on walks, waiting for you to battle or let go. */
+  wildPending?: import('./walkFinds').WildEncounter[];
   /** What was bought at today's Food Market (stock is limited per day). */
   market?: { day: string; bought: Record<string, number> };
   /** Food in the pantry, by food id (see game/food.ts). */
@@ -151,6 +155,8 @@ export interface GameState {
   tutorialDone?: boolean;
   /** Battle record and today's rewarded battles. */
   battle?: { day: string; rewarded: number; wonToday: boolean; wins: number; losses: number };
+  /** This week's Sky Tower climb. */
+  tower?: import('./tower').TowerState;
   /** Live battles whose rewards were already collected (so a second phone can't collect them again). */
   liveDone?: string[];
 }

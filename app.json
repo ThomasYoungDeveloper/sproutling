@@ -49,6 +49,27 @@
           "recordAudioAndroid": false,
           "enableBackgroundPlayback": false
         }
+      ],
+      [
+        "expo-widgets",
+        {
+          "groupIdentifier": "group.com.sproutlingapp.sproutling",
+          "widgets": [
+            {
+              "name": "PetWidget",
+              "displayName": "Sproutling",
+              "description": "Your pet, its adventures and today's habits.",
+              "ios": {
+                "supportedFamilies": [
+                  "systemSmall",
+                  "systemMedium"
+                ],
+                "initialLayout": "./src/widgets/PetWidget.tsx"
+              },
+              "android": null
+            }
+          ]
+        }
       ]
     ],
     "extra": {

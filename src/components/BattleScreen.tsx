@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import * as H from '../game/hp';
 import { Animated, Easing, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { useGame } from '../state/GameContext';
 import { useTeam } from '../state/TeamContext';
@@ -33,9 +34,26 @@ type Pop = { id: number; side: B.Side; text: string; color: string };
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const moveColor = (m: MoveDef) => (m.element === 'normal' ? B.NORMAL_COLOR : B.ELEMENT_COLOR[m.element]);
 
+/** A line on the result screen for special battles (wild pets, the Sky Tower). */
+export type ResultLine = { label: string; value: string; color?: string };
+
+/** Battles that use your pets' real HP and pay out their own way. */
+export interface SpecialBattle {
+  /** Called once when the battle ends (or you run away, which counts as a loss). Returns lines for the result screen. */
+  onEnd: (won: boolean, b: B.Battle, teamIds: string[]) => ResultLine[];
+  /** Extra fighter changes, e.g. Sky Tower blessings. */
+  tweak?: (b: B.Battle) => B.Battle;
+  /** How many of your pets can fight (default 3). */
+  teamSize?: number;
+  title?: string;
+  /** Heading on the result screen when you win / lose. */
+  winText?: string;
+  loseText?: string;
+}
+
 export const REACTIONS = ['😤', '😂', '👏', '😱', '🔥', '🙏'];
 
-export default function BattleScreen({ opponent, onClose, onResult, live }: { opponent: Opponent; onClose: () => void; onResult?: (won: boolean) => void; /** Id of a live battle against a real friend. */ live?: string }) {
+export default function BattleScreen({ opponent, onClose, onResult, live, special }: { opponent: Opponent; onClose: () => void; onResult?: (won: boolean) => void; /** Id of a live battle against a real friend. */ live?: string; special?: SpecialBattle }) {
   const insets = useSafeAreaInsets();
   const { state, apply } = useGame();
   const L = useLive();
@@ -49,6 +67,7 @@ export default function BattleScreen({ opponent, onClose, onResult, live }: { op
   const [reward, setReward] = useState<B.BattleReward | null>(null);
   const [switching, setSwitching] = useState(false);
   const [sky] = useState(skyNow);
+  const [lines, setLines] = useState<ResultLine[] | null>(null);
   const { team: guild, raidHit } = useTeam();
   const [raid, setRaid] = useState<{ dmg: number; boss: string } | null>(null);
   const { report, ranked } = useRanked();
@@ -65,12 +84,29 @@ export default function BattleScreen({ opponent, onClose, onResult, live }: { op
   const hit = { me: useRef(new Animated.Value(0)).current, them: useRef(new Animated.Value(0)).current };
   const faint = { me: useRef(new Animated.Value(1)).current, them: useRef(new Animated.Value(1)).current };
   const [pops, setPops] = useState<Pop[]>([]);
+  // Battle drama: screen shake, element bursts, big callouts and a slow-motion final knockout.
+  const shake = useRef(new Animated.Value(0)).current;
+  const flash = useRef(new Animated.Value(0)).current;
+  const [bursts, setBursts] = useState<{ id: number; side: B.Side; color: string; big: boolean }[]>([]);
+  const [callout, setCallout] = useState<{ id: number; text: string; color: string } | null>(null);
+  const doShake = (power: number) => {
+    shake.setValue(0);
+    Animated.sequence(
+      [1, -1, 0.7, -0.6, 0.3, 0].map((k) => Animated.timing(shake, { toValue: k * power, duration: 45, useNativeDriver: true })),
+    ).start();
+  };
+  const burst = (side: B.Side, color: string, big: boolean) => setBursts((b) => [...b, { id: Date.now() + Math.random(), side, color, big }]);
   const pop = (side: B.Side, text: string, color: string) => setPops((p) => [...p, { id: Date.now() + Math.random(), side, text, color }]);
 
   const start = (ids: string[]) => {
     const mine = ids.map((id) => state.pets.find((p) => p.id === id)!).filter(Boolean);
     setTeam(ids);
-    setBattle(B.startBattle(mine, opponent.team, setup.buffs, { care: setup.care, streak: setup.streak }));
+    let b = B.startBattle(mine, opponent.team, setup.buffs, { care: setup.care, streak: setup.streak });
+    if (special) {
+      b = { ...b, mine: b.mine.map((f, i) => H.atSavedHp(f, H.hpPct(mine[i]))) };
+      if (special.tweak) b = special.tweak(b);
+    }
+    setBattle(b);
     faint.me.setValue(1);
     faint.them.setValue(1);
     setLine(opponent.friendId ? `${opponent.name} wants to battle!` : 'Wild pets appeared!');
@@ -101,7 +137,13 @@ export default function BattleScreen({ opponent, onClose, onResult, live }: { op
         pop(tgt, 'Dodged!', '#FFFFFF');
       } else {
         const big = (ev.move?.power ?? 0) >= 100 || ev.crit;
-        buzz(big ? 'heavy' : 'medium', big ? 'special' : 'hit');
+        const superEff = (ev.effect ?? 1) > 1;
+        buzz(big || superEff ? 'heavy' : 'medium', big || superEff ? 'special' : 'hit');
+        const elColor = ev.move && ev.move.element !== 'normal' ? B.ELEMENT_COLOR[ev.move.element] : '#FFFFFF';
+        burst(tgt, elColor, big || superEff);
+        if (big || superEff) doShake(superEff && big ? 12 : 8);
+        if (ev.crit || superEff) setCallout({ id: Date.now(), text: ev.crit && superEff ? 'CRITICAL! SUPER EFFECTIVE!' : ev.crit ? 'CRITICAL HIT!' : 'SUPER EFFECTIVE!', color: superEff ? elColor : '#FFD84D' });
+        else if ((ev.effect ?? 1) < 1) setCallout({ id: Date.now(), text: 'Not very effective…', color: '#D6DCF5' });
         hit[tgt].setValue(0);
         Animated.timing(hit[tgt], { toValue: 1, duration: 420, useNativeDriver: true }).start();
         pop(tgt, `-${ev.damage}`, (ev.effect ?? 1) > 1 || ev.crit ? '#FFD84D' : '#FFFFFF');
@@ -129,8 +171,16 @@ export default function BattleScreen({ opponent, onClose, onResult, live }: { op
       setBattle(f.battle);
       await wait(600);
     } else if (ev.kind === 'faint') {
-      Animated.timing(faint[ev.side], { toValue: 0, duration: 450, useNativeDriver: true }).start();
-      await wait(500);
+      // The last knockout plays in slow motion with a flash.
+      const final = !!f.battle.over;
+      if (final) {
+        doShake(14);
+        flash.setValue(0.9);
+        Animated.timing(flash, { toValue: 0, duration: 900, useNativeDriver: true }).start();
+        buzz('heavy', 'special');
+      }
+      Animated.timing(faint[ev.side], { toValue: 0, duration: final ? 1300 : 450, easing: Easing.out(Easing.quad), useNativeDriver: true }).start();
+      await wait(final ? 1400 : 500);
       setBattle(f.battle);
       if (!f.battle.over) faint[ev.side].setValue(1);
       await wait(500);
@@ -150,7 +200,11 @@ export default function BattleScreen({ opponent, onClose, onResult, live }: { op
       if (ended.current) return;
       ended.current = true;
     }
-    if (live && lb) {
+    if (special) {
+      if (ended.current) return;
+      ended.current = true;
+      setLines(special.onEnd(won, after ?? battle!, team));
+    } else if (live && lb) {
       // Only collect rewards for a live battle once, even across phones.
       if (!(stateRef.current.liveDone ?? []).includes(live)) {
         const r = B.finishBattle(stateRef.current, won, true);
@@ -246,11 +300,11 @@ export default function BattleScreen({ opponent, onClose, onResult, live }: { op
     const buffText = setup.buffs.length ? ` Today’s habit buffs: ${setup.buffs.map((b) => `${b.emoji} ${b.label}`).join(', ')}.` : ' Tip: sleep 7+ hours, drink 6 glasses and walk 8,000 steps for battle buffs!';
     return (
       <PetPicker
-        title="Pick your battle team"
-        subtitle={`Up to ${B.TEAM_SIZE} pets vs ${opponent.name}: ${theirNames}.${buffText}`}
-        pets={state.pets.map((p) => ({ pet: p }))}
-        max={B.TEAM_SIZE}
-        initial={team}
+        title={special?.title ?? "Pick your battle team"}
+        subtitle={`${(special?.teamSize ?? B.TEAM_SIZE) === 1 ? 'Pick 1 pet' : `Up to ${special?.teamSize ?? B.TEAM_SIZE} pets`} vs ${opponent.name}: ${theirNames}.${special ? ' Your pets fight with the HP they have now, and lost HP stays down until you use a potion.' : ''}${buffText}`}
+        pets={state.pets.map((p) => (special ? { pet: p, showHp: true, disabled: H.isKnockedOut(p) ? `${p.nickname} is knocked out. Use a potion from its page first.` : undefined } : { pet: p }))}
+        max={special?.teamSize ?? B.TEAM_SIZE}
+        initial={special ? team.slice(0, special.teamSize ?? B.TEAM_SIZE).filter((id) => !H.isKnockedOut(state.pets.find((p) => p.id === id))) : team}
         confirmLabel={(n) => (n ? `Battle with ${n} pet${n > 1 ? 's' : ''}!` : 'Pick at least 1 pet')}
         onConfirm={start}
         onClose={onClose}
@@ -264,7 +318,7 @@ export default function BattleScreen({ opponent, onClose, onResult, live }: { op
 
   return (
     <View style={[styles.full, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
-      <View style={styles.arena}>
+      <Animated.View style={[styles.arena, { transform: [{ translateX: shake }] }]}>
         <Backdrop element={me.element} sky={sky} scene={state.scene} />
         <TeamDots fighters={battle.theirs} index={battle.ti} style={{ top: 10, right: 12 }} />
         <TeamDots fighters={battle.mine} index={battle.mi} style={{ bottom: 32, left: 16 }} />
@@ -278,7 +332,12 @@ export default function BattleScreen({ opponent, onClose, onResult, live }: { op
         {pops.map((p) => (
           <DamagePop key={p.id} side={p.side} text={p.text} color={p.color} onDone={() => setPops((list) => list.filter((x) => x.id !== p.id))} />
         ))}
-      </View>
+        {bursts.map((b) => (
+          <HitBurst key={b.id} side={b.side} color={b.color} big={b.big} onDone={() => setBursts((list) => list.filter((x) => x.id !== b.id))} />
+        ))}
+        {callout ? <Callout key={callout.id} text={callout.text} color={callout.color} onDone={() => setCallout(null)} /> : null}
+        <Animated.View pointerEvents="none" style={[styles.flash, { opacity: flash }]} />
+      </Animated.View>
 
       <View style={styles.panel}>
         {phase === 'fight' ? (
@@ -327,7 +386,17 @@ export default function BattleScreen({ opponent, onClose, onResult, live }: { op
                       <Text style={[styles.run, sureQuit && { color: '#C4562F' }]}>{sureQuit ? 'Tap again to give up' : 'Give up'}</Text>
                     </Pressable>
                   ) : null}
-                  <Pressable onPress={onClose} accessibilityRole="button">
+                  <Pressable
+                    onPress={() => {
+                      // Running from a wild pet or the tower keeps the HP you lost.
+                      if (special && battle && !ended.current) {
+                        ended.current = true;
+                        special.onEnd(false, battle, team);
+                      }
+                      onClose();
+                    }}
+                    accessibilityRole="button"
+                  >
                     <Text style={styles.run}>{live ? 'Close' : 'Run away'}</Text>
                   </Pressable>
                 </View>
@@ -345,7 +414,7 @@ export default function BattleScreen({ opponent, onClose, onResult, live }: { op
             )}
           </>
         ) : (
-          <Result won={battle.over === 'win'} reward={reward} raid={raid} rp={rp} points={ranked?.points ?? null} name={opponent.name} onRematch={live ? undefined : () => { setRaid(null); setRp(null); setPhase('pick'); }} onClose={onClose} />
+          <Result won={battle.over === 'win'} lines={lines} special={special} reward={reward} raid={raid} rp={rp} points={ranked?.points ?? null} name={opponent.name} onRematch={live || special ? undefined : () => { setRaid(null); setRp(null); setPhase('pick'); }} onClose={onClose} />
         )}
       </View>
     </View>
@@ -384,7 +453,7 @@ function MoveButton({ m, foe, energy, disabled, onPress }: { m: MoveDef; foe: B.
   );
 }
 
-function Result({ won, reward, raid, rp, points, name, onRematch, onClose }: { won: boolean; reward: B.BattleReward | null; raid: { dmg: number; boss: string } | null; rp: number | null; points: number | null; name: string; onRematch?: () => void; onClose: () => void }) {
+function Result({ won, lines, special, reward, raid, rp, points, name, onRematch, onClose }: { won: boolean; lines?: ResultLine[] | null; special?: SpecialBattle; reward: B.BattleReward | null; raid: { dmg: number; boss: string } | null; rp: number | null; points: number | null; name: string; onRematch?: () => void; onClose: () => void }) {
   const { width, height } = useWindowDimensions();
   const nm = name === 'Wild pets' ? 'the wild pets' : name;
   return (
@@ -393,8 +462,21 @@ function Result({ won, reward, raid, rp, points, name, onRematch, onClose }: { w
       <PopIn from={0.2}>
         <Text style={[styles.result, { color: won ? '#E5A800' : colors.ink }]}>{won ? '🏆 YOU WIN!' : 'So close!'}</Text>
       </PopIn>
-      <Text style={styles.resultSub}>{won ? `You beat ${nm}!` : `${nm[0].toUpperCase() + nm.slice(1)} won this time. Train your pets and try new moves!`}</Text>
-      {reward && reward.rewarded ? (
+      <Text style={styles.resultSub}>{special ? (won ? special.winText : special.loseText) ?? '' : won ? `You beat ${nm}!` : `${nm[0].toUpperCase() + nm.slice(1)} won this time. Train your pets and try new moves!`}</Text>
+      {special ? (
+        lines && lines.length ? (
+          <PopIn delay={200}>
+            <View style={styles.lines}>
+              {lines.map((l, i) => (
+                <View key={i} style={styles.lineRow}>
+                  <Text style={styles.lineLabel}>{l.label}</Text>
+                  <Text style={[styles.lineValue, l.color ? { color: l.color } : null]}>{l.value}</Text>
+                </View>
+              ))}
+            </View>
+          </PopIn>
+        ) : null
+      ) : reward && reward.rewarded ? (
         <PopIn delay={200}>
           <View style={styles.rewardRow}>
             <View style={styles.reward}><Text style={styles.rewardText}>🪙 +{reward.coins}</Text></View>
@@ -503,6 +585,44 @@ function FighterSprite({ f, side, lunge, hit, faint, style, glow = 0 }: { f: B.F
   );
 }
 
+/** A ring of color that bursts out where a hit lands. */
+function HitBurst({ side, color, big, onDone }: { side: B.Side; color: string; big: boolean; onDone: () => void }) {
+  const v = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    Animated.timing(v, { toValue: 1, duration: big ? 600 : 420, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start(onDone);
+  }, []);
+  const size = big ? 170 : 120;
+  return (
+    <Animated.View
+      pointerEvents="none"
+      style={[
+        { position: 'absolute', width: size, height: size, borderRadius: size / 2, borderWidth: big ? 10 : 6, borderColor: color },
+        side === 'them' ? { top: 120 - size / 2 + 40, right: 84 - size / 2 + 40 } : { bottom: 120 - size / 2 + 40, left: 84 - size / 2 + 40 },
+        { opacity: v.interpolate({ inputRange: [0, 0.2, 1], outputRange: [0.9, 0.8, 0] }), transform: [{ scale: v.interpolate({ inputRange: [0, 1], outputRange: [0.2, 1.2] }) }] },
+      ]}
+    />
+  );
+}
+
+/** Big text across the arena for critical and super effective hits. */
+function Callout({ text, color, onDone }: { text: string; color: string; onDone: () => void }) {
+  const v = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    Animated.timing(v, { toValue: 1, duration: 1100, easing: Easing.out(Easing.quad), useNativeDriver: true }).start(onDone);
+  }, []);
+  return (
+    <Animated.Text
+      pointerEvents="none"
+      style={[
+        styles.callout,
+        { color, opacity: v.interpolate({ inputRange: [0, 0.1, 0.75, 1], outputRange: [0, 1, 1, 0] }), transform: [{ scale: v.interpolate({ inputRange: [0, 0.12, 0.25, 1], outputRange: [0.4, 1.25, 1, 1] }) }, { rotate: '-4deg' }] },
+      ]}
+    >
+      {text}
+    </Animated.Text>
+  );
+}
+
 function DamagePop({ side, text, color, onDone }: { side: B.Side; text: string; color: string; onDone: () => void }) {
   const v = useRef(new Animated.Value(0)).current;
   useEffect(() => {
@@ -523,6 +643,10 @@ function DamagePop({ side, text, color, onDone }: { side: B.Side; text: string; 
 }
 
 const styles = StyleSheet.create({
+  lines: { alignSelf: 'stretch', backgroundColor: '#F6F1E7', borderRadius: 14, padding: 12, gap: 6, minWidth: 260 },
+  lineRow: { flexDirection: 'row', justifyContent: 'space-between', gap: 10 },
+  lineLabel: { fontSize: 15, fontWeight: '800', color: colors.ink, flexShrink: 1 },
+  lineValue: { fontSize: 15, fontWeight: '900', color: colors.ink },
   bubble: { position: 'absolute', backgroundColor: '#fff', borderRadius: 18, paddingHorizontal: 10, paddingVertical: 4, shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 6, shadowOffset: { width: 0, height: 2 }, elevation: 4 },
   bubbleText: { fontSize: 30 },
   liveTag: { position: 'absolute', top: 10, left: 12, backgroundColor: 'rgba(214,40,57,0.9)', borderRadius: 10, paddingHorizontal: 8, paddingVertical: 3 },
@@ -531,6 +655,8 @@ const styles = StyleSheet.create({
   reactBtn: { width: 44, height: 40, borderRadius: 12, backgroundColor: '#F4F1EA', alignItems: 'center', justifyContent: 'center' },
   full: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: '#1B2240', zIndex: 90 },
   arena: { flex: 1, overflow: 'hidden', minHeight: 330 },
+  flash: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: '#FFFFFF' },
+  callout: { position: 'absolute', top: '42%', left: 0, right: 0, textAlign: 'center', fontSize: 30, fontWeight: '900', letterSpacing: 0.5, textShadowColor: 'rgba(0,0,0,0.45)', textShadowOffset: { width: 0, height: 3 }, textShadowRadius: 6 },
   panel: { backgroundColor: '#FFFFFF', borderTopLeftRadius: 26, borderTopRightRadius: 26, padding: space.md, gap: 8, marginTop: -20 },
   line: { fontSize: 15, fontWeight: '800', color: colors.ink, minHeight: 40, textAlign: 'center' },
   energyRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },

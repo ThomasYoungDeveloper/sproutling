@@ -1,4 +1,5 @@
 import type { ChestKind, DayLog, Egg, Element, GameState, Meal, OwnedPet, Rarity } from './types';
+import { addPotions } from './hp';
 import { addCrystals, chestCrystals } from './powerups';
 import { dateKey } from './dates';
 import { emptyDay, scoreDay, dailyQuests, streakFrom, COINS_PER_XP } from './scoring';
@@ -50,6 +51,7 @@ export function updateToday(s: GameState, change: (d: DayLog) => DayLog): GameSt
   // Finishing all daily quests earns one bronze chest per day.
   if (!next.questChestDays[key] && dailyQuests(after).every((q) => q.done)) {
     next = grantChest(next, 'bronze', 'Finished all daily quests');
+    next = addPotions(next, 'small', 1); // Hitting all 3 goals also gives a Small Potion.
     next.questChestDays = { ...next.questChestDays, [key]: true };
   }
 
@@ -152,6 +154,13 @@ export interface OpenedChest {
   result: ChestResult;
 }
 
+/** Silver chests sometimes hold a Small Potion; Gold ones always do, and sometimes a Full one. */
+export function chestPotions(kind: ChestKind, rng: Rng = defaultRng): { small: number; full: number } {
+  if (kind === 'gold') return { small: 1, full: rng() < 0.4 ? 1 : 0 };
+  if (kind === 'silver') return { small: rng() < 0.35 ? 1 : 0, full: 0 };
+  return { small: 0, full: 0 };
+}
+
 export function openChestById(s: GameState, chestId: string, rng: Rng = defaultRng): OpenedChest | null {
   const chest = s.chests.find((c) => c.id === chestId);
   if (!chest) return null;
@@ -163,8 +172,11 @@ export function openChestById(s: GameState, chestId: string, rng: Rng = defaultR
   if (cosmetic) next = grantCosmetic(next, cosmetic);
   const crystals = chestCrystals(chest.kind, rng);
   next = addCrystals(next, crystals);
+  const potions = chestPotions(chest.kind, rng);
+  if (potions.small) next = addPotions(next, 'small', potions.small);
+  if (potions.full) next = addPotions(next, 'full', potions.full);
   next = bump(next, 'chests');
-  return { state: next, result: { ...result, cosmetic, crystals } };
+  return { state: next, result: { ...result, cosmetic, crystals, potions } };
 }
 
 export const incubatingCount = (s: GameState) => s.eggs.filter((e) => e.incubating).length;
@@ -265,6 +277,7 @@ export function claimLogin(s: GameState, rng: Rng = defaultRng): { state: GameSt
   if (!st.canClaim) return null;
   const reward = LOGIN_REWARDS[st.index];
   let next: GameState = { ...s, coins: s.coins + reward.coins, login: { last: todayKey(s), count: st.claimedTotal + 1 } };
+  next = addPotions(next, 'small', 1); // Everyone gets one free Small Potion a day.
   if (reward.chest) next = grantChest(next, reward.chest, `Day ${st.index + 1} login reward`, rng);
   return { state: next, reward, day: st.index + 1 };
 }

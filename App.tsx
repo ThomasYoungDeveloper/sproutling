@@ -16,6 +16,7 @@ import FriendsScreen from './src/screens/FriendsScreen';
 import DailyLoginSheet from './src/components/DailyLoginSheet';
 import { FriendsProvider, useFriends } from './src/state/FriendsContext';
 import { LiveBattleProvider, useLive } from './src/state/LiveBattleContext';
+import { syncWidgets } from './src/lib/widgetSync';
 import { OverlayProvider, useOverlay } from './src/components/Overlay';
 import { TeamProvider } from './src/state/TeamContext';
 import { RankedProvider } from './src/state/RankedContext';
@@ -92,6 +93,14 @@ function Shell() {
   const starter = A.needsStarter(state);
   const login = A.loginStatus(state);
   const today = A.todayKey(state);
+
+  // Home screen widget + adventure Live Activity (iPhone only; a second after the save settles).
+  const wildWaiting = (state.wildPending ?? []).length;
+  useEffect(() => {
+    const waiting = liveWaiting ? 'Your move in a live battle' : readyEggs ? 'Egg ready to hatch' : wildWaiting ? 'A wild pet is waiting' : null;
+    const t = setTimeout(() => syncWidgets(state, waiting), 1200);
+    return () => clearTimeout(t);
+  }, [state, liveWaiting, readyEggs, wildWaiting]);
 
   // Opened from a friend's invite link: jump to Friends with their code filled in.
   useEffect(() => {

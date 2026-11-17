@@ -8,11 +8,15 @@ import { SPECIES_BY_ID } from '../game/species';
 import { levelFor, stageFor } from '../game/scoring';
 import { gradeOf } from '../game/stats';
 import type { OwnedPet } from '../game/types';
+import { HpBar, HP_COLOR, HP_LABEL } from './HpCard';
+import { hpState } from '../game/hp';
 
 export interface PickerPet {
   pet: OwnedPet;
   /** Why this pet can't be picked, if it can't. */
   disabled?: string;
+  /** Show this pet's HP bar (trips and wild fights). */
+  showHp?: boolean;
 }
 
 /** A sheet for choosing one or more of your pets (for a trade or a battle team). */
@@ -70,7 +74,14 @@ export default function PetPicker({
                 {on && max > 1 ? <View style={styles.num}><Text style={styles.numText}>{order + 1}</Text></View> : null}
                 {on && max === 1 ? <View style={styles.num}><Text style={styles.numText}>✓</Text></View> : null}
                 <Text style={styles.name} numberOfLines={1}>{p.pet.nickname}</Text>
-                <RarityBadge rarity={sp.rarity} />
+                {p.showHp ? (
+                  <View style={{ alignSelf: 'stretch', gap: 2 }}>
+                    <HpBar pet={p.pet} height={6} />
+                    <Text style={[styles.hpText, { color: HP_COLOR[hpState(p.pet)] }]}>{HP_LABEL[hpState(p.pet)]}</Text>
+                  </View>
+                ) : (
+                  <RarityBadge rarity={sp.rarity} />
+                )}
               </Pressable>
             );
           })}
@@ -87,6 +98,7 @@ export default function PetPicker({
 }
 
 const styles = StyleSheet.create({
+  hpText: { fontSize: 10, fontWeight: '900', textAlign: 'center' },
   backdrop: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(24,30,48,0.6)', justifyContent: 'center', alignItems: 'center', padding: space.lg, zIndex: 80 },
   sheet: { backgroundColor: '#FFFFFF', borderRadius: 22, padding: space.lg, gap: space.sm, width: '100%', maxWidth: 440 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: '3.5%', rowGap: space.sm, paddingVertical: space.xs },
