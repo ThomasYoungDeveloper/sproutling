@@ -1,6 +1,7 @@
 import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { GameState } from '../game/types';
+import * as A from '../game/actions';
 import { newGame } from '../game/seed';
 import { supabase } from '../lib/supabase';
 import { useAuth } from './AuthContext';
@@ -43,7 +44,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       .then((raw) => {
         if (raw) {
           const parsed = JSON.parse(raw) as GameState;
-          if (parsed.version === 1) setState(parsed);
+          if (parsed.version === 1) setState(A.cleanSave(parsed));
         }
       })
       .catch(() => {})
@@ -75,7 +76,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       const cloud = data?.state as GameState | undefined;
       const local = stateRef.current;
       if (cloud && cloud.version === 1 && progress(cloud) >= progress(local)) {
-        setState(cloud);
+        setState(A.cleanSave(cloud));
       } else {
         const { error: upErr } = await supabase.from('game_saves').upsert({ user_id: user.id, state: local });
         if (upErr) {

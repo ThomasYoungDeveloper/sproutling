@@ -115,7 +115,22 @@ export const setHealthExtras = (s: GameState, x: { rings?: { move: number; exerc
     ...(x.water !== undefined && x.water > d.water ? { water: Math.min(20, x.water) } : {}),
   }));
 
-export const addSteps = (s: GameState, n: number) => updateToday(s, (d) => ({ ...d, steps: Math.max(0, d.steps + n) }));
+/** No one walks more than this in a day; stops a stuck button or a typo from flooding guild goals. */
+export const MAX_DAY_STEPS = 60000;
+export const addSteps = (s: GameState, n: number) => updateToday(s, (d) => ({ ...d, steps: Math.min(MAX_DAY_STEPS, Math.max(0, d.steps + n)) }));
+
+/** Brings an older or edited save in line with today's rules (step cap per day). */
+export function cleanSave(s: GameState): GameState {
+  let changed = false;
+  const days = { ...s.days };
+  for (const k of Object.keys(days)) {
+    if ((days[k]?.steps ?? 0) > MAX_DAY_STEPS) {
+      days[k] = { ...days[k], steps: MAX_DAY_STEPS };
+      changed = true;
+    }
+  }
+  return changed ? { ...s, days } : s;
+}
 export const setSleep = (s: GameState, h: number) => updateToday(s, (d) => ({ ...d, sleepHours: Math.min(14, Math.max(0, h)) }));
 export const setWater = (s: GameState, n: number) => updateToday(s, (d) => ({ ...d, water: Math.min(12, Math.max(0, n)) }));
 export const addWorkout = (s: GameState, n: number) => updateToday(s, (d) => ({ ...d, workoutMinutes: Math.max(0, d.workoutMinutes + n) }));
