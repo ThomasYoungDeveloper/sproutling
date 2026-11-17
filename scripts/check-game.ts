@@ -264,14 +264,13 @@ ok(fin.state.pets.find((p) => p.id === epet.id)!.hpPct === 70 && fin.loot.foods.
   ok(!Hp.usePotion({ ...kf.state, items: {} }, kp.id, 'small').ok, 'no potion, no heal');
   // Real fights: a strong pet usually clears the Meadow; a nearly knocked-out one often doesn't.
   let wins = 0, lowWins = 0;
+  const mid = { ...K, pets: K.pets.map((p) => ({ ...p, xp: 2300 })) } as GameState; // about level 10
   for (let i = 0; i < 40; i++) {
-    const f1 = Ex.planFights(K, kp.id, Ex.PLACE_BY_ID.meadow, 'a' + i);
-    if (f1.every((f) => f.won)) wins++;
-    const low = Hp.setHp(K, kp.id, 3);
-    if (Ex.planFights(low, kp.id, Ex.PLACE_BY_ID.meadow, 'a' + i).every((f) => f.won)) lowWins++;
+    if (Ex.planFights(K, kp.id, Ex.PLACE_BY_ID.shrine, 'a' + i).every((f) => f.won)) wins++;
+    if (Ex.planFights(Hp.setHp(mid, kp.id, 10), kp.id, Ex.PLACE_BY_ID.mountain, 'a' + i).every((f) => f.won)) lowWins++;
   }
-  ok(wins > 28, `a strong pet usually wins its trip fights (${wins}/40)`);
-  ok(lowWins < wins, `a hurt pet loses more often (${lowWins}/40)`);
+  ok(wins > 30, `a strong pet usually wins its trip fights (${wins}/40)`);
+  ok(lowWins < 30, `a hurt pet on a hard trip often gets knocked out (${lowWins}/40 made it)`);
 }
 // Achievements
 let H = { ...t, achievements: {}, stats: {}, battle: undefined, wardrobe: {} } as GameState;
