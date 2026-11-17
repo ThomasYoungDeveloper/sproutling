@@ -43,7 +43,7 @@ export default function Tutorial() {
     },
     {
       art: '⚔️', tint: '#E9E3FF', title: 'Battle and team up',
-      body: 'Battle wild pets and friends from the Friends tab. Your healthy habits power up your pet in battle.',
+      body: 'Battle wild pets and friends from the Social tab. Your healthy habits power up your pet in battle.',
       tips: ['🏆 Climb the ranked season', '🛡️ Join a guild and beat the weekly raid boss together'],
     },
     {

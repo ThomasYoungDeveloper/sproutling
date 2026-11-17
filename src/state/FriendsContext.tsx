@@ -134,7 +134,7 @@ export function FriendsProvider({ children }: { children: React.ReactNode }) {
       play('chime');
       buzz('success', 'none');
     } else if (fresh.length) {
-      say(`👋 ${list(fresh)} sent you a friend request. Check the Friends tab!`);
+      say(`👋 ${list(fresh)} sent you a friend request. Check the Social tab!`);
       play('pop');
     }
   }, [say]);
