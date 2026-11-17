@@ -96,7 +96,7 @@ export default function FeedSheet({ onFeed, onClose, onShop }: { onFeed: (foodId
           <View style={styles.grid}>{shopFoods.map((f) => tile(f, true))}</View>
 
           <Text style={styles.small}>
-            Every food except Pellets raises one stat by a little, for good: Common +0.2%, Uncommon +0.4%, Rare +0.6%, Epic +1%, Legendary +1.5%, up to +10% per stat. Up to {F.BOOSTS_PER_DAY} stat boosts a day; Pellets anytime.
+            Every food except Pellets raises one stat by a little, for good: Common +0.8%, Uncommon +1.2%, Rare +1.8%, Epic +2.5%, Legendary +4%, up to +10% per stat. Up to {F.BOOSTS_PER_DAY} stat boosts a day; Pellets anytime.
           </Text>
           {msg ? <Text style={styles.msg}>{msg}</Text> : null}
         </ScrollView>

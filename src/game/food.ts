@@ -25,7 +25,7 @@ export interface FoodDef {
 export const PELLETS = { id: 'pellets', name: 'Pellets', emoji: '🟤', fill: 45 } as const;
 
 /** How much a food raises its stat, as a percent of that stat, by rarity. Small, so it adds up over time. */
-export const BOOST_BY_RARITY: Record<Rarity, number> = { common: 0.2, uncommon: 0.4, rare: 0.6, epic: 1, legendary: 1.5 };
+export const BOOST_BY_RARITY: Record<Rarity, number> = { common: 0.8, uncommon: 1.2, rare: 1.8, epic: 2.5, legendary: 4 };
 export const boostOf = (f: Pick<FoodDef, 'rarity' | 'stat'>) => BOOST_BY_RARITY[f.rarity];
 /** Shows a percent boost like "+0.2%". */
 export const pct = (n: number) => `+${Number(n.toFixed(1))}%`;
