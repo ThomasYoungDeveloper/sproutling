@@ -17,7 +17,7 @@ export default function FeedSheet({ onFeed, onClose, onShop }: { onFeed: (foodId
   const [msg, setMsg] = useState<string | null>(null);
   if (!pet) return null;
 
-  const walkFoods = F.WALK_FOODS.filter((f) => F.foodCount(state, f.id) > 0);
+  const owned = F.FOODS.filter((f) => F.foodCount(state, f.id) > 0);
   const shopFoods = F.SHOP_FOODS;
 
   const tile = (f: F.FoodDef, shop: boolean) => {
@@ -25,7 +25,7 @@ export default function FeedSheet({ onFeed, onClose, onShop }: { onFeed: (foodId
     const gain = F.boostFor(pet, f);
     const check = F.canFeed(state, day, pet.id, f.id);
     const rare = RARITY_INFO[f.rarity];
-    const canBuy = shop && have === 0;
+    const canBuy = shop;
     return (
       <Pressable
         key={f.id}
@@ -34,7 +34,7 @@ export default function FeedSheet({ onFeed, onClose, onShop }: { onFeed: (foodId
             if (state.coins < (f.price ?? 0)) return setMsg(`${f.name} costs ${f.price} coins.`);
             apply((s) => F.buyFood(s, f.id));
             buzz('light', 'coin');
-            return setMsg(`Bought ${f.name}! Tap it again to feed.`);
+            return setMsg(`Bought ${f.name}! It's in your food now.`);
           }
           if (!check.ok) return setMsg(check.reason);
           onFeed(f.id);
@@ -44,7 +44,7 @@ export default function FeedSheet({ onFeed, onClose, onShop }: { onFeed: (foodId
         accessibilityLabel={`${f.name}, ${rare.label}, +${gain} ${F.statLabel(f.stat)}${canBuy ? `, buy for ${f.price} coins` : `, you have ${have}`}`}
       >
         <Text style={{ fontSize: 26 }}>{f.emoji}</Text>
-        <Text style={styles.tileName} numberOfLines={1}>{f.name}{have > 0 ? ` ×${have}` : ''}</Text>
+        <Text style={styles.tileName} numberOfLines={1}>{f.name}{!shop && have > 0 ? ` ×${have}` : ''}</Text>
         <Text style={[styles.tileRarity, { color: rare.color }]}>{rare.label.toUpperCase()}</Text>
         <Text style={styles.tileGain}>{gain > 0 ? `+${gain} ${F.statLabel(f.stat)}` : 'Stat maxed'}</Text>
         {canBuy ? <Text style={styles.price}>🪙 {f.price}</Text> : null}
@@ -85,14 +85,14 @@ export default function FeedSheet({ onFeed, onClose, onShop }: { onFeed: (foodId
             <Text style={styles.feedWord}>Feed</Text>
           </Pressable>
 
-          <Text style={styles.section}>FOUND ON WALKS</Text>
-          {walkFoods.length ? (
-            <View style={styles.grid}>{walkFoods.map((f) => tile(f, false))}</View>
+          <Text style={styles.section}>YOUR FOOD</Text>
+          {owned.length ? (
+            <View style={styles.grid}>{owned.map((f) => tile(f, false))}</View>
           ) : (
-            <Text style={styles.small}>Nothing yet. Every 1,000 steps, {pet.nickname} might sniff out berries, mushrooms or something rarer.</Text>
+            <Text style={styles.small}>No food yet. Buy some below, or go for a walk: every 1,000 steps {pet.nickname} might sniff out berries, mushrooms or something rarer.</Text>
           )}
 
-          <Text style={styles.section}>SHOP</Text>
+          <Text style={styles.section}>BUY FOOD</Text>
           <View style={styles.grid}>{shopFoods.map((f) => tile(f, true))}</View>
 
           <Text style={styles.small}>
