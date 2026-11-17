@@ -1,9 +1,7 @@
 import { Platform } from 'react-native';
-import { Asset } from 'expo-asset';
-import * as FS from 'expo-file-system/legacy';
-import { widgetsDirectory } from 'expo-widgets';
-import PetWidget, { type PetWidgetProps } from '../widgets/PetWidget';
-import TripActivity, { type TripActivityProps } from '../widgets/TripActivity';
+import type { PetWidgetProps } from '../widgets/PetWidget';
+import type { TripActivityProps } from '../widgets/TripActivity';
+import { reportCrash } from './crashReport';
 import { PET_IMAGES } from '../components/petImages';
 import type { GameState } from '../game/types';
 import * as A from '../game/actions';
@@ -20,7 +18,37 @@ import { MOOD_INFO, moodFor } from '../game/care';
 
 const copied = new Set<string>();
 
-async function petImage(speciesId: string): Promise<string | null> {
+/**
+ * The widget modules are loaded only when first needed, inside a try, so a problem with them can
+ * never stop the app from starting. If they fail once, widgets are switched off for this session.
+ */
+type Mods = {
+  Asset: typeof import('expo-asset').Asset;
+  FS: typeof import('expo-file-system/legacy');
+  widgetsDirectory: string | null;
+  PetWidget: typeof import('../widgets/PetWidget').default;
+  TripActivity: typeof import('../widgets/TripActivity').default;
+};
+let mods: Mods | null | undefined;
+function load(): Mods | null {
+  if (mods !== undefined) return mods;
+  try {
+    mods = {
+      Asset: require('expo-asset').Asset,
+      FS: require('expo-file-system/legacy'),
+      widgetsDirectory: require('expo-widgets').widgetsDirectory ?? null,
+      PetWidget: require('../widgets/PetWidget').default,
+      TripActivity: require('../widgets/TripActivity').default,
+    };
+  } catch (e) {
+    reportCrash(e, 'widgets-load');
+    mods = null;
+  }
+  return mods;
+}
+
+async function petImage(m: Mods, speciesId: string): Promise<string | null> {
+  const { widgetsDirectory, FS, Asset } = m;
   if (!widgetsDirectory) return null;
   const target = `${widgetsDirectory.replace(/\/$/, '')}/pet-${speciesId}.png`;
   if (copied.has(target)) return target;
@@ -45,13 +73,16 @@ let lastKey = '';
 
 export async function syncWidgets(s: GameState, waiting: string | null): Promise<void> {
   if (Platform.OS !== 'ios') return;
+  const m = load();
+  if (!m) return;
+  const { PetWidget } = m;
   try {
     const pet = A.activePet(s) ?? s.pets[0];
     if (!pet) return;
     const day = A.today(s);
     const tripPet = s.expedition ? s.pets.find((p) => p.id === s.expedition!.petId) : undefined;
     const shown = tripPet ?? pet;
-    const image = await petImage(shown.speciesId);
+    const image = await petImage(m, shown.speciesId);
     const prog = Ex.progress(s);
     const now = Date.now();
     const lastFight = s.expedition?.fights?.length ? s.expedition.fights[s.expedition.fights.length - 1] : undefined;
@@ -91,13 +122,15 @@ export async function syncWidgets(s: GameState, waiting: string | null): Promise
         PetWidget.updateSnapshot(props);
       }
     }
-    await syncTripActivity(s, tripPet?.nickname ?? '', image, trip);
-  } catch {
+    await syncTripActivity(m, s, tripPet?.nickname ?? '', image, trip);
+  } catch (e) {
     // Widgets are a bonus; never let them break the game.
+    reportCrash(e, 'widgets-sync');
   }
 }
 
-async function syncTripActivity(s: GameState, name: string, image: string | null, trip: PetWidgetProps['trip']) {
+async function syncTripActivity(m: Mods, s: GameState, name: string, image: string | null, trip: PetWidgetProps['trip']) {
+  const { TripActivity } = m;
   const running = TripActivity.getInstances();
   if (!trip || !s.expedition) {
     for (const a of running) await a.end('default');

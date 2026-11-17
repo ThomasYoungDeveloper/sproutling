@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Linking, Platform, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import ErrorBoundary from './src/components/ErrorBoundary';
 import UpdateGate from './src/components/UpdateGate';
 import { GameProvider, useGame } from './src/state/GameContext';
 import { AuthProvider, useAuth } from './src/state/AuthContext';
@@ -354,6 +355,7 @@ function Gate() {
 export default function App() {
   if (Platform.OS === 'web' && typeof window !== 'undefined' && window.location.search.includes('lab=hats')) return <LabScreen />;
   return (
+    <ErrorBoundary>
     <SafeAreaProvider>
       <UpdateGate>
         <AuthProvider>
@@ -361,6 +363,7 @@ export default function App() {
         </AuthProvider>
       </UpdateGate>
     </SafeAreaProvider>
+    </ErrorBoundary>
   );
 }
 
