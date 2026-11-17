@@ -159,12 +159,6 @@ function ReturnSheet({ loot, onClose }: { loot: Ex.ExpeditionLoot; onClose: () =
                 <Text style={[styles.fightRes, { color: f.won ? colors.mintDark : '#C4562F' }]}>{f.won ? `Won · ${f.hpAfter}% HP left` : 'Knocked out'}</Text>
               </View>
             ))}
-            {loot.knockedOut ? (
-              <View style={styles.fightRow}>
-                <Text style={[styles.fightName, { opacity: 0.5 }]}>{loot.placeName}</Text>
-                <Text style={[styles.fightRes, { opacity: 0.5 }]}>Not reached</Text>
-              </View>
-            ) : null}
           </View>
         ) : null}
         <View style={styles.lootRow}>
