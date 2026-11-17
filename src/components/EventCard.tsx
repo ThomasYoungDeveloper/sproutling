@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { Animated, Easing, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
 import { useGame } from '../state/GameContext';
 import { Button, Card, ProgressBar } from './ui';
@@ -9,6 +9,58 @@ import { colors, space } from '../theme';
 import * as Ev from '../game/events';
 import * as A from '../game/actions';
 import { dailyQuests } from '../game/scoring';
+
+/** A few emoji drifting down the banner (leaves for Harvest, snow for Winter). */
+function Falling({ emojis, width, height }: { emojis: string[]; width: number; height: number }) {
+  const vals = useRef(emojis.map(() => new Animated.Value(0))).current;
+  useEffect(() => {
+    if (!width) return;
+    const loops = vals.map((v, i) => {
+      const l = Animated.loop(Animated.timing(v, { toValue: 1, duration: 6500 + i * 1700, delay: i * 1300, easing: Easing.linear, useNativeDriver: true }));
+      l.start();
+      return l;
+    });
+    return () => loops.forEach((l) => l.stop());
+  }, [width]);
+  if (!width) return null;
+  return (
+    <View pointerEvents="none" style={StyleSheet.absoluteFill}>
+      {emojis.map((e, i) => (
+        <Animated.Text
+          key={i}
+          style={{
+            position: 'absolute',
+            left: width * (0.2 + 0.3 * i),
+            top: -24,
+            fontSize: 18,
+            opacity: 0.75,
+            transform: [
+              { translateY: vals[i].interpolate({ inputRange: [0, 1], outputRange: [0, height + 40] }) },
+              { translateX: vals[i].interpolate({ inputRange: [0, 0.5, 1], outputRange: [0, 18, -10] }) },
+              { rotate: vals[i].interpolate({ inputRange: [0, 1], outputRange: ['0deg', '220deg'] }) },
+            ],
+          }}
+        >
+          {e}
+        </Animated.Text>
+      ))}
+    </View>
+  );
+}
+
+/** Gently pulses its child, for buttons that have something waiting. */
+function Pulse({ children }: { children: React.ReactNode }) {
+  const v = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    const l = Animated.loop(Animated.sequence([
+      Animated.timing(v, { toValue: 1, duration: 700, useNativeDriver: true }),
+      Animated.timing(v, { toValue: 0, duration: 700, useNativeDriver: true }),
+    ]));
+    l.start();
+    return () => l.stop();
+  }, []);
+  return <Animated.View style={{ transform: [{ scale: v.interpolate({ inputRange: [0, 1], outputRange: [1, 1.08] }) }] }}>{children}</Animated.View>;
+}
 
 export default function EventCard() {
   const { state, apply } = useGame();
@@ -41,23 +93,61 @@ export default function EventCard() {
   const tokenName = ev.id === 'harvest' ? 'acorns' : 'stars';
 
   if (!open) {
+    const next = ev.milestones.find((m, i) => !got.includes(i) && tokens < m.tokens);
+    const nextIdx = next ? ev.milestones.indexOf(next) : -1;
     return (
       <Pressable
         onPress={() => { buzz('light'); setOpen(true); }}
-        style={({ pressed }) => [styles.row, { backgroundColor: ev.colors[0] }, pressed && { transform: [{ scale: 0.98 }] }]}
+        onLayout={(e) => setBox({ w: Math.ceil(e.nativeEvent.layout.width), h: Math.ceil(e.nativeEvent.layout.height) })}
+        style={({ pressed }) => [styles.banner, { backgroundColor: ev.colors[1] }, pressed && { transform: [{ scale: 0.98 }] }]}
         accessibilityRole="button"
-        accessibilityLabel={`${ev.name}, ${daysLeft} days left${ready ? `, ${ready} rewards to claim` : ''}. Open`}
+        accessibilityLabel={`${ev.name}, ${daysLeft} days left, ${tokens} ${tokenName}${ready ? `, ${ready} rewards to claim` : ''}. Open`}
       >
-        <Text style={{ fontSize: 26 }}>{ev.emoji}</Text>
-        <View style={{ flex: 1 }}>
-          <Text style={styles.rowTitle}>{ev.name}</Text>
-          <Text style={styles.rowSub} numberOfLines={2}>Earn {tokenName} from daily quests for limited gear · {daysLeft} day{daysLeft === 1 ? '' : 's'} left</Text>
+        {box.w > 0 ? (
+          <Svg width={box.w} height={box.h} style={StyleSheet.absoluteFill}>
+            <Defs>
+              <LinearGradient id={`evb-${ev.id}`} x1="0" y1="0" x2="1" y2="1">
+                <Stop offset="0" stopColor={ev.colors[0]} />
+                <Stop offset="1" stopColor={ev.colors[1]} />
+              </LinearGradient>
+            </Defs>
+            <Rect x={0} y={0} width={box.w} height={box.h} fill={`url(#evb-${ev.id})`} />
+          </Svg>
+        ) : null}
+        <Falling emojis={ev.id === 'harvest' ? ['🍂', '🍁', '🍂'] : ['❄️', '✨', '❄️']} width={box.w} height={box.h} />
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+          <View style={styles.badgeBox}><Text style={{ fontSize: 26 }}>{ev.emoji}</Text></View>
+          <View style={{ flex: 1, minWidth: 0 }}>
+            <Text style={styles.bannerKicker} numberOfLines={1}>EVENT · {daysLeft} DAY{daysLeft === 1 ? '' : 'S'} LEFT</Text>
+            <Text style={styles.bannerTitle} numberOfLines={1}>{ev.name}</Text>
+          </View>
+          <View style={styles.countPill}><Text style={styles.countPillText} numberOfLines={1}>{ev.token} {tokens}</Text></View>
         </View>
-        {ready ? (
-          <View style={styles.claimPill}><Text style={styles.claimPillText}>Claim {ready}</Text></View>
-        ) : (
-          <View style={styles.claimPill}><Text style={styles.claimPillText}>{ev.token} {tokens}</Text></View>
-        )}
+        <View style={styles.track}>
+          <View style={styles.trackLine} />
+          <View style={[styles.trackFill, { width: `${Math.min(100, (tokens / max) * 100)}%` }]} />
+          {ev.milestones.map((m, i) => {
+            const have = got.includes(i);
+            const can = !have && tokens >= m.tokens;
+            return (
+              <View key={i} style={[styles.stop, { left: `${(m.tokens / max) * 100}%` }]}>
+                <View style={[styles.stopDot, have && styles.stopHave, can && styles.stopCan]}>
+                  {m.item ? <ItemIcon id={m.item} size={22} /> : <Text style={{ fontSize: 13 }}>🎁</Text>}
+                  {have ? <View style={styles.stopCheck}><Text style={styles.stopCheckText}>✓</Text></View> : null}
+                </View>
+                <Text style={styles.stopNum}>{m.tokens}</Text>
+              </View>
+            );
+          })}
+        </View>
+        <View style={styles.nextRow}>
+          <Text style={styles.nextText} numberOfLines={2}>
+            {next ? <>Next: <Text style={{ fontWeight: '900' }}>{Ev.milestoneLabel(next)}</Text> in {next.tokens - tokens} {tokenName}. Finish today’s habits to earn them.</> : 'You’ve unlocked everything. Amazing!'}
+          </Text>
+          {ready ? (
+            <Pulse><View style={styles.claim}><Text style={styles.claimText}>Claim {ready}</Text></View></Pulse>
+          ) : null}
+        </View>
       </Pressable>
     );
   }
@@ -137,6 +227,26 @@ export default function EventCard() {
 }
 
 const styles = StyleSheet.create({
+  banner: { borderRadius: 24, overflow: 'hidden', padding: 14, paddingBottom: 12, gap: 10, shadowColor: '#7A3418', shadowOpacity: 0.3, shadowRadius: 0, shadowOffset: { width: 0, height: 5 }, elevation: 3 },
+  badgeBox: { width: 46, height: 46, borderRadius: 16, backgroundColor: 'rgba(255,255,255,0.22)', alignItems: 'center', justifyContent: 'center' },
+  bannerKicker: { fontSize: 11, fontWeight: '900', letterSpacing: 1, color: '#FFE9C9' },
+  bannerTitle: { fontSize: 20, fontWeight: '900', color: '#FFFFFF' },
+  countPill: { backgroundColor: '#FFFFFF', borderRadius: 999, paddingHorizontal: 12, paddingVertical: 6 },
+  countPillText: { fontSize: 15, fontWeight: '900', color: '#8A3E15' },
+  track: { height: 56, marginTop: 16, marginHorizontal: 18 },
+  trackLine: { position: 'absolute', left: 0, right: 0, top: 0, height: 8, borderRadius: 999, backgroundColor: 'rgba(59,32,10,0.35)' },
+  trackFill: { position: 'absolute', left: 0, top: 0, height: 8, borderRadius: 999, backgroundColor: '#FFE27A' },
+  stop: { position: 'absolute', top: -15, width: 40, marginLeft: -20, alignItems: 'center', gap: 2 },
+  stopDot: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#FFF6E6', borderWidth: 3, borderColor: '#E7C79B', alignItems: 'center', justifyContent: 'center' },
+  stopHave: { backgroundColor: '#FFE27A', borderColor: '#FFFFFF' },
+  stopCan: { backgroundColor: '#FFFFFF', borderColor: '#FFE27A' },
+  stopCheck: { position: 'absolute', right: -5, top: -5, width: 16, height: 16, borderRadius: 8, backgroundColor: colors.mint, alignItems: 'center', justifyContent: 'center' },
+  stopCheckText: { color: '#FFFFFF', fontSize: 10, fontWeight: '900' },
+  stopNum: { fontSize: 10, fontWeight: '900', color: '#FFF3E0' },
+  nextRow: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: 'rgba(255,255,255,0.16)', borderRadius: 16, paddingVertical: 8, paddingHorizontal: 10 },
+  nextText: { flex: 1, fontSize: 13, fontWeight: '800', color: '#FFFFFF' },
+  claim: { backgroundColor: '#FFE27A', borderRadius: 12, paddingHorizontal: 12, paddingVertical: 8 },
+  claimText: { fontSize: 14, fontWeight: '900', color: '#5A2A0A' },
   row: { flexDirection: 'row', alignItems: 'center', gap: 10, borderRadius: 18, paddingVertical: 12, paddingHorizontal: 14 },
   rowTitle: { fontSize: 16, fontWeight: '900', color: '#FFFFFF' },
   rowSub: { fontSize: 12, fontWeight: '800', color: '#FFE9C9' },

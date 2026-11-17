@@ -9,6 +9,7 @@ import ExpeditionCard from '../components/ExpeditionCard';
 import EventCard from '../components/EventCard';
 import AchievementsSheet from '../components/AchievementsSheet';
 import PetSheet from '../components/PetSheet';
+import TrainingCard from '../components/TrainingCard';
 import EggSprite from '../components/EggSprite';
 import { Button } from '../components/ui';
 import { buzz, PopIn } from '../components/fx';
@@ -20,7 +21,7 @@ import * as C from '../game/care';
 type Tab = 'eggs' | 'chests';
 
 /** Reminders that get a chip. Everything else already shows up on Home (tray, Today card, event and expedition rows). */
-const CHIP_IDS = ['train', 'chests', 'badges', 'egg'];
+const CHIP_IDS = ['chests', 'badges', 'egg'];
 
 function chipLabel(r: C.Reminder, s: ReturnType<typeof useGame>['state']): { icon: string; text: string } {
   if (r.id === 'train' && r.petId) {
@@ -34,7 +35,7 @@ function chipLabel(r: C.Reminder, s: ReturnType<typeof useGame>['state']): { ico
   return { icon: r.icon, text: r.text };
 }
 
-export default function HomeScreen({ onNavigate, onAccount, account }: { onNavigate?: (tab: Tab) => void; onAccount?: () => void; account?: { initial: string; label: string; warn?: boolean } }) {
+export default function HomeScreen({ onNavigate, onAccount, account, banner }: { onNavigate?: (tab: Tab) => void; onAccount?: () => void; account?: { initial: string; label: string; warn?: boolean }; banner?: React.ReactNode }) {
   const { state, apply } = useGame();
   const pet = A.activePet(state);
   const overlay = useOverlay();
@@ -52,9 +53,10 @@ export default function HomeScreen({ onNavigate, onAccount, account }: { onNavig
   };
 
   return (
-    <View style={{ gap: space.md }}>
+    <View>
       {pet ? <PetScene onShop={openShop} onDressUp={openWardrobe} onAccount={onAccount} account={account} /> : null}
-
+      <View style={styles.homeSheet}>
+      {banner}
       <TodayCard />
 
       {readyEggs.length ? <HatchCard rarity={readyEggs[0].rarity} count={readyEggs.length} onPress={() => { buzz('success'); onNavigate?.('eggs'); }} /> : null}
@@ -85,6 +87,8 @@ export default function HomeScreen({ onNavigate, onAccount, account }: { onNavig
 
       <EventCard />
       <ExpeditionCard />
+      {pet ? <TrainingCard onOpen={() => overlay.open(<PetSheet petId={pet.id} onClose={overlay.close} />)} /> : null}
+      </View>
     </View>
   );
 }
@@ -155,6 +159,7 @@ function TodoSheet({ items, onPick, onClose }: { items: C.Reminder[]; onPick: (r
 }
 
 const styles = StyleSheet.create({
+  homeSheet: { marginTop: -26, borderTopLeftRadius: 28, borderTopRightRadius: 28, backgroundColor: colors.bg, padding: space.lg, paddingTop: space.lg, gap: space.md, width: '100%', maxWidth: 520, alignSelf: 'center' },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, alignItems: 'center' },
   chip: { height: 38, paddingHorizontal: 12, borderRadius: 999, borderWidth: 1, borderColor: colors.line, backgroundColor: '#FFFFFF', flexDirection: 'row', alignItems: 'center', gap: 6 },
   chipText: { fontSize: 14, fontWeight: '900', color: colors.ink },

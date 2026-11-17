@@ -19,6 +19,9 @@ const INFO: Record<Habit, { icon: string; label: string; color: string; goal: nu
   sleep: { icon: '🌙', label: 'sleep', color: '#7F77DD', goal: 7 },
 };
 
+/** Each habit tile is softly tinted in its ring color. */
+const TINT: Record<string, string> = { steps: '#DDF4EA', water: '#DCEBFB', sleep: '#E8E1FA' };
+
 /** Today's three habits as tiles with progress rings. Tap a tile to log it. */
 export default function TodayCard() {
   const { state } = useGame();
@@ -57,7 +60,7 @@ export default function TodayCard() {
                 buzz('light');
                 overlay.open(<LogSheet habit={h} onClose={overlay.close} />);
               }}
-              style={({ pressed }) => [styles.tile, boosted && { borderColor: INFO[h].color, borderWidth: 2, backgroundColor: '#F4F3FE' }, pressed && { transform: [{ scale: 0.96 }] }]}
+              style={({ pressed }) => [styles.tile, { backgroundColor: TINT[h] }, boosted && { borderColor: INFO[h].color, borderWidth: 2 }, pressed && { transform: [{ scale: 0.96 }] }]}
               accessibilityRole="button"
               accessibilityLabel={`${INFO[h].label}: ${shown[h]}${done[h] ? ', done' : ''}${boosted ? `, ${pet?.nickname ?? 'your pet'} boosts this` : ''}. Tap to log`}
             >
@@ -215,7 +218,7 @@ function Glass({ on, index, onPress }: { on: boolean; index: number; onPress: ()
 }
 
 const styles = StyleSheet.create({
-  activity: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: '#F6FAF8', borderRadius: 14, borderWidth: 1, borderColor: colors.line, padding: 10 },
+  activity: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: '#FFF0F3', borderRadius: 14, padding: 10 },
   actTitle: { fontSize: 14, fontWeight: '900', color: colors.ink },
   actSub: { fontSize: 12, fontWeight: '800', color: colors.muted },
   mindful: { borderRadius: 999, paddingHorizontal: 9, paddingVertical: 4, backgroundColor: '#EFEDF6' },
@@ -227,7 +230,7 @@ const styles = StyleSheet.create({
   xp: { backgroundColor: colors.mintSoft, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 3 },
   xpText: { color: colors.mintDark, fontSize: 14, fontWeight: '900' },
   tiles: { flexDirection: 'row', gap: 8 },
-  tile: { flex: 1, borderWidth: 1, borderColor: colors.line, backgroundColor: '#F6FAF8', borderRadius: 16, paddingVertical: 10, paddingHorizontal: 4, alignItems: 'center', gap: 3 },
+  tile: { flex: 1, borderWidth: 0, borderColor: 'transparent', backgroundColor: '#F6FAF8', borderRadius: 16, paddingVertical: 10, paddingHorizontal: 4, alignItems: 'center', gap: 3 },
   value: { fontSize: 16, fontWeight: '900', color: colors.ink },
   label: { fontSize: 12, fontWeight: '800', color: colors.muted },
   mult: { position: 'absolute', top: -9, right: -5, backgroundColor: '#7F77DD', borderRadius: 999, paddingHorizontal: 7, paddingVertical: 2, zIndex: 2 },

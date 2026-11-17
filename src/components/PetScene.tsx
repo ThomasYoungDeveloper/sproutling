@@ -235,7 +235,7 @@ function DraggableToy({ toy, onDrop, onTap, onGrab, small }: { toy: Cosmetic; on
 const TOY_SIZE = 46;
 const AUTO_LINES = ['I love my {toy}!', 'Watch this!', 'Hehe, so fun!', 'Play with me!', 'Again, again!', 'Best day ever!'];
 /** Top of a toy resting on the ground, measured from the top of the scene. */
-const GROUND_TOP = 316;
+const GROUND_TOP = 318;
 
 /** A toy sitting in the scene. Drag it around, drag it back to the tray, or tap it to make your pet play. */
 function PlacedToy({ toy, x, fromY, bounce, onMove, onTap }: { toy: Cosmetic; x: number; fromY: number; bounce: number; onMove: (dx: number, upToTray: boolean) => void; onTap: () => void }) {
@@ -308,6 +308,130 @@ function PlacedToy({ toy, x, fromY, bounce, onMove, onTap }: { toy: Cosmetic; x:
   );
 }
 
+/** The yard: the pet's feet can be anywhere between these two lines (further up = further back). */
+const SCENE_H = 500;
+const FLOOR_TOP = 262;
+const FLOOR_BOTTOM = 372;
+const HOME_FEET = 340;
+const PET_SIZE = 170;
+
+/** The color at the very top of the home yard's sky (for the strip behind the phone's status bar), or whether it's a dark sky. */
+export function yardSkyTop(s: { scene?: string }, wantDark?: false): string;
+export function yardSkyTop(s: { scene?: string }, wantDark: true): boolean;
+export function yardSkyTop(s: { scene?: string }, wantDark = false): string | boolean {
+  const theme = s.scene ? SCENES[s.scene] : undefined;
+  const sky = skyNow();
+  if (wantDark) return theme ? !!theme.dark : sky === 'night';
+  return theme ? theme.sky[0] : SKY[sky][0];
+}
+
+/** The home yard, drawn from a tilted top-down view: sky and fence at the back, a lawn floor the pet walks on. */
+export function YardBackdrop({ element, sky, scene }: { element: Element; sky: Sky; scene?: string }) {
+  const [box, setBox] = React.useState({ w: 0, h: 0 });
+  const theme = scene ? SCENES[scene] : undefined;
+  const [top, bottom] = theme ? theme.sky : SKY[sky];
+  const [h1, h2, h3] = theme ? theme.hills : HILLS[element];
+  const night = theme ? !!theme.dark : sky === 'night';
+  const { w, h } = box;
+  return (
+    <View
+      pointerEvents="none"
+      style={[StyleSheet.absoluteFill, { backgroundColor: h1 }]}
+      onLayout={(e) => {
+        const nw = Math.ceil(e.nativeEvent.layout.width), nh = Math.ceil(e.nativeEvent.layout.height);
+        if (nw !== box.w || nh !== box.h) setBox({ w: nw, h: nh });
+      }}
+    >
+      {w > 0 ? (
+        <Svg width={w} height={h} style={{ position: 'absolute', top: 0, left: 0 }}>
+          <Defs>
+            <LinearGradient id={`ysky-${scene ?? sky}`} x1="0" y1="0" x2="0" y2="1">
+              <Stop offset="0" stopColor={top} />
+              <Stop offset="1" stopColor={bottom} />
+            </LinearGradient>
+            <LinearGradient id={`ylawn-${scene ?? element}`} x1="0" y1="0" x2="0" y2="1">
+              <Stop offset="0" stopColor={h1} />
+              <Stop offset="1" stopColor={h2} />
+            </LinearGradient>
+          </Defs>
+          <Rect x={0} y={0} width={w} height={210} fill={`url(#ysky-${scene ?? sky})`} />
+          {night ? (
+            <>
+              <Circle cx={w * 0.8} cy={70} r={22} fill="#FFF6D6" />
+              {[0.1, 0.25, 0.4, 0.55, 0.92].map((x, i) => <Circle key={i} cx={w * x} cy={30 + (i % 3) * 28} r={2} fill="#FFFFFF" opacity={0.8} />)}
+            </>
+          ) : (
+            <Circle cx={w * 0.82} cy={96} r={34} fill="#FFF3B8" opacity={0.85} />
+          )}
+          <Path d={`M0 150 Q${w * 0.15} 118 ${w * 0.32} 140 T${w * 0.64} 134 T${w} 140 V210 H0z`} fill={h3} opacity={0.9} />
+          <Rect x={0} y={170} width={w} height={38} fill={night ? '#8C7A9E' : '#E8C79A'} />
+          {Array.from({ length: Math.ceil(w / 32) + 1 }, (_, i) => (
+            <Rect key={i} x={i * 32 + 8} y={170} width={3} height={38} fill={night ? '#6E5E82' : '#B98B55'} />
+          ))}
+          <Rect x={0} y={180} width={w} height={3} fill={night ? '#6E5E82' : '#B98B55'} />
+          <Rect x={0} y={197} width={w} height={3} fill={night ? '#6E5E82' : '#B98B55'} />
+          <Rect x={0} y={206} width={w} height={h - 206} fill={`url(#ylawn-${scene ?? element})`} />
+          {[250, 300, 360, 430].map((y) => <Rect key={y} x={0} y={y} width={w} height={2} fill="#FFFFFF" opacity={0.16} />)}
+          {[-0.35, -0.12, 0.12, 0.35].map((k) => (
+            <Path key={k} d={`M${w / 2 + k * w * 0.55} 206 L${w / 2 + k * w * 1.9} ${h}`} stroke="#FFFFFF" strokeOpacity={0.14} strokeWidth={2} />
+          ))}
+          <Ellipse cx={w / 2} cy={330} rx={Math.min(130, w * 0.32)} ry={34} fill="#FFFFFF" opacity={0.28} />
+          <Ellipse cx={w / 2} cy={330} rx={Math.min(112, w * 0.28)} ry={26} fill="none" stroke="#FFFFFF" strokeOpacity={0.5} strokeWidth={3} strokeDasharray="6 6" />
+          {[
+            [0.08, 236], [0.11, 240], [0.9, 250], [0.78, 452], [0.2, 470],
+          ].map(([x, y], i) => (
+            <Path key={i} d={`M${w * x} ${y}c4-12 9-12 12 0`} stroke={h3} strokeWidth={3} fill="none" strokeLinecap="round" />
+          ))}
+        </Svg>
+      ) : null}
+    </View>
+  );
+}
+
+function Bed() {
+  return (
+    <Svg width={96} height={62} viewBox="0 0 96 62">
+      <Ellipse cx={48} cy={54} rx={44} ry={7} fill="#000" opacity={0.15} />
+      <Ellipse cx={48} cy={38} rx={44} ry={18} fill="#C46A8E" stroke="#5A2A3A" strokeWidth={3} />
+      <Ellipse cx={48} cy={34} rx={34} ry={11} fill="#F7B6CC" />
+      <Ellipse cx={32} cy={30} rx={12} ry={7} fill="#FFFFFF" stroke="#5A2A3A" strokeWidth={2} />
+    </Svg>
+  );
+}
+function Bowl({ full }: { full: boolean }) {
+  return (
+    <Svg width={64} height={44} viewBox="0 0 64 44">
+      <Ellipse cx={32} cy={38} rx={28} ry={5} fill="#000" opacity={0.15} />
+      <Path d="M6 18h52l-6 18H12z" fill="#4A8FE0" stroke="#1F3F6A" strokeWidth={3} strokeLinejoin="round" />
+      <Ellipse cx={32} cy={18} rx={26} ry={7} fill={full ? '#F2B04A' : '#D6E4F2'} stroke="#1F3F6A" strokeWidth={3} />
+      {full ? (
+        <>
+          <Circle cx={24} cy={15} r={3} fill="#C9772A" />
+          <Circle cx={36} cy={14} r={3} fill="#C9772A" />
+        </>
+      ) : null}
+    </Svg>
+  );
+}
+function Ball() {
+  return (
+    <Svg width={44} height={44} viewBox="0 0 44 44">
+      <Ellipse cx={22} cy={40} rx={14} ry={3} fill="#000" opacity={0.15} />
+      <Circle cx={22} cy={22} r={16} fill="#FF6B5B" stroke="#5A1A1A" strokeWidth={3} />
+      <Path d="M8 18c8 4 20 4 28 0" fill="none" stroke="#FFFFFF" strokeWidth={4} />
+    </Svg>
+  );
+}
+function Plant() {
+  return (
+    <Svg width={46} height={60} viewBox="0 0 46 60">
+      <Ellipse cx={23} cy={56} rx={16} ry={3} fill="#000" opacity={0.15} />
+      <Path d="M9 34h28l-4 22H13z" fill="#D9774A" stroke="#5A2A1A" strokeWidth={3} strokeLinejoin="round" />
+      <Path d="M23 34c-10-6-16-18-10-26 4 8 8 12 10 26zM23 34c8-8 18-14 18-24-8 4-14 10-18 24z" fill="#5CC27A" stroke="#2E6B3E" strokeWidth={2.5} strokeLinejoin="round" />
+    </Svg>
+  );
+}
+
 export default function PetScene({ onTrinketsEmpty, onDressUp, onShop, onAccount, account }: { onTrinketsEmpty?: () => void; onDressUp?: () => void; onShop?: () => void; onAccount?: () => void; account?: { initial: string; label: string; warn?: boolean } }) {
   const { state, apply } = useGame();
   const pet = A.activePet(state)!;
@@ -318,7 +442,6 @@ export default function PetScene({ onTrinketsEmpty, onDressUp, onShop, onAccount
   const mood = C.moodFor(d);
   const mi = C.MOOD_INFO[mood];
   const tasks = C.careTasks(d);
-  const mult = C.careMultiplier(d);
   const trinkets = C.trinketCount(state);
   const [sky] = useState(skyNow);
   const [width, setWidth] = useState(0);
@@ -328,6 +451,7 @@ export default function PetScene({ onTrinketsEmpty, onDressUp, onShop, onAccount
   // Idle: gentle bob and breathing. Tapping makes the pet hop.
   const bob = useRef(new Animated.Value(0)).current;
   const hop = useRef(new Animated.Value(0)).current;
+  const step = useRef(new Animated.Value(0)).current;
   useEffect(() => {
     const loop = Animated.loop(
       Animated.sequence([
@@ -340,14 +464,17 @@ export default function PetScene({ onTrinketsEmpty, onDressUp, onShop, onAccount
   }, [mood]);
   const [burst, setBurst] = useState(0);
 
+  const hopOnce = (high = 1) => {
+    hop.setValue(0);
+    Animated.sequence([
+      Animated.timing(hop, { toValue: high, duration: 180, easing: Easing.out(Easing.quad), useNativeDriver: true }),
+      Animated.spring(hop, { toValue: 0, friction: 3.5, tension: 140, useNativeDriver: true }),
+    ]).start();
+  };
   const doPlay = () => {
     buzz('light', 'pop');
     setBurst((b) => b + 1);
-    hop.setValue(0);
-    Animated.sequence([
-      Animated.timing(hop, { toValue: 1, duration: 180, easing: Easing.out(Easing.quad), useNativeDriver: true }),
-      Animated.spring(hop, { toValue: 0, friction: 3.5, tension: 140, useNativeDriver: true }),
-    ]).start();
+    hopOnce();
     apply(C.play);
   };
 
@@ -375,16 +502,44 @@ export default function PetScene({ onTrinketsEmpty, onDressUp, onShop, onAccount
       sceneRect.current = { x, y };
     });
   };
-  // The pet walks over to toys. petX is its offset from the middle of the scene.
+  const say = (text: string) => {
+    setToyLine({ id: Date.now(), text });
+    setTimeout(() => setToyLine((l) => (l && Date.now() - l.id >= 2200 ? null : l)), 2300);
+  };
+
+  // Walking around the yard. petX is the offset from the middle, petY is where the feet are.
   const petX = useRef(new Animated.Value(0)).current;
-  const petXNow = useRef(0);
-  const walkTo = (target: number, then?: () => void) => {
-    const limit = Math.max(0, width / 2 - 80);
-    const to = Math.max(-limit, Math.min(limit, target));
-    const dist = Math.abs(to - petXNow.current);
-    petXNow.current = to;
-    if (dist < 4) return then?.();
-    Animated.timing(petX, { toValue: to, duration: Math.min(1200, 250 + dist * 4), easing: Easing.inOut(Easing.quad), useNativeDriver: true }).start(() => then?.());
+  const petY = useRef(new Animated.Value(HOME_FEET)).current;
+  const face = useRef(new Animated.Value(1)).current;
+  const pos = useRef({ x: 0, y: HOME_FEET });
+  const busy = useRef(false);
+  const lastAct = useRef(Date.now());
+  const walkTo = (targetX: number, targetY: number | null, then?: () => void) => {
+    const limit = Math.max(0, width / 2 - 70);
+    const to = Math.max(-limit, Math.min(limit, targetX));
+    const ty = Math.max(FLOOR_TOP, Math.min(FLOOR_BOTTOM, targetY ?? pos.current.y));
+    const dist = Math.hypot(to - pos.current.x, (ty - pos.current.y) * 1.6);
+    if (Math.abs(to - pos.current.x) > 6) face.setValue(to < pos.current.x ? -1 : 1);
+    pos.current = { x: to, y: ty };
+    if (dist < 6) return then?.();
+    const duration = Math.min(2200, 300 + dist * 6);
+    busy.current = true;
+    const steps = Animated.loop(
+      Animated.sequence([
+        Animated.timing(step, { toValue: 1, duration: 150, easing: Easing.out(Easing.quad), useNativeDriver: true }),
+        Animated.timing(step, { toValue: 0, duration: 150, easing: Easing.in(Easing.quad), useNativeDriver: true }),
+      ]),
+    );
+    steps.start();
+    Animated.parallel([
+      Animated.timing(petX, { toValue: to, duration, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
+      Animated.timing(petY, { toValue: ty, duration, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
+    ]).start(() => {
+      steps.stop();
+      step.setValue(0);
+      busy.current = false;
+      then?.();
+    });
   };
   /** Walk next to a toy at scene x, then play with it. */
   const playWith = (key: number, earn: boolean) => {
@@ -392,11 +547,11 @@ export default function PetScene({ onTrinketsEmpty, onDressUp, onShop, onAccount
     if (!p) return;
     const toy = COSMETIC_BY_ID[p.id];
     const center = width / 2;
-    const side = p.x < center + petXNow.current ? 1 : -1;
-    walkTo(p.x - center + side * 62, () => {
+    const side = p.x < center + pos.current.x ? 1 : -1;
+    lastAct.current = Date.now();
+    walkTo(p.x - center + side * 58, GROUND_TOP + TOY_SIZE, () => {
       react(toy, earn);
       if (toy.reaction === 'munch') {
-        // Food gets eaten, then goes back in the tray.
         setTimeout(() => setPlaced((list) => list.filter((q) => q.key !== key)), 800);
       } else {
         setPlaced((list) => list.map((q) => (q.key === key ? { ...q, bounce: q.bounce + 1 } : q)));
@@ -405,17 +560,19 @@ export default function PetScene({ onTrinketsEmpty, onDressUp, onShop, onAccount
   };
   const placedRef = useRef(placed);
   placedRef.current = placed;
-  // While a toy is out, the pet plays with it by itself now and then.
+  // The pet wanders the yard on its own, and plays with any toy that's out.
   useEffect(() => {
-    if (!placed.some((p) => COSMETIC_BY_ID[p.id]?.reaction !== 'munch')) return;
+    if (!width) return;
     const t = setInterval(() => {
+      if (busy.current || Date.now() - lastAct.current < 3500) return;
       const fun = placedRef.current.filter((p) => COSMETIC_BY_ID[p.id]?.reaction !== 'munch');
-      if (!fun.length) return;
-      if (Math.random() < 0.35) return walkTo(0);
-      playWith(fun[Math.floor(Math.random() * fun.length)].key, false);
-    }, 5200);
+      if (fun.length && Math.random() < 0.5) return playWith(fun[Math.floor(Math.random() * fun.length)].key, false);
+      if (Math.random() < (mood === 'sleepy' ? 0.7 : 0.3)) return;
+      const limit = Math.max(0, width / 2 - 80);
+      walkTo((Math.random() * 2 - 1) * limit, FLOOR_TOP + Math.random() * (FLOOR_BOTTOM - FLOOR_TOP));
+    }, 4200);
     return () => clearInterval(t);
-  }, [placed.length, width]);
+  }, [width, mood]);
 
   const react = (toy: Cosmetic, earn = true) => {
     const sounds = { munch: 'munch', bubbles: 'bubbles', notes: 'notes', rocket: 'whoosh', spin: 'whoosh', hop: toy.id === 'duck' ? 'squeak' : 'pop' } as const;
@@ -430,26 +587,51 @@ export default function PetScene({ onTrinketsEmpty, onDressUp, onShop, onAccount
     };
     setBurstSet(sets[toy.reaction ?? 'hop']);
     setBurst((b) => b + 1);
-    setToyLine({ id: Date.now(), text: earn ? toy.line ?? 'Yay!' : AUTO_LINES[Math.floor(Math.random() * AUTO_LINES.length)].replace('{toy}', toy.name.toLowerCase()) });
-    setTimeout(() => setToyLine((l) => (l && Date.now() - l.id >= 2200 ? null : l)), 2300);
-    if (toy.reaction === 'munch') {
-      squash.setValue(0);
-      Animated.sequence([0, 1, 2].flatMap(() => [
-        Animated.timing(squash, { toValue: 1, duration: 120, useNativeDriver: true }),
-        Animated.timing(squash, { toValue: 0, duration: 140, useNativeDriver: true }),
-      ])).start();
-    } else if (toy.reaction === 'spin') {
+    say(earn ? toy.line ?? 'Yay!' : AUTO_LINES[Math.floor(Math.random() * AUTO_LINES.length)].replace('{toy}', toy.name.toLowerCase()));
+    if (toy.reaction === 'munch') munch();
+    else if (toy.reaction === 'spin') {
       spin.setValue(0);
       Animated.timing(spin, { toValue: 1, duration: 700, easing: Easing.inOut(Easing.cubic), useNativeDriver: true }).start();
-    } else {
-      const high = toy.reaction === 'rocket' ? 1 : 0.6;
-      hop.setValue(0);
-      Animated.sequence([
-        Animated.timing(hop, { toValue: high * (toy.reaction === 'rocket' ? 3 : 1), duration: toy.reaction === 'rocket' ? 420 : 180, easing: Easing.out(Easing.quad), useNativeDriver: true }),
-        Animated.spring(hop, { toValue: 0, friction: 3.5, tension: 120, useNativeDriver: true }),
-      ]).start();
-    }
+    } else hopOnce(toy.reaction === 'rocket' ? 3 : 0.6);
     if (earn) apply(C.playToy);
+  };
+  const munch = () => {
+    squash.setValue(0);
+    Animated.sequence([0, 1, 2].flatMap(() => [
+      Animated.timing(squash, { toValue: 1, duration: 120, useNativeDriver: true }),
+      Animated.timing(squash, { toValue: 0, duration: 140, useNativeDriver: true }),
+    ])).start();
+  };
+
+  // Things in the yard. Tapping one sends the pet over.
+  const bed = { x: 20, y: 214 };
+  const bowl = { x: Math.max(0, width - 84), y: 376 };
+  const ball = { x: 26, y: 356 };
+  const goBed = () => {
+    lastAct.current = Date.now() + 4000;
+    walkTo(bed.x + 48 - width / 2, FLOOR_TOP, () => {
+      buzz('light', 'pop');
+      say(mood === 'sleepy' || night ? 'Zzz… so cozy.' : 'My comfy bed!');
+    });
+  };
+  const goBowl = (fromButton = false) => {
+    lastAct.current = Date.now() + 4000;
+    walkTo(bowl.x - 20 - width / 2, FLOOR_BOTTOM, () => {
+      if (tasks[0].done) return say(fromButton ? 'Already full, thanks!' : 'I’m full!');
+      buzz('success', 'munch');
+      munch();
+      setBurstSet(['😋', '✨', '💛']);
+      setBurst((b) => b + 1);
+      say('Yum, dinner time!');
+      apply(C.feed);
+    });
+  };
+  const goBall = () => {
+    lastAct.current = Date.now() + 4000;
+    walkTo(ball.x + 60 - width / 2, FLOOR_BOTTOM - 10, () => {
+      say('Again! Again!');
+      doPlay();
+    });
   };
 
   // Drop test: is the finger over the pet?
@@ -458,12 +640,11 @@ export default function PetScene({ onTrinketsEmpty, onDressUp, onShop, onAccount
     if (!sr) return false;
     const sx = x - sr.x;
     const sy = y - sr.y;
-    if (sx < 0 || sx > width || sy < 0 || sy > GROUND_TOP + 30) return false; // dropped on the tray or outside: back it goes
+    if (sx < 0 || sx > width || sy < 206 || sy > FLOOR_BOTTOM + 30) return false; // dropped off the floor: back it goes
     const r = petRect.current;
     const onPet = !!r && x >= r.x - 30 && x <= r.x + r.w + 30 && y >= r.y - 30 && y <= r.y + r.h + 30;
-    const center = width / 2 + petXNow.current;
-    // Dropped on the pet: it lands right beside them.
-    const tx = onPet ? center + (sx < center ? -62 : 62) : Math.max(TOY_SIZE, Math.min(width - TOY_SIZE, sx));
+    const center = width / 2 + pos.current.x;
+    const tx = onPet ? center + (sx < center ? -58 : 58) : Math.max(TOY_SIZE, Math.min(width - TOY_SIZE, sx));
     const key = Date.now();
     setPlaced((list) => [...list, { key, id: toy.id, x: tx, fromY: Math.min(GROUND_TOP, sy - TOY_SIZE / 2), bounce: 0 }]);
     setShowToys(false);
@@ -503,183 +684,231 @@ export default function PetScene({ onTrinketsEmpty, onDressUp, onShop, onAccount
     lastLevel.current = lp.level;
   }, [pet.id]);
 
-  const petTransform = [
+  const depth = petY.interpolate({ inputRange: [FLOOR_TOP, FLOOR_BOTTOM], outputRange: [0.82, 1.08], extrapolate: 'clamp' });
+  const placeTransform = [
     { translateX: petX },
-    { translateY: Animated.add(bob.interpolate({ inputRange: [0, 1], outputRange: [0, -7] }), hop.interpolate({ inputRange: [0, 1], outputRange: [0, -38] })) },
+    { translateY: Animated.add(petY, -HOME_FEET) },
+  ];
+  const petTransform = [
+    { translateY: Animated.add(Animated.add(bob.interpolate({ inputRange: [0, 1], outputRange: [0, -6] }), hop.interpolate({ inputRange: [0, 1], outputRange: [0, -38] })), step.interpolate({ inputRange: [0, 1], outputRange: [0, -9] })) },
     { rotate: spin.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '360deg'] }) },
     { scaleY: Animated.add(bob.interpolate({ inputRange: [0, 1], outputRange: [1, 1.03] }), squash.interpolate({ inputRange: [0, 1], outputRange: [0, -0.14] })) },
     { scaleX: Animated.add(bob.interpolate({ inputRange: [0, 1], outputRange: [1, 0.985] }), squash.interpolate({ inputRange: [0, 1], outputRange: [0, 0.1] })) },
   ];
   const night = state.scene && SCENES[state.scene] ? !!SCENES[state.scene].dark : sky === 'night';
-  const ink = night ? '#FFFFFF' : colors.ink;
 
   return (
-    <View style={styles.card}>
-      <View style={styles.scene} ref={sceneBox} onLayout={(e) => setWidth(e.nativeEvent.layout.width)}>
-        <Backdrop element={sp.element} sky={sky} scene={state.scene} />
-        <Cloud width={width} top={18} duration={38000} delay={0} scale={1} />
-        <Cloud width={width} top={58} duration={52000} delay={9000} scale={0.7} />
+    <View style={styles.scene} ref={sceneBox} onLayout={(e) => setWidth(e.nativeEvent.layout.width)}>
+      <YardBackdrop element={sp.element} sky={sky} scene={state.scene} />
+      <Cloud width={width} top={22} duration={38000} delay={0} scale={1} />
+      <Cloud width={width} top={70} duration={52000} delay={9000} scale={0.7} />
 
-        <View style={styles.head}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-            <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8, minWidth: 0 }}>
-              <View style={styles.level}><Text style={styles.levelText}>Lv {lp.level}</Text></View>
-              <TextInput
-                style={[styles.name, { color: ink }]}
-                defaultValue={pet.nickname}
-                key={pet.id + pet.nickname}
-                onEndEditing={(e) => apply((s) => A.renamePet(s, pet.id, e.nativeEvent.text))}
-                onBlur={(e: any) => e?.nativeEvent?.text !== undefined && apply((s) => A.renamePet(s, pet.id, e.nativeEvent.text))}
-                accessibilityLabel="Pet name"
-                maxLength={14}
-              />
-            </View>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
-              <Pressable style={styles.stat} hitSlop={10} accessibilityRole="text" accessibilityLabel={`${streak}-day streak${state.shields ? `, ${state.shields} shields` : ''}`}>
-                <Text style={styles.statText}>🔥 {streak}{state.shields ? ` 🛡️${state.shields}` : ''}</Text>
-              </Pressable>
-              <Pressable style={styles.stat} hitSlop={10} onPress={onShop} accessibilityRole="button" accessibilityLabel={`${state.coins} coins, open shop`}>
-                <RollingNumber value={state.coins} prefix="🪙 " style={styles.statText} />
-              </Pressable>
-              <Pressable style={[styles.avatar, account?.warn && { backgroundColor: '#E8590C' }]} hitSlop={10} onPress={onAccount} accessibilityRole="button" accessibilityLabel={account?.label ?? 'Account'}>
-                <Text style={styles.avatarText}>{account?.warn ? '!' : account?.initial ?? '?'}</Text>
-              </Pressable>
-            </View>
-          </View>
-          <Text style={[styles.sub, { color: night ? '#DDE3FF' : '#3F5560' }]} numberOfLines={1}>
-            {RARITY_INFO[sp.rarity].label} {sp.name}{pet.skin ? ` · ${SKIN_INFO[pet.skin].label} skin` : ''}{pet.shiny ? ' · ✦ Shiny' : ''} · {gradeOf(pet)}%
-          </Text>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-            <View style={[styles.xpTrack, { flex: 1 }]} accessibilityLabel={lp.max ? 'Max level' : `${lp.into} of ${lp.need} XP to level ${lp.level + 1}`}>
-              <View style={[styles.xpFill, { width: `${Math.round((lp.max ? 1 : lp.into / lp.need) * 100)}%` }]} />
-            </View>
-            <View style={[styles.mood, { borderColor: mi.color }]}>
-              <Text style={[styles.moodText, { color: mi.color }]}>{mi.emoji} {mi.label}</Text>
-            </View>
-          </View>
-        </View>
+      <Pressable onPress={goBed} style={[styles.decor, { left: bed.x, top: bed.y }]} accessibilityRole="button" accessibilityLabel={`${pet.nickname}'s bed`}>
+        <Bed />
+      </Pressable>
+      <View pointerEvents="none" style={[styles.decor, { left: Math.max(0, width * 0.6), top: 196 }]}>
+        <Plant />
+      </View>
 
-        <View style={styles.stage}>
-          <View style={styles.bubbleWrap} pointerEvents="none">
-            <PopIn key={toyLine ? toyLine.id : toyHint ? 'hint' : mood}>
-              <View style={styles.bubble}>
-                <Text style={styles.bubbleText}>{toyLine ? toyLine.text : toyHint ? 'Drag a toy out to play!' : C.moodLine(mood, pet.nickname)}</Text>
-              </View>
-            </PopIn>
-          </View>
-          <Hearts burst={burst} set={burstSet} />
-          {floats.map((f) => (
-            <XpFloat key={f.id} id={f.id} amount={f.amount} />
-          ))}
-          <Pressable onPress={doPlay} accessibilityRole="button" accessibilityLabel={`Play with ${pet.nickname}`}>
-            <Animated.View ref={petBox as any} style={{ transform: petTransform }}>
-              <PowerGlow count={buffs.length} size={200} />
-              <PetSprite species={sp} stage={stage} size={200} shiny={pet.shiny} skin={pet.skin} mood={mood === 'sleepy' ? 'sleepy' : mood === 'joy' ? 'joy' : 'happy'} hat={pet.look?.hat} aura={pet.look?.aura} />
+      <Animated.View pointerEvents="box-none" style={[styles.petSpot, { left: width / 2 - PET_SIZE / 2, top: HOME_FEET - PET_SIZE - 6, transform: placeTransform }]}>
+        <Animated.View pointerEvents="box-none" style={{ transform: [{ scale: depth }] }}>
+          <View style={styles.petShadow} />
+          <Pressable onPress={() => { lastAct.current = Date.now(); doPlay(); }} accessibilityRole="button" accessibilityLabel={`Play with ${pet.nickname}`}>
+            <Animated.View ref={petBox as any} style={{ transform: [{ scaleX: face }] }}>
+              <Animated.View style={{ transform: petTransform }}>
+                <PowerGlow count={buffs.length} size={PET_SIZE} />
+                <PetSprite species={sp} stage={stage} size={PET_SIZE} shiny={pet.shiny} skin={pet.skin} mood={mood === 'sleepy' ? 'sleepy' : mood === 'joy' ? 'joy' : 'happy'} hat={pet.look?.hat} aura={pet.look?.aura} />
+              </Animated.View>
             </Animated.View>
           </Pressable>
-          {levelUp ? (
-            <View style={styles.levelUpWrap} pointerEvents="none">
-              <PopIn key={levelUp}>
-                <View style={styles.levelUp}>
-                  <Text style={styles.levelUpText}>LEVEL UP! Lv {levelUp}</Text>
-                  <Text style={styles.levelUpSub}>+1 stat point to train</Text>
-                </View>
-              </PopIn>
-            </View>
-          ) : null}
-        </View>
+          <Hearts burst={burst} set={burstSet} />
+        </Animated.View>
+      </Animated.View>
 
-        {placed.map((p) => {
-          const toy = COSMETIC_BY_ID[p.id];
-          return toy ? <PlacedToy key={p.key} toy={toy} x={p.x} fromY={p.fromY} bounce={p.bounce} onMove={moveToy(p.key)} onTap={() => playWith(p.key, true)} /> : null;
-        })}
-        {showToys ? (
-          <View style={styles.toyShelf}>
-            {toys.length ? (
-              toys.slice(0, 8).map((t) => (
-                <DraggableToy
-                  key={t.id}
-                  toy={t}
-                  small={toys.length > 6}
-                  onDrop={dropToy(t)}
-                  onGrab={measureAll}
-                  onTap={() => {
-                    setToyHint(true);
-                    setTimeout(() => setToyHint(false), 1800);
-                  }}
-                />
-              ))
-            ) : (
-              <Text style={styles.shelfEmpty}>All your toys are out. Drag them back here to put them away.</Text>
-            )}
+      <Pressable onPress={goBall} style={[styles.decor, { left: ball.x, top: ball.y }]} accessibilityRole="button" accessibilityLabel="Ball">
+        <Ball />
+      </Pressable>
+      <Pressable onPress={() => goBowl()} style={[styles.decor, { left: bowl.x, top: bowl.y }]} accessibilityRole="button" accessibilityLabel={tasks[0].done ? 'Food bowl (fed today)' : 'Food bowl'}>
+        <Bowl full={!tasks[0].done} />
+      </Pressable>
+
+      {placed.map((p) => {
+        const toy = COSMETIC_BY_ID[p.id];
+        return toy ? <PlacedToy key={p.key} toy={toy} x={p.x} fromY={p.fromY} bounce={p.bounce} onMove={moveToy(p.key)} onTap={() => playWith(p.key, true)} /> : null;
+      })}
+      {floats.map((f) => (
+        <XpFloat key={f.id} id={f.id} amount={f.amount} />
+      ))}
+
+      <View style={styles.hud}>
+        <View style={styles.namePill}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            <View style={styles.level}><Text style={styles.levelText}>Lv {lp.level}</Text></View>
+            <TextInput
+              style={styles.name}
+              defaultValue={pet.nickname}
+              key={pet.id + pet.nickname}
+              onEndEditing={(e) => apply((s) => A.renamePet(s, pet.id, e.nativeEvent.text))}
+              onBlur={(e: any) => e?.nativeEvent?.text !== undefined && apply((s) => A.renamePet(s, pet.id, e.nativeEvent.text))}
+              accessibilityLabel="Pet name"
+              maxLength={14}
+            />
           </View>
-        ) : null}
-        <View style={styles.tray}>
-          <TrayButton icon="🍙" label="Feed" done={tasks[0].done} onPress={() => { buzz('success'); apply(C.feed); }} />
-          <TrayButton icon="🎾" label={tasks[1].done ? 'Play' : `Play ${tasks[1].progress}`} done={tasks[1].done} onPress={doPlay} />
-          <TrayButton
-            icon="✨"
-            label="Treat"
-            badge={tasks[2].done ? undefined : trinkets}
-            done={tasks[2].done}
-            dim={!tasks[2].done && trinkets === 0}
-            onPress={() => {
-              if (!trinkets) return onTrinketsEmpty?.();
-              buzz('success');
-              setBurst((b) => b + 1);
-              apply(C.treat);
-            }}
-          />
-          <View style={styles.trayDivider} />
-          <TrayButton square icon="🧸" label="Toys" on={showToys} onPress={() => { buzz('light'); setShowToys((v) => !v); }} />
-          <TrayButton square icon="👗" label="Style" onPress={() => onDressUp?.()} />
+          <View style={styles.xpTrack} accessibilityLabel={lp.max ? 'Max level' : `${lp.into} of ${lp.need} XP to level ${lp.level + 1}`}>
+            <View style={[styles.xpFill, { width: `${Math.round((lp.max ? 1 : lp.into / lp.need) * 100)}%` }]} />
+          </View>
+          <Text style={styles.sub} numberOfLines={1}>
+            {RARITY_INFO[sp.rarity].label}{pet.shiny ? ' ✦' : ''} · {gradeOf(pet)}% · <Text style={{ color: mi.color }}>{mi.emoji} {mi.label}</Text>
+          </Text>
         </View>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+          <View style={styles.stat} accessibilityLabel={`${streak}-day streak${state.shields ? `, ${state.shields} shields` : ''}`}>
+            <Text style={styles.statText}>🔥 {streak}{state.shields ? ` 🛡️${state.shields}` : ''}</Text>
+          </View>
+          <Pressable style={styles.stat} hitSlop={8} onPress={onShop} accessibilityRole="button" accessibilityLabel={`${state.coins} coins, open shop`}>
+            <RollingNumber value={state.coins} prefix="🪙 " style={styles.statText} />
+            <View style={styles.plus}><Text style={styles.plusText}>+</Text></View>
+          </Pressable>
+          <Pressable style={[styles.avatar, account?.warn && { backgroundColor: '#E8590C' }]} hitSlop={8} onPress={onAccount} accessibilityRole="button" accessibilityLabel={account?.label ?? 'Account'}>
+            <Text style={styles.avatarText}>{account?.warn ? '!' : account?.initial ?? '?'}</Text>
+          </Pressable>
+        </View>
+      </View>
+
+      <View style={styles.bubbleWrap} pointerEvents="none">
+        <PopIn key={toyLine ? toyLine.id : toyHint ? 'hint' : mood}>
+          <View style={styles.bubble}>
+            <Text style={styles.bubbleText}>{toyLine ? toyLine.text : toyHint ? 'Drag a toy onto the grass!' : C.moodLine(mood, pet.nickname)}</Text>
+          </View>
+        </PopIn>
+      </View>
+      {levelUp ? (
+        <View style={styles.levelUpWrap} pointerEvents="none">
+          <PopIn key={levelUp}>
+            <View style={styles.levelUp}>
+              <Text style={styles.levelUpText}>LEVEL UP! Lv {levelUp}</Text>
+              <Text style={styles.levelUpSub}>+1 stat point to train</Text>
+            </View>
+          </PopIn>
+        </View>
+      ) : null}
+
+      <Pressable onPress={() => onDressUp?.()} style={styles.side} accessibilityRole="button" accessibilityLabel="Style">
+        <View style={styles.sideBtn}><Text style={{ fontSize: 22 }}>👗</Text></View>
+        <Text style={styles.sideLabel}>Style</Text>
+      </Pressable>
+
+      {showToys ? (
+        <View style={styles.toyShelf}>
+          {toys.length ? (
+            toys.slice(0, 8).map((t) => (
+              <DraggableToy
+                key={t.id}
+                toy={t}
+                small={toys.length > 6}
+                onDrop={dropToy(t)}
+                onGrab={measureAll}
+                onTap={() => {
+                  setToyHint(true);
+                  setTimeout(() => setToyHint(false), 1800);
+                }}
+              />
+            ))
+          ) : (
+            <Text style={styles.shelfEmpty}>All your toys are out. Drag them back here to put them away.</Text>
+          )}
+        </View>
+      ) : null}
+      <View style={styles.care}>
+        <CareButton icon="🍙" label="Feed" color="#F28C38" done={tasks[0].done} onPress={() => goBowl(true)} />
+        <CareButton
+          icon="🧸"
+          label={tasks[1].done ? 'Play' : `Play ${tasks[1].progress}`}
+          color="#4A8FE0"
+          done={tasks[1].done}
+          on={showToys}
+          onPress={() => {
+            if (!allToys.length) return doPlay();
+            buzz('light');
+            setShowToys((v) => !v);
+          }}
+        />
+        <CareButton
+          icon="🍪"
+          label="Snack"
+          color="#C9772A"
+          badge={tasks[2].done ? undefined : trinkets}
+          done={tasks[2].done}
+          dim={!tasks[2].done && trinkets === 0}
+          onPress={() => {
+            if (!trinkets) return onTrinketsEmpty?.();
+            buzz('success', 'munch');
+            munch();
+            setBurst((b) => b + 1);
+            say('A snack! You’re the best!');
+            apply(C.treat);
+          }}
+        />
       </View>
     </View>
   );
 }
 
-/** One button in the pet's tray: care tasks, toys and style. */
-function TrayButton({ icon, label, done, dim, badge, square, on, onPress }: { icon: string; label: string; done?: boolean; dim?: boolean; badge?: number; square?: boolean; on?: boolean; onPress: () => void }) {
+/** A big round care button at the bottom of the yard: Feed, Play and Snack. */
+function CareButton({ icon, label, color, done, dim, badge, on, onPress }: { icon: string; label: string; color: string; done?: boolean; dim?: boolean; badge?: number; on?: boolean; onPress: () => void }) {
   const press = useRef(new Animated.Value(1)).current;
   return (
     <Pressable
-      onPress={done ? undefined : onPress}
+      onPress={onPress}
       onPressIn={() => Animated.spring(press, { toValue: 0.9, useNativeDriver: true, friction: 6 }).start()}
       onPressOut={() => Animated.spring(press, { toValue: 1, useNativeDriver: true, friction: 4 }).start()}
-      style={square ? { width: 56 } : { flex: 1 }}
+      style={{ alignItems: 'center', gap: 3, width: 70 }}
       accessibilityRole="button"
-      accessibilityState={{ disabled: done, checked: done, selected: on }}
-      accessibilityLabel={badge !== undefined ? `${label}, ${badge} left` : label}
+      accessibilityState={{ checked: done, selected: on }}
+      accessibilityLabel={badge !== undefined ? `${label}, ${badge} left` : done ? `${label}, done today` : label}
     >
-      <Animated.View style={[styles.trayBtn, done && styles.trayDone, on && styles.trayOn, dim && { opacity: 0.5 }, { transform: [{ scale: press }] }]}>
-        <Text style={{ fontSize: 20 }}>{done ? '✅' : icon}</Text>
-        <Text style={[styles.trayLabel, done && { color: colors.mintDark }]} numberOfLines={1}>{label}</Text>
-        {badge ? (
+      <Animated.View style={[styles.careBtn, { backgroundColor: color }, on && { borderColor: '#FFE27A' }, dim && { opacity: 0.55 }, { transform: [{ scale: press }] }]}>
+        <Text style={{ fontSize: 26 }}>{icon}</Text>
+        {done ? (
+          <View style={styles.careCheck}><Text style={styles.careCheckText}>✓</Text></View>
+        ) : badge ? (
           <View style={styles.trayBadge}><Text style={styles.trayBadgeText}>{badge}</Text></View>
         ) : null}
       </Animated.View>
+      <Text style={styles.careLabel} numberOfLines={1}>{label}</Text>
     </Pressable>
   );
 }
 
-
 const styles = StyleSheet.create({
-  card: { borderRadius: 26, overflow: 'hidden', backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: colors.line, shadowColor: '#2B4A40', shadowOpacity: 0.12, shadowRadius: 18, shadowOffset: { width: 0, height: 6 }, elevation: 3 },
-  scene: { height: 450 },
+  scene: { height: SCENE_H, overflow: 'hidden' },
+  decor: { position: 'absolute', zIndex: 4 },
+  petSpot: { position: 'absolute', width: PET_SIZE, height: PET_SIZE + 6, alignItems: 'center', justifyContent: 'flex-end', zIndex: 6 },
+  petShadow: { position: 'absolute', bottom: -2, alignSelf: 'center', width: PET_SIZE * 0.5, height: 14, borderRadius: 999, backgroundColor: 'rgba(0,0,0,0.16)' },
+  hud: { position: 'absolute', top: 10, left: 12, right: 12, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8, zIndex: 20 },
+  namePill: { flex: 1, maxWidth: 220, backgroundColor: 'rgba(255,255,255,0.9)', borderRadius: 18, paddingVertical: 7, paddingHorizontal: 10, gap: 4 },
+  plus: { width: 16, height: 16, borderRadius: 8, backgroundColor: colors.mint, alignItems: 'center', justifyContent: 'center', marginLeft: 4 },
+  plusText: { color: '#FFFFFF', fontSize: 12, fontWeight: '900', marginTop: -1 },
+  side: { position: 'absolute', right: 10, top: 112, alignItems: 'center', gap: 2, zIndex: 20 },
+  sideBtn: { width: 48, height: 48, borderRadius: 24, backgroundColor: '#FFFFFF', borderWidth: 3, borderColor: '#9B5BD6', alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 4, shadowOffset: { width: 0, height: 3 }, elevation: 3 },
+  sideLabel: { fontSize: 11, fontWeight: '900', color: colors.ink, backgroundColor: 'rgba(255,255,255,0.85)', borderRadius: 999, paddingHorizontal: 6, overflow: 'hidden' },
+  care: { position: 'absolute', left: 0, right: 0, bottom: 34, flexDirection: 'row', justifyContent: 'center', gap: 10, zIndex: 20 },
+  careBtn: { width: 60, height: 60, borderRadius: 30, borderWidth: 3, borderColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOpacity: 0.16, shadowRadius: 4, shadowOffset: { width: 0, height: 4 }, elevation: 4 },
+  careCheck: { position: 'absolute', top: -4, right: -4, width: 22, height: 22, borderRadius: 11, backgroundColor: colors.mint, borderWidth: 2, borderColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center' },
+  careCheckText: { color: '#FFFFFF', fontSize: 12, fontWeight: '900' },
   tray: { position: 'absolute', left: 10, right: 10, bottom: 10, flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: 'rgba(255,255,255,0.88)', borderRadius: 20, padding: 6, zIndex: 10 },
   trayDivider: { width: 1, height: 36, backgroundColor: colors.line },
   trayDone: { borderColor: colors.mint, backgroundColor: colors.mintSoft },
   trayOn: { borderColor: '#3D8FD6', backgroundColor: '#EAF3FC' },
   trayBadge: { position: 'absolute', top: -6, right: -4, minWidth: 20, height: 20, paddingHorizontal: 5, borderRadius: 999, backgroundColor: '#9C5FD8', alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: '#FFFFFF' },
   trayBadgeText: { color: '#FFFFFF', fontSize: 11, fontWeight: '900' },
-  toyShelf: { position: 'absolute', left: 10, right: 10, bottom: 82, flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 6, backgroundColor: 'rgba(255,255,255,0.92)', borderRadius: 18, padding: 6, zIndex: 11 },
+  toyShelf: { position: 'absolute', left: 10, right: 10, bottom: 126, flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 6, backgroundColor: 'rgba(255,255,255,0.92)', borderRadius: 18, padding: 6, zIndex: 11 },
   shelfEmpty: { fontSize: 12, fontWeight: '800', color: colors.muted, padding: 6, textAlign: 'center' },
-  stat: { height: 26, paddingHorizontal: 8, borderRadius: 999, backgroundColor: 'rgba(255,255,255,0.88)', alignItems: 'center', justifyContent: 'center' },
+  stat: { height: 30, paddingHorizontal: 9, borderRadius: 999, backgroundColor: 'rgba(255,255,255,0.9)', alignItems: 'center', justifyContent: 'center', flexDirection: 'row' },
   statText: { fontSize: 12, fontWeight: '900', color: colors.ink },
-  avatar: { width: 26, height: 26, borderRadius: 13, backgroundColor: colors.mint, borderWidth: 2, borderColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center' },
+  avatar: { width: 32, height: 32, borderRadius: 16, backgroundColor: colors.mint, borderWidth: 2, borderColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center' },
   avatarText: { color: '#FFFFFF', fontSize: 12, fontWeight: '900' },
-  xpTrack: { height: 6, maxWidth: 190, borderRadius: 999, backgroundColor: 'rgba(255,255,255,0.75)', overflow: 'hidden' },
+  xpTrack: { height: 6, borderRadius: 999, backgroundColor: '#E3EBE8', overflow: 'hidden' },
   xpFill: { height: '100%', borderRadius: 999, backgroundColor: colors.mint },
   trayBtn: { height: 54, borderRadius: 14, borderWidth: 1, borderColor: colors.line, backgroundColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center', gap: 1 },
   trayIcon: { fontSize: 22 },
@@ -691,19 +920,19 @@ const styles = StyleSheet.create({
   placedEmoji: { fontSize: 34 },
   placedShadow: { position: 'absolute', bottom: -4, width: 30, height: 7, borderRadius: 4, backgroundColor: 'rgba(0,0,0,0.15)' },
   head: { gap: 4, paddingTop: 12, paddingRight: 12, paddingLeft: 16 },
-  level: { backgroundColor: colors.gold, borderRadius: 10, paddingHorizontal: 8, paddingVertical: 3, borderWidth: 2, borderColor: '#FFFFFF' },
-  levelText: { color: '#5A3E00', fontWeight: '900', fontSize: 13 },
-  name: { fontSize: 24, fontWeight: '900', padding: 0, flexShrink: 1, minWidth: 60 },
-  sub: { fontSize: 13, fontWeight: '800', marginTop: 2 },
+  level: { backgroundColor: colors.gold, borderRadius: 999, paddingHorizontal: 8, paddingVertical: 2 },
+  levelText: { color: '#5A3E00', fontWeight: '900', fontSize: 12 },
+  name: { fontSize: 17, fontWeight: '900', padding: 0, flexShrink: 1, minWidth: 60, color: colors.ink },
+  sub: { fontSize: 11, fontWeight: '800', color: '#4F5F63' },
   mood: { backgroundColor: 'rgba(255,255,255,0.92)', borderRadius: 999, borderWidth: 1.5, paddingHorizontal: 9, paddingVertical: 3 },
   moodText: { fontSize: 12, fontWeight: '900' },
   stage: { flex: 1, alignItems: 'center', justifyContent: 'flex-end', paddingBottom: 86, paddingTop: 30 },
-  bubbleWrap: { position: 'absolute', top: 6, left: 0, right: 0, alignItems: 'center', zIndex: 3 },
+  bubbleWrap: { position: 'absolute', top: 104, left: 60, right: 60, alignItems: 'center', zIndex: 15 },
   bubble: { backgroundColor: '#FFFFFF', borderRadius: 16, paddingVertical: 7, paddingHorizontal: 12, maxWidth: 230, shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 6, elevation: 2 },
   bubbleText: { fontSize: 13, fontWeight: '800', color: colors.ink, textAlign: 'center' },
-  xpFloat: { position: 'absolute', bottom: 150, alignSelf: 'center', backgroundColor: colors.gold, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 4, zIndex: 5 },
+  xpFloat: { position: 'absolute', top: 160, alignSelf: 'center', backgroundColor: colors.gold, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 4, zIndex: 5 },
   xpFloatText: { fontWeight: '900', color: '#5A3E00', fontSize: 15 },
-  levelUpWrap: { position: 'absolute', top: 10, left: 0, right: 0, alignItems: 'center' },
+  levelUpWrap: { position: 'absolute', top: 150, left: 0, right: 0, alignItems: 'center', zIndex: 25 },
   levelUp: { backgroundColor: colors.ink, borderRadius: 999, paddingHorizontal: 18, paddingVertical: 8, borderWidth: 3, borderColor: colors.gold },
   levelUpSub: { color: '#FFFFFF', fontWeight: '800', fontSize: 12, textAlign: 'center' },
   levelUpText: { color: colors.gold, fontWeight: '900', fontSize: 18, letterSpacing: 1 },
@@ -717,8 +946,7 @@ const styles = StyleSheet.create({
   boostOn: { backgroundColor: '#FFF1C9' },
   boostText: { fontWeight: '900', fontSize: 12, color: colors.muted },
   careRow: { flexDirection: 'row', gap: space.sm },
-  careBtn: { alignItems: 'center', gap: 2, paddingVertical: 10, borderRadius: 16, borderWidth: 1.5, borderColor: colors.line, backgroundColor: '#FAFCFB' },
   careDone: { borderColor: colors.mint, backgroundColor: colors.mintSoft },
-  careLabel: { fontWeight: '900', fontSize: 13, color: colors.ink },
+  careLabel: { fontWeight: '900', fontSize: 12, color: '#FFFFFF', textShadowColor: 'rgba(0,0,0,0.45)', textShadowRadius: 3, textShadowOffset: { width: 0, height: 1 } },
   hint: { fontSize: 11, fontWeight: '700', color: colors.muted },
 });

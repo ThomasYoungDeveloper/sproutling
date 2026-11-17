@@ -87,7 +87,7 @@ export function Chip({ label, tone = 'mint' }: { label: string; tone?: 'mint' | 
 }
 
 const styles = StyleSheet.create({
-  card: { backgroundColor: colors.card, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.line, padding: space.lg, gap: space.sm },
+  card: { backgroundColor: colors.card, borderRadius: radius.lg, padding: space.lg, gap: space.sm, shadowColor: '#24323A', shadowOpacity: 0.08, shadowRadius: 0, shadowOffset: { width: 0, height: 4 }, elevation: 2 },
   head: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: space.xs },
   btn: { borderWidth: 1, borderColor: colors.line, backgroundColor: '#F7FAF9', borderRadius: radius.sm, paddingVertical: 9, paddingHorizontal: 14, alignItems: 'center' },
   btnPrimary: { backgroundColor: colors.mint, borderColor: colors.mint },

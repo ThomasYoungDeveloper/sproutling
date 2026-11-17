@@ -226,7 +226,7 @@ const styles = StyleSheet.create({
   openAll: { backgroundColor: colors.gold, borderRadius: 16, minHeight: 52, alignItems: 'center', justifyContent: 'center', borderBottomWidth: 4, borderBottomColor: '#C99212' },
   openAllText: { fontSize: 17, fontWeight: '900', color: '#3B2A00' },
   tapHint: { fontSize: 13, fontWeight: '800', color: '#DCD8F5', textAlign: 'center' },
-  card: { backgroundColor: '#FFFFFF', borderRadius: 22, padding: space.md, gap: space.md, borderWidth: 1, borderColor: colors.line },
+  card: { backgroundColor: colors.card, borderRadius: 22, padding: space.md, gap: space.md, shadowColor: '#24323A', shadowOpacity: 0.08, shadowRadius: 0, shadowOffset: { width: 0, height: 4 }, elevation: 2 },
   nextHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   howBtn: { borderWidth: 2, borderColor: colors.line, borderRadius: 999, paddingHorizontal: 12, minHeight: 36, justifyContent: 'center' },
   howBtnText: { fontSize: 13, fontWeight: '900', color: colors.mintDark },

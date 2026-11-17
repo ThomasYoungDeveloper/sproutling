@@ -1,6 +1,6 @@
 export const colors = {
-  bg: '#EEF5F1',
-  card: '#FFFFFF',
+  bg: '#CFEDE0',
+  card: '#FFFCF5',
   ink: '#24323A',
   muted: '#6B7C80',
   mint: '#2FB58A',

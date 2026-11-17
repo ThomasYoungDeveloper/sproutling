@@ -64,6 +64,9 @@ const FILTER_HINT: Record<DexFilter, string> = {
   shiny: 'Shiny pets sparkle. Keep hatching!',
 };
 
+const ELEMENT_TINT: Record<string, string> = { flower: '#DDF2D2', moon: '#E8E1FA', ember: '#FFE4CC', tide: '#D6EDF8' };
+const RARITY_TINT: Record<string, string> = { common: '#E8F6FF', uncommon: '#E2F6E6', rare: '#F1E8FF', epic: '#FFE8F2', legendary: '#FFF2D6' };
+
 export default function DexScreen() {
   const { state, apply } = useGame();
   const found = Object.keys(state.dex).length;
@@ -83,13 +86,13 @@ export default function DexScreen() {
             const sp = SPECIES_BY_ID[p.speciesId];
             const active = p.id === state.activePetId;
             return (
-              <Pressable key={p.id} onPress={() => overlay.open(<PetSheet petId={p.id} onClose={overlay.close} />)} style={[styles.tile, active && styles.active]} accessibilityLabel={`Open ${p.nickname}`}>
+              <Pressable key={p.id} onPress={() => overlay.open(<PetSheet petId={p.id} onClose={overlay.close} />)} style={[styles.tile, { backgroundColor: ELEMENT_TINT[sp.element], borderColor: 'transparent' }, active && styles.active]} accessibilityLabel={`Open ${p.nickname}`}>
                 <PetSprite species={sp} stage={stageFor(p.xp)} size={86} shiny={p.shiny} skin={p.skin} hat={p.look?.hat} aura={p.look?.aura} />
                 <View style={styles.lv}><Text style={styles.lvText}>Lv {levelFor(p.xp)}</Text></View>
                 {p.skin ? <Text style={[styles.skinBadge, { color: SKIN_INFO[p.skin].color }]}>{SKIN_INFO[p.skin].emoji}</Text> : null}
                 {pointsLeft(p) > 0 ? <View style={styles.pts}><Text style={styles.ptsText}>+{pointsLeft(p)}</Text></View> : null}
                 <Text style={styles.name} numberOfLines={1}>{p.nickname}</Text>
-                <View style={{ flexDirection: 'row', gap: 4, alignItems: 'center' }}>
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 4, alignItems: 'center' }}>
                   <GradeChip grade={gradeOf(p)} />
                   {active ? <Chip label="Active" /> : <RarityBadge rarity={sp.rarity} />}
                 </View>
@@ -124,7 +127,7 @@ export default function DexScreen() {
                   {SPECIES.filter((s) => s.rarity === r).map((s) => {
                     const seen = !!state.dex[s.id];
                     return (
-                      <View key={s.id} style={styles.tile}>
+                      <View key={s.id} style={[styles.tile, { borderColor: 'transparent', backgroundColor: seen ? RARITY_TINT[s.rarity] : '#E6ECEA' }]}>
                         <PetSprite species={s} stage="adult" size={76} silhouette={!seen} />
                         <Text style={styles.name} numberOfLines={1}>{seen ? s.name : '???'}</Text>
                         {seen ? (
@@ -150,7 +153,7 @@ export default function DexScreen() {
             {filtered.length ? (
               <View style={styles.grid}>
                 {filtered.map((s) => (
-                  <View key={s.id} style={styles.tile}>
+                  <View key={s.id} style={[styles.tile, { borderColor: 'transparent', backgroundColor: RARITY_TINT[s.rarity] }]}>
                     <PetSprite species={s} stage="adult" size={76} skin={filter === 'shiny' ? undefined : filter} shiny={filter === 'shiny'} />
                     <Text style={styles.name} numberOfLines={1}>{s.name}</Text>
                     <View style={[styles.styleTag, { backgroundColor: FILTER_TAG[filter] }]}><Text style={styles.styleTagText}>{FILTER_LABEL[filter]}</Text></View>

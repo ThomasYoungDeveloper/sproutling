@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Animated, Easing, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import Svg, { Circle, Defs, LinearGradient, Path, Rect, Stop } from 'react-native-svg';
 import { useGame } from '../state/GameContext';
 import { useOverlay } from './Overlay';
 import PetPicker from './PetPicker';
@@ -14,6 +15,94 @@ import { levelFor, stageFor } from '../game/scoring';
 import { COSMETIC_BY_ID } from '../game/cosmetics';
 import { RARITY_INFO } from '../game/rarity';
 import * as Ex from '../game/expedition';
+
+/** Each place has its own look on the Home card. */
+const THEME: Record<string, { sky: [string, string]; ground: string; ink: string; sub: string; deco: (w: number) => React.ReactNode }> = {
+  meadow: {
+    sky: ['#9FE0B6', '#5DB57A'], ground: '#3F8F5A', ink: '#FFFFFF', sub: '#E6FFEF',
+    deco: (w) => [0.12, 0.3, 0.7, 0.88].map((x, i) => <Circle key={i} cx={w * x} cy={112 - (i % 2) * 6} r={5} fill={['#FFE27A', '#FF9EB5', '#FFFFFF', '#FFE27A'][i]} />),
+  },
+  caves: {
+    sky: ['#2B2050', '#4A3A86'], ground: '#1C1538', ink: '#FFFFFF', sub: '#E6DEFF',
+    deco: (w) => [
+      <Path key="a" d="M20 116l8-30 8 30z" fill="#7FE7FF" stroke="#2AA7D6" strokeWidth={2} />,
+      <Path key="b" d="M40 118l5-18 5 18z" fill="#B9A6FF" stroke="#7A5FD6" strokeWidth={2} />,
+      <Path key="c" d={`M${w - 70} 112l9-34 9 34z`} fill="#FF9EE0" stroke="#D65FB0" strokeWidth={2} />,
+      <Path key="d" d={`M${w - 46} 114l6-20 6 20z`} fill="#7FE7FF" stroke="#2AA7D6" strokeWidth={2} />,
+      <Path key="e" d={`M0 0h${w}v24c-30 10-50 24-90 16s-50-16-90-6-60 18-100 10S40 22 0 30z`} fill="#1C1538" />,
+    ],
+  },
+  shrine: {
+    sky: ['#FFD6E6', '#F59AB8'], ground: '#B8607E', ink: '#4A1730', sub: '#6E2A48',
+    deco: (w) => [
+      <Rect key="a" x={w - 96} y={52} width={66} height={8} rx={2} fill="#D93C3C" />,
+      <Rect key="b" x={w - 102} y={44} width={78} height={8} rx={3} fill="#D93C3C" />,
+      <Rect key="c" x={w - 88} y={52} width={7} height={58} fill="#D93C3C" />,
+      <Rect key="d" x={w - 50} y={52} width={7} height={58} fill="#D93C3C" />,
+      ...[0.1, 0.42, 0.6].map((x, i) => <Circle key={'p' + i} cx={w * x} cy={20 + i * 18} r={4} fill="#FFFFFF" opacity={0.8} />),
+    ],
+  },
+  mountain: {
+    sky: ['#1E2A5A', '#3E4E9A'], ground: '#2A2F5E', ink: '#FFFFFF', sub: '#DDE3FF',
+    deco: (w) => [
+      <Circle key="m" cx={w - 60} cy={34} r={18} fill="#FFF6D6" />,
+      <Path key="mt" d={`M${w * 0.45} 120 L${w * 0.68} 50 L${w * 0.9} 120z`} fill="#4A5AA8" />,
+      <Path key="snow" d={`M${w * 0.62} 68 L${w * 0.68} 50 L${w * 0.74} 68 L${w * 0.7} 64 L${w * 0.66} 70z`} fill="#FFFFFF" />,
+      ...[0.1, 0.25, 0.4].map((x, i) => <Circle key={'s' + i} cx={w * x} cy={20 + (i % 2) * 22} r={1.8} fill="#FFFFFF" />),
+    ],
+  },
+};
+
+/** The trip as a little scene: the place's colors, its landmarks, and the pet walking the trail home. */
+function TripScene({ placeId, speciesId, xp, hat, pct, title, pill, foot, onPress, label, done }: { placeId: string; speciesId: string; xp: number; hat?: string; pct: number; title: string; pill: string; foot: string; onPress: () => void; label: string; done?: boolean }) {
+  const [w, setW] = useState(0);
+  const t = THEME[placeId] ?? THEME.meadow;
+  const step = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    const loop = Animated.loop(Animated.sequence([
+      Animated.timing(step, { toValue: 1, duration: 260, easing: Easing.out(Easing.quad), useNativeDriver: true }),
+      Animated.timing(step, { toValue: 0, duration: 260, easing: Easing.in(Easing.quad), useNativeDriver: true }),
+    ]));
+    loop.start();
+    return () => loop.stop();
+  }, []);
+  const sp = SPECIES_BY_ID[speciesId];
+  const x = 20 + Math.min(0.9, pct) * Math.max(0, w - 90);
+  return (
+    <Pressable onPress={onPress} onLayout={(e) => setW(Math.ceil(e.nativeEvent.layout.width))} style={({ pressed }) => [styles.scene, { backgroundColor: t.sky[1] }, pressed && { transform: [{ scale: 0.98 }] }]} accessibilityRole="button" accessibilityLabel={label}>
+      {w > 0 ? (
+        <Svg width={w} height={150} style={StyleSheet.absoluteFill}>
+          <Defs>
+            <LinearGradient id={`trip-${placeId}`} x1="0" y1="0" x2="0" y2="1">
+              <Stop offset="0" stopColor={t.sky[0]} />
+              <Stop offset="1" stopColor={t.sky[1]} />
+            </LinearGradient>
+          </Defs>
+          <Rect x={0} y={0} width={w} height={150} fill={`url(#trip-${placeId})`} />
+          {t.deco(w)}
+          <Path d={`M0 150V116c${w * 0.1}-8 ${w * 0.2} 4 ${w * 0.3}-2s${w * 0.18}-14 ${w * 0.3}-8 ${w * 0.2} 12 ${w * 0.4} 6V150z`} fill={t.ground} />
+          <Path d={`M20 126 Q${w * 0.35} 108 ${w * 0.55} 122 T${w - 26} 118`} fill="none" stroke="#FFFFFF" strokeOpacity={0.45} strokeWidth={3} strokeDasharray="2 9" strokeLinecap="round" />
+          <Circle cx={w - 26} cy={118} r={9} fill="#FFE27A" stroke="#FFFFFF" strokeWidth={2} />
+        </Svg>
+      ) : null}
+      {w > 0 ? (
+        <Animated.View style={{ position: 'absolute', left: done ? w - 96 : x, top: 62, transform: [{ translateY: step.interpolate({ inputRange: [0, 1], outputRange: [0, done ? -10 : -6] }) }] }}>
+          <PetSprite species={sp} stage={stageFor(xp)} size={58} hat={hat} mood={done ? 'joy' : undefined} />
+        </Animated.View>
+      ) : null}
+      <View style={styles.sceneHead}>
+        <View style={{ flex: 1, minWidth: 0 }}>
+          <Text style={[styles.sceneKicker, { color: t.sub }]}>ADVENTURE</Text>
+          <Text style={[styles.sceneTitle, { color: t.ink }]} numberOfLines={1}>{title}</Text>
+        </View>
+        <View style={[styles.scenePill, done && { backgroundColor: '#FFE27A' }]}>
+          <Text style={[styles.scenePillText, done && { color: '#5A2A0A' }]}>{pill}</Text>
+        </View>
+      </View>
+      <Text style={[styles.sceneFoot, { color: t.sub }]} numberOfLines={1}>{foot}</Text>
+    </Pressable>
+  );
+}
 
 /** The pet walking along the trail while it explores. */
 function Walker({ speciesId, xp, hat, pct }: { speciesId: string; xp: number; hat?: string; pct: number }) {
@@ -200,30 +289,40 @@ export default function ExpeditionCard() {
 
   if (prog && pet) {
     const sp = SPECIES_BY_ID[pet.speciesId];
+    const might = [prog.place.chest ? `a ${prog.place.chest.kind} chest` : null, prog.place.egg ? 'an egg' : null, 'coins'].filter(Boolean).join(', ');
     if (prog.done) {
       return (
         <PopIn>
-          <Pressable onPress={collect} style={({ pressed }) => [styles.row, styles.rowDone, pressed && { transform: [{ scale: 0.98 }] }]} accessibilityRole="button" accessibilityLabel={`${pet.nickname} is back from ${prog.place.name}. See what they found`}>
-            <PetSprite species={sp} stage={stageFor(pet.xp)} size={42} />
-            <View style={{ flex: 1 }}>
-              <Text style={styles.rowTitle}>{pet.nickname} is back!</Text>
-              <Text style={styles.rowSub}>Home from {prog.place.name} with treasure</Text>
-            </View>
-            <View style={styles.openBtn}><Text style={styles.openText}>Open</Text></View>
-          </Pressable>
+          <TripScene
+            placeId={prog.place.id}
+            speciesId={pet.speciesId}
+            xp={pet.xp}
+            hat={pet.look?.hat}
+            pct={1}
+            done
+            title={`${pet.nickname} is back!`}
+            pill="Open loot"
+            foot={`Home from ${prog.place.name} with treasure. Tap to see!`}
+            onPress={collect}
+            label={`${pet.nickname} is back from ${prog.place.name}. See what they found`}
+          />
         </PopIn>
       );
     }
+    void sp;
     return (
-      <Pressable onPress={() => open(<TripSheet onClose={close} />)} style={({ pressed }) => [styles.row, pressed && { transform: [{ scale: 0.98 }] }]} accessibilityRole="button" accessibilityLabel={`${pet.nickname} is at ${prog.place.name}, home in ${Ex.formatLeft(prog.msLeft)}`}>
-        <PetSprite species={sp} stage={stageFor(pet.xp)} size={42} />
-        <View style={{ flex: 1, gap: 5 }}>
-          <Text style={styles.rowTitle} numberOfLines={1}>{pet.nickname} is at {prog.place.name}</Text>
-          <View style={styles.bar}><View style={[styles.barFill, { width: `${Math.round(prog.pct * 100)}%` }]} /></View>
-        </View>
-        <Text style={styles.left}>{Ex.formatLeft(prog.msLeft)}</Text>
-        <Text style={styles.chev}>›</Text>
-      </Pressable>
+      <TripScene
+        placeId={prog.place.id}
+        speciesId={pet.speciesId}
+        xp={pet.xp}
+        hat={pet.look?.hat}
+        pct={prog.pct}
+        title={`${pet.nickname} is in ${prog.place.name}`}
+        pill={`Back in ${Ex.formatLeft(prog.msLeft)}`}
+        foot={`Might bring back: ${might}`}
+        onPress={() => open(<TripSheet onClose={close} />)}
+        label={`${pet.nickname} is at ${prog.place.name}, home in ${Ex.formatLeft(prog.msLeft)}`}
+      />
     );
   }
 
@@ -240,6 +339,13 @@ export default function ExpeditionCard() {
 }
 
 const styles = StyleSheet.create({
+  scene: { height: 150, borderRadius: 22, overflow: 'hidden', shadowColor: '#000', shadowOpacity: 0.15, shadowRadius: 0, shadowOffset: { width: 0, height: 4 }, elevation: 3 },
+  sceneHead: { position: 'absolute', left: 14, right: 14, top: 12, flexDirection: 'row', alignItems: 'flex-start', gap: 8 },
+  sceneKicker: { fontSize: 11, fontWeight: '900', letterSpacing: 1.2 },
+  sceneTitle: { fontSize: 19, fontWeight: '900' },
+  scenePill: { backgroundColor: 'rgba(0,0,0,0.28)', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4 },
+  scenePillText: { fontSize: 13, fontWeight: '900', color: '#FFFFFF' },
+  sceneFoot: { position: 'absolute', left: 14, bottom: 10, right: 14, fontSize: 12, fontWeight: '800' },
   row: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: colors.line, borderRadius: 18, paddingVertical: 10, paddingHorizontal: 14 },
   rowDone: { backgroundColor: '#FFF6DD', borderColor: colors.gold, borderWidth: 2 },
   rowTitle: { fontSize: 15, fontWeight: '900', color: colors.ink },

@@ -5,6 +5,7 @@ import { useGame } from '../state/GameContext';
 import { Card, SectionHead, Button, ProgressBar, RarityBadge } from '../components/ui';
 import EggSprite from '../components/EggSprite';
 import { IncubatorArt, IncubatorSheet } from '../components/Incubator';
+import PremiumSheet from '../components/PremiumSheet';
 import { useReveal } from '../components/RevealOverlay';
 import { useOverlay } from '../components/Overlay';
 import { Wobble } from '../components/fx';
@@ -82,9 +83,17 @@ export default function EggsScreen() {
           )}
         </View>
         <View style={{ padding: space.md, gap: 8 }}>
-          <Text style={styles.label}>YOUR INCUBATORS</Text>
+          <Text style={styles.label}>YOUR INCUBATORS · {state.incubatorSlots} OF {MAX_INCUBATORS + 1}</Text>
           <View style={styles.slots}>
-            {Array.from({ length: MAX_INCUBATORS }, (_, i) => {
+            {Array.from({ length: MAX_INCUBATORS + 1 }, (_, i) => {
+              if (i === MAX_INCUBATORS) {
+                return (
+                  <Pressable key="premium" onPress={() => overlay.open(<PremiumSheet onClose={overlay.close} />)} style={[styles.slot, styles.slotPremium]} accessibilityRole="button" accessibilityLabel="Premium incubator: comes with Premium">
+                    <Text style={{ fontSize: 18 }}>⭐</Text>
+                    <Text style={[styles.slotText, { color: '#6A51C2' }]}>Premium</Text>
+                  </Pressable>
+                );
+              }
               const egg = incubating[i];
               if (i >= state.incubatorSlots) {
                 return (
@@ -112,7 +121,7 @@ export default function EggsScreen() {
               );
             })}
           </View>
-          <Text style={font.tiny}>Every step warms every egg in an incubator.{state.incubatorSlots < MAX_INCUBATORS ? ' Tap a lock to buy another one.' : ''}</Text>
+          <Text style={font.tiny}>Every step warms every egg in an incubator. Tap a locked one to unlock more and hatch more eggs at once.</Text>
         </View>
       </View>
 
@@ -141,7 +150,7 @@ export default function EggsScreen() {
 }
 
 const styles = StyleSheet.create({
-  card: { backgroundColor: '#FFFFFF', borderRadius: 22, overflow: 'hidden', borderWidth: 1, borderColor: colors.line },
+  card: { backgroundColor: colors.card, borderRadius: 22, overflow: 'hidden' },
   hero: { backgroundColor: '#FFE9C7', padding: space.md, paddingBottom: space.lg, alignItems: 'center', gap: 6 },
   heroHead: { flexDirection: 'row', alignSelf: 'stretch', justifyContent: 'space-between', alignItems: 'center' },
   heroTitle: { fontSize: 20, fontWeight: '900', color: colors.ink },
@@ -149,12 +158,13 @@ const styles = StyleSheet.create({
   useText: { fontSize: 12, fontWeight: '900', color: '#9A5B12' },
   heroSub: { fontSize: 14, fontWeight: '800', color: '#8A5A1E', textAlign: 'center' },
   label: { fontSize: 12, fontWeight: '900', color: colors.muted, letterSpacing: 0.5 },
-  slots: { flexDirection: 'row', gap: 8 },
+  slots: { flexDirection: 'row', gap: 6 },
   slot: { flex: 1, height: 76, borderRadius: 16, borderWidth: 2, borderColor: colors.line, alignItems: 'center', justifyContent: 'center', gap: 2, backgroundColor: '#FFFFFF' },
   slotOn: { borderColor: '#F28C38', borderWidth: 3, backgroundColor: '#FFF6E6' },
   slotReady: { backgroundColor: '#FFF0C8' },
   slotEmpty: { borderStyle: 'dashed' },
-  slotLocked: { backgroundColor: '#F4F7F6' },
+  slotLocked: { backgroundColor: '#EEF1F0', opacity: 0.8 },
+  slotPremium: { backgroundColor: '#EFE9FC', borderColor: '#CDBEF2' },
   slotText: { fontSize: 11, fontWeight: '900', color: colors.muted },
   nursery: { fontWeight: '900', fontSize: 11, color: '#C2185B' },
   eggRow: { flexDirection: 'row', alignItems: 'center', gap: space.md, borderTopWidth: 1, borderTopColor: colors.line, paddingTop: space.sm },

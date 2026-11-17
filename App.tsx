@@ -20,6 +20,8 @@ import { useHealthSync } from './src/lib/useHealthSync';
 import { useReminders } from './src/lib/useReminders';
 import { useWalkFinds } from './src/lib/useWalkFinds';
 import Tutorial from './src/components/Tutorial';
+import TabBar from './src/components/TabBar';
+import { yardSkyTop } from './src/components/PetScene';
 import { DayComplete, QuestBanner, useCelebrations } from './src/components/Celebrations';
 import * as Ach from './src/game/achievements';
 import LabScreen from './src/screens/LabScreen';
@@ -31,6 +33,15 @@ import { colors, font, space } from './src/theme';
 import * as A from './src/game/actions';
 
 type Tab = 'home' | 'eggs' | 'chests' | 'dex' | 'friends';
+/** Page title and a short line under it, for every tab but Home. */
+const PAGE: Record<Tab, { title: string; sub: (s: ReturnType<typeof useGame>['state']) => string }> = {
+  home: { title: 'Home', sub: () => '' },
+  eggs: { title: 'Eggs', sub: (s) => `${s.eggs.filter((e) => e.incubating).length} of ${s.incubatorSlots} incubators in use` },
+  chests: { title: 'Chests', sub: (s) => (s.chests.length ? `${s.chests.length} waiting to be opened` : 'Earn more by being active') },
+  dex: { title: 'Pets', sub: (s) => `${s.pets.length} pets · ${Object.keys(s.dex).length} in the Pet-dex` },
+  friends: { title: 'Friends', sub: () => 'Battle, trade and team up' },
+};
+
 const TABS: { id: Tab; label: string }[] = [
   { id: 'home', label: 'Home' },
   { id: 'eggs', label: 'Eggs' },
@@ -141,24 +152,29 @@ function Shell() {
   }, [pet?.id, stage]);
 
   return (
-    <SafeAreaView style={styles.root}>
-      <StatusBar style="dark" />
-      {tab === 'home' && !starter ? null : <View style={styles.top}>
-        <Text style={styles.brand}>Sprout<Text style={{ color: colors.mint }}>ling</Text></Text>
-        <View style={styles.pills}>
-          <View style={styles.pill}><Text style={styles.pillText}>🔥 {A.streak(state)}-day{state.shields ? ` 🛡️${state.shields}` : ''}</Text></View>
-          <View style={styles.pill}><RollingNumber value={state.coins} prefix="🪙 " style={styles.pillText} /></View>
-          <Pressable onPress={() => setShowAccount(true)} style={[styles.pill, user ? null : styles.signIn]} accessibilityRole="button" accessibilityLabel={user ? 'Account' : 'Sign in to save your pets'}>
-            <Text style={[styles.pillText, !user && { color: '#fff' }]} numberOfLines={1}>{sync === 'error' ? '⚠ Offline' : `☁ ${username ?? 'Me'}`}</Text>
-          </Pressable>
+    <SafeAreaView style={[styles.root, tab === 'home' && !starter && pet && { backgroundColor: yardSkyTop(state) }]}>
+      <StatusBar style={tab === 'home' && !starter && pet && yardSkyTop(state, true) ? 'light' : 'dark'} />
+      {tab === 'home' && !starter ? null : (
+        <View style={styles.top}>
+          <View style={{ flex: 1, minWidth: 0 }}>
+            <Text style={styles.pageTitle} numberOfLines={1}>{starter ? 'Sproutling' : PAGE[tab].title}</Text>
+            {!starter ? <Text style={styles.pageSub} numberOfLines={1}>{PAGE[tab].sub(state)}</Text> : null}
+          </View>
+          <View style={styles.pills}>
+            <View style={styles.pill}><Text style={styles.pillText}>🔥 {A.streak(state)}{state.shields ? ` 🛡️${state.shields}` : ''}</Text></View>
+            <View style={styles.pill}><RollingNumber value={state.coins} prefix="🪙 " style={styles.pillText} /></View>
+            <Pressable onPress={() => setShowAccount(true)} style={[styles.avatar, (!user || sync === 'error') && { backgroundColor: '#E8590C' }]} accessibilityRole="button" accessibilityLabel={user ? `Account: ${username ?? 'you'}${sync === 'error' ? ', offline' : ''}` : 'Sign in to save your pets'}>
+              <Text style={styles.avatarText}>{!user || sync === 'error' ? '!' : (username ?? 'T')[0].toUpperCase()}</Text>
+            </Pressable>
+          </View>
         </View>
-      </View>}
-      <ScrollView contentContainerStyle={[styles.scroll, tab === 'home' && !starter && { paddingTop: space.md }]}>
+      )}
+      <ScrollView style={tab === 'home' && !starter ? { backgroundColor: colors.bg } : undefined} contentContainerStyle={[styles.scroll, tab === 'home' && !starter && styles.scrollHome]}>
         {starter ? <StarterScreen /> : null}
         {!starter && (
           <FadeSwitch id={tab}>
             <View style={{ gap: space.md }}>
-        {tab === 'home' && login.canClaim && (
+        {tab === 'home' && login.canClaim && false && (
           <Pressable onPress={() => setShowLogin(true)} style={[styles.daily, login.canClaim && styles.dailyReady]} accessibilityRole="button" accessibilityLabel="Daily rewards">
             <Text style={{ fontSize: 22 }}>{login.canClaim ? '🎁' : '✅'}</Text>
             <View style={{ flex: 1 }}>
@@ -170,6 +186,15 @@ function Shell() {
         {tab === 'home' && (
           <HomeScreen
             onNavigate={setTab}
+            banner={login.canClaim ? (
+              <Pressable onPress={() => setShowLogin(true)} style={[styles.daily, styles.dailyReady]} accessibilityRole="button" accessibilityLabel="Daily rewards">
+                <Text style={{ fontSize: 22 }}>🎁</Text>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.dailyTitle}>Day {login.index + 1} reward is ready!</Text>
+                  <Text style={font.small}>Tap to collect</Text>
+                </View>
+              </Pressable>
+            ) : null}
             onAccount={() => setShowAccount(true)}
             account={{ initial: (username ?? (user ? 'T' : '?'))[0].toUpperCase(), label: user ? `Account: ${username ?? 'you'}${sync === 'error' ? ', offline' : ''}` : 'Sign in to save your pets', warn: sync === 'error' || !user }}
           />
@@ -182,17 +207,14 @@ function Shell() {
           </FadeSwitch>
         )}
       </ScrollView>
-      {!starter && <View style={styles.nav}>
-        {TABS.map((t) => {
-          const badge = t.id === 'eggs' ? readyEggs : t.id === 'chests' ? state.chests.length : t.id === 'friends' ? incoming.length + tradesForMe : t.id === 'dex' ? Ach.claimable(state).length : 0;
-          return (
-            <Pressable key={t.id} onPress={() => setTab(t.id)} style={[styles.navBtn, tab === t.id && styles.navActive]} accessibilityRole="tab" accessibilityState={{ selected: tab === t.id }}>
-              <Text style={[styles.navText, tab === t.id && { color: colors.mintDark }]}>{t.label}</Text>
-              {badge > 0 ? <View style={styles.dot}><Text style={styles.dotText}>{badge}</Text></View> : null}
-            </Pressable>
-          );
-        })}
-      </View>}
+      {!starter && (
+        <TabBar
+          tabs={TABS}
+          active={tab}
+          onPick={setTab}
+          badges={{ eggs: readyEggs, chests: state.chests.length, friends: incoming.length + tradesForMe, dex: Ach.claimable(state).length }}
+        />
+      )}
       {settled && !starter && !state.tutorialDone ? <Tutorial /> : null}
       {showAccount && <AccountSheet onClose={() => setShowAccount(false)} />}
       {showLogin && !starter && <DailyLoginSheet onClose={() => setShowLogin(false)} />}
@@ -272,10 +294,15 @@ export default function App() {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.bg },
-  top: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: space.lg, paddingTop: space.md, paddingBottom: space.sm, maxWidth: 520, width: '100%', alignSelf: 'center' },
+  top: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: space.sm, paddingHorizontal: space.lg, paddingTop: space.lg, paddingBottom: space.sm, maxWidth: 520, width: '100%', alignSelf: 'center' },
+  pageTitle: { fontSize: 30, fontWeight: '900', color: '#1F3A33' },
+  pageSub: { fontSize: 13, fontWeight: '800', color: '#3E6B5E' },
+  avatar: { width: 32, height: 32, borderRadius: 16, backgroundColor: colors.mint, borderWidth: 2, borderColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center' },
+  avatarText: { color: '#FFFFFF', fontWeight: '900', fontSize: 13 },
+  scrollHome: { paddingHorizontal: 0, paddingTop: 0, maxWidth: undefined },
   brand: { fontSize: 24, fontWeight: '900', color: colors.ink },
   pills: { flexDirection: 'row', gap: 6 },
-  pill: { backgroundColor: '#fff', borderWidth: 1, borderColor: colors.line, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4 },
+  pill: { backgroundColor: colors.card, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 6 },
   pillText: { fontWeight: '800', fontSize: 13, color: colors.ink },
   signIn: { backgroundColor: colors.mint, borderColor: colors.mint },
   scroll: { padding: space.lg, paddingTop: space.sm, paddingBottom: 40, gap: space.md, maxWidth: 520, width: '100%', alignSelf: 'center' },

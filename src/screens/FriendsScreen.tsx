@@ -138,30 +138,28 @@ export default function FriendsScreen({ initialAdd, onUsedInitialAdd, initialGui
       {section === 'friends' && (
         <>
       {(friends.length === 0 || inviteTop) && invite}
-      {incoming.length > 0 && (
-        <Card style={{ borderColor: colors.peach }}>
-          <SectionHead title="Friend requests" meta={`${incoming.length} new`} />
-          {incoming.map((r) => (
-            <View key={r.id} style={styles.person}>
-              <Avatar t={r.from} />
-              <View style={{ flex: 1 }}>
-                <Text style={styles.personName}>{r.from.username}</Text>
-                <Text style={font.small}>wants to be friends</Text>
-              </View>
-              <Button small label="Not now" onPress={() => respond(r.id, false)} />
-              <Button
-                small
-                primary
-                label="Accept"
-                onPress={() => {
-                  buzz('success');
-                  respond(r.id, true);
-                }}
-              />
-            </View>
-          ))}
-        </Card>
-      )}
+      {incoming.map((r) => (
+        <View key={r.id} style={styles.request}>
+          <View style={styles.newTag}><Text style={styles.newTagText}>NEW REQUEST</Text></View>
+          <Avatar t={r.from} />
+          <View style={{ flex: 1, minWidth: 0 }}>
+            <Text style={styles.personName} numberOfLines={1}>{r.from.username}</Text>
+            <Text style={font.small} numberOfLines={1}>wants to be friends{r.from.card?.streak ? ` · ${r.from.card.streak}-day streak` : ''}</Text>
+          </View>
+          <Pressable onPress={() => respond(r.id, false)} style={styles.decline} accessibilityRole="button" accessibilityLabel={`Decline ${r.from.username}`}>
+            <Text style={styles.declineText}>✕</Text>
+          </Pressable>
+          <Button
+            small
+            primary
+            label="Accept"
+            onPress={() => {
+              buzz('success');
+              respond(r.id, true);
+            }}
+          />
+        </View>
+      ))}
 
       <TradesCard />
 
@@ -237,10 +235,15 @@ function Avatar({ t }: { t: Trainer }) {
 }
 
 const styles = StyleSheet.create({
-  segs: { flexDirection: 'row', gap: 4, backgroundColor: '#FFFFFF', borderRadius: 999, padding: 4, borderWidth: 1, borderColor: colors.line },
-  seg: { flex: 1, alignItems: 'center', paddingVertical: 8, borderRadius: 999 },
-  segOn: { backgroundColor: colors.mint },
-  segText: { fontWeight: '900', fontSize: 12, color: colors.ink },
+  segs: { flexDirection: 'row', gap: 4, backgroundColor: '#B9E2D1', borderRadius: 18, padding: 4 },
+  seg: { flex: 1, alignItems: 'center', paddingVertical: 10, borderRadius: 14 },
+  segOn: { backgroundColor: colors.ink },
+  segText: { fontWeight: '900', fontSize: 12, color: '#2E5E50' },
+  request: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: colors.card, borderRadius: 22, borderWidth: 3, borderColor: colors.gold, padding: 12, marginTop: 6 },
+  newTag: { position: 'absolute', top: -11, left: 14, backgroundColor: '#FF6B5B', borderRadius: 999, paddingHorizontal: 8, paddingVertical: 2 },
+  newTagText: { color: '#FFFFFF', fontSize: 10, fontWeight: '900', letterSpacing: 0.6 },
+  decline: { width: 38, height: 38, borderRadius: 12, backgroundColor: '#E8EEEC', alignItems: 'center', justifyContent: 'center' },
+  declineText: { fontSize: 15, fontWeight: '900', color: colors.muted },
   segDot: { position: 'absolute', top: 4, right: 8, width: 8, height: 8, borderRadius: 4, backgroundColor: colors.peach },
   row: { flexDirection: 'row', gap: space.sm, alignItems: 'center' },
   codeRow: { flexDirection: 'row', gap: 6, justifyContent: 'center', marginVertical: space.xs },
