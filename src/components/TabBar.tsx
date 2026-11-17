@@ -1,5 +1,5 @@
 import React from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Dimensions, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
 const ICONS: Record<string, string> = {
@@ -36,8 +36,12 @@ export default function TabBar<T extends string>({ tabs, active, badges, onPick 
   );
 }
 
+// iPhones with a home bar (no Home button) leave a tall empty strip under the safe area.
+// Tuck the bar down into it like Apple's own tab bars, so there's no gap under it.
+const HOME_BAR = Platform.OS === 'ios' && Math.max(Dimensions.get('screen').height, Dimensions.get('screen').width) >= 812;
+
 const styles = StyleSheet.create({
-  wrap: { paddingHorizontal: 10, paddingBottom: 8, paddingTop: 4 },
+  wrap: { paddingHorizontal: 10, paddingBottom: HOME_BAR ? 0 : 8, paddingTop: 4, marginBottom: HOME_BAR ? -20 : 0 },
   bar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-around', backgroundColor: '#24323A', borderRadius: 24, paddingHorizontal: 6, height: 66, maxWidth: 520, width: '100%', alignSelf: 'center' },
   btn: { width: 64, height: 54, borderRadius: 18, alignItems: 'center', justifyContent: 'center', gap: 2 },
   on: { backgroundColor: '#2FB58A' },

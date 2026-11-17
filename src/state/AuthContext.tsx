@@ -28,7 +28,10 @@ interface AuthCtx {
 
 const Ctx = createContext<AuthCtx | null>(null);
 const LAST_EMAIL = 'sproutling/last-email';
-const site = () => (typeof window !== 'undefined' && window.location ? window.location.origin : undefined);
+// Email links (confirm, reset password) open in a browser. On the phone there is no web address of our own,
+// so send them to the live web app, which finishes the reset and the player then signs in on the phone.
+const WEB_APP = 'https://sproutling.vercel.app';
+const site = () => (typeof window !== 'undefined' && window.location?.origin?.startsWith('http') ? window.location.origin : WEB_APP);
 
 export function friendlyAuthError(msg: string): string {
   if (/invalid login/i.test(msg)) return 'That email and password don’t match. Try again or reset your password.';
