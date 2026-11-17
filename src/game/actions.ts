@@ -193,7 +193,7 @@ export function hatch(s: GameState, eggId: string, rng: Rng = defaultRng): Hatch
     hatchedOn: todayKey(s),
     ...(skin ? { skin } : {}),
     personality: randomPersonality(rng),
-    ivs: egg.bred?.parentIvs ? inheritIvs(rng, egg.bred.parentIvs[0], egg.bred.parentIvs[1]) : rollIvs(rng),
+    ivs: egg.bred?.parentIvs ? inheritIvs(rng, egg.bred.parentIvs[0], egg.bred.parentIvs[1], egg.bred.lucky ?? 0) : rollIvs(rng),
   };
   const isNew = !s.dex[species.id];
   return {

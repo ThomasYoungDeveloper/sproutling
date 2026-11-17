@@ -1,4 +1,4 @@
-import { ivsOf } from './stats';
+import { ivsOf, LUCKY_CHANCE } from './stats';
 import type { Egg, GameState, OwnedPet, Rarity } from './types';
 import { SPECIES, SPECIES_BY_ID } from './species';
 import { levelFor } from './scoring';
@@ -63,13 +63,15 @@ export function breed(s: GameState, aId: string, bId: string, rng: Rng = default
   const pool = surprisePool(a, b);
   const surprise = pool.length > 0 && rng() < SURPRISE_CHANCE;
   const speciesId = surprise ? pickOne(pool, rng) : rng() < 0.5 ? a.speciesId : b.speciesId;
+  // A Lucky egg: +1 or +2 to every stat when it hatches.
+  const lucky = rng() < LUCKY_CHANCE ? (rng() < 0.5 ? 1 : 2) : 0;
   const egg: Egg = {
     id: makeId(rng),
     rarity: SPECIES_BY_ID[speciesId].rarity,
     stepsWalked: 0,
     incubating: false,
     foundOn: A.todayKey(s),
-    bred: { speciesId, parents: [a.speciesId, b.speciesId], parentSkins: [a.skin ?? null, b.skin ?? null], parentIvs: [ivsOf(a), ivsOf(b)] },
+    bred: { speciesId, parents: [a.speciesId, b.speciesId], parentSkins: [a.skin ?? null, b.skin ?? null], parentIvs: [ivsOf(a), ivsOf(b)], ...(lucky ? { lucky } : {}) },
   };
   const rest = gameNow(s, now) + REST_HOURS * 3_600_000;
   const pets = s.pets.map((p) => (p.id === aId || p.id === bId ? { ...p, restUntil: rest } : p));

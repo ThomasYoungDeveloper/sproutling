@@ -56,10 +56,40 @@ export function rollIvs(rng: () => number, floor = 0): Ivs {
 }
 
 /** Nursery babies: each stat comes from a random parent half the time, otherwise a fresh roll of at least 5. */
-export function inheritIvs(rng: () => number, a: Ivs, b: Ivs): Ivs {
+/** Breeding odds for each stat: copy the stronger parent, copy the other parent, or a fresh roll. */
+export const INHERIT_BETTER = 0.6;
+export const INHERIT_OTHER = 0.25;
+/** Chance a bred egg is a Lucky egg, and what it adds to every stat. */
+export const LUCKY_CHANCE = 0.15;
+
+/**
+ * A bred baby's quality values. Each stat leans toward the stronger parent (60%), sometimes copies the
+ * other parent (25%), and otherwise rolls fresh (5–15). A Lucky egg adds +1 or +2 to every stat.
+ */
+export function inheritIvs(rng: () => number, a: Ivs, b: Ivs, lucky = 0): Ivs {
   const out = {} as Ivs;
-  for (const k of ['hp', 'atk', 'def', 'spd'] as Stat[]) out[k] = rng() < 0.5 ? (rng() < 0.5 ? a : b)[k] : 5 + Math.floor(rng() * (IV_MAX - 4));
+  for (const k of ['hp', 'atk', 'def', 'spd'] as Stat[]) {
+    const hi = Math.max(a[k], b[k]);
+    const lo = Math.min(a[k], b[k]);
+    const r = rng();
+    const v = r < INHERIT_BETTER ? hi : r < INHERIT_BETTER + INHERIT_OTHER ? lo : 5 + Math.floor(rng() * (IV_MAX - 4));
+    out[k] = Math.min(IV_MAX, v + lucky);
+  }
   return out;
+}
+
+/** The likely grade range (10th to 90th percentile) of a baby from these parents, without luck. */
+export function likelyGrade(a: Ivs, b: Ivs): { low: number; high: number } {
+  // A fixed seed keeps the numbers steady while the player looks at them.
+  let seed = 12345;
+  const rng = () => ((seed = (seed * 1103515245 + 12345) & 0x7fffffff) / 0x80000000);
+  const grades: number[] = [];
+  for (let i = 0; i < 400; i++) {
+    const v = inheritIvs(rng, a, b);
+    grades.push(Math.round(((v.hp + v.atk + v.def + v.spd) / (IV_MAX * 4)) * 100));
+  }
+  grades.sort((x, y) => x - y);
+  return { low: grades[40], high: grades[359] };
 }
 
 /** Cleans up values that came from a trade or a friend's card. */

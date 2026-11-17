@@ -76,7 +76,7 @@ export interface Egg {
   incubating: boolean;
   foundOn: string;
   /** Eggs from the Pet Nursery: who the parents were and which pet will hatch. */
-  bred?: { speciesId: string; parents: [string, string]; parentSkins: (Skin | null)[]; parentIvs?: [import('./stats').Ivs, import('./stats').Ivs] };
+  bred?: { speciesId: string; parents: [string, string]; parentSkins: (Skin | null)[]; parentIvs?: [import('./stats').Ivs, import('./stats').Ivs]; lucky?: number };
 }
 
 /** Rare color variants of a pet. */

@@ -414,6 +414,22 @@ ok(A.applyShields(shielded.state).used === 0, 'shields are not used twice');
   h = A.syncHealthSteps(h, 2500);
   ok(h.eggs[0].stepsWalked === 2500 && A.today(h).steps === 2500, 'first Health sync of the day counts all of it');
 }
+// Better babies and Lucky eggs
+{
+  const strong = { hp: 13, atk: 12, def: 12, spd: 13 };
+  const weak = { hp: 9, atk: 11, def: 8, spd: 12 };
+  let seed = 7;
+  const rng = () => ((seed = (seed * 1103515245 + 12345) & 0x7fffffff) / 0x80000000);
+  let sum = 0;
+  for (let i = 0; i < 2000; i++) { const v = St.inheritIvs(rng, strong, weak); sum += v.hp + v.atk + v.def + v.spd; }
+  const avgGrade = (sum / 2000 / 60) * 100;
+  ok(avgGrade > 75, `babies lean toward the stronger parent (average ${avgGrade.toFixed(1)}%)`);
+  const lucky = St.inheritIvs(() => 0, strong, weak, 2);
+  ok(lucky.hp === 15 && lucky.spd === 15 && lucky.atk === 14, 'a Lucky egg adds to every stat, capped at 15');
+  const r = St.likelyGrade(strong, weak);
+  ok(r.low >= 60 && r.high <= 100 && r.low < r.high, `likely grade range looks sensible (${r.low}-${r.high}%)`);
+}
+
 // Merging the phone and web saves
 {
   const egg = (id: string, w = 0) => ({ id, rarity: 'common', stepsWalked: w, incubating: true, foundOn: '' }) as any;

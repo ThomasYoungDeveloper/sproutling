@@ -34,7 +34,7 @@ export default function EggsScreen() {
     if (!r) return;
     apply(() => r.state);
     const petId = r.pet.id;
-    reveal({ kind: 'egg', rarity: e.rarity, pet: r.pet, isNew: r.isNew, ...(e.bred ? { eggSpots: NURSERY_SPOTS, title: 'Your nursery egg is hatching!' } : {}), onMakeActive: r.state.activePetId === petId ? undefined : () => apply((s) => A.setActivePet(s, petId)) });
+    reveal({ kind: 'egg', rarity: e.rarity, pet: r.pet, isNew: r.isNew, ...(e.bred ? { eggSpots: NURSERY_SPOTS, title: e.bred.lucky ? 'Your Lucky egg is hatching! ✨' : 'Your nursery egg is hatching!', lucky: e.bred.lucky } : {}), onMakeActive: r.state.activePetId === petId ? undefined : () => apply((s) => A.setActivePet(s, petId)) });
   };
 
   const openShop = () => overlay.open(<IncubatorSheet onClose={overlay.close} />);
@@ -62,7 +62,7 @@ export default function EggsScreen() {
             <>
               <View style={{ flexDirection: 'row', gap: 6, alignItems: 'center' }}>
                 <RarityBadge rarity={shown.rarity} />
-                {shown.bred ? <Text style={styles.nursery}>💞 Nursery egg</Text> : null}
+                {shown.bred ? <Text style={styles.nursery}>{shown.bred.lucky ? '✨ Lucky nursery egg' : '💞 Nursery egg'}</Text> : null}
               </View>
               {A.isReady(shown) ? (
                 <>
@@ -132,7 +132,7 @@ export default function EggsScreen() {
           <View key={e.id} style={styles.eggRow}>
             <EggSprite rarity={e.rarity} size={46} spots={e.bred ? NURSERY_SPOTS : undefined} />
             <View style={{ flex: 1, gap: 2 }}>
-              <Text style={[font.body, { fontWeight: '900' }]}>{RARITY_INFO[e.rarity].label} egg{e.bred ? ' 💞' : ''}</Text>
+              <Text style={[font.body, { fontWeight: '900' }]}>{RARITY_INFO[e.rarity].label} egg{e.bred ? (e.bred.lucky ? ' ✨ Lucky' : ' 💞') : ''}</Text>
               <Text style={font.tiny}>{RARITY_INFO[e.rarity].eggKm} km to hatch</Text>
             </View>
             {free > 0 ? (

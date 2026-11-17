@@ -18,7 +18,7 @@ import { Button } from './ui';
 import { Confetti, Flash, PopIn, Rays, buzz, useCountUp, useIdleWobble, useShake } from './fx';
 
 export type Reveal =
-  | { kind: 'egg'; rarity: Rarity; pet: OwnedPet; isNew: boolean; title?: string; eggColor?: string; eggSpots?: string[]; onMakeActive?: () => void }
+  | { kind: 'egg'; rarity: Rarity; pet: OwnedPet; isNew: boolean; title?: string; eggColor?: string; eggSpots?: string[]; onMakeActive?: () => void; lucky?: number }
   | { kind: 'chest'; chest: ChestKind; result: ChestResult }
   | { kind: 'grow'; pet: OwnedPet; stage: Stage }
   | { kind: 'trade'; gave: { speciesId: string; nickname: string; shiny: boolean; skin?: Skin } | null; got: OwnedPet; isNew: boolean; friend: string };
@@ -61,7 +61,7 @@ function EggReveal({ r, onClose }: { r: Extract<Reveal, { kind: 'egg' }>; onClos
   const idle = useIdleWobble();
   const sp = SPECIES_BY_ID[r.pet.speciesId];
   const info = RARITY_INFO[sp.rarity];
-  const big = BIG.includes(sp.rarity) || r.pet.skin === 'gold' || r.pet.skin === 'rainbow';
+  const big = BIG.includes(sp.rarity) || r.pet.skin === 'gold' || r.pet.skin === 'rainbow' || !!r.lucky;
 
   const tap = () => {
     if (phase !== 'tap') return;
@@ -104,6 +104,13 @@ function EggReveal({ r, onClose }: { r: Extract<Reveal, { kind: 'egg' }>; onClos
               <Text style={styles.bannerText}>{sp.rarity === 'legendary' ? 'LEGENDARY!' : sp.rarity === 'epic' ? 'EPIC!' : info.label.toUpperCase()}</Text>
             </View>
           </PopIn>
+          {r.lucky ? (
+            <PopIn delay={300}>
+              <View style={styles.lucky}>
+                <Text style={styles.luckyText}>✨ LUCKY EGG! +{r.lucky} to every stat ✨</Text>
+              </View>
+            </PopIn>
+          ) : null}
           {r.pet.skin ? (
             <PopIn delay={330}>
               <View style={[styles.skinTag, { borderColor: SKIN_INFO[r.pet.skin].color }]}>
@@ -340,6 +347,8 @@ function GrowReveal({ r, onClose }: { r: Extract<Reveal, { kind: 'grow' }>; onCl
 }
 
 const styles = StyleSheet.create({
+  lucky: { backgroundColor: '#FFD84D', borderRadius: 999, paddingVertical: 6, paddingHorizontal: 14, marginTop: 6 },
+  luckyText: { color: '#5A3A00', fontWeight: '900', fontSize: 14 },
   backdrop: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(22,28,46,0.97)', zIndex: 100, alignItems: 'center', justifyContent: 'center' },
   stage: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center', padding: 20, gap: 14 },
   center: { alignItems: 'center', justifyContent: 'center', gap: 10, maxWidth: 420, width: '100%' },

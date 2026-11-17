@@ -15,6 +15,9 @@ import { RARITY_INFO } from '../game/rarity';
 import { formatLeft } from '../game/expedition';
 import * as Br from '../game/breeding';
 import type { Egg } from '../game/types';
+import { INHERIT_BETTER, INHERIT_OTHER, LUCKY_CHANCE, gradeOf, ivsOf, likelyGrade } from '../game/stats';
+
+const STAT_LABEL = { hp: 'HP', atk: 'Attack', def: 'Defense', spd: 'Speed' } as const;
 
 function Slot({ petId, label, onPress }: { petId: string | null; label: string; onPress: () => void }) {
   const { state } = useGame();
@@ -116,7 +119,8 @@ export default function NurseryCard() {
         <PopIn>
           <View style={styles.made}>
             <EggSprite rarity={made.egg.rarity} size={90} spots={['#FF8FB1', '#FFD6E5', '#FF8FB1', '#B18CFF']} />
-            <Text style={styles.madeTitle}>A new {RARITY_INFO[made.egg.rarity].label.toLowerCase()} egg! 💕</Text>
+            <Text style={styles.madeTitle}>{made.egg.bred?.lucky ? `✨ A Lucky ${RARITY_INFO[made.egg.rarity].label.toLowerCase()} egg!` : `A new ${RARITY_INFO[made.egg.rarity].label.toLowerCase()} egg! 💕`}</Text>
+            {made.egg.bred?.lucky ? <Text style={styles.luckyNote}>It shimmers! The baby gets +{made.egg.bred.lucky} on every stat.</Text> : null}
             <Text style={[font.small, { textAlign: 'center' }]}>Put it in an incubator on the Eggs tab and walk to hatch it. Who knows what skin it’ll have!</Text>
             <Button small label="Make another" onPress={() => setMade(null)} />
           </View>
@@ -137,6 +141,7 @@ export default function NurseryCard() {
                 </Text>
               ))}
               <Text style={font.small}>🎨 Skin chance: {skinChance}% (3× normal eggs)</Text>
+              <GradePreview a={pa} b={pb} />
               {skinnedParents.length ? (
                 <Text style={[font.small, { color: '#9C4C77', fontWeight: '800' }]}>
                   {skinnedParents.map((p) => `${p!.nickname} has a ${SKIN_INFO[p!.skin!].label} skin`).join(' and ')}: {Math.round(INHERIT_CHANCE * 100)}% chance each to pass it down!
@@ -155,7 +160,55 @@ export default function NurseryCard() {
   );
 }
 
+/** What the baby gets: which parent is stronger in each stat, the likely grade, and the Lucky egg chance. */
+function GradePreview({ a, b }: { a: { nickname: string } & Parameters<typeof ivsOf>[0]; b: { nickname: string } & Parameters<typeof ivsOf>[0] }) {
+  const ia = ivsOf(a);
+  const ib = ivsOf(b);
+  const range = likelyGrade(ia, ib);
+  return (
+    <View style={styles.preview}>
+      <Text style={styles.oddsTitle}>What the baby gets</Text>
+      <View style={styles.statRow}>
+        <Text style={[styles.statName, { color: colors.muted }]} />
+        <Text style={styles.statHead} numberOfLines={1}>{a.nickname} · {gradeOf(a)}%</Text>
+        <Text style={styles.statHead} numberOfLines={1}>{b.nickname} · {gradeOf(b)}%</Text>
+      </View>
+      {(['hp', 'atk', 'def', 'spd'] as const).map((k) => (
+        <View key={k} style={styles.statRow}>
+          <Text style={styles.statName}>{STAT_LABEL[k]}</Text>
+          <Text style={[styles.statVal, ia[k] > ib[k] && styles.better]}>{ia[k]}{ia[k] > ib[k] ? ' ★' : ''}</Text>
+          <Text style={[styles.statVal, ib[k] > ia[k] && styles.better]}>{ib[k]}{ib[k] > ia[k] ? ' ★' : ''}</Text>
+        </View>
+      ))}
+      <Text style={styles.small}>★ = the stronger parent. Each stat has a {Math.round(INHERIT_BETTER * 100)}% chance to copy ★, {Math.round(INHERIT_OTHER * 100)}% to copy the other parent, and {Math.round((1 - INHERIT_BETTER - INHERIT_OTHER) * 100)}% to roll fresh.</Text>
+      <View style={styles.chips}>
+        <View style={[styles.chip, { backgroundColor: '#F3EAFE' }]}>
+          <Text style={[styles.chipLabel, { color: '#7A49B8' }]}>LIKELY GRADE</Text>
+          <Text style={[styles.chipValue, { color: '#5B2E99' }]}>{range.low === range.high ? `${range.low}%` : `${range.low}–${range.high}%`}</Text>
+        </View>
+        <View style={[styles.chip, { backgroundColor: '#FFF1C4' }]}>
+          <Text style={[styles.chipLabel, { color: '#9A6A00' }]}>✨ LUCKY EGG</Text>
+          <Text style={[styles.chipValue, { color: '#7A5200' }]}>{Math.round(LUCKY_CHANCE * 100)}% chance</Text>
+          <Text style={[styles.small, { color: '#8A6A20' }]}>+1 to +2 on every stat</Text>
+        </View>
+      </View>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
+  preview: { marginTop: 6, gap: 4 },
+  statRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  statName: { width: 64, fontSize: 12, fontWeight: '800', color: colors.ink },
+  statHead: { flex: 1, fontSize: 11, fontWeight: '900', color: colors.muted },
+  statVal: { flex: 1, fontSize: 13, fontWeight: '700', color: colors.ink },
+  better: { fontWeight: '900', color: '#C9662A' },
+  small: { fontSize: 11, fontWeight: '700', color: colors.muted },
+  chips: { flexDirection: 'row', gap: 8, marginTop: 4 },
+  chip: { flex: 1, borderRadius: 12, padding: 8 },
+  chipLabel: { fontSize: 10, fontWeight: '900' },
+  chipValue: { fontSize: 17, fontWeight: '900' },
+  luckyNote: { fontSize: 13, fontWeight: '800', color: '#9A6A00', textAlign: 'center' },
   parents: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: space.sm },
   slot: { width: 120, minHeight: 140, alignItems: 'center', justifyContent: 'center', gap: 2, borderRadius: 18, borderWidth: 2, borderStyle: 'dashed', borderColor: '#F2A7C6', backgroundColor: '#FFFFFF', padding: 6 },
   slotFull: { borderStyle: 'solid', borderColor: '#E26AA0' },
