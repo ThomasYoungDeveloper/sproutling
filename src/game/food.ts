@@ -5,7 +5,7 @@ import { STAT_INFO, type Stat } from './stats';
  * Food and needs.
  *
  * - Pellets are always free: they fill the food bar but give nothing extra.
- * - Every other food raises one battle stat a little, more for rarer food. Food is found on walks
+ * - Every other food raises one battle stat by a small percent, more for rarer food (up to +10% per stat). Food is found on walks
  *   or bought in the shop. Up to BOOSTS_PER_DAY boosting foods a day.
  * - Four needs bars (food, fun, water, energy) drift down slowly and never hit zero.
  */
@@ -24,9 +24,11 @@ export interface FoodDef {
 
 export const PELLETS = { id: 'pellets', name: 'Pellets', emoji: '🟤', fill: 45 } as const;
 
-/** How much a food raises its stat, by rarity. HP numbers are bigger, so HP gets 4×. */
-export const BOOST_BY_RARITY: Record<Rarity, number> = { common: 1, uncommon: 2, rare: 3, epic: 5, legendary: 8 };
-export const boostOf = (f: Pick<FoodDef, 'rarity' | 'stat'>) => BOOST_BY_RARITY[f.rarity] * (f.stat === 'hp' ? 4 : 1);
+/** How much a food raises its stat, as a percent of that stat, by rarity. Small, so it adds up over time. */
+export const BOOST_BY_RARITY: Record<Rarity, number> = { common: 0.2, uncommon: 0.4, rare: 0.6, epic: 1, legendary: 1.5 };
+export const boostOf = (f: Pick<FoodDef, 'rarity' | 'stat'>) => BOOST_BY_RARITY[f.rarity];
+/** Shows a percent boost like "+0.2%". */
+export const pct = (n: number) => `+${Number(n.toFixed(1))}%`;
 
 export const FOODS: FoodDef[] = [
   // Found on walks
@@ -51,9 +53,9 @@ export const SHOP_FOODS = FOODS.filter((f) => f.price);
 export const WALK_FOODS = FOODS.filter((f) => !f.price);
 
 export const BOOSTS_PER_DAY = 3;
-/** No pet can gain more than this much from food in one stat (HP 4×), so food can't outgrow training. */
-export const FOOD_CAP = 30;
-export const foodCapFor = (stat: Stat) => FOOD_CAP * (stat === 'hp' ? 4 : 1);
+/** No pet can gain more than this percent from food in one stat, so food can't outgrow training. */
+export const FOOD_CAP = 10;
+export const foodCapFor = (_stat: Stat) => FOOD_CAP;
 
 export const foodsOf = (s: GameState) => s.foods ?? {};
 export const foodCount = (s: GameState, id: string) => s.foods?.[id] ?? 0;
@@ -115,7 +117,7 @@ export function canFeed(s: GameState, d: DayLog, petId: string, foodId: string):
 /** How much this food would actually raise the pet's stat (0 once the stat's food cap is reached). */
 export function boostFor(pet: OwnedPet, f: FoodDef): number {
   const have = pet.foodBoost?.[f.stat] ?? 0;
-  return Math.max(0, Math.min(boostOf(f), foodCapFor(f.stat) - have));
+  return Math.round(Math.max(0, Math.min(boostOf(f), foodCapFor(f.stat) - have)) * 10) / 10;
 }
 
 /**
@@ -144,7 +146,7 @@ export function feedPet(
     next = {
       ...s,
       foods,
-      pets: s.pets.map((p) => (p.id === petId && gain > 0 ? { ...p, foodBoost: { ...p.foodBoost, [f.stat]: (p.foodBoost?.[f.stat] ?? 0) + gain } } : p)),
+      pets: s.pets.map((p) => (p.id === petId && gain > 0 ? { ...p, foodBoost: { ...p.foodBoost, [f.stat]: Math.round(((p.foodBoost?.[f.stat] ?? 0) + gain) * 10) / 10 } } : p)),
     };
   }
   const fill = isPellet ? PELLETS.fill : f.fill;

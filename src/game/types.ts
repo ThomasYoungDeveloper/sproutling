@@ -66,7 +66,7 @@ export interface OwnedPet {
   personality?: import('./stats').Personality;
   /** Stat points spent through training. */
   train?: import('./stats').Training;
-  /** Battle stat points gained from food (capped per stat). */
+  /** Percent added to each battle stat by food (capped at +10% per stat). */
   foodBoost?: import('./stats').Training;
   /** Hidden quality values (0–15 each) that make up the pet's grade. */
   ivs?: import('./stats').Ivs;

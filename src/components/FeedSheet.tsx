@@ -41,12 +41,12 @@ export default function FeedSheet({ onFeed, onClose, onShop }: { onFeed: (foodId
         }}
         style={({ pressed }) => [styles.tile, { backgroundColor: shop ? '#FFF3E6' : '#F1F8F4' }, pressed && { transform: [{ scale: 0.96 }] }]}
         accessibilityRole="button"
-        accessibilityLabel={`${f.name}, ${rare.label}, +${gain} ${F.statLabel(f.stat)}${canBuy ? `, buy for ${f.price} coins` : `, you have ${have}`}`}
+        accessibilityLabel={`${f.name}, ${rare.label}, ${F.pct(gain)} ${F.statLabel(f.stat)}${canBuy ? `, buy for ${f.price} coins` : `, you have ${have}`}`}
       >
         <Text style={{ fontSize: 26 }}>{f.emoji}</Text>
         <Text style={styles.tileName} numberOfLines={1}>{f.name}{!shop && have > 0 ? ` ×${have}` : ''}</Text>
         <Text style={[styles.tileRarity, { color: rare.color }]}>{rare.label.toUpperCase()}</Text>
-        <Text style={styles.tileGain}>{gain > 0 ? `+${gain} ${F.statLabel(f.stat)}` : 'Stat maxed'}</Text>
+        <Text style={styles.tileGain}>{gain > 0 ? `${F.pct(gain)} ${F.statLabel(f.stat)}` : 'Stat maxed'}</Text>
         {canBuy ? <Text style={styles.price}>🪙 {f.price}</Text> : null}
       </Pressable>
     );
@@ -96,7 +96,7 @@ export default function FeedSheet({ onFeed, onClose, onShop }: { onFeed: (foodId
           <View style={styles.grid}>{shopFoods.map((f) => tile(f, true))}</View>
 
           <Text style={styles.small}>
-            Every food except Pellets raises one stat a little: Common +1, Uncommon +2, Rare +3, Epic +5, Legendary +8 (HP 4×). Up to {F.BOOSTS_PER_DAY} stat boosts a day; Pellets anytime.
+            Every food except Pellets raises one stat by a little, for good: Common +0.2%, Uncommon +0.4%, Rare +0.6%, Epic +1%, Legendary +1.5%, up to +10% per stat. Up to {F.BOOSTS_PER_DAY} stat boosts a day; Pellets anytime.
           </Text>
           {msg ? <Text style={styles.msg}>{msg}</Text> : null}
         </ScrollView>

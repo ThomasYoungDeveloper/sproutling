@@ -163,9 +163,9 @@ export function statsFor(p: { speciesId: string; xp: number; train?: Training; f
   // Grade: a perfect stat is up to 10% stronger.
   const iv = ivsOf(p);
   for (const k of ['hp', 'atk', 'def', 'spd'] as Stat[]) raw[k] *= 1 + iv[k] / 150;
-  // Food boosts: small, capped, added straight onto the final stat.
+  // Food boosts: a small percent per stat, up to +10%.
   // (Capped here too, so a friend's card can't carry more than food could ever give: see game/food.ts.)
-  for (const k of ['hp', 'atk', 'def', 'spd'] as Stat[]) raw[k] += Math.max(0, Math.min(k === 'hp' ? 120 : 30, Number(p.foodBoost?.[k]) || 0));
+  for (const k of ['hp', 'atk', 'def', 'spd'] as Stat[]) raw[k] *= 1 + Math.max(0, Math.min(10, Number(p.foodBoost?.[k]) || 0)) / 100;
   return { hp: Math.round(raw.hp), atk: Math.round(raw.atk), def: Math.round(raw.def), spd: Math.round(raw.spd) };
 }
 

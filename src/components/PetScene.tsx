@@ -633,7 +633,7 @@ export default function PetScene({ onTrinketsEmpty, onDressUp, onShop, onAccount
       setBurstSet(f ? [f.emoji, '✨', '💪'] : ['😋', '✨', '💛']);
       setBurst((b) => b + 1);
       const gain = f ? F.boostFor(pet, f) : 0;
-      say(f ? (gain > 0 ? `Yum! +${gain} ${F.statLabel(f.stat)}!` : `Yum, ${f.name}!`) : 'Crunchy pellets, thanks!');
+      say(f ? (gain > 0 ? `Yum! ${F.pct(gain)} ${F.statLabel(f.stat)}!` : `Yum, ${f.name}!`) : 'Crunchy pellets, thanks!');
       apply((s) => C.feed(s, foodId));
     });
   };
