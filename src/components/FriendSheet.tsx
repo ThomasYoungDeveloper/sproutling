@@ -11,10 +11,13 @@ import { gradeOf } from '../game/stats';
 import { GIFT_COINS, GIFTS_PER_DAY } from '../game/actions';
 import { activeToday, lastSeen } from '../screens/friendsShared';
 import { YardBackdrop } from './PetScene';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import PetZoom from './PetZoom';
 import { friendOpponent, useBattle, useTradeOffer } from './SocialPanels';
 
 export default function FriendSheet({ friend, onClose }: { friend: Friend; onClose: () => void }) {
+  // This screen covers the whole phone, so keep the Back button below the clock and camera.
+  const insets = useSafeAreaInsets();
   const { gift, giftsLeft, remove, friends } = useFriends();
   const battle = useBattle();
   const tradeOffer = useTradeOffer();
@@ -51,7 +54,7 @@ export default function FriendSheet({ friend, onClose }: { friend: Friend; onClo
           ) : (
             <Text style={{ position: 'absolute', alignSelf: 'center', top: 220, fontSize: 64 }}>🥚</Text>
           )}
-          <View style={styles.yardTop}>
+          <View style={[styles.yardTop, { top: 14 + insets.top }]}>
             <Pressable onPress={onClose} style={styles.backPill} accessibilityRole="button" accessibilityLabel="Back">
               <Text style={styles.backText}>‹ Back</Text>
             </Pressable>
@@ -60,7 +63,7 @@ export default function FriendSheet({ friend, onClose }: { friend: Friend; onClo
               <Text style={styles.seenText}>{lastSeen(live)}</Text>
             </View>
           </View>
-          <View style={styles.hello} pointerEvents="none">
+          <View style={[styles.hello, { top: Math.max(104, insets.top + 62) }]} pointerEvents="none">
             <Text style={styles.helloText}>Hi from {possessive} yard!</Text>
           </View>
         </View>

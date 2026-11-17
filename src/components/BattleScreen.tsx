@@ -9,6 +9,7 @@ import PetSprite from './PetSprite';
 import PetPicker from './PetPicker';
 import PowerGlow from './PowerGlow';
 import { Backdrop, skyNow } from './PetScene';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button } from './ui';
 import { Confetti, PopIn, buzz } from './fx';
 import { colors, space } from '../theme';
@@ -32,6 +33,7 @@ const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const moveColor = (m: MoveDef) => (m.element === 'normal' ? B.NORMAL_COLOR : B.ELEMENT_COLOR[m.element]);
 
 export default function BattleScreen({ opponent, onClose, onResult }: { opponent: Opponent; onClose: () => void; onResult?: (won: boolean) => void }) {
+  const insets = useSafeAreaInsets();
   const { state, apply } = useGame();
   const stateRef = useRef<GameState>(state);
   stateRef.current = state;
@@ -178,7 +180,7 @@ export default function BattleScreen({ opponent, onClose, onResult }: { opponent
   const them = B.active(battle, 'them');
 
   return (
-    <View style={styles.full}>
+    <View style={[styles.full, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
       <View style={styles.arena}>
         <Backdrop element={me.element} sky={sky} scene={state.scene} />
         <TeamDots fighters={battle.theirs} index={battle.ti} style={{ top: 10, right: 12 }} />
