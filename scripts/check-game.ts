@@ -476,7 +476,8 @@ ok(A.applyShields(shielded.state).used === 0, 'shields are not used twice');
   ok(g.pets[0].foodBoost?.hp === 1.6 && A.today(g).care?.boosts === 3, 'common food adds +0.8% each');
   const strong = { ...pet, xp: 50000, foodBoost: { atk: 10 } };
   ok(St.statsFor(strong).atk > St.statsFor({ ...pet, xp: 50000 }).atk && St.statsFor(strong).atk <= Math.ceil(St.statsFor({ ...pet, xp: 50000 }).atk * 1.1) + 1, 'a full +10% food boost is +10% on that stat');
-  ok(!F.canFeed(g, A.today(g), 'fp', 'berries').ok && F.canFeed(g, A.today(g), 'fp', 'pellets').ok, 'three boosting foods a day; Pellets always work');
+  const fourth = C.feed(g, 'berries', t0);
+  ok(fourth.pets[0].foodBoost?.hp === 1.6 && F.foodCount(fourth, 'berries') === F.foodCount(g, 'berries') - 1, 'after three stat bonuses a day, food still feeds but adds no bonus');
   ok(F.boostFor({ ...pet, foodBoost: { atk: 9.6 } }, F.FOOD_BY_ID.sushi) === 0.4 && F.boostFor({ ...pet, foodBoost: { atk: 10 } }, F.FOOD_BY_ID.sushi) === 0, 'food boosts stop at +10%');
   let foodFinds = 0;
   for (let d = 0; d < 300; d++) { const w = A.addSteps({ ...g, pets: [{ ...pet, id: 'f' + d }], walkFinds: undefined }, 10000); foodFinds += W.rollWalkFinds(w, false).finds.filter((f: any) => f.kind === 'food').length; }

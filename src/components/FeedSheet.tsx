@@ -22,7 +22,7 @@ export default function FeedSheet({ onFeed, onClose, onShop }: { onFeed: (foodId
 
   const tile = (f: F.FoodDef, shop: boolean) => {
     const have = F.foodCount(state, f.id);
-    const gain = F.boostFor(pet, f);
+    const gain = F.boostFor(pet, f, day);
     const check = F.canFeed(state, day, pet.id, f.id);
     const rare = RARITY_INFO[f.rarity];
     const canBuy = shop;
@@ -46,7 +46,7 @@ export default function FeedSheet({ onFeed, onClose, onShop }: { onFeed: (foodId
         <Text style={{ fontSize: 26 }}>{f.emoji}</Text>
         <Text style={styles.tileName} numberOfLines={1}>{f.name}{!shop && have > 0 ? ` ×${have}` : ''}</Text>
         <Text style={[styles.tileRarity, { color: rare.color }]}>{rare.label.toUpperCase()}</Text>
-        <Text style={styles.tileGain}>{gain > 0 ? `${F.pct(gain)} ${F.statLabel(f.stat)}` : 'Stat maxed'}</Text>
+        <Text style={styles.tileGain}>{gain > 0 ? `${F.pct(gain)} ${F.statLabel(f.stat)}` : used >= F.BOOSTS_PER_DAY ? 'Just a snack' : 'Stat maxed'}</Text>
         {canBuy ? <Text style={styles.price}>🪙 {f.price}</Text> : null}
       </Pressable>
     );
@@ -64,11 +64,14 @@ export default function FeedSheet({ onFeed, onClose, onShop }: { onFeed: (foodId
               <Text style={styles.chipEmoji}>🍙</Text>
               <Text style={[styles.chipText, { color: '#B24E1C' }]}>Food {needs.food}%</Text>
             </View>
-            <View style={[styles.chip, { backgroundColor: '#E6F4EE' }]} accessibilityLabel={`${F.BOOSTS_PER_DAY - used} stat boosts left today`}>
+            <View style={[styles.chip, { backgroundColor: '#E6F4EE' }]} accessibilityLabel={`${F.BOOSTS_PER_DAY - used} of ${F.BOOSTS_PER_DAY} stat bonuses left today`}>
               <Text style={styles.chipEmoji}>💪</Text>
-              <Text style={[styles.chipText, { color: colors.mintDark }]}>{F.BOOSTS_PER_DAY - used} boosts left today</Text>
+              <Text style={[styles.chipText, { color: colors.mintDark }]}>Stat bonuses: {F.BOOSTS_PER_DAY - used} of {F.BOOSTS_PER_DAY} left</Text>
             </View>
           </View>
+          <Text style={styles.small}>
+            Food makes {pet.nickname} a little stronger for good. The first {F.BOOSTS_PER_DAY} foods each day give a stat bonus; after that, food just fills the tummy.
+          </Text>
         </View>
         <ScrollView style={{ maxHeight: 520 }} contentContainerStyle={{ gap: 10 }} showsVerticalScrollIndicator={false}>
           <Pressable
@@ -96,7 +99,7 @@ export default function FeedSheet({ onFeed, onClose, onShop }: { onFeed: (foodId
           <View style={styles.grid}>{shopFoods.map((f) => tile(f, true))}</View>
 
           <Text style={styles.small}>
-            Every food except Pellets raises one stat by a little, for good: Common +0.8%, Uncommon +1.2%, Rare +1.8%, Epic +2.5%, Legendary +4%, up to +10% per stat. Up to {F.BOOSTS_PER_DAY} stat boosts a day; Pellets anytime.
+            Bonus size by rarity: Common +0.8%, Uncommon +1.2%, Rare +1.8%, Epic +2.5%, Legendary +4%. Each stat can gain up to +10% from food.
           </Text>
           {msg ? <Text style={styles.msg}>{msg}</Text> : null}
         </ScrollView>

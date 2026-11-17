@@ -110,12 +110,12 @@ export function canFeed(s: GameState, d: DayLog, petId: string, foodId: string):
   const pet = s.pets.find((p) => p.id === petId);
   if (!f || !pet) return { ok: false, reason: 'Pick a food.' };
   if (foodCount(s, foodId) < 1) return { ok: false, reason: `You're out of ${f.name}.` };
-  if (boostsUsedToday(d) >= BOOSTS_PER_DAY) return { ok: false, reason: `That's ${BOOSTS_PER_DAY} boosting foods today. Pellets are still free!` };
   return { ok: true };
 }
 
 /** How much this food would actually raise the pet's stat (0 once the stat's food cap is reached). */
-export function boostFor(pet: OwnedPet, f: FoodDef): number {
+export function boostFor(pet: OwnedPet, f: FoodDef, day?: DayLog): number {
+  if (day && boostsUsedToday(day) >= BOOSTS_PER_DAY) return 0; // Still tasty, just no stat bonus today.
   const have = pet.foodBoost?.[f.stat] ?? 0;
   return Math.round(Math.max(0, Math.min(boostOf(f), foodCapFor(f.stat) - have)) * 10) / 10;
 }
@@ -142,7 +142,7 @@ export function feedPet(
     if (left > 0) foods[foodId] = left;
     else delete foods[foodId];
     const pet = s.pets.find((p) => p.id === petId)!;
-    const gain = boostFor(pet, f);
+    const gain = boostFor(pet, f, day);
     next = {
       ...s,
       foods,
@@ -158,7 +158,7 @@ export function feedPet(
       fed: true,
       food: Math.min(100, current + fill),
       foodAt: now,
-      ...(isPellet ? {} : { boosts: (d.care?.boosts ?? 0) + 1 }),
+      ...(isPellet || boostFor(s.pets.find((p) => p.id === petId)!, f, day) === 0 ? {} : { boosts: (d.care?.boosts ?? 0) + 1 }),
     },
   }));
 }
