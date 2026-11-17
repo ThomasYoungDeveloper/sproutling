@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Platform, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Linking, Platform, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { GameProvider, useGame } from './src/state/GameContext';
 import { AuthProvider, useAuth } from './src/state/AuthContext';
@@ -51,6 +51,13 @@ const TABS: { id: Tab; label: string }[] = [
 ];
 
 /** A friend code from an invite link (sproutling.app/?add=CODE), read once and removed from the address bar. */
+/** A friend or guild code inside an invite link the phone opened the app with. */
+function codeFromUrl(link: string | null | undefined, param: string): string | null {
+  if (!link) return null;
+  const m = link.match(new RegExp(`[?&]${param}=([^&#]+)`));
+  return m ? decodeURIComponent(m[1]).slice(0, 20) : null;
+}
+
 function takeInviteCode(param = 'add'): string | null {
   if (Platform.OS !== 'web' || typeof window === 'undefined') return null;
   const url = new URL(window.location.href);
@@ -92,6 +99,21 @@ function Shell() {
       setGuildInvite(guild.toUpperCase());
       setTab('friends');
     }
+  }, []);
+
+  // On the phone, invite links open the app directly (Universal Links): read the code from the link.
+  useEffect(() => {
+    if (Platform.OS === 'web') return;
+    const handle = (link: string | null | undefined) => {
+      const code = codeFromUrl(link, 'add');
+      const guild = codeFromUrl(link, 'guild');
+      if (code) setInvite(code);
+      if (guild) setGuildInvite(guild.toUpperCase());
+      if (code || guild) setTab('friends');
+    };
+    Linking.getInitialURL().then(handle).catch(() => {});
+    const sub = Linking.addEventListener('url', (e) => handle(e.url));
+    return () => sub.remove();
   }, []);
 
   // Pop up the daily reward once a day, after the save has synced (so it isn't shown twice across devices).

@@ -1,0 +1,13 @@
+{
+  "applinks": {
+    "details": [
+      {
+        "appIDs": ["S8N2T57J86.com.sproutlingapp.sproutling"],
+        "components": [
+          { "?": { "add": "?*" }, "comment": "Friend invite links" },
+          { "?": { "guild": "?*" }, "comment": "Guild invite links" }
+        ]
+      }
+    ]
+  }
+}
