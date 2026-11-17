@@ -152,7 +152,9 @@ function Shell() {
   }, [pet?.id, stage]);
 
   return (
-    <SafeAreaView style={[styles.root, tab === 'home' && !starter && pet && { backgroundColor: yardSkyTop(state) }]}>
+    <SafeAreaView style={styles.root}>
+      {/* Sky colour only behind the status bar; the rest of the edges stay mint so no stray band shows by the tab bar. */}
+      {tab === 'home' && !starter && pet ? <View pointerEvents="none" style={[styles.skyCap, { backgroundColor: yardSkyTop(state) }]} /> : null}
       <StatusBar style={tab === 'home' && !starter && pet && yardSkyTop(state, true) ? 'light' : 'dark'} />
       {tab === 'home' && !starter ? null : (
         <View style={styles.top}>
@@ -294,6 +296,7 @@ export default function App() {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.bg },
+  skyCap: { position: 'absolute', top: 0, left: 0, right: 0, height: '45%' },
   top: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: space.sm, paddingHorizontal: space.lg, paddingTop: space.lg, paddingBottom: space.sm, maxWidth: 520, width: '100%', alignSelf: 'center' },
   pageTitle: { fontSize: 30, fontWeight: '900', color: '#1F3A33' },
   pageSub: { fontSize: 13, fontWeight: '800', color: '#3E6B5E' },

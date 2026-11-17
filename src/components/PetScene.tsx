@@ -443,7 +443,11 @@ export default function PetScene({ onTrinketsEmpty, onDressUp, onShop, onAccount
   const mi = C.MOOD_INFO[mood];
   const tasks = C.careTasks(d);
   const trinkets = C.trinketCount(state);
-  const [sky] = useState(skyNow);
+  const [sky, setSky] = useState(skyNow);
+  useEffect(() => {
+    const t = setInterval(() => setSky(skyNow()), 60000);
+    return () => clearInterval(t);
+  }, []);
   const [width, setWidth] = useState(0);
   const [showToys, setShowToys] = useState(false);
   const streak = A.streak(state);
@@ -605,8 +609,8 @@ export default function PetScene({ onTrinketsEmpty, onDressUp, onShop, onAccount
 
   // Things in the yard. Tapping one sends the pet over.
   const bed = { x: 20, y: 214 };
-  const bowl = { x: Math.max(0, width - 84), y: 376 };
-  const ball = { x: 26, y: 356 };
+  const bowl = { x: Math.max(0, width - 76), y: 300 };
+  const ball = { x: 14, y: 300 };
   const goBed = () => {
     lastAct.current = Date.now() + 4000;
     walkTo(bed.x + 48 - width / 2, FLOOR_TOP, () => {
@@ -616,7 +620,7 @@ export default function PetScene({ onTrinketsEmpty, onDressUp, onShop, onAccount
   };
   const goBowl = (fromButton = false) => {
     lastAct.current = Date.now() + 4000;
-    walkTo(bowl.x - 20 - width / 2, FLOOR_BOTTOM, () => {
+    walkTo(bowl.x - 20 - width / 2, bowl.y + 40, () => {
       if (tasks[0].done) return say(fromButton ? 'Already full, thanks!' : 'I’m full!');
       buzz('success', 'munch');
       munch();
@@ -628,7 +632,7 @@ export default function PetScene({ onTrinketsEmpty, onDressUp, onShop, onAccount
   };
   const goBall = () => {
     lastAct.current = Date.now() + 4000;
-    walkTo(ball.x + 60 - width / 2, FLOOR_BOTTOM - 10, () => {
+    walkTo(ball.x + 60 - width / 2, ball.y + 40, () => {
       say('Again! Again!');
       doPlay();
     });
@@ -717,7 +721,7 @@ export default function PetScene({ onTrinketsEmpty, onDressUp, onShop, onAccount
             <Animated.View ref={petBox as any} style={{ transform: [{ scaleX: face }] }}>
               <Animated.View style={{ transform: petTransform }}>
                 <PowerGlow count={buffs.length} size={PET_SIZE} />
-                <PetSprite species={sp} stage={stage} size={PET_SIZE} shiny={pet.shiny} skin={pet.skin} mood={mood === 'sleepy' ? 'sleepy' : mood === 'joy' ? 'joy' : 'happy'} hat={pet.look?.hat} aura={pet.look?.aura} />
+                <PetSprite noShadow species={sp} stage={stage} size={PET_SIZE} shiny={pet.shiny} skin={pet.skin} mood={mood === 'sleepy' ? 'sleepy' : mood === 'joy' ? 'joy' : 'happy'} hat={pet.look?.hat} aura={pet.look?.aura} />
               </Animated.View>
             </Animated.View>
           </Pressable>
@@ -758,7 +762,7 @@ export default function PetScene({ onTrinketsEmpty, onDressUp, onShop, onAccount
             <View style={[styles.xpFill, { width: `${Math.round((lp.max ? 1 : lp.into / lp.need) * 100)}%` }]} />
           </View>
           <Text style={styles.sub} numberOfLines={1}>
-            {RARITY_INFO[sp.rarity].label}{pet.shiny ? ' ✦' : ''} · {gradeOf(pet)}% · <Text style={{ color: mi.color }}>{mi.emoji} {mi.label}</Text>
+            {RARITY_INFO[sp.rarity].label}{pet.shiny ? ' ✦' : ''} · {gradeOf(pet)}% · <Text accessibilityLabel={mi.label}>{mi.emoji}</Text>
           </Text>
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
@@ -884,9 +888,9 @@ const styles = StyleSheet.create({
   scene: { height: SCENE_H, overflow: 'hidden' },
   decor: { position: 'absolute', zIndex: 4 },
   petSpot: { position: 'absolute', width: PET_SIZE, height: PET_SIZE + 6, alignItems: 'center', justifyContent: 'flex-end', zIndex: 6 },
-  petShadow: { position: 'absolute', bottom: -2, alignSelf: 'center', width: PET_SIZE * 0.5, height: 14, borderRadius: 999, backgroundColor: 'rgba(0,0,0,0.16)' },
+  petShadow: { position: 'absolute', bottom: -PET_SIZE * 0.22, alignSelf: 'center', width: PET_SIZE * 0.5, height: PET_SIZE * 0.5, borderRadius: PET_SIZE, backgroundColor: 'rgba(0,0,0,0.14)', transform: [{ scaleY: 0.16 }] },
   hud: { position: 'absolute', top: 10, left: 12, right: 12, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8, zIndex: 20 },
-  namePill: { flex: 1, maxWidth: 220, backgroundColor: 'rgba(255,255,255,0.9)', borderRadius: 18, paddingVertical: 7, paddingHorizontal: 10, gap: 4 },
+  namePill: { flex: 1, maxWidth: 230, backgroundColor: 'rgba(255,255,255,0.9)', borderRadius: 18, paddingVertical: 7, paddingHorizontal: 10, gap: 4 },
   plus: { width: 16, height: 16, borderRadius: 8, backgroundColor: colors.mint, alignItems: 'center', justifyContent: 'center', marginLeft: 4 },
   plusText: { color: '#FFFFFF', fontSize: 12, fontWeight: '900', marginTop: -1 },
   side: { position: 'absolute', right: 10, top: 112, alignItems: 'center', gap: 2, zIndex: 20 },
@@ -904,7 +908,7 @@ const styles = StyleSheet.create({
   trayBadgeText: { color: '#FFFFFF', fontSize: 11, fontWeight: '900' },
   toyShelf: { position: 'absolute', left: 10, right: 10, bottom: 126, flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 6, backgroundColor: 'rgba(255,255,255,0.92)', borderRadius: 18, padding: 6, zIndex: 11 },
   shelfEmpty: { fontSize: 12, fontWeight: '800', color: colors.muted, padding: 6, textAlign: 'center' },
-  stat: { height: 30, paddingHorizontal: 9, borderRadius: 999, backgroundColor: 'rgba(255,255,255,0.9)', alignItems: 'center', justifyContent: 'center', flexDirection: 'row' },
+  stat: { height: 30, paddingHorizontal: 8, borderRadius: 999, backgroundColor: 'rgba(255,255,255,0.9)', alignItems: 'center', justifyContent: 'center', flexDirection: 'row' },
   statText: { fontSize: 12, fontWeight: '900', color: colors.ink },
   avatar: { width: 32, height: 32, borderRadius: 16, backgroundColor: colors.mint, borderWidth: 2, borderColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center' },
   avatarText: { color: '#FFFFFF', fontSize: 12, fontWeight: '900' },

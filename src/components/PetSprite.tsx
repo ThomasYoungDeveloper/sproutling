@@ -9,6 +9,8 @@ import { PET_ANCHORS } from './petAnchors';
 import { Aura, HatArt, hatPlacement } from './Cosmetics';
 
 interface Props {
+  /** Skip the built-in ground shadow (when the parent draws its own). */
+  noShadow?: boolean;
   species: Species;
   stage: Stage;
   size?: number;
@@ -25,7 +27,7 @@ interface Props {
 /** How big the pet looks at each growth stage (the art itself has a single stage). */
 const STAGE_SCALE: Record<Stage, number> = { baby: 0.62, teen: 0.8, adult: 1 };
 
-export default function PetSprite({ species, stage, size = 180, shiny = false, mood = 'happy', silhouette = false, hat, aura, skin }: Props) {
+export default function PetSprite({ species, stage, size = 180, shiny = false, mood = 'happy', silhouette = false, hat, aura, skin, noShadow = false }: Props) {
   const scale = STAGE_SCALE[stage];
   // Leave headroom so a hat fits inside the pet's box.
   const img = size * scale * (hat && !silhouette ? (stage === 'adult' ? 0.8 : 0.9) : 1);
@@ -45,7 +47,7 @@ export default function PetSprite({ species, stage, size = 180, shiny = false, m
       {shiny && !silhouette && (
         <View style={[styles.glow, { width: img, height: img, borderRadius: img, backgroundColor: '#FFE27A', opacity: 0.35, bottom: size * 0.02 }]} />
       )}
-      <View style={[styles.shadow, { width: img * 0.6, bottom: 0 }]} />
+      {!noShadow && <View style={[styles.shadow, { width: img * 0.6, bottom: 0 }]} />}
       <Image
         source={(skin && !silhouette && SKIN_IMAGES[skin]?.[species.id]) || PET_IMAGES[species.id]}
         style={{ width: img, height: img, opacity: silhouette ? 0.9 : 1 }}
