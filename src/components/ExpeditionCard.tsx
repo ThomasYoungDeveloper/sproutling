@@ -55,6 +55,30 @@ const THEME: Record<string, { sky: [string, string]; ground: string; ink: string
   },
 };
 
+/** The place as a picture behind the pet on the return screen (same look as the Home card). */
+function PlaceHeader({ placeId, children }: { placeId: string; children: React.ReactNode }) {
+  const [w, setW] = useState(0);
+  const t = THEME[placeId] ?? THEME.meadow;
+  return (
+    <View onLayout={(e) => setW(Math.ceil(e.nativeEvent.layout.width))} style={[styles.placeHead, { backgroundColor: t.sky[1] }]}>
+      {w > 0 ? (
+        <Svg width={w} height={170} style={StyleSheet.absoluteFill}>
+          <Defs>
+            <LinearGradient id={`home-${placeId}`} x1="0" y1="0" x2="0" y2="1">
+              <Stop offset="0" stopColor={t.sky[0]} />
+              <Stop offset="1" stopColor={t.sky[1]} />
+            </LinearGradient>
+          </Defs>
+          <Rect x={0} y={0} width={w} height={170} fill={`url(#home-${placeId})`} />
+          {t.deco(w)}
+          <Path d={`M0 170V128c${w * 0.1}-8 ${w * 0.2} 4 ${w * 0.3}-2s${w * 0.18}-14 ${w * 0.3}-8 ${w * 0.2} 12 ${w * 0.4} 6V170z`} fill={t.ground} />
+        </Svg>
+      ) : null}
+      <View style={{ alignItems: 'center', justifyContent: 'flex-end', height: 170, paddingBottom: 6 }}>{children}</View>
+    </View>
+  );
+}
+
 /** The trip as a little scene: the place's colors, its landmarks, and the pet walking the trail home. */
 function TripScene({ placeId, speciesId, xp, hat, pct, title, pill, foot, onPress, label, done }: { placeId: string; speciesId: string; xp: number; hat?: string; pct: number; title: string; pill: string; foot: string; onPress: () => void; label: string; done?: boolean }) {
   const [w, setW] = useState(0);
@@ -139,14 +163,14 @@ function ReturnSheet({ loot, onClose }: { loot: Ex.ExpeditionLoot; onClose: () =
       {loot.knockedOut ? null : <Confetti amount={60} width={width} height={height} />}
       <View style={styles.sheet}>
         <Text style={[font.title, { textAlign: 'center' }]}>{loot.knockedOut ? `${loot.petName} was knocked out` : `Welcome home, ${loot.petName}!`}</Text>
-        <View style={{ alignItems: 'center', height: loot.knockedOut ? 130 : 170, justifyContent: 'center' }}>
-          {loot.knockedOut ? null : <Rays color={colors.gold} size={220} />}
+        <PlaceHeader placeId={loot.placeId}>
+          {loot.knockedOut ? null : <View style={{ position: 'absolute', top: 0 }}><Rays color={colors.gold} size={200} /></View>}
           <PopIn from={0.2}>
-            <View style={loot.knockedOut ? { opacity: 0.55 } : undefined}>
-              <PetSprite species={sp} stage="adult" size={loot.knockedOut ? 120 : 150} mood={loot.knockedOut ? 'sleepy' : 'joy'} />
+            <View style={loot.knockedOut ? { opacity: 0.6 } : undefined}>
+              <PetSprite species={sp} stage="adult" size={loot.knockedOut ? 120 : 140} mood={loot.knockedOut ? 'sleepy' : 'joy'} />
             </View>
           </PopIn>
-        </View>
+        </PlaceHeader>
         <PopIn delay={250}>
           <Text style={styles.story}>{loot.story}</Text>
         </PopIn>
@@ -397,6 +421,7 @@ const styles = StyleSheet.create({
   placeSub: { fontWeight: '700', fontSize: 11, color: colors.muted },
   backdrop: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(22,28,46,0.92)', justifyContent: 'center', alignItems: 'center', padding: space.lg },
   sheet: { backgroundColor: '#FFFFFF', borderRadius: 24, padding: space.lg, gap: space.sm, width: '100%', maxWidth: 420 },
+  placeHead: { alignSelf: 'stretch', height: 170, borderRadius: 18, overflow: 'hidden' },
   fights: { alignSelf: 'stretch', backgroundColor: '#F6F1E7', borderRadius: 14, padding: 10, gap: 6 },
   fightsHead: { fontSize: 11, fontWeight: '900', letterSpacing: 0.6, color: colors.muted },
   fightRow: { flexDirection: 'row', justifyContent: 'space-between', gap: 8 },

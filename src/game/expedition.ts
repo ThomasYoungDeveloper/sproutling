@@ -215,6 +215,7 @@ export interface ExpeditionLoot {
   /** Food won in fights on the way. */
   foods: string[];
   placeName: string;
+  placeId: string;
 }
 
 /** Brings the pet home with its loot and a little story. */
@@ -258,7 +259,7 @@ export function finish(s: GameState, rng: Rng = defaultRng, now = Date.now()): {
   const story = knockedOut
     ? `${name} was knocked out by a ${lostTo?.name ?? 'wild pet'} and came home early.`
     : `${name} ${event}${found.length ? `, and came home with ${found.join(' and ')}` : ''}!`;
-  return { state: next, loot: { coins, xp, chest, egg, item, cosmetic, story, petName: name, speciesId: pet?.speciesId ?? 'p01', fights, knockedOut, foods, placeName: place.name } };
+  return { state: next, loot: { coins, xp, chest, egg, item, cosmetic, story, petName: name, speciesId: pet?.speciesId ?? 'p01', fights, knockedOut, foods, placeName: place.name, placeId: place.id } };
 }
 
 /** Cancels an expedition early. The pet comes home with nothing, but nothing is lost either. */
