@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useLive, type LiveBattle } from '../state/LiveBattleContext';
 import { useGame } from '../state/GameContext';
@@ -241,7 +242,7 @@ function MiniPet({ p, label }: { p: TradePet | null; label: string }) {
   );
 }
 
-function TradeRow({ t }: { t: Trade }) {
+function TradeRow({ t, onDismiss }: { t: Trade; onDismiss?: () => void }) {
   const { counterTrade, confirmTrade, cancelTrade } = useFriends();
   const { open, close } = useOverlay();
   const [busy, setBusy] = useState(false);
@@ -301,8 +302,10 @@ function TradeRow({ t }: { t: Trade }) {
     actions = <Button small label="Cancel" onPress={() => cancelTrade(t.id)} />;
   } else if (t.status === 'declined') {
     text = t.fromMe ? `${t.friendName} said no thanks to this trade.` : 'You passed on this trade.';
+    actions = <Button small label="OK" onPress={() => onDismiss?.()} />;
   } else if (t.status === 'cancelled') {
     text = t.fromMe ? 'You cancelled this trade.' : `${t.friendName} cancelled this trade.`;
+    actions = <Button small label="OK" onPress={() => onDismiss?.()} />;
   }
 
   const closed = t.status === 'declined' || t.status === 'cancelled';
@@ -320,16 +323,28 @@ function TradeRow({ t }: { t: Trade }) {
   );
 }
 
+const DISMISSED_KEY = 'sproutling/trades-dismissed';
+
 export function TradesCard() {
   const { trades } = useFriends();
-  const shown = trades.filter((t) => t.status !== 'completed');
+  // Declined and cancelled trades show once, until you tap OK.
+  const [dismissed, setDismissed] = useState<string[] | null>(null);
+  useEffect(() => {
+    AsyncStorage.getItem(DISMISSED_KEY).then((v) => setDismissed(v ? JSON.parse(v) : [])).catch(() => setDismissed([]));
+  }, []);
+  const dismiss = (id: string) => {
+    const next = [...(dismissed ?? []), id].slice(-100);
+    setDismissed(next);
+    AsyncStorage.setItem(DISMISSED_KEY, JSON.stringify(next)).catch(() => {});
+  };
+  const shown = trades.filter((t) => t.status !== 'completed' && !((t.status === 'declined' || t.status === 'cancelled') && (dismissed === null || dismissed.includes(t.id))));
   if (!shown.length) return null;
   const waiting = shown.filter((t) => (t.status === 'offered' && !t.fromMe) || (t.status === 'countered' && t.fromMe)).length;
   return (
     <Card style={waiting ? { borderColor: colors.peach } : undefined}>
       <SectionHead title="Trades" meta={waiting ? `${waiting} need${waiting === 1 ? 's' : ''} you` : undefined} />
       {shown.map((t) => (
-        <TradeRow key={t.id} t={t} />
+        <TradeRow key={t.id} t={t} onDismiss={() => dismiss(t.id)} />
       ))}
     </Card>
   );

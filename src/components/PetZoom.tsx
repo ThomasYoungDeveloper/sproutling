@@ -20,7 +20,7 @@ interface ZoomPet {
 }
 
 /** A big close-up of a pet in its scene, with its hat and aura. Tap anywhere to close. */
-export default function PetZoom({ pet, scene, onClose }: { pet: ZoomPet; scene?: string; onClose: () => void }) {
+export default function PetZoom({ pet, scene, onClose, dex }: { pet: ZoomPet; scene?: string; onClose: () => void; /** Pet-dex view: no level, plus the species' description. */ dex?: boolean }) {
   const sp = SPECIES_BY_ID[pet.speciesId];
   const { width } = useWindowDimensions();
   const size = Math.min(320, width - 80);
@@ -49,11 +49,12 @@ export default function PetZoom({ pet, scene, onClose }: { pet: ZoomPet; scene?:
         <View style={styles.info}>
           <Text style={styles.name} numberOfLines={1}>{pet.nickname}</Text>
           <View style={{ flexDirection: 'row', gap: 6, alignItems: 'center', flexWrap: 'wrap', justifyContent: 'center' }}>
-            <Text style={styles.sub}>Lv {levelFor(pet.xp)} {sp.name}</Text>
+            {dex ? null : <Text style={styles.sub}>Lv {levelFor(pet.xp)} {sp.name}</Text>}
             <RarityBadge rarity={sp.rarity} />
             {pet.skin ? <Text style={[styles.sub, { color: SKIN_INFO[pet.skin].color }]}>{SKIN_INFO[pet.skin].emoji} {SKIN_INFO[pet.skin].label}</Text> : null}
             {pet.shiny ? <Text style={[styles.sub, { color: '#C99212' }]}>✦ Shiny</Text> : null}
           </View>
+          {dex ? <Text style={styles.blurb}>{sp.blurb}</Text> : null}
           <Text style={styles.hint}>Tap anywhere to close</Text>
         </View>
       </Animated.View>
@@ -62,6 +63,7 @@ export default function PetZoom({ pet, scene, onClose }: { pet: ZoomPet; scene?:
 }
 
 const styles = StyleSheet.create({
+  blurb: { fontSize: 14, fontWeight: '700', color: '#4F5F63', textAlign: 'center', lineHeight: 19 },
   backdrop: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(16,20,36,0.85)', justifyContent: 'center', alignItems: 'center', padding: space.md, zIndex: 120 },
   card: { backgroundColor: '#FFFFFF', borderRadius: 26, overflow: 'hidden' },
   stage: { alignItems: 'center', justifyContent: 'flex-end', paddingBottom: 10, overflow: 'hidden' },

@@ -29,6 +29,7 @@ export default function FriendSheet({ friend, onClose }: { friend: Friend; onClo
   const [confirmRemove, setConfirmRemove] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const [zoom, setZoom] = useState(false);
+  const [zoomPet, setZoomPet] = useState<any>(null);
   const card = live.card;
   const active = card?.active;
   const activeSpecies = active ? SPECIES_BY_ID[active.speciesId] : undefined;
@@ -171,12 +172,12 @@ export default function FriendSheet({ friend, onClose }: { friend: Friend; onClo
                   const sp = SPECIES_BY_ID[p.speciesId];
                   if (!sp) return null;
                   return (
-                    <View key={i} style={[styles.tile, { backgroundColor: RARITY_TINT[sp.rarity] ?? '#F2F6F4' }]}>
+                    <Pressable key={i} onPress={() => setZoomPet(p)} style={({ pressed }) => [styles.tile, { backgroundColor: RARITY_TINT[sp.rarity] ?? '#F2F6F4' }, pressed && { transform: [{ scale: 0.96 }] }]} accessibilityRole="button" accessibilityLabel={`See ${p.nickname} up close`}>
                       <View style={styles.lv}><Text style={styles.lvText}>Lv {levelFor(p.xp)} · {gradeOf(p)}%</Text></View>
                       <PetSprite species={sp} stage={stageFor(p.xp)} size={64} shiny={p.shiny} skin={p.skin} hat={p.hat} aura={p.aura} />
                       <Text style={styles.name} numberOfLines={1}>{p.nickname}</Text>
                       <RarityBadge rarity={sp.rarity} />
-                    </View>
+                    </Pressable>
                   );
                 })}
               </View>
@@ -201,6 +202,7 @@ export default function FriendSheet({ friend, onClose }: { friend: Friend; onClo
         </View>
       </ScrollView>
       {zoom && active ? <PetZoom pet={active} scene={card?.scene} onClose={() => setZoom(false)} /> : null}
+      {zoomPet ? <PetZoom pet={zoomPet} onClose={() => setZoomPet(null)} /> : null}
     </View>
   );
 }

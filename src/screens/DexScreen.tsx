@@ -14,6 +14,7 @@ import { useOverlay } from '../components/Overlay';
 import AchievementsSheet from '../components/AchievementsSheet';
 import NurseryCard from '../components/NurseryCard';
 import PetSheet from '../components/PetSheet';
+import PetZoom from '../components/PetZoom';
 import { pointsLeft } from '../game/stats';
 import * as A from '../game/actions';
 import type { Skin } from '../game/types';
@@ -127,7 +128,7 @@ export default function DexScreen() {
                   {SPECIES.filter((s) => s.rarity === r).map((s) => {
                     const seen = !!state.dex[s.id];
                     return (
-                      <View key={s.id} style={[styles.tile, { borderColor: 'transparent', backgroundColor: seen ? RARITY_TINT[s.rarity] : '#E6ECEA' }]}>
+                      <Pressable key={s.id} disabled={!seen} onPress={() => overlay.open(<PetZoom dex pet={{ speciesId: s.id, nickname: s.name, xp: 99999, shiny: false }} onClose={overlay.close} />)} style={({ pressed }) => [styles.tile, { borderColor: 'transparent', backgroundColor: seen ? RARITY_TINT[s.rarity] : '#E6ECEA' }, pressed && { transform: [{ scale: 0.96 }] }]} accessibilityRole={seen ? 'button' : undefined} accessibilityLabel={seen ? `See ${s.name} up close` : 'Not found yet'}>
                         <PetSprite species={s} stage="adult" size={76} silhouette={!seen} />
                         <Text style={styles.name} numberOfLines={1}>{seen ? s.name : '???'}</Text>
                         {seen ? (
@@ -137,7 +138,7 @@ export default function DexScreen() {
                             ))}
                           </View>
                         ) : null}
-                      </View>
+                      </Pressable>
                     );
                   })}
                 </View>
@@ -153,11 +154,11 @@ export default function DexScreen() {
             {filtered.length ? (
               <View style={styles.grid}>
                 {filtered.map((s) => (
-                  <View key={s.id} style={[styles.tile, { borderColor: 'transparent', backgroundColor: RARITY_TINT[s.rarity] }]}>
+                  <Pressable key={s.id} onPress={() => overlay.open(<PetZoom dex pet={{ speciesId: s.id, nickname: s.name, xp: 99999, shiny: filter === 'shiny', skin: filter === 'shiny' ? undefined : filter }} onClose={overlay.close} />)} style={({ pressed }) => [styles.tile, { borderColor: 'transparent', backgroundColor: RARITY_TINT[s.rarity] }, pressed && { transform: [{ scale: 0.96 }] }]} accessibilityRole="button" accessibilityLabel={`See ${s.name} up close`}>
                     <PetSprite species={s} stage="adult" size={76} skin={filter === 'shiny' ? undefined : filter} shiny={filter === 'shiny'} />
                     <Text style={styles.name} numberOfLines={1}>{s.name}</Text>
                     <View style={[styles.styleTag, { backgroundColor: FILTER_TAG[filter] }]}><Text style={styles.styleTagText}>{FILTER_LABEL[filter]}</Text></View>
-                  </View>
+                  </Pressable>
                 ))}
               </View>
             ) : (
