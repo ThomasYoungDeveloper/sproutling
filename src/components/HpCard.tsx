@@ -50,9 +50,11 @@ export default function HpCard({ pet }: { pet: OwnedPet }) {
       <Text style={font.small}>
         {now} / {max} HP.{' '}
         {st === 'out'
-          ? `${pet.nickname} is resting and wakes up tomorrow with ${H.WAKE_HP}% HP. Potions can’t wake a knocked-out pet.`
-          : pct < 100
-            ? 'HP only comes back with a potion.'
+          ? `${pet.nickname} is resting. Its HP comes back by itself (up to ${H.REST_UP_TO}%) starting in about ${H.minutesToWake(pet, state)} min. Potions can’t wake a knocked-out pet.`
+          : pet.restFrom != null
+            ? `Resting: HP comes back by itself up to ${H.REST_UP_TO}%. Potions heal the rest.`
+            : pct < 100
+            ? 'Use a potion to heal. Knocked-out pets rest and get some HP back by themselves.'
             : 'Fights on trips and with wild pets lower HP. Friend battles never do.'}
       </Text>
       {pct < 100 && pct > 0 ? (

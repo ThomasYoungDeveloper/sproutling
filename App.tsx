@@ -95,10 +95,12 @@ function Shell() {
   const login = A.loginStatus(state);
   const today = A.todayKey(state);
 
-  // Knocked-out pets wake up the next day with a little HP.
+  // Knocked-out pets rest and slowly get some HP back.
   useEffect(() => {
-    apply((s) => H.wakeRested(s, A.todayKey(s)));
-  }, [today]);
+    apply((s) => H.restPets(s));
+    const t = setInterval(() => apply((s) => H.restPets(s)), 60_000);
+    return () => clearInterval(t);
+  }, []);
 
   // Home screen widget + adventure Live Activity (iPhone only; a second after the save settles).
   const wildWaiting = (state.wildPending ?? []).length;

@@ -210,7 +210,7 @@ function ReturnSheet({ loot, onClose }: { loot: Ex.ExpeditionLoot; onClose: () =
             </PopIn>
           ) : null}
         </View>
-        {loot.knockedOut ? <Text style={[font.small, { textAlign: 'center' }]}>{loot.petName} is resting and wakes up tomorrow with a little HP.</Text> : null}
+        {loot.knockedOut ? <Text style={[font.small, { textAlign: 'center' }]}>{loot.petName} is resting. Its HP comes back by itself over the next few hours.</Text> : null}
         <Button primary label={loot.knockedOut ? 'OK' : 'Yay!'} onPress={onClose} />
       </View>
     </View>
@@ -317,7 +317,7 @@ export default function ExpeditionCard() {
               levelFor(p.xp) < place.minLevel
                 ? `${p.nickname} needs to be level ${place.minLevel} for ${place.name}.`
                 : H.isKnockedOut(p)
-                  ? `${p.nickname} is knocked out and resting. It wakes up tomorrow.`
+                  ? `${p.nickname} is knocked out and resting. Its HP starts coming back within a few minutes.`
                   : undefined,
           }))}
         initial={[...state.pets].sort((a, b) => b.xp - a.xp).filter((p) => levelFor(p.xp) >= place.minLevel && !H.isKnockedOut(p)).sort((a, b) => H.hpPct(b) - H.hpPct(a)).slice(0, 1).map((p) => p.id)}

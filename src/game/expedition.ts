@@ -66,7 +66,7 @@ export function canStart(s: GameState, petId: string, placeId: string): StartChe
   if (!pet || !place) return { ok: false, reason: 'Pick a pet and a place.' };
   if (s.expedition) return { ok: false, reason: 'Someone is already exploring. Wait for them to come home!' };
   if (levelFor(pet.xp) < place.minLevel) return { ok: false, reason: `${pet.nickname} needs to be level ${place.minLevel} to explore ${place.name}.` };
-  if (H.isKnockedOut(pet)) return { ok: false, reason: `${pet.nickname} is knocked out and resting. It wakes up tomorrow.` };
+  if (H.isKnockedOut(pet)) return { ok: false, reason: `${pet.nickname} is knocked out and resting. Its HP starts coming back within a few minutes.` };
   return { ok: true };
 }
 

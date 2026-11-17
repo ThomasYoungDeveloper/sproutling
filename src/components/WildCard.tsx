@@ -96,7 +96,7 @@ export function WildSheet({ w, onFight, onLetGo, onClose, canFight }: { w: WildE
         </View>
         <View style={[styles.rarity, { backgroundColor: r.color }]}><Text style={styles.rarityText}>{r.label.toUpperCase()} · Lv {w.level}</Text></View>
         <Text style={styles.body}>Win for a surprise reward. It might even join your team.</Text>
-        {canFight ? <Button primary label="Battle" onPress={() => { buzz('medium'); onFight(); }} style={{ alignSelf: 'stretch' }} /> : <Text style={styles.body}>All your pets are knocked out and resting. They wake up tomorrow.</Text>}
+        {canFight ? <Button primary label="Battle" onPress={() => { buzz('medium'); onFight(); }} style={{ alignSelf: 'stretch' }} /> : <Text style={styles.body}>All your pets are knocked out and resting. Their HP starts coming back within a few minutes.</Text>}
         <Button label="Let it go" onPress={onLetGo} style={{ alignSelf: 'stretch' }} />
         <Text style={styles.foot}>Wild pets wait until you open the app. Up to {MAX_WILD_PER_DAY} a day.</Text>
       </View>

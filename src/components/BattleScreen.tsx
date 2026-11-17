@@ -303,7 +303,7 @@ export default function BattleScreen({ opponent, onClose, onResult, live, specia
       <PetPicker
         title={special?.title ?? "Pick your battle team"}
         subtitle={`${(special?.teamSize ?? B.TEAM_SIZE) === 1 ? 'Pick 1 pet' : `Up to ${special?.teamSize ?? B.TEAM_SIZE} pets`} vs ${opponent.name}: ${theirNames}.${special ? ' Your pets fight with the HP they have now, and lost HP stays down until you use a potion.' : ''}${buffText}`}
-        pets={state.pets.map((p) => (special ? { pet: p, showHp: true, disabled: H.isKnockedOut(p) ? `${p.nickname} is knocked out and resting. It wakes up tomorrow.` : undefined } : { pet: p }))}
+        pets={state.pets.map((p) => (special ? { pet: p, showHp: true, disabled: H.isKnockedOut(p) ? `${p.nickname} is knocked out and resting. Its HP starts coming back within a few minutes.` : undefined } : { pet: p }))}
         max={special?.teamSize ?? B.TEAM_SIZE}
         initial={special ? team.slice(0, special.teamSize ?? B.TEAM_SIZE).filter((id) => !H.isKnockedOut(state.pets.find((p) => p.id === id))) : team}
         confirmLabel={(n) => (n ? `Battle with ${n} pet${n > 1 ? 's' : ''}!` : 'Pick at least 1 pet')}
