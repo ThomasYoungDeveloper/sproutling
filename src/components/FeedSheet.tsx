@@ -59,7 +59,16 @@ export default function FeedSheet({ onFeed, onClose, onShop }: { onFeed: (foodId
         <View style={styles.handle} />
         <View style={styles.head}>
           <Text style={font.title}>Feed {pet.nickname}</Text>
-          <Text style={styles.headNote}>🍙 Food {needs.food}% · {used} of {F.BOOSTS_PER_DAY} boosts</Text>
+          <View style={styles.chips}>
+            <View style={[styles.chip, { backgroundColor: '#FBE7DA' }]}>
+              <Text style={styles.chipEmoji}>🍙</Text>
+              <Text style={[styles.chipText, { color: '#B24E1C' }]}>Food {needs.food}%</Text>
+            </View>
+            <View style={[styles.chip, { backgroundColor: '#E6F4EE' }]} accessibilityLabel={`${F.BOOSTS_PER_DAY - used} stat boosts left today`}>
+              <Text style={styles.chipEmoji}>💪</Text>
+              <Text style={[styles.chipText, { color: colors.mintDark }]}>{F.BOOSTS_PER_DAY - used} boosts left today</Text>
+            </View>
+          </View>
         </View>
         <ScrollView style={{ maxHeight: 520 }} contentContainerStyle={{ gap: 10 }} showsVerticalScrollIndicator={false}>
           <Pressable
@@ -87,7 +96,7 @@ export default function FeedSheet({ onFeed, onClose, onShop }: { onFeed: (foodId
           <View style={styles.grid}>{shopFoods.map((f) => tile(f, true))}</View>
 
           <Text style={styles.small}>
-            Every food except Pellets raises one stat a little: Common +1, Uncommon +2, Rare +3, Epic +5, Legendary +8 (HP 4×). Up to {F.BOOSTS_PER_DAY} a day.
+            Every food except Pellets raises one stat a little: Common +1, Uncommon +2, Rare +3, Epic +5, Legendary +8 (HP 4×). Up to {F.BOOSTS_PER_DAY} stat boosts a day; Pellets anytime.
           </Text>
           {msg ? <Text style={styles.msg}>{msg}</Text> : null}
         </ScrollView>
@@ -163,7 +172,10 @@ const styles = StyleSheet.create({
   sheet: { backgroundColor: '#FFFCF5', borderTopLeftRadius: 26, borderTopRightRadius: 26, padding: 18, paddingBottom: 30, gap: 10, width: '100%', maxWidth: 520 },
   handle: { width: 44, height: 5, borderRadius: 999, backgroundColor: '#DCE7E2', alignSelf: 'center' },
   head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 4 },
-  headNote: { fontSize: 13, fontWeight: '900', color: '#C4562F' },
+  chips: { flexDirection: 'row', gap: 6, flexWrap: 'wrap' },
+  chip: { flexDirection: 'row', alignItems: 'center', gap: 5, borderRadius: 999, paddingVertical: 4, paddingHorizontal: 10 },
+  chipEmoji: { fontSize: 14 },
+  chipText: { fontSize: 13, fontWeight: '900' },
   pellets: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: '#F1F4F3', borderRadius: 14, padding: 10 },
   pelletsTitle: { fontSize: 15, fontWeight: '900', color: colors.ink },
   feedWord: { fontSize: 14, fontWeight: '900', color: colors.mintDark },
