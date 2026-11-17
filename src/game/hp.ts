@@ -16,9 +16,9 @@ export const POTION_ITEM: Record<PotionKind, string> = { small: SMALL, full: FUL
 export const POTION_HEAL: Record<PotionKind, number> = { small: 50, full: 100 };
 export const POTION_PRICE: Record<PotionKind, number> = { small: 60, full: 150 };
 export const POTION_INFO: Record<PotionKind, string> = { small: 'Heals half your pet’s HP', full: 'Heals all of your pet’s HP' };
-/** A knocked-out pet rests: its HP comes back by itself, 10% an hour, up to 30%. Potions can’t wake it. */
+/** Every pet slowly heals by itself: 10% an hour, up to half its HP. Potions heal the rest (and can’t wake a knocked-out pet). */
 export const REST_PER_HOUR = 10;
-export const REST_UP_TO = 30;
+export const REST_UP_TO = 50;
 const HOUR = 3_600_000;
 /** Below this a pet is "hurt" and a trip is risky. */
 export const HURT_BELOW = 50;
@@ -38,10 +38,10 @@ export function addPotions(s: GameState, kind: PotionKind, n = 1): GameState {
 
 export function setHp(s: GameState, petId: string, pct: number): GameState {
   const v = pct > 0 ? Math.max(1, Math.min(100, Math.round(pct))) : 0;
-  return { ...s, pets: s.pets.map((p) => (p.id === petId ? (v >= 100 ? withoutHp(p) : v === 0 ? { ...p, hpPct: 0, restFrom: nowOf(s) } : (({ restFrom: _k, ...rest }) => ({ ...rest, hpPct: v }))(p)) : p)) };
+  return { ...s, pets: s.pets.map((p) => (p.id === petId ? (v >= 100 ? withoutHp(p) : { ...p, hpPct: v, ...(v < REST_UP_TO ? { hpAt: nowOf(s) } : {}) }) : p)) };
 }
 const withoutHp = (p: OwnedPet): OwnedPet => {
-  const { hpPct: _drop, restFrom: _r, ...rest } = p;
+  const { hpPct: _drop, hpAt: _r, ...rest } = p;
   return rest;
 };
 
@@ -52,13 +52,13 @@ export function usePotion(s: GameState, petId: string, kind: PotionKind): { ok: 
   const before = hpPct(pet);
   if (before <= 0) return { ok: false, reason: `Potions can’t wake a knocked-out pet. ${pet.nickname} is resting; its HP comes back over the next hour.` };
   if (before >= 100) return { ok: false, reason: `${pet.nickname} already has full HP.` };
-  const after = Math.min(100, before + POTION_HEAL[kind]);
+  const after = Math.min(100, Math.round(before + POTION_HEAL[kind]));
   const key = POTION_ITEM[kind];
   const left = (s.items[key] ?? 0) - 1;
   const items = { ...s.items };
   if (left > 0) items[key] = left;
   else delete items[key];
-  return { ok: true, state: setHp({ ...s, items }, petId, after), healed: after - before };
+  return { ok: true, state: setHp({ ...s, items }, petId, after), healed: Math.round(after - before) };
 }
 
 /** The potion that fits best: a Small one unless the pet is knocked out or very low and you have a Full one. */
@@ -81,37 +81,40 @@ export function takePotion(s: GameState, kind: PotionKind): GameState | null {
   return { ...s, items };
 }
 
-/** Resting pets (knocked out) slowly get HP back by themselves, up to 30%. Run it now and then. */
+/** Heals every pet a little over time (10% an hour, up to 50%). Run it now and then. */
 export function restPets(s: GameState, now = Date.now()): GameState {
   const t = nowOf(s, now);
   let changed = false;
   const pets = s.pets.map((p) => {
-    if (p.restFrom == null) {
-      if (hpPct(p) > 0) return p;
-      changed = true; // Knocked out with no start time yet: start resting now.
-      return { ...p, restFrom: t };
-    }
-    const gained = Math.min(REST_UP_TO, Math.floor(((t - p.restFrom) / HOUR) * REST_PER_HOUR));
-    const hp = Math.max(hpPct(p), gained);
+    const hp = hpPct(p);
     if (hp >= REST_UP_TO) {
+      if (p.hpAt == null) return p;
       changed = true;
-      const { restFrom: _r, ...rest } = p;
-      return { ...rest, hpPct: Math.max(hpPct(p), REST_UP_TO) };
+      const { hpAt: _a, ...rest } = p;
+      return rest;
     }
-    if (hp !== hpPct(p)) {
+    if (p.hpAt == null) {
       changed = true;
-      return { ...p, hpPct: hp };
+      return { ...p, hpAt: t };
     }
-    return p;
+    const gained = ((t - p.hpAt) / HOUR) * REST_PER_HOUR;
+    if (gained < 0.1) return p;
+    changed = true;
+    const next = Math.min(REST_UP_TO, Math.round((hp + gained) * 10) / 10);
+    if (next >= REST_UP_TO) {
+      const { hpAt: _a, ...rest } = p;
+      return { ...rest, hpPct: next };
+    }
+    return { ...p, hpPct: next, hpAt: t };
   });
   return changed ? { ...s, pets } : s;
 }
 
 /** Minutes until a resting pet has any HP again (0 if it's awake). */
 export function minutesToWake(p: OwnedPet, s: GameState, now = Date.now()): number {
-  if (hpPct(p) > 0 || p.restFrom == null) return 0;
-  const firstHp = HOUR / REST_PER_HOUR; // 1% comes back every 6 minutes
-  return Math.max(1, Math.ceil((p.restFrom + firstHp - nowOf(s, now)) / 60_000));
+  if (hpPct(p) > 0) return 0;
+  const since = p.hpAt == null ? 0 : (nowOf(s, now) - p.hpAt) / 60_000;
+  return Math.max(1, Math.ceil(1 - since)); // the first bit of HP comes back within a minute or two
 }
 
 export function buyPotion(s: GameState, kind: PotionKind): GameState {

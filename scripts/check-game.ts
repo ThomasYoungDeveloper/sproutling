@@ -245,16 +245,17 @@ ok(fin.state.pets.find((p) => p.id === epet.id)!.hpPct === 70 && fin.loot.foods.
   ok(kf.loot.knockedOut && !kf.loot.chest && !kf.loot.egg && kf.loot.foods.length === 1, 'knocked out keeps what it found so far, but no chest or egg');
   ok(kf.state.pets.find((p) => p.id === kp.id)!.hpPct === 0 && !Ex.canStart(kf.state, kp.id, 'meadow').ok, 'a knocked-out pet can’t go on a trip');
   ok(!Hp.usePotion(Hp.addPotions(kf.state, 'full'), kp.id, 'full').ok, 'potions can’t wake a knocked-out pet');
-  const startRest = kf.state.pets.find((p) => p.id === kp.id)!.restFrom!;
+  const startRest = kf.state.pets.find((p) => p.id === kp.id)!.hpAt!;
   const realAt = (ms: number) => startRest - kf.state.dayOffset * 86_400_000 + ms;
-  const rested = Hp.restPets(kf.state, realAt(60_000));
-  ok(startRest != null && Hp.isKnockedOut(rested.pets.find((p) => p.id === kp.id)), 'a knocked-out pet starts resting');
-  const half = Hp.restPets(rested, realAt(90 * 60_000));
-  ok(Hp.hpPct(half.pets.find((p) => p.id === kp.id)) === 15 && Ex.canStart(half, kp.id, 'meadow').ok, 'its HP comes back by itself over time (15% after 90 minutes)');
-  const woke = Hp.restPets(half, realAt(10 * 3_600_000));
-  ok(Hp.hpPct(woke.pets.find((p) => p.id === kp.id)) === Hp.REST_UP_TO && woke.pets.find((p) => p.id === kp.id)!.restFrom == null, 'resting stops at 30%');
+  ok(startRest != null && Hp.isKnockedOut(Hp.restPets(kf.state, realAt(0)).pets.find((p) => p.id === kp.id)), 'a knocked-out pet starts resting');
+  const half = Hp.restPets(kf.state, realAt(90 * 60_000));
+  ok(Hp.hpPct(half.pets.find((p) => p.id === kp.id)) === 15 && Ex.canStart(half, kp.id, 'meadow').ok, 'HP comes back by itself over time (15% after 90 minutes)');
+  const woke = Hp.restPets(Hp.restPets(half, realAt(3 * 3_600_000)), realAt(20 * 3_600_000));
+  ok(Hp.hpPct(woke.pets.find((p) => p.id === kp.id)) === Hp.REST_UP_TO && woke.pets.find((p) => p.id === kp.id)!.hpAt == null, 'healing by itself stops at 50%');
+  const hurt = Hp.setHp(woke, kp.id, 70);
+  ok(Hp.restPets(hurt, realAt(40 * 3_600_000)).pets.find((p) => p.id === kp.id)!.hpPct === 70, 'pets above 50% only heal with potions');
   const healed = Hp.usePotion(Hp.addPotions(woke, 'small'), kp.id, 'small');
-  ok(healed.ok && Hp.hpPct(healed.state.pets.find((p) => p.id === kp.id)) === 80, 'a Small Potion heals half');
+  ok(healed.ok && Hp.hpPct(healed.state.pets.find((p) => p.id === kp.id)) === 100, 'a Small Potion heals half (50% + 50%)');
   const full = Hp.usePotion(Hp.addPotions(woke, 'full'), kp.id, 'full');
   ok(full.ok && full.state.pets.find((p) => p.id === kp.id)!.hpPct === undefined, 'a Full Potion heals to full');
   {

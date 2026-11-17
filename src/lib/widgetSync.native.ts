@@ -61,7 +61,7 @@ export async function syncWidgets(s: GameState, waiting: string | null): Promise
             place: prog.place.name,
             startAt: now - Math.round(prog.place.hours * 3_600_000 * (s.expedition.koAt ?? 1) * prog.pct),
             endAt: now + prog.msLeft,
-            hp: lastFight && prog.done ? lastFight.hpAfter : H.hpPct(tripPet),
+            hp: Math.round(lastFight && prog.done ? lastFight.hpAfter : H.hpPct(tripPet)),
             knockedOut: !!s.expedition.koAt,
           }
         : null;

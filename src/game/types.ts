@@ -78,8 +78,8 @@ export interface OwnedPet {
   look?: { hat?: string; aura?: string };
   /** HP left after trips and wild fights, in percent (missing = full). Only potions bring it back. */
   hpPct?: number;
-  /** Game time (ms) a knocked-out pet started resting; its HP comes back slowly while this is set. */
-  restFrom?: number;
+  /** Game time (ms) HP last changed; pets below half heal 10% an hour from then. */
+  hpAt?: number;
 }
 
 export interface Egg {

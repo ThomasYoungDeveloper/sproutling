@@ -13,7 +13,7 @@ export const HP_LABEL = { ready: 'Ready', hurt: 'Hurt', out: 'Knocked out' } as 
 
 /** A thin HP bar with the pet's state, for lists like the trip picker. */
 export function HpBar({ pet, height = 8 }: { pet: OwnedPet; height?: number }) {
-  const pct = H.hpPct(pet);
+  const pct = Math.round(H.hpPct(pet));
   const st = H.hpState(pet);
   return (
     <View style={{ height, borderRadius: height, backgroundColor: '#E6EEEA', overflow: 'hidden' }}>
@@ -50,11 +50,11 @@ export default function HpCard({ pet }: { pet: OwnedPet }) {
       <Text style={font.small}>
         {now} / {max} HP.{' '}
         {st === 'out'
-          ? `${pet.nickname} is resting. Its HP comes back by itself (up to ${H.REST_UP_TO}%) starting in about ${H.minutesToWake(pet, state)} min. Potions can’t wake a knocked-out pet.`
-          : pet.restFrom != null
-            ? `Resting: HP comes back by itself up to ${H.REST_UP_TO}%. Potions heal the rest.`
+          ? `${pet.nickname} is resting. HP starts coming back in about ${H.minutesToWake(pet, state)} min (10% an hour). Potions can’t wake a knocked-out pet.`
+          : pct < H.REST_UP_TO
+            ? `Healing by itself: 10% an hour, up to ${H.REST_UP_TO}%. Potions heal faster.`
             : pct < 100
-            ? 'Use a potion to heal. Knocked-out pets rest and get some HP back by themselves.'
+            ? `Pets heal by themselves up to ${H.REST_UP_TO}%. Use a potion to heal the rest.`
             : 'Fights on trips and with wild pets lower HP. Friend battles never do.'}
       </Text>
       {pct < 100 && pct > 0 ? (
