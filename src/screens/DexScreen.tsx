@@ -52,13 +52,13 @@ const badgeStyles = StyleSheet.create({
 
 type DexFilter = 'all' | Skin | 'shiny';
 const FILTERS: DexFilter[] = ['all', 'mono', 'silver', 'gold', 'rainbow', 'shiny'];
-const FILTER_LABEL: Record<DexFilter, string> = { all: 'All', mono: 'Black & White', silver: 'Silver', gold: 'Gold', rainbow: 'Rainbow', shiny: 'Shiny' };
+const FILTER_LABEL: Record<DexFilter, string> = { all: 'All', mono: 'Ink', silver: 'Silver', gold: 'Gold', rainbow: 'Rainbow', shiny: 'Shiny' };
 const FILTER_DOT: Record<DexFilter, string> = { all: '#FFFFFF', mono: SKIN_INFO.mono.color, silver: SKIN_INFO.silver.color, gold: SKIN_INFO.gold.color, rainbow: SKIN_INFO.rainbow.color, shiny: '#F2C230' };
 /** Darker tag colors so white text stays readable. */
 const FILTER_TAG: Record<DexFilter, string> = { all: colors.mintDark, mono: '#3B3B4F', silver: '#5F7385', gold: '#9A6F00', rainbow: '#8A3DB8', shiny: '#9A6F00' };
 const FILTER_HINT: Record<DexFilter, string> = {
   all: '',
-  mono: 'Black & White hatches from about 1 in 20 eggs.',
+  mono: 'Ink hatches from about 1 in 20 eggs.',
   silver: 'Silver hatches from about 1 in 33 eggs. Nursery eggs make it more likely.',
   gold: 'Gold hatches from about 1 in 67 eggs. Breed two skinned pets for better odds.',
   rainbow: 'The rarest style: about 1 in 200 eggs.',

@@ -4,7 +4,7 @@ import { type Rng, defaultRng } from './random';
 export const SKINS: Skin[] = ['mono', 'silver', 'gold', 'rainbow'];
 
 export const SKIN_INFO: Record<Skin, { label: string; emoji: string; color: string; chance: number }> = {
-  mono: { label: 'Black & White', emoji: '⚫', color: '#3B3B4F', chance: 0.05 },
+  mono: { label: 'Ink', emoji: '🖌️', color: '#3B3B4F', chance: 0.05 },
   silver: { label: 'Silver', emoji: '🥈', color: '#8FA3B5', chance: 0.03 },
   gold: { label: 'Gold', emoji: '🥇', color: '#E5A800', chance: 0.015 },
   rainbow: { label: 'Rainbow', emoji: '🌈', color: '#B45FE0', chance: 0.005 },
@@ -17,7 +17,7 @@ export const INHERIT_CHANCE = 0.25;
 
 /**
  * Rolls a skin for a newly hatched pet. Rarest first, so a lucky roll always lands on the best skin.
- * Normal eggs: 10% total (5% B&W, 3% Silver, 1.5% Gold, 0.5% Rainbow). Bred eggs: 30% total, plus inheritance.
+ * Normal eggs: 10% total (5% Ink, 3% Silver, 1.5% Gold, 0.5% Rainbow). Bred eggs: 30% total, plus inheritance.
  */
 export function rollSkin(rng: Rng = defaultRng, boost = 1, parentSkins: (Skin | null | undefined)[] = []): Skin | undefined {
   for (const ps of parentSkins) if (ps && rng() < INHERIT_CHANCE) return ps;
