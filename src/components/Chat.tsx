@@ -236,6 +236,33 @@ function ChatRoomScreen({ room, title, otherId, onClose }: { room: string; title
   );
 }
 
+/** A slim row on the Guild tab: the latest guild message and unread count. Tap to open guild chat. */
+export function GuildChatRow() {
+  const { rooms, mode } = useChat();
+  const { team } = useTeam();
+  const openChat = useOpenChat();
+  if (!team || mode === 'off') return null;
+  const r = rooms.find((x) => x.room === `team:${team.id}`);
+  return (
+    <Pressable onPress={() => openChat(`team:${team.id}`, team.name)} style={styles.guildRow} accessibilityRole="button" accessibilityLabel={`Guild chat${r?.unread ? `, ${r.unread} unread` : ''}`}>
+      <View style={{ flex: 1, minWidth: 0 }}>
+        <Text style={styles.guildRowTitle}>Guild chat</Text>
+        <Text style={styles.guildRowPrev} numberOfLines={1}>
+          {r?.last ? `${r.lastFrom === 'me' ? 'You' : r.lastFrom || 'Guild'}: ${r.last}` : 'Say hi to your guild!'}
+        </Text>
+      </View>
+      {r?.unread ? <View style={styles.dot}><Text style={styles.dotText}>{r.unread}</Text></View> : null}
+      <Text style={styles.guildRowGo}>›</Text>
+    </Pressable>
+  );
+}
+
+/** Unread messages from one friend (for the dot on the friends list). */
+export function useFriendUnread() {
+  const { rooms, dmRoom } = useChat();
+  return (friendId: string) => rooms.find((r) => r.room === dmRoom(friendId))?.unread ?? 0;
+}
+
 /** Chat settings for the account page. */
 export function ChatSettings() {
   const chat = useChat();
@@ -275,6 +302,10 @@ export function ChatSettings() {
 
 const styles = StyleSheet.create({
   card: { backgroundColor: '#FFFBF2', borderRadius: 22, padding: space.md, gap: 4 },
+  guildRow: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: '#2A3366', borderRadius: 18, paddingHorizontal: 14, paddingVertical: 10 },
+  guildRowTitle: { color: '#fff', fontWeight: '900', fontSize: 15 },
+  guildRowPrev: { color: '#C9D3FF', fontWeight: '700', fontSize: 13 },
+  guildRowGo: { color: '#C9D3FF', fontWeight: '900', fontSize: 22 },
   row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10, borderTopWidth: 1, borderTopColor: colors.line },
   av: { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
   avText: { color: '#fff', fontWeight: '900', fontSize: 11 },

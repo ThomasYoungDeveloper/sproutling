@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ChatList } from '../components/Chat';
+import { ChatList, GuildChatRow, useFriendUnread } from '../components/Chat';
 import { useChat } from '../state/ChatContext';
 import { TowerCard } from '../components/TowerScreen';
 import WildCard from '../components/WildCard';
@@ -32,6 +32,7 @@ const SECTIONS = [
 export default function FriendsScreen({ initialAdd, onUsedInitialAdd, initialGuild, onUsedInitialGuild }: { initialAdd?: string | null; onUsedInitialAdd?: () => void; initialGuild?: string | null; onUsedInitialGuild?: () => void }) {
   const { waiting: liveWaiting } = useLive();
   const { unread: chatUnread } = useChat();
+  const friendUnread = useFriendUnread();
   const { myCode, friends, incoming, outgoing, loading, error, addFriend, respond, remove, gift, giftsLeft, refresh, tradesForMe } = useFriends();
   const [target, setTarget] = useState('');
   const [busy, setBusy] = useState(false);
@@ -142,6 +143,7 @@ export default function FriendsScreen({ initialAdd, onUsedInitialAdd, initialGui
         ))}
       </View>
       {section === 'chat' && <ChatList />}
+      {section === 'team' && <GuildChatRow />}
       {section === 'team' && <TeamCard initialJoin={initialGuild} onUsedInitialJoin={onUsedInitialGuild} />}
       {section === 'battle' && <WildCard />}
       {section === 'battle' && <LiveBattlesCard />}
@@ -197,6 +199,11 @@ export default function FriendsScreen({ initialAdd, onUsedInitialAdd, initialGui
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                 <Text style={styles.personName} numberOfLines={1}>{f.username}</Text>
                 {activeToday(f) ? <View style={styles.onlineDot} /> : null}
+                {friendUnread(f.id) ? (
+                  <View style={styles.msgDot} accessibilityLabel={`${friendUnread(f.id)} new message${friendUnread(f.id) > 1 ? 's' : ''}`}>
+                    <Text style={styles.msgDotText}>{friendUnread(f.id)} new</Text>
+                  </View>
+                ) : null}
               </View>
               <Text style={font.small} numberOfLines={1}>
                 🔥 {f.card?.streak ?? 0}-day · {lastSeen(f)}
@@ -250,6 +257,8 @@ function Avatar({ t }: { t: Trainer }) {
 }
 
 const styles = StyleSheet.create({
+  msgDot: { backgroundColor: '#E0567A', borderRadius: 999, paddingHorizontal: 7, paddingVertical: 1 },
+  msgDotText: { color: '#fff', fontWeight: '900', fontSize: 11 },
   segs: { flexDirection: 'row', gap: 4, backgroundColor: '#B9E2D1', borderRadius: 18, padding: 4 },
   seg: { flex: 1, alignItems: 'center', paddingVertical: 10, borderRadius: 14 },
   segOn: { backgroundColor: colors.ink },
