@@ -180,7 +180,7 @@ export default function FashionShow() {
             <Text style={styles.enterTitle}>Enter {myPet.nickname}?</Text>
             <Text style={font.small}>Your pet walks the runway in its outfit and scene. Entering gives you 15 coins.</Text>
             <Button primary label={busy ? 'Entering…' : '✨ Enter the show'} disabled={busy} onPress={enter} />
-            <Button small label="👗 Change outfit first" onPress={openWardrobe} />
+            <Button small label="🎨 Change outfit first" onPress={openWardrobe} />
           </View>
         </View>
       ) : null}

@@ -41,12 +41,12 @@ export function boostedTotal(d: DayLog, element?: Element): number {
 export type Mood = 'joy' | 'happy' | 'sleepy' | 'hungry' | 'thirsty' | 'bored';
 
 export const MOOD_INFO: Record<Mood, { label: string; emoji: string; color: string }> = {
-  joy: { label: 'Overjoyed', emoji: '🤩', color: '#E5A800' },
+  joy: { label: 'Joyful', emoji: '🤩', color: '#E5A800' },
   happy: { label: 'Happy', emoji: '😊', color: '#1E8A68' },
   sleepy: { label: 'Sleepy', emoji: '😴', color: '#6E62C6' },
   hungry: { label: 'Hungry', emoji: '🍙', color: '#C4562F' },
   thirsty: { label: 'Thirsty', emoji: '💧', color: '#2E7FB8' },
-  bored: { label: 'Wants to play', emoji: '🎾', color: '#9A6A00' },
+  bored: { label: 'Bored', emoji: '🎾', color: '#9A6A00' },
 };
 
 /** How the active pet feels right now, from your habits and its care. */

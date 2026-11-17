@@ -159,7 +159,7 @@ function TodoSheet({ items, onPick, onClose }: { items: C.Reminder[]; onPick: (r
 }
 
 const styles = StyleSheet.create({
-  homeSheet: { marginTop: -26, borderTopLeftRadius: 28, borderTopRightRadius: 28, backgroundColor: colors.bg, padding: space.lg, paddingTop: space.lg, gap: space.md, width: '100%', maxWidth: 520, alignSelf: 'center' },
+  homeSheet: { borderTopWidth: 3, borderTopColor: 'rgba(31,58,51,0.10)', backgroundColor: colors.bg, padding: space.lg, paddingTop: space.lg, gap: space.md, width: '100%', maxWidth: 520, alignSelf: 'center' },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, alignItems: 'center' },
   chip: { height: 38, paddingHorizontal: 12, borderRadius: 999, borderWidth: 1, borderColor: colors.line, backgroundColor: '#FFFFFF', flexDirection: 'row', alignItems: 'center', gap: 6 },
   chipText: { fontSize: 14, fontWeight: '900', color: colors.ink },

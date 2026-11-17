@@ -762,7 +762,7 @@ export default function PetScene({ onTrinketsEmpty, onDressUp, onShop, onAccount
             <View style={[styles.xpFill, { width: `${Math.round((lp.max ? 1 : lp.into / lp.need) * 100)}%` }]} />
           </View>
           <Text style={styles.sub} numberOfLines={1}>
-            {RARITY_INFO[sp.rarity].label}{pet.shiny ? ' ✦' : ''} · {gradeOf(pet)}% · <Text accessibilityLabel={mi.label}>{mi.emoji}</Text>
+            {RARITY_INFO[sp.rarity].label}{pet.shiny ? ' ✦' : ''} · {gradeOf(pet)}% · <Text style={{ color: mi.color }}>{mi.emoji} {mi.label}</Text>
           </Text>
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
@@ -798,7 +798,7 @@ export default function PetScene({ onTrinketsEmpty, onDressUp, onShop, onAccount
       ) : null}
 
       <Pressable onPress={() => onDressUp?.()} style={styles.side} accessibilityRole="button" accessibilityLabel="Style">
-        <View style={styles.sideBtn}><Text style={{ fontSize: 22 }}>👗</Text></View>
+        <View style={styles.sideBtn}><Text style={{ fontSize: 22 }}>🎨</Text></View>
         <Text style={styles.sideLabel}>Style</Text>
       </Pressable>
 

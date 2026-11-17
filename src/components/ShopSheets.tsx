@@ -176,7 +176,7 @@ export function ShopSheet({ onClose, onWardrobe }: { onClose: () => void; onWard
         </ScrollView>
         {msg ? <Text style={styles.msg}>{msg}</Text> : null}
         <View style={styles.row}>
-          <Button label="👗 My wardrobe" onPress={onWardrobe} style={{ flex: 1 }} />
+          <Button label="🎨 My wardrobe" onPress={onWardrobe} style={{ flex: 1 }} />
           <Button primary label="Done" onPress={onClose} style={{ flex: 1 }} />
         </View>
         <Text style={[font.tiny, { textAlign: 'center' }]}>Earn coins from healthy habits, quests, chests, battles and gifts. Chests can hold items too!</Text>
@@ -202,7 +202,7 @@ export function WardrobeSheet({ onClose, onShop }: { onClose: () => void; onShop
     <View style={styles.backdrop}>
       <Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessibilityLabel="Close" />
       <View style={styles.sheet}>
-        <Text style={font.title}>👗 Style {pet.nickname}</Text>
+        <Text style={font.title}>🎨 Style {pet.nickname}</Text>
         <View style={styles.preview}>
           <Backdrop element={sp.element} sky={sky} scene={state.scene} />
           <PopIn key={`${pet.look?.hat}-${pet.look?.aura}`}>
