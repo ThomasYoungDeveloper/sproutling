@@ -18,6 +18,7 @@ import { levelFor, levelProgress, stageFor, scoreDay } from '../src/game/scoring
 import type { ChestKind, GameState } from '../src/game/types';
 import { mergeSaves } from '../src/game/merge';
 import * as Pw from '../src/game/powerups';
+const F_count = (s: any, id: string) => s.foods?.[id] ?? 0;
 
 let fails = 0;
 const ok = (c: boolean, m: string) => { console.log((c ? 'PASS ' : 'FAIL ') + m); if (!c) fails++; };
@@ -467,8 +468,7 @@ ok(A.applyShields(shielded.state).used === 0, 'shields are not used twice');
   ok(!!A.today(g).care?.fed && F.needsFor(A.today(g), t0).food >= 60 && !g.pets[0].foodBoost, 'Pellets fill the food bar with no stat bonus');
   ok(F.needsFor(A.today(g), t0 + 5 * 3600000).food < F.needsFor(A.today(g), t0).food, 'the food bar drifts down over the day');
   ok(F.needsFor(A.today(g), t0 + 48 * 3600000).food === F.NEED_FLOOR, 'bars never go below the floor');
-  g = F.buyFood(g, 'sushi');
-  ok(F.foodCount(g, 'sushi') === 1 && g.coins === 1000 - F.FOOD_BY_ID.sushi.price, 'the shop sells food');
+  g = F.addFood(g, 'sushi');
   g = C.feed(g, 'sushi', t0);
   ok(g.pets[0].foodBoost?.atk === 2.5 && F.foodCount(g, 'sushi') === 0, 'an epic food adds +2.5% to its stat');
   g = F.addFood(g, 'berries', 5);
@@ -484,6 +484,22 @@ ok(A.applyShields(shielded.state).used === 0, 'shields are not used twice');
   ok(foodFinds / 300 > 2 && foodFinds / 300 <= W.MAX_FORAGE_PER_DAY, `walks turn up food (about ${(foodFinds / 300).toFixed(1)} a 10k-step day)`);
   const played = C.play(C.play(C.play(g, t0), t0), t0);
   ok(F.needsFor(A.today(played), t0).fun >= 80, 'playing fills the fun bar');
+}
+
+// Food Market
+{
+  const Mk = require('../src/game/market');
+  const day = '2026-11-17';
+  const stock = Mk.marketFor(day);
+  ok(stock.length === 5 && stock[0].special && ['rare', 'epic', 'legendary'].includes(stock[0].food.rarity), 'the market has a special plus 4 everyday foods');
+  ok(JSON.stringify(Mk.marketFor(day)) === JSON.stringify(stock), 'everyone sees the same stock on the same day');
+  ok(JSON.stringify(Mk.marketFor('2026-11-18')) !== JSON.stringify(stock), 'the stock changes the next day');
+  let m = { ...newGame(), coins: 5000 } as GameState;
+  const slot = stock[1];
+  for (let i = 0; i < slot.stock; i++) { const r = Mk.buyFromMarket(m, day, slot.food.id); if (r.ok) m = r.state; }
+  ok(F_count(m, slot.food.id) === slot.stock && !Mk.buyFromMarket(m, day, slot.food.id).ok, 'market stock runs out for the day');
+  ok(Mk.buyFromMarket(m, '2026-11-18', slot.food.id).ok === Mk.marketFor('2026-11-18').some((x: any) => x.food.id === slot.food.id), 'stock resets the next day');
+  ok(Mk.nextDay('2026-11-30') === '2026-12-01', 'tomorrow rolls over months');
 }
 
 // Merging the phone and web saves

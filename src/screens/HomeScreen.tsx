@@ -39,8 +39,8 @@ export default function HomeScreen({ onNavigate, onAccount, account, banner }: {
   const { state, apply } = useGame();
   const pet = A.activePet(state);
   const overlay = useOverlay();
-  const openShop = () => overlay.open(<ShopSheet onClose={overlay.close} onWardrobe={openWardrobe} />);
-  const openWardrobe = () => overlay.open(<WardrobeSheet onClose={overlay.close} onShop={openShop} />);
+  const openShop = (start?: 'food' | 'general') => overlay.open(<ShopSheet onClose={overlay.close} onWardrobe={openWardrobe} start={start} />);
+  const openWardrobe = () => overlay.open(<WardrobeSheet onClose={overlay.close} onShop={() => openShop('general')} />);
   const readyEggs = state.eggs.filter(A.isReady);
   const chips = C.reminders(state).filter((r) => CHIP_IDS.includes(r.id));
 

@@ -151,7 +151,7 @@ export default function FashionShow() {
     load();
   };
 
-  const openWardrobe = () => overlay.open(<WardrobeSheet onClose={overlay.close} onShop={() => overlay.open(<ShopSheet onClose={overlay.close} onWardrobe={openWardrobe} />)} />);
+  const openWardrobe = () => overlay.open(<WardrobeSheet onClose={overlay.close} onShop={() => overlay.open(<ShopSheet onClose={overlay.close} onWardrobe={openWardrobe} start="general" />)} />);
 
   return (
     <Card style={styles.card}>

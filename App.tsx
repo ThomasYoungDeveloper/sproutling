@@ -261,8 +261,15 @@ function Shell() {
       {walkNote && !notice ? (
         <View style={styles.toastWrap} pointerEvents="box-none">
           <PopIn>
-            <Pressable onPress={dismissWalkNote} style={styles.toast} accessibilityRole="alert">
-              <Text style={styles.toastText}>{walkNote}</Text>
+            <Pressable onPress={dismissWalkNote} style={[styles.toast, styles.findsToast]} accessibilityRole="alert" accessibilityLabel={`Found on your walk: ${walkNote.map((r) => `${r.label} times ${r.count}`).join(', ')}`}>
+              <Text style={styles.findsTitle}>Found on your walk</Text>
+              {walkNote.map((r) => (
+                <View key={r.key} style={styles.findRow}>
+                  <Text style={styles.findIcon}>{r.icon}</Text>
+                  <Text style={[styles.findLabel, { color: r.color }]}>{r.label}</Text>
+                  <Text style={styles.findCount}>×{r.count}</Text>
+                </View>
+              ))}
             </Pressable>
           </PopIn>
         </View>
@@ -337,6 +344,12 @@ export default function App() {
 }
 
 const styles = StyleSheet.create({
+  findsToast: { alignItems: 'stretch', gap: 4, minWidth: 220 },
+  findsTitle: { color: '#CFE3DA', fontSize: 12, fontWeight: '900', letterSpacing: 0.5, textTransform: 'uppercase', marginBottom: 2 },
+  findRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  findIcon: { fontSize: 18, width: 24, textAlign: 'center' },
+  findLabel: { flex: 1, fontSize: 15, fontWeight: '900' },
+  findCount: { color: '#FFFFFF', fontSize: 15, fontWeight: '900' },
   root: { flex: 1, backgroundColor: colors.bg },
   skyCap: { position: 'absolute', top: 0, left: 0, right: 0, height: '45%' },
   top: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: space.sm, paddingHorizontal: space.lg, paddingTop: space.lg, paddingBottom: space.sm, maxWidth: 520, width: '100%', alignSelf: 'center' },

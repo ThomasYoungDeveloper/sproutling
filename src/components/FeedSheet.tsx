@@ -18,36 +18,27 @@ export default function FeedSheet({ onFeed, onClose, onShop }: { onFeed: (foodId
   if (!pet) return null;
 
   const owned = F.FOODS.filter((f) => F.foodCount(state, f.id) > 0);
-  const shopFoods = F.SHOP_FOODS;
 
-  const tile = (f: F.FoodDef, shop: boolean) => {
+  const tile = (f: F.FoodDef) => {
     const have = F.foodCount(state, f.id);
     const gain = F.boostFor(pet, f, day);
     const check = F.canFeed(state, day, pet.id, f.id);
     const rare = RARITY_INFO[f.rarity];
-    const canBuy = shop;
     return (
       <Pressable
         key={f.id}
         onPress={() => {
-          if (canBuy) {
-            if (state.coins < (f.price ?? 0)) return setMsg(`${f.name} costs ${f.price} coins.`);
-            apply((s) => F.buyFood(s, f.id));
-            buzz('light', 'coin');
-            return setMsg(`Bought ${f.name}! It's in your food now.`);
-          }
           if (!check.ok) return setMsg(check.reason);
           onFeed(f.id);
         }}
-        style={({ pressed }) => [styles.tile, { backgroundColor: shop ? '#FFF3E6' : '#F1F8F4' }, pressed && { transform: [{ scale: 0.96 }] }]}
+        style={({ pressed }) => [styles.tile, { backgroundColor: '#F1F8F4' }, pressed && { transform: [{ scale: 0.96 }] }]}
         accessibilityRole="button"
-        accessibilityLabel={`${f.name}, ${rare.label}, ${F.pct(gain)} ${F.statLabel(f.stat)}${canBuy ? `, buy for ${f.price} coins` : `, you have ${have}`}`}
+        accessibilityLabel={`${f.name}, ${rare.label}, ${F.pct(gain)} ${F.statLabel(f.stat)}, you have ${have}`}
       >
         <Text style={{ fontSize: 26 }}>{f.emoji}</Text>
-        <Text style={styles.tileName} numberOfLines={1}>{f.name}{!shop && have > 0 ? ` ×${have}` : ''}</Text>
+        <Text style={styles.tileName} numberOfLines={1}>{f.name} ×{have}</Text>
         <Text style={[styles.tileRarity, { color: rare.color }]}>{rare.label.toUpperCase()}</Text>
         <Text style={styles.tileGain}>{gain > 0 ? `${F.pct(gain)} ${F.statLabel(f.stat)}` : used >= F.BOOSTS_PER_DAY ? 'Just a snack' : 'Stat maxed'}</Text>
-        {canBuy ? <Text style={styles.price}>🪙 {f.price}</Text> : null}
       </Pressable>
     );
   };
@@ -90,20 +81,27 @@ export default function FeedSheet({ onFeed, onClose, onShop }: { onFeed: (foodId
 
           <Text style={styles.section}>YOUR FOOD</Text>
           {owned.length ? (
-            <View style={styles.grid}>{owned.map((f) => tile(f, false))}</View>
+            <View style={styles.grid}>{owned.map((f) => tile(f))}</View>
           ) : (
-            <Text style={styles.small}>No food yet. Buy some below, or go for a walk: every 1,000 steps {pet.nickname} might sniff out berries, mushrooms or something rarer.</Text>
+            <Text style={styles.small}>No food yet. Visit the Food Market, or go for a walk: every 1,000 steps {pet.nickname} might sniff out berries, mushrooms or something rarer.</Text>
           )}
 
-          <Text style={styles.section}>BUY FOOD</Text>
-          <View style={styles.grid}>{shopFoods.map((f) => tile(f, true))}</View>
+          {onShop ? (
+            <Pressable onPress={onShop} style={({ pressed }) => [styles.market, pressed && { transform: [{ scale: 0.98 }] }]} accessibilityRole="button" accessibilityLabel="Go to the Food Market">
+              <Text style={{ fontSize: 26 }}>🍙</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.pelletsTitle}>Go to the Food Market</Text>
+                <Text style={styles.small}>New food every day</Text>
+              </View>
+              <Text style={styles.feedWord}>›</Text>
+            </Pressable>
+          ) : null}
 
           <Text style={styles.small}>
             Bonus size by rarity: Common +0.8%, Uncommon +1.2%, Rare +1.8%, Epic +2.5%, Legendary +4%. Each stat can gain up to +10% from food.
           </Text>
           {msg ? <Text style={styles.msg}>{msg}</Text> : null}
         </ScrollView>
-        {onShop ? null : null}
       </View>
     </View>
   );
@@ -179,6 +177,7 @@ const styles = StyleSheet.create({
   chip: { flexDirection: 'row', alignItems: 'center', gap: 5, borderRadius: 999, paddingVertical: 4, paddingHorizontal: 10 },
   chipEmoji: { fontSize: 14 },
   chipText: { fontSize: 13, fontWeight: '900' },
+  market: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: '#FFE3B8', borderRadius: 14, padding: 10 },
   pellets: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: '#F1F4F3', borderRadius: 14, padding: 10 },
   pelletsTitle: { fontSize: 15, fontWeight: '900', color: colors.ink },
   feedWord: { fontSize: 14, fontWeight: '900', color: colors.mintDark },

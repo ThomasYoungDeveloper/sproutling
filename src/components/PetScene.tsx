@@ -435,7 +435,7 @@ function Plant() {
   );
 }
 
-export default function PetScene({ onTrinketsEmpty, onDressUp, onShop, onAccount, account }: { onTrinketsEmpty?: () => void; onDressUp?: () => void; onShop?: () => void; onAccount?: () => void; account?: { initial: string; label: string; warn?: boolean } }) {
+export default function PetScene({ onTrinketsEmpty, onDressUp, onShop, onAccount, account }: { onTrinketsEmpty?: () => void; onDressUp?: () => void; onShop?: (store?: 'food' | 'general') => void; onAccount?: () => void; account?: { initial: string; label: string; warn?: boolean } }) {
   const { state, apply } = useGame();
   const pet = A.activePet(state)!;
   const sp = SPECIES_BY_ID[pet.speciesId];
@@ -642,6 +642,7 @@ export default function PetScene({ onTrinketsEmpty, onDressUp, onShop, onAccount
     overlay.open(
       <FeedSheet
         onClose={overlay.close}
+        onShop={onShop ? () => { overlay.close(); onShop('food'); } : undefined}
         onFeed={(id) => {
           overlay.close();
           eat(id);
@@ -807,7 +808,7 @@ export default function PetScene({ onTrinketsEmpty, onDressUp, onShop, onAccount
           <View style={styles.stat} accessibilityLabel={`${streak}-day streak${state.shields ? `, ${state.shields} shields` : ''}`}>
             <Text style={styles.statText}>🔥 {streak}{state.shields ? ` 🛡️${state.shields}` : ''}</Text>
           </View>
-          <Pressable style={styles.stat} hitSlop={8} onPress={onShop} accessibilityRole="button" accessibilityLabel={`${state.coins} coins, open shop`}>
+          <Pressable style={styles.stat} hitSlop={8} onPress={() => onShop?.()} accessibilityRole="button" accessibilityLabel={`${state.coins} coins, open shop`}>
             <RollingNumber value={state.coins} prefix="🪙 " style={styles.statText} />
             <View style={styles.plus}><Text style={styles.plusText}>+</Text></View>
           </Pressable>

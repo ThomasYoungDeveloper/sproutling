@@ -6,7 +6,7 @@ import { STAT_INFO, type Stat } from './stats';
  *
  * - Pellets are always free: they fill the food bar but give nothing extra.
  * - Every other food raises one battle stat by a small percent, more for rarer food (up to +10% per stat). Food is found on walks
- *   or bought in the shop. Up to BOOSTS_PER_DAY boosting foods a day.
+ *   or bought at the Food Market (game/market.ts). The first BOOSTS_PER_DAY each day give a stat bonus.
  * - Four needs bars (food, fun, water, energy) drift down slowly and never hit zero.
  */
 
@@ -18,8 +18,8 @@ export interface FoodDef {
   stat: Stat;
   /** How much it fills the food bar (0–100). */
   fill: number;
-  /** Shop price in coins, if it is sold. Foods without a price are only found on walks. */
-  price?: number;
+  /** Can turn up on walks. (Every food can appear at the Food Market: see game/market.ts.) */
+  walk?: boolean;
 }
 
 export const PELLETS = { id: 'pellets', name: 'Pellets', emoji: '🟤', fill: 45 } as const;
@@ -31,26 +31,25 @@ export const boostOf = (f: Pick<FoodDef, 'rarity' | 'stat'>) => BOOST_BY_RARITY[
 export const pct = (n: number) => `+${Number(n.toFixed(1))}%`;
 
 export const FOODS: FoodDef[] = [
-  // Found on walks
-  { id: 'berries', name: 'Berries', emoji: '🍓', rarity: 'common', stat: 'hp', fill: 45 },
-  { id: 'mushroom', name: 'Mushroom', emoji: '🍄', rarity: 'common', stat: 'def', fill: 45 },
-  { id: 'carrot', name: 'Carrot', emoji: '🥕', rarity: 'common', stat: 'spd', fill: 45 },
-  { id: 'chestnut', name: 'Chestnut', emoji: '🌰', rarity: 'uncommon', stat: 'atk', fill: 55 },
-  { id: 'melon', name: 'Melon', emoji: '🍈', rarity: 'uncommon', stat: 'hp', fill: 55 },
-  { id: 'peach', name: 'Peach', emoji: '🍑', rarity: 'rare', stat: 'spd', fill: 65 },
-  { id: 'goldapple', name: 'Golden apple', emoji: '🍎', rarity: 'epic', stat: 'hp', fill: 80 },
-  // Sold in the shop
-  { id: 'onigiri', name: 'Onigiri', emoji: '🍙', rarity: 'common', stat: 'atk', fill: 50, price: 30 },
-  { id: 'egg', name: 'Tamago', emoji: '🍳', rarity: 'common', stat: 'def', fill: 50, price: 30 },
-  { id: 'dango', name: 'Dango', emoji: '🍡', rarity: 'uncommon', stat: 'spd', fill: 60, price: 70 },
-  { id: 'ramen', name: 'Ramen', emoji: '🍜', rarity: 'uncommon', stat: 'hp', fill: 70, price: 70 },
-  { id: 'bento', name: 'Bento', emoji: '🍱', rarity: 'rare', stat: 'def', fill: 80, price: 150 },
-  { id: 'sushi', name: 'Sushi', emoji: '🍣', rarity: 'epic', stat: 'atk', fill: 90, price: 300 },
-  { id: 'mooncake', name: 'Mooncake', emoji: '🥮', rarity: 'legendary', stat: 'spd', fill: 100, price: 600 },
+  // Found on walks (and sometimes at the market)
+  { id: 'berries', name: 'Berries', emoji: '🍓', rarity: 'common', stat: 'hp', fill: 45, walk: true },
+  { id: 'mushroom', name: 'Mushroom', emoji: '🍄', rarity: 'common', stat: 'def', fill: 45, walk: true },
+  { id: 'carrot', name: 'Carrot', emoji: '🥕', rarity: 'common', stat: 'spd', fill: 45, walk: true },
+  { id: 'chestnut', name: 'Chestnut', emoji: '🌰', rarity: 'uncommon', stat: 'atk', fill: 55, walk: true },
+  { id: 'melon', name: 'Melon', emoji: '🍈', rarity: 'uncommon', stat: 'hp', fill: 55, walk: true },
+  { id: 'peach', name: 'Peach', emoji: '🍑', rarity: 'rare', stat: 'spd', fill: 65, walk: true },
+  { id: 'goldapple', name: 'Golden apple', emoji: '🍎', rarity: 'epic', stat: 'hp', fill: 80, walk: true },
+  // Market foods
+  { id: 'onigiri', name: 'Onigiri', emoji: '🍙', rarity: 'common', stat: 'atk', fill: 50 },
+  { id: 'egg', name: 'Tamago', emoji: '🍳', rarity: 'common', stat: 'def', fill: 50 },
+  { id: 'dango', name: 'Dango', emoji: '🍡', rarity: 'uncommon', stat: 'spd', fill: 60 },
+  { id: 'ramen', name: 'Ramen', emoji: '🍜', rarity: 'uncommon', stat: 'hp', fill: 70 },
+  { id: 'bento', name: 'Bento', emoji: '🍱', rarity: 'rare', stat: 'def', fill: 80 },
+  { id: 'sushi', name: 'Sushi', emoji: '🍣', rarity: 'epic', stat: 'atk', fill: 90 },
+  { id: 'mooncake', name: 'Mooncake', emoji: '🥮', rarity: 'legendary', stat: 'spd', fill: 100 },
 ];
 export const FOOD_BY_ID: Record<string, FoodDef> = Object.fromEntries(FOODS.map((f) => [f.id, f]));
-export const SHOP_FOODS = FOODS.filter((f) => f.price);
-export const WALK_FOODS = FOODS.filter((f) => !f.price);
+export const WALK_FOODS = FOODS.filter((f) => f.walk);
 
 export const BOOSTS_PER_DAY = 3;
 /** No pet can gain more than this percent from food in one stat, so food can't outgrow training. */
@@ -63,12 +62,6 @@ export const foodCount = (s: GameState, id: string) => s.foods?.[id] ?? 0;
 export function addFood(s: GameState, id: string, n = 1): GameState {
   if (!FOOD_BY_ID[id] || n <= 0) return s;
   return { ...s, foods: { ...foodsOf(s), [id]: foodCount(s, id) + n } };
-}
-
-export function buyFood(s: GameState, id: string): GameState {
-  const f = FOOD_BY_ID[id];
-  if (!f?.price || s.coins < f.price) return s;
-  return addFood({ ...s, coins: s.coins - f.price }, id);
 }
 
 /* ---------- Needs bars ---------- */

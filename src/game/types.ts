@@ -141,6 +141,8 @@ export interface GameState {
   appliedTrades?: Record<string, true>;
   /** Walking finds today: how many 1,000-step marks were rolled and how many finds came up. */
   walkFinds?: { day: string; checked: number; found: number; foraged?: number };
+  /** What was bought at today's Food Market (stock is limited per day). */
+  market?: { day: string; bought: Record<string, number> };
   /** Food in the pantry, by food id (see game/food.ts). */
   foods?: Record<string, number>;
   /** The day a Training Crystal was last bought in the shop (one a day). */

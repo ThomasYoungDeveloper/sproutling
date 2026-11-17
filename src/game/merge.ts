@@ -76,6 +76,7 @@ export function mergeSaves(base: GameState | null, mine: GameState, theirs: Game
     shields: Math.min(2, counter(base.shields, mine.shields, theirs.shields)),
     shieldEarnedOn: maxStr(mine.shieldEarnedOn, theirs.shieldEarnedOn),
     crystalShopDay: maxStr(mine.crystalShopDay, theirs.crystalShopDay),
+    market: mergeMarket(mine.market, theirs.market),
     login: (mine.login?.count ?? 0) >= (theirs.login?.count ?? 0) ? mine.login : theirs.login,
     walkFinds: newerWalkFinds(mine.walkFinds, theirs.walkFinds),
     battle: newerBattle(mine.battle, theirs.battle),
@@ -162,6 +163,15 @@ function mergeEvents(a?: Record<string, number[]>, b?: Record<string, number[]>)
   const out: Record<string, number[]> = {};
   for (const k of new Set([...Object.keys(a ?? {}), ...Object.keys(b ?? {})])) out[k] = [...new Set([...(a?.[k] ?? []), ...(b?.[k] ?? [])])].sort((x, y) => x - y);
   return out;
+}
+
+function mergeMarket(m: GameState['market'], t: GameState['market']) {
+  if (!m) return t;
+  if (!t) return m;
+  if (m.day !== t.day) return m.day > t.day ? m : t;
+  const bought: Record<string, number> = { ...t.bought };
+  for (const [k, v] of Object.entries(m.bought)) bought[k] = Math.max(v, bought[k] ?? 0);
+  return { day: m.day, bought };
 }
 
 const maxStr = (a?: string, b?: string) => (!a ? b : !b ? a : a > b ? a : b);

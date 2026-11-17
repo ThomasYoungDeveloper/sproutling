@@ -15,6 +15,9 @@ import { stageFor } from '../game/scoring';
 import * as A from '../game/actions';
 import * as K from '../game/cosmetics';
 import * as Pw from '../game/powerups';
+import * as F from '../game/food';
+import * as M from '../game/market';
+import { RARITY_INFO } from '../game/rarity';
 import type { Cosmetic, Slot } from '../game/cosmetics';
 
 const SLOT_TITLE: Record<Slot, string> = { toy: 'Toys', hat: 'Hats', aura: 'Auras', scene: 'Scenes' };
@@ -82,7 +85,7 @@ function CrystalOffer() {
   );
 }
 
-export function ShopSheet({ onClose, onWardrobe }: { onClose: () => void; onWardrobe: () => void }) {
+function GeneralStore({ onClose, onWardrobe, onBack }: { onClose: () => void; onWardrobe: () => void; onBack: () => void }) {
   const { state, apply } = useGame();
   const items = K.shopToday(state);
   const left = useCountdown();
@@ -115,10 +118,11 @@ export function ShopSheet({ onClose, onWardrobe }: { onClose: () => void; onWard
     <View style={styles.backdrop}>
       <Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessibilityLabel="Close" />
       <View style={styles.sheet}>
+        <Pressable onPress={onBack} hitSlop={8} accessibilityRole="button"><Text style={styles.back}>‹ Shop</Text></Pressable>
         <View style={styles.head}>
           <View style={{ flex: 1 }}>
-            <Text style={font.title}>🛍️ Today’s shop</Text>
-            <Text style={font.small}>New items in {left}</Text>
+            <Text style={font.title}>🧺 General Store</Text>
+            <Text style={font.small}>New outfits and toys in {left}</Text>
           </View>
           <View style={styles.coins}><Text style={styles.coinsText}>🪙 {state.coins.toLocaleString()}</Text></View>
         </View>
@@ -180,6 +184,121 @@ export function ShopSheet({ onClose, onWardrobe }: { onClose: () => void; onWard
           <Button primary label="Done" onPress={onClose} style={{ flex: 1 }} />
         </View>
         <Text style={[font.tiny, { textAlign: 'center' }]}>Earn coins from healthy habits, quests, chests, battles and gifts. Chests can hold items too!</Text>
+      </View>
+    </View>
+  );
+}
+
+export type Store = 'food' | 'general';
+
+/** The shop: pick the Food Market or the General Store. Both restock at midnight. */
+export function ShopSheet({ onClose, onWardrobe, start }: { onClose: () => void; onWardrobe: () => void; start?: Store }) {
+  const { state } = useGame();
+  const [store, setStore] = useState<Store | null>(start ?? null);
+  const left = useCountdown();
+  const day = A.todayKey(state);
+  const special = M.specialFor(day);
+  const pick = K.shopToday(state).slice().sort((a, b) => b.price - a.price)[0];
+  if (store === 'food') return <FoodMarket onClose={onClose} onBack={() => setStore(null)} />;
+  if (store === 'general') return <GeneralStore onClose={onClose} onWardrobe={onWardrobe} onBack={() => setStore(null)} />;
+  return (
+    <View style={styles.backdrop}>
+      <Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessibilityLabel="Close" />
+      <View style={styles.sheet}>
+        <View style={styles.head}>
+          <Text style={[font.title, { flex: 1 }]}>Shop</Text>
+          <View style={styles.coins}><Text style={styles.coinsText}>🪙 {state.coins.toLocaleString()}</Text></View>
+        </View>
+        <Text style={font.small}>Pick a store</Text>
+        <Pressable onPress={() => setStore('food')} style={({ pressed }) => [styles.store, { backgroundColor: '#FFE3B8' }, pressed && { transform: [{ scale: 0.98 }] }]} accessibilityRole="button" accessibilityLabel={`Food Market. Today's special: ${special.food.name}`}>
+          <Text style={styles.storeIcon}>🍙</Text>
+          <View style={{ flex: 1, gap: 2 }}>
+            <Text style={styles.storeName}>Food Market</Text>
+            <Text style={[styles.storeSub, { color: '#8A5A00' }]}>Today's special: {special.food.emoji} {special.food.name} ({RARITY_INFO[special.food.rarity].label})</Text>
+          </View>
+          <View style={[styles.newTag, { backgroundColor: '#E07A3F' }]}><Text style={styles.newTagText}>NEW TODAY</Text></View>
+        </Pressable>
+        <Pressable onPress={() => setStore('general')} style={({ pressed }) => [styles.store, { backgroundColor: '#D8E9FB' }, pressed && { transform: [{ scale: 0.98 }] }]} accessibilityRole="button" accessibilityLabel="General Store">
+          <Text style={styles.storeIcon}>🧺</Text>
+          <View style={{ flex: 1, gap: 2 }}>
+            <Text style={styles.storeName}>General Store</Text>
+            <Text style={[styles.storeSub, { color: '#1F5E99' }]}>{pick ? `Today's pick: ${pick.name}` : 'Outfits, toys, incubators and crystals'}</Text>
+          </View>
+          <View style={[styles.newTag, { backgroundColor: '#4A8FE0' }]}><Text style={styles.newTagText}>NEW TODAY</Text></View>
+        </Pressable>
+        <Text style={[font.small, { textAlign: 'center' }]}>Both stores restock at midnight · {left}</Text>
+        <Button primary label="Done" onPress={onClose} />
+      </View>
+    </View>
+  );
+}
+
+/** Food Market: today's special plus 4 everyday foods, limited stock, new every day. */
+function FoodMarket({ onClose, onBack }: { onClose: () => void; onBack: () => void }) {
+  const { state, apply } = useGame();
+  const day = A.todayKey(state);
+  const stock = M.marketFor(day);
+  const tomorrow = M.specialFor(M.nextDay(day));
+  const left = useCountdown();
+  const [msg, setMsg] = useState<string | null>(null);
+
+  const row = (slot: M.MarketSlot) => {
+    const remaining = M.leftToday(state, day, slot);
+    const rare = RARITY_INFO[slot.food.rarity];
+    const have = F.foodCount(state, slot.food.id);
+    return (
+      <View key={slot.food.id} style={[styles.foodRow, slot.special && styles.specialRow]}>
+        <Text style={{ fontSize: 34 }}>{slot.food.emoji}</Text>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.foodName}>{slot.food.name}{have ? <Text style={styles.have}>  · you have {have}</Text> : null}</Text>
+          <Text style={[styles.foodMeta, { color: rare.color }]}>{rare.label.toUpperCase()} · {F.pct(F.boostOf(slot.food))} {F.statLabel(slot.food.stat)}</Text>
+          <Text style={styles.foodLeft}>{remaining ? `${remaining} left today` : 'Sold out'}</Text>
+        </View>
+        <Pressable
+          disabled={!remaining}
+          onPress={() => {
+            const r = M.buyFromMarket(state, day, slot.food.id);
+            if (!r.ok) {
+              buzz('light');
+              return setMsg(r.reason);
+            }
+            buzz('success', 'coin');
+            apply(() => r.state);
+            setMsg(`Bought ${slot.food.name}! Feed it from the Feed button.`);
+          }}
+          style={[styles.buyBtn, !remaining && { opacity: 0.4 }, state.coins < slot.price && { opacity: 0.55 }]}
+          accessibilityRole="button"
+          accessibilityLabel={remaining ? `Buy ${slot.food.name} for ${slot.price} coins` : `${slot.food.name} sold out`}
+        >
+          <Text style={styles.buyText}>{remaining ? `🪙 ${slot.price}` : 'Sold out'}</Text>
+        </Pressable>
+      </View>
+    );
+  };
+
+  return (
+    <View style={styles.backdrop}>
+      <Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessibilityLabel="Close" />
+      <View style={[styles.sheet, { backgroundColor: '#FFF8EC' }]}>
+        <View style={styles.head}>
+          <Pressable onPress={onBack} hitSlop={8} accessibilityRole="button" style={{ flex: 1 }}><Text style={styles.back}>‹ Shop</Text></Pressable>
+          <View style={styles.coins}><Text style={styles.coinsText}>🪙 {state.coins.toLocaleString()}</Text></View>
+        </View>
+        <View style={{ alignItems: 'center' }}>
+          <Text style={{ fontSize: 40 }}>🍙</Text>
+          <Text style={font.title}>Food Market</Text>
+          <Text style={font.small}>New food every day · restocks in {left}</Text>
+        </View>
+        <ScrollView style={{ maxHeight: 460 }} contentContainerStyle={{ gap: 8 }}>
+          <Text style={[styles.section, { color: '#9A6A00' }]}>✨ Today's special</Text>
+          {row(stock[0])}
+          <Text style={styles.section}>Everyday</Text>
+          {stock.slice(1).map(row)}
+          <Text style={styles.section}>Tomorrow's hint</Text>
+          <Text style={font.small}>A {RARITY_INFO[tomorrow.food.rarity].label.toLowerCase()} special is on the way… 🤫</Text>
+        </ScrollView>
+        {msg ? <Text style={styles.msg}>{msg}</Text> : null}
+        <Button primary label="Done" onPress={onClose} />
       </View>
     </View>
   );
@@ -258,6 +377,21 @@ const styles = StyleSheet.create({
   coins: { backgroundColor: '#FFF6DD', borderRadius: 999, paddingHorizontal: 12, paddingVertical: 6, borderWidth: 1.5, borderColor: colors.gold },
   coinsText: { fontWeight: '900', color: '#5A3E00', fontSize: 15 },
   section: { fontWeight: '900', fontSize: 15, color: colors.ink, marginTop: 4 },
+  back: { fontSize: 15, fontWeight: '900', color: colors.mintDark },
+  store: { flexDirection: 'row', alignItems: 'center', gap: 12, borderRadius: 20, padding: 14 },
+  storeIcon: { fontSize: 40 },
+  storeName: { fontSize: 18, fontWeight: '900', color: colors.ink },
+  storeSub: { fontSize: 13, fontWeight: '800' },
+  newTag: { borderRadius: 999, paddingHorizontal: 8, paddingVertical: 3 },
+  newTagText: { color: '#FFFFFF', fontSize: 10, fontWeight: '900' },
+  foodRow: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: '#FFFFFF', borderRadius: 16, padding: 10 },
+  specialRow: { borderWidth: 2, borderColor: '#FFD84D', backgroundColor: '#FFF8DC' },
+  foodName: { fontSize: 15, fontWeight: '900', color: colors.ink },
+  have: { fontSize: 12, fontWeight: '800', color: colors.muted },
+  foodMeta: { fontSize: 11, fontWeight: '900' },
+  foodLeft: { fontSize: 11, fontWeight: '800', color: colors.muted },
+  buyBtn: { minWidth: 76, height: 40, borderRadius: 12, backgroundColor: colors.mint, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 10 },
+  buyText: { color: '#FFFFFF', fontSize: 14, fontWeight: '900' },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: '3%', rowGap: space.sm },
   tile: { width: '31%', alignItems: 'center', gap: 2, padding: 8, borderRadius: 16, borderWidth: 2, borderColor: colors.line, backgroundColor: '#FAFCFB' },
   tileOn: { borderColor: colors.mint, backgroundColor: colors.mintSoft },
