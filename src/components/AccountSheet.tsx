@@ -65,8 +65,8 @@ function RemindersToggle() {
       >
         <Text style={{ fontSize: 20 }}>{on ? '🔔' : '🔕'}</Text>
         <View style={{ flex: 1 }}>
-          <Text style={[font.body, { fontWeight: '800' }]}>Reminders</Text>
-          <Text style={font.tiny}>Streaks, hatching eggs, expeditions, guild raids{remindersSupported ? '' : ' · phone app only'}</Text>
+          <Text style={[font.body, { fontWeight: '800' }]}>Reminders & alerts</Text>
+          <Text style={font.tiny}>Streaks, eggs, expeditions, guild raids, plus friend requests, gifts and trades{remindersSupported ? '' : ' · phone app only'}</Text>
         </View>
         <View style={[styles.switch, on && styles.switchOn]}>
           <View style={[styles.knob, on && { alignSelf: 'flex-end' }]} />

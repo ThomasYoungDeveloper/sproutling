@@ -19,6 +19,8 @@ import { TeamProvider } from './src/state/TeamContext';
 import { RankedProvider } from './src/state/RankedContext';
 import { useHealthSync } from './src/lib/useHealthSync';
 import { useReminders } from './src/lib/useReminders';
+import { onPushTap, registerPushToken } from './src/lib/pushTokens';
+import { onRemindersChange } from './src/lib/remindersState';
 import { useWalkFinds } from './src/lib/useWalkFinds';
 import Tutorial from './src/components/Tutorial';
 import TabBar from './src/components/TabBar';
@@ -101,6 +103,18 @@ function Shell() {
       setTab('friends');
     }
   }, []);
+
+  // Real push notifications: register this phone for the signed-in player (once Reminders allowed
+  // notifications), and open the right tab when a notification is tapped.
+  useEffect(() => {
+    registerPushToken(user?.id ?? null);
+    return onRemindersChange((on) => {
+      if (on) registerPushToken(user?.id ?? null);
+    });
+  }, [user?.id]);
+  useEffect(() => onPushTap((t) => {
+    if (t === 'home' || t === 'eggs' || t === 'chests' || t === 'dex' || t === 'friends') setTab(t);
+  }), []);
 
   // On the phone, invite links open the app directly (Universal Links): read the code from the link.
   useEffect(() => {

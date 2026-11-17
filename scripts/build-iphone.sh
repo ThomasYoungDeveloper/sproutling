@@ -79,7 +79,8 @@ Answer the questions like this:
   • "Do you want to log in to your Apple account?"            → Y, then your Apple ID email, password and the 6-digit code
   • "Generate a new Apple Distribution Certificate?"           → Y
   • "Generate a new Apple Provisioning Profile?"               → Y
-  • Anything about push notifications                          → N (not yet)
+  • "Would you like to set up Push Notifications?"             → Y
+  • "Generate a new Apple Push Notifications service key?"     → Y   (lets friends' alerts reach your phone)
 The build itself takes about 15–25 minutes. You can watch it at the link it prints.
 TXT
 $EAS build --platform ios --profile production
