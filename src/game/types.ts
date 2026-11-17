@@ -151,4 +151,6 @@ export interface GameState {
   tutorialDone?: boolean;
   /** Battle record and today's rewarded battles. */
   battle?: { day: string; rewarded: number; wonToday: boolean; wins: number; losses: number };
+  /** Live battles whose rewards were already collected (so a second phone can't collect them again). */
+  liveDone?: string[];
 }

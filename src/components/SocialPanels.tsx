@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useLive, type LiveBattle } from '../state/LiveBattleContext';
 import { useGame } from '../state/GameContext';
 import { useFriends, type Friend, type Trade } from '../state/FriendsContext';
 import { useOverlay } from './Overlay';
@@ -74,6 +75,90 @@ export function useBattle() {
   const { recordBattle } = useFriends();
   return (opponent: Opponent) =>
     open(<BattleScreen opponent={opponent} onClose={close} onResult={(won) => opponent.friendId && recordBattle(opponent.friendId, won)} />);
+}
+
+/** Open, start or accept live battles against a friend who plays their own moves. */
+export function useLiveBattle() {
+  const { open, close } = useOverlay();
+  const { state } = useGame();
+  const L = useLive();
+  const watch = (id: string, name: string, team: B.PetLike[], friendId: string) =>
+    open(<BattleScreen live={id} opponent={{ name, team, friendId }} onClose={close} />);
+  const openLive = (b: LiveBattle) => {
+    const theirs = b.battle ? b.battle.theirs : [];
+    watch(b.id, b.friendName, theirs as unknown as B.PetLike[], b.friendId);
+  };
+  const pick = (title: string, subtitle: string, label: string, onPick: (ids: string[]) => Promise<void>) =>
+    open(
+      <PetPicker
+        title={title}
+        subtitle={subtitle}
+        pets={state.pets.map((p) => ({ pet: p }))}
+        max={B.TEAM_SIZE}
+        initial={B.defaultTeam(state)}
+        confirmLabel={(n) => (n ? label : 'Pick at least 1 pet')}
+        onConfirm={(ids) => onPick(ids)}
+        onClose={close}
+      />,
+    );
+  const challenge = (f: Friend, onMsg?: (t: string) => void) =>
+    pick(`Live battle vs ${f.username}`, `${f.username} plays their own moves. You each pick a move every turn, and get a notification when it’s your turn. Up to ${B.TEAM_SIZE} pets.`, 'Send challenge ⚡', async (ids) => {
+      const r = await L.challenge(f.id, B.liveTeamFrom(state, ids));
+      close();
+      buzz(r.ok ? 'success' : 'medium');
+      onMsg?.(r.ok ? `Challenge sent! We’ll let you know when ${f.username} accepts.` : r.text);
+    });
+  const accept = (b: LiveBattle) =>
+    pick(`${b.friendName} challenged you!`, `Pick up to ${B.TEAM_SIZE} pets for a live battle. You each pick a move every turn.`, 'Accept ⚡', async (ids) => {
+      const r = await L.respond(b.id, true, B.liveTeamFrom(state, ids));
+      close();
+      const now = L.get(b.id);
+      if (r.ok && now) openLive(now);
+    });
+  return { openLive, challenge, accept, decline: (b: LiveBattle) => L.respond(b.id, false) };
+}
+
+function liveLine(b: LiveBattle) {
+  if (b.status === 'invited') return b.iChallenged ? 'Waiting for them to accept' : 'Challenged you!';
+  if (b.status === 'declined') return 'Said not right now';
+  if (b.status === 'cancelled') return 'Challenge expired';
+  if (b.status === 'done') return b.won ? '🏆 You won' : 'They won';
+  if (b.myTurn) return `Turn ${b.turn + 1} · Your move!`;
+  return `Turn ${b.turn + 1} · Waiting for their move`;
+}
+
+export function LiveBattlesCard() {
+  const { battles } = useLive();
+  const { openLive, accept, decline } = useLiveBattle();
+  const shown = battles.filter((b) => b.status === 'invited' || b.status === 'active' || (b.status === 'done' && Date.now() - new Date(b.updatedAt).getTime() < 86400000)).slice(0, 8);
+  if (!shown.length) return null;
+  const waiting = shown.filter((b) => b.myTurn).length;
+  return (
+    <Card style={waiting ? { borderColor: '#E0567A' } : undefined}>
+      <SectionHead title="⚡ Live battles" meta={waiting ? `${waiting} waiting on you` : undefined} />
+      {shown.map((b) => {
+        const invite = b.status === 'invited' && !b.iChallenged;
+        const canOpen = b.status === 'active' || (b.status === 'done' && !!b.battle);
+        return (
+          <Pressable key={b.id} disabled={!canOpen} onPress={() => openLive(b)} style={styles.liveRow} accessibilityRole="button" accessibilityLabel={`Live battle with ${b.friendName}: ${liveLine(b)}`}>
+            <View style={[styles.liveDot, { backgroundColor: b.myTurn ? '#E0567A' : b.status === 'active' ? colors.gold : colors.line }]} />
+            <View style={{ flex: 1, minWidth: 0 }}>
+              <Text style={styles.liveName} numberOfLines={1}>{b.friendName}</Text>
+              <Text style={[font.small, b.myTurn && { color: '#C2365C', fontWeight: '800' }]} numberOfLines={1}>{liveLine(b)}</Text>
+            </View>
+            {invite ? (
+              <View style={{ flexDirection: 'row', gap: 6 }}>
+                <Button small label="Not now" onPress={() => decline(b)} />
+                <Button small primary label="Accept" onPress={() => accept(b)} />
+              </View>
+            ) : canOpen ? (
+              <Text style={styles.liveGo}>{b.status === 'done' ? 'See' : b.myTurn ? 'Play ›' : 'Open ›'}</Text>
+            ) : null}
+          </Pressable>
+        );
+      })}
+    </Card>
+  );
 }
 
 export function friendOpponent(f: Friend): Opponent | null {
@@ -264,4 +349,8 @@ const styles = StyleSheet.create({
   miniName: { fontWeight: '900', fontSize: 13, color: colors.ink, marginTop: 2 },
   miniSub: { fontWeight: '700', fontSize: 11, color: colors.muted },
   actions: { flexDirection: 'row', gap: space.sm, justifyContent: 'flex-end' },
+  liveRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm, borderTopWidth: 1, borderTopColor: colors.line, paddingTop: space.sm },
+  liveDot: { width: 10, height: 10, borderRadius: 5 },
+  liveName: { fontWeight: '900', fontSize: 15, color: colors.ink },
+  liveGo: { fontWeight: '900', fontSize: 14, color: '#C2365C' },
 });

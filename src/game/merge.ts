@@ -80,6 +80,7 @@ export function mergeSaves(base: GameState | null, mine: GameState, theirs: Game
     login: (mine.login?.count ?? 0) >= (theirs.login?.count ?? 0) ? mine.login : theirs.login,
     walkFinds: newerWalkFinds(mine.walkFinds, theirs.walkFinds),
     battle: newerBattle(mine.battle, theirs.battle),
+    liveDone: Array.from(new Set([...(mine.liveDone ?? []), ...(theirs.liveDone ?? [])])).slice(-200),
     tutorialDone: !!(mine.tutorialDone || theirs.tutorialDone) || undefined,
     activePetId: activePetId && pets.some((p) => p.id === activePetId) ? activePetId : pets[0]?.id ?? null,
     scene: pick(base.scene, mine.scene, theirs.scene),

@@ -15,6 +15,7 @@ import StarterScreen from './src/screens/StarterScreen';
 import FriendsScreen from './src/screens/FriendsScreen';
 import DailyLoginSheet from './src/components/DailyLoginSheet';
 import { FriendsProvider, useFriends } from './src/state/FriendsContext';
+import { LiveBattleProvider, useLive } from './src/state/LiveBattleContext';
 import { OverlayProvider, useOverlay } from './src/components/Overlay';
 import { TeamProvider } from './src/state/TeamContext';
 import { RankedProvider } from './src/state/RankedContext';
@@ -77,6 +78,7 @@ function Shell() {
   useHealthSync();
   useReminders();
   const { incoming, tradesForMe, notice, dismissNotice } = useFriends();
+  const { waiting: liveWaiting } = useLive();
   const [invite, setInvite] = useState<string | null>(null);
   const [guildInvite, setGuildInvite] = useState<string | null>(null);
   const [showLogin, setShowLogin] = useState(false);
@@ -252,7 +254,7 @@ function Shell() {
           tabs={TABS}
           active={tab}
           onPick={setTab}
-          badges={{ eggs: readyEggs, chests: state.chests.length, friends: incoming.length + tradesForMe, dex: Ach.claimable(state).length }}
+          badges={{ eggs: readyEggs, chests: state.chests.length, friends: incoming.length + tradesForMe + liveWaiting, dex: Ach.claimable(state).length }}
         />
       )}
       {settled && !starter && !state.tutorialDone ? <Tutorial /> : null}
@@ -317,13 +319,15 @@ function Gate() {
     <GameProvider key={user.id}>
       <RevealProvider>
         <FriendsProvider>
-          <TeamProvider>
-            <RankedProvider>
-              <OverlayProvider>
-                <Shell />
-              </OverlayProvider>
-            </RankedProvider>
-          </TeamProvider>
+          <LiveBattleProvider>
+            <TeamProvider>
+              <RankedProvider>
+                <OverlayProvider>
+                  <Shell />
+                </OverlayProvider>
+              </RankedProvider>
+            </TeamProvider>
+          </LiveBattleProvider>
         </FriendsProvider>
       </RevealProvider>
     </GameProvider>

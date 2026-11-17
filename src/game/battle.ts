@@ -2,7 +2,7 @@ import type { Element, GameState, Rarity, Skin } from './types';
 import { EXERCISE_MINUTES, MINDFUL_MINUTES, levelFor, ringsClosed, xpForLevel } from './scoring';
 import { SPECIES, SPECIES_BY_ID } from './species';
 import { careMultiplier } from './care';
-import { pickOne, randInt, type Rng, defaultRng } from './random';
+import { pickOne, randInt, seededRng, type Rng, defaultRng } from './random';
 import * as A from './actions';
 import {
   MOVES, STATS, equippedMoves, personalityOf, statsFor,
@@ -407,10 +407,73 @@ function faint(b: Battle, side: Side, push: (e: BattleEvent) => void) {
   }
   if (side === 'me') b.mi = next;
   else b.ti = next;
-  push({ side, kind: 'faint', target: side, text: `${f.nickname} fainted! ${side === 'me' ? 'Go' : 'They send out'} ${active(b, side).nickname}!` });
+  push({ side, kind: 'faint', target: side, text: `${f.nickname} fainted! ${active(b, side).nickname} steps in!` });
 }
 
 /** Runs a whole battle with both sides played by the AI (used for balance tests). */
+/* ---------------- Live battles (two real players) ---------------- */
+
+/** One player's side of a live battle: their pets plus that day's habit buffs. */
+export interface LiveTeam {
+  pets: PetLike[];
+  buffs: HabitBuff[];
+  care: number;
+  streak: number;
+}
+
+export type LiveTurn = { c: Action; o: Action };
+
+export function liveTeamFrom(s: GameState, ids: string[]): LiveTeam {
+  const setup = myBattleSetup(s);
+  const pets = ids
+    .map((id) => s.pets.find((p) => p.id === id))
+    .filter(Boolean)
+    .slice(0, TEAM_SIZE)
+    .map((p) => ({ id: p!.id, speciesId: p!.speciesId, nickname: p!.nickname, xp: p!.xp, shiny: p!.shiny, skin: p!.skin, look: p!.look, personality: p!.personality, train: p!.train, moves: p!.moves, ivs: p!.ivs, foodBoost: p!.foodBoost }) as PetLike);
+  return { pets, buffs: setup.buffs, care: setup.care, streak: setup.streak };
+}
+
+/**
+ * The battle as both phones see it, always worked out from the challenger's side ('me' = challenger).
+ * Each turn uses its own seeded random numbers, so replaying the history gives the same result anywhere.
+ */
+export function liveStart(c: LiveTeam, o: LiveTeam): Battle {
+  return {
+    mine: c.pets.slice(0, TEAM_SIZE).map((p, i) => makeFighter(p, `m${i}`, c.buffs, c.care, c.streak)),
+    theirs: o.pets.slice(0, TEAM_SIZE).map((p, i) => makeFighter(p, `t${i}`, o.buffs, o.care, o.streak)),
+    mi: 0,
+    ti: 0,
+    turn: 0,
+    over: null,
+  };
+}
+
+const liveRng = (seed: string, turn: number) => seededRng(`${seed}:${turn}`);
+
+/** Replays every finished turn. Returns the battle now and the frames of the last turn (to animate). */
+export function liveReplay(c: LiveTeam, o: LiveTeam, seed: string, history: LiveTurn[]): { battle: Battle; last: Frame[] } {
+  let b = liveStart(c, o);
+  let last: Frame[] = [];
+  history.forEach((t, i) => {
+    if (b.over) return;
+    last = playTurn(b, t.c, t.o, liveRng(seed, i));
+    b = last[last.length - 1].battle;
+  });
+  return { battle: b, last };
+}
+
+/** Turns the challenger's view into the opponent's view (swap sides). */
+export function flipBattle(b: Battle): Battle {
+  return { ...b, mine: b.theirs, theirs: b.mine, mi: b.ti, ti: b.mi, over: b.over === 'win' ? 'lose' : b.over === 'lose' ? 'win' : null };
+}
+export function flipFrames(frames: Frame[]): Frame[] {
+  const sw = (x: Side): Side => (x === 'me' ? 'them' : 'me');
+  return frames.map((f) => ({
+    event: { ...f.event, side: sw(f.event.side), ...(f.event.target ? { target: sw(f.event.target) } : {}) },
+    battle: flipBattle(f.battle),
+  }));
+}
+
 export function simulate(b: Battle, rng: Rng = defaultRng): { battle: Battle; turns: number } {
   let cur = b;
   let n = 0;

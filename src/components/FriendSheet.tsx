@@ -13,7 +13,8 @@ import { activeToday, lastSeen } from '../screens/friendsShared';
 import { YardBackdrop } from './PetScene';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import PetZoom from './PetZoom';
-import { friendOpponent, useBattle, useTradeOffer } from './SocialPanels';
+import { friendOpponent, useBattle, useLiveBattle, useTradeOffer } from './SocialPanels';
+import { useLive } from '../state/LiveBattleContext';
 
 export default function FriendSheet({ friend, onClose }: { friend: Friend; onClose: () => void }) {
   // This screen covers the whole phone, so keep the Back button below the clock and camera.
@@ -21,6 +22,9 @@ export default function FriendSheet({ friend, onClose }: { friend: Friend; onClo
   const { gift, giftsLeft, remove, friends } = useFriends();
   const battle = useBattle();
   const tradeOffer = useTradeOffer();
+  const liveB = useLiveBattle();
+  const { battles } = useLive();
+  const [choose, setChoose] = useState(false);
   const live = friends.find((f) => f.id === friend.id) ?? friend;
   const [confirmRemove, setConfirmRemove] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
@@ -93,17 +97,21 @@ export default function FriendSheet({ friend, onClose }: { friend: Friend; onClo
             <Pressable
               disabled={!friendOpponent(live)}
               onPress={() => {
-                const opp = friendOpponent(live);
-                if (!opp) return;
-                onClose();
-                battle(opp);
+                const going = battles.find((b) => b.friendId === live.id && (b.status === 'active' || (b.status === 'invited' && !b.iChallenged)));
+                if (going) {
+                  onClose();
+                  if (going.status === 'active') liveB.openLive(going);
+                  else liveB.accept(going);
+                  return;
+                }
+                setChoose((c) => !c);
               }}
               style={[styles.action, { backgroundColor: '#E0567A' }, !friendOpponent(live) && { opacity: 0.5 }]}
               accessibilityRole="button"
               accessibilityLabel="Battle"
             >
               <Text style={styles.actionIcon}>⚔️</Text>
-              <Text style={styles.actionText}>Battle</Text>
+              <Text style={styles.actionText}>{battles.some((b) => b.friendId === live.id && b.myTurn) ? 'Your move!' : 'Battle'}</Text>
             </Pressable>
             <Pressable
               onPress={() => {
@@ -118,6 +126,39 @@ export default function FriendSheet({ friend, onClose }: { friend: Friend; onClo
               <Text style={styles.actionText}>Trade</Text>
             </Pressable>
           </View>
+          {choose && friendOpponent(live) ? (
+            <View style={styles.choose}>
+              <Pressable
+                onPress={() => {
+                  setChoose(false);
+                  if (battles.some((b) => b.friendId === live.id && b.status === 'invited')) {
+                    setMsg(`You already sent ${live.username} a challenge.`);
+                    return;
+                  }
+                  liveB.challenge(live, (t) => setMsg(t));
+                }}
+                style={[styles.chooseBtn, { backgroundColor: '#E0567A' }]}
+                accessibilityRole="button"
+              >
+                <Text style={styles.chooseTitle}>⚡ Live battle</Text>
+                <Text style={styles.chooseSub}>{live.username} picks their own moves</Text>
+              </Pressable>
+              <Pressable
+                onPress={() => {
+                  const opp = friendOpponent(live);
+                  if (!opp) return;
+                  setChoose(false);
+                  onClose();
+                  battle(opp);
+                }}
+                style={[styles.chooseBtn, { backgroundColor: '#5B6BB5' }]}
+                accessibilityRole="button"
+              >
+                <Text style={styles.chooseTitle}>🤖 Practice</Text>
+                <Text style={styles.chooseSub}>Battle their team right now</Text>
+              </Pressable>
+            </View>
+          ) : null}
           {!live.giftedToday && giftsLeft > 0 ? <Text style={[font.tiny, { textAlign: 'center' }]}>{giftsLeft} of {GIFTS_PER_DAY} gifts left today</Text> : null}
           {!friendOpponent(live) ? <Text style={[font.tiny, { textAlign: 'center' }]}>{live.username} needs to hatch a pet before you can battle.</Text> : null}
           {msg ? <Text style={[font.small, { textAlign: 'center', color: colors.mintDark }]}>{msg}</Text> : null}
@@ -215,6 +256,10 @@ function Stat({ label, value, bg, ink }: { label: string; value: string; bg: str
 }
 
 const styles = StyleSheet.create({
+  choose: { flexDirection: 'row', gap: space.sm },
+  chooseBtn: { flex: 1, borderRadius: 16, padding: 12, gap: 2 },
+  chooseTitle: { color: '#fff', fontWeight: '900', fontSize: 15 },
+  chooseSub: { color: 'rgba(255,255,255,0.85)', fontWeight: '700', fontSize: 11 },
   screen: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: colors.bg, zIndex: 50 },
   yard: { height: 460, overflow: 'hidden' },
   yardTop: { position: 'absolute', top: 14, left: 14, right: 14, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },

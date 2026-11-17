@@ -11,7 +11,8 @@ import { SPECIES_BY_ID } from '../game/species';
 import { levelFor, stageFor } from '../game/scoring';
 import { GIFTS_PER_DAY } from '../game/actions';
 import { activeToday, copyText, lastSeen, shareInvite } from './friendsShared';
-import { ArenaCard, TradesCard } from '../components/SocialPanels';
+import { ArenaCard, LiveBattlesCard, TradesCard } from '../components/SocialPanels';
+import { useLive } from '../state/LiveBattleContext';
 import RankedCard from '../components/RankedCard';
 import TeamCard from '../components/TeamCard';
 import FashionShow from '../components/FashionShow';
@@ -24,6 +25,7 @@ const SECTIONS = [
 ] as const;
 
 export default function FriendsScreen({ initialAdd, onUsedInitialAdd, initialGuild, onUsedInitialGuild }: { initialAdd?: string | null; onUsedInitialAdd?: () => void; initialGuild?: string | null; onUsedInitialGuild?: () => void }) {
+  const { waiting: liveWaiting } = useLive();
   const { myCode, friends, incoming, outgoing, loading, error, addFriend, respond, remove, gift, giftsLeft, refresh, tradesForMe } = useFriends();
   const [target, setTarget] = useState('');
   const [busy, setBusy] = useState(false);
@@ -127,11 +129,13 @@ export default function FriendsScreen({ initialAdd, onUsedInitialAdd, initialGui
         {SECTIONS.map((sec) => (
           <Pressable key={sec.id} onPress={() => setSection(sec.id)} style={[styles.seg, section === sec.id && styles.segOn]} accessibilityRole="tab" accessibilityState={{ selected: section === sec.id }} accessibilityLabel={sec.label}>
             <Text style={[styles.segText, section === sec.id && { color: '#fff' }]}>{sec.icon} {sec.label}</Text>
-            {sec.id === 'friends' && incoming.length + tradesForMe > 0 ? <View style={styles.segDot} /> : null}
+            {sec.id === 'friends' && incoming.length + tradesForMe + liveWaiting > 0 ? <View style={styles.segDot} /> : null}
+            {sec.id === 'battle' && liveWaiting > 0 ? <View style={styles.segDot} /> : null}
           </Pressable>
         ))}
       </View>
       {section === 'team' && <TeamCard initialJoin={initialGuild} onUsedInitialJoin={onUsedInitialGuild} />}
+      {section === 'battle' && <LiveBattlesCard />}
       {section === 'battle' && <ArenaCard />}
       {section === 'battle' && <RankedCard />}
       {section === 'show' && <FashionShow />}
@@ -161,6 +165,7 @@ export default function FriendsScreen({ initialAdd, onUsedInitialAdd, initialGui
         </View>
       ))}
 
+      <LiveBattlesCard />
       <TradesCard />
 
       <Card>

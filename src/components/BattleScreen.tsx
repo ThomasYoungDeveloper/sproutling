@@ -3,6 +3,7 @@ import { Animated, Easing, Pressable, ScrollView, StyleSheet, Text, View, useWin
 import { useGame } from '../state/GameContext';
 import { useTeam } from '../state/TeamContext';
 import { useRanked } from '../state/RankedContext';
+import { useLive } from '../state/LiveBattleContext';
 import { tierFor } from '../game/ranked';
 import { raidBoss } from '../game/team';
 import PetSprite from './PetSprite';
@@ -32,14 +33,17 @@ type Pop = { id: number; side: B.Side; text: string; color: string };
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const moveColor = (m: MoveDef) => (m.element === 'normal' ? B.NORMAL_COLOR : B.ELEMENT_COLOR[m.element]);
 
-export default function BattleScreen({ opponent, onClose, onResult }: { opponent: Opponent; onClose: () => void; onResult?: (won: boolean) => void }) {
+export const REACTIONS = ['😤', '😂', '👏', '😱', '🔥', '🙏'];
+
+export default function BattleScreen({ opponent, onClose, onResult, live }: { opponent: Opponent; onClose: () => void; onResult?: (won: boolean) => void; /** Id of a live battle against a real friend. */ live?: string }) {
   const insets = useSafeAreaInsets();
   const { state, apply } = useGame();
+  const L = useLive();
   const stateRef = useRef<GameState>(state);
   stateRef.current = state;
-  const [phase, setPhase] = useState<Phase>('pick');
+  const [phase, setPhase] = useState<Phase>(live ? 'fight' : 'pick');
   const [team, setTeam] = useState<string[]>(B.defaultTeam(state));
-  const [battle, setBattle] = useState<B.Battle | null>(null);
+  const [battle, setBattle] = useState<B.Battle | null>(() => (live ? L.get(live)?.battle ?? null : null));
   const [busy, setBusy] = useState(false);
   const [line, setLine] = useState('');
   const [reward, setReward] = useState<B.BattleReward | null>(null);
@@ -50,6 +54,12 @@ export default function BattleScreen({ opponent, onClose, onResult }: { opponent
   const { report, ranked } = useRanked();
   const [rp, setRp] = useState<number | null>(null);
   const setup = B.myBattleSetup(state);
+  const lb = live ? L.get(live) : undefined;
+  const shownTurn = useRef<number>(lb?.turn ?? 0);
+  const [reactAt, setReactAt] = useState<string | null>(lb?.theirReact?.at ?? null);
+  const [bubble, setBubble] = useState<string | null>(null);
+  const [myBubble, setMyBubble] = useState<string | null>(null);
+  const buffs = lb?.myTeam?.buffs ?? setup.buffs;
 
   const lunge = { me: useRef(new Animated.Value(0)).current, them: useRef(new Animated.Value(0)).current };
   const hit = { me: useRef(new Animated.Value(0)).current, them: useRef(new Animated.Value(0)).current };
@@ -132,31 +142,104 @@ export default function BattleScreen({ opponent, onClose, onResult }: { opponent
     }
   };
 
+  /** Rewards, ranked points and the result screen once a battle ends. */
+  const ended = useRef(false);
+  const [sureQuit, setSureQuit] = useState(false);
+  const endBattle = async (won: boolean, after: B.Battle | null) => {
+    if (live) {
+      if (ended.current) return;
+      ended.current = true;
+    }
+    if (live && lb) {
+      // Only collect rewards for a live battle once, even across phones.
+      if (!(stateRef.current.liveDone ?? []).includes(live)) {
+        const r = B.finishBattle(stateRef.current, won, true);
+        apply(() => ({ ...r.state, liveDone: [...(r.state.liveDone ?? []), live].slice(-200) }));
+        setReward(r.reward);
+        report(lb.friendId, won).then(setRp);
+      }
+      if (lb.status === 'active') L.finish(live, lb.iChallenged ? won : !won);
+    } else {
+      const r = B.finishBattle(stateRef.current, won, !!opponent.friendId);
+      apply(() => r.state);
+      setReward(r.reward);
+      report(opponent.friendId ?? null, won).then(setRp);
+      const dmg = after ? B.raidDamage(after) : 0;
+      if (guild && dmg) raidHit(dmg).then((res) => setRaid(res === 'ok' ? { dmg, boss: raidBoss(guild.week).name } : null));
+    }
+    onResult?.(won);
+    buzz(won ? 'success' : 'medium', won ? 'win' : 'lose');
+    await wait(400);
+    setPhase('result');
+  };
+
   const act = async (action: B.Action) => {
     if (!battle || busy || battle.over) return;
-    setBusy(true);
     setSwitching(false);
+    if (live && lb) {
+      setBusy(true);
+      const res = await L.move(live, lb.turn, action);
+      if (!res.ok) {
+        setLine(res.text);
+        setBusy(false);
+      } else if (res.text === 'waiting') {
+        setLine(`Move locked in! Waiting for ${opponent.name}…`);
+      }
+      // When both moves are in, the turn plays out from the effect below.
+      return;
+    }
+    setBusy(true);
     const frames = B.playTurn(battle, action, B.aiAction(battle, 'them'));
     for (const f of frames) await playFrame(f);
     const after = frames[frames.length - 1].battle;
     setBattle(after);
-    if (after.over) {
-      const won = after.over === 'win';
-      const r = B.finishBattle(stateRef.current, won, !!opponent.friendId);
-      apply(() => r.state);
-      setReward(r.reward);
-      onResult?.(won);
-      report(opponent.friendId ?? null, won).then(setRp);
-      const dmg = B.raidDamage(after);
-      if (guild) raidHit(dmg).then((res) => setRaid(res === 'ok' ? { dmg, boss: raidBoss(guild.week).name } : null));
-      buzz(won ? 'success' : 'medium', won ? 'win' : 'lose');
-      await wait(400);
-      setPhase('result');
-    } else {
-      setLine(`What will ${B.active(after, 'me').nickname} do?`);
-    }
+    if (after.over) await endBattle(after.over === 'win', after);
+    else setLine(`What will ${B.active(after, 'me').nickname} do?`);
     setBusy(false);
   };
+
+  // Live battles: play each new turn as soon as it arrives.
+  useEffect(() => {
+    if (!live || !lb || phase === 'result') return;
+    if (lb.theirReact && lb.theirReact.at !== reactAt) {
+      setReactAt(lb.theirReact.at);
+      setBubble(lb.theirReact.e);
+      buzz('light', 'pop');
+      setTimeout(() => setBubble(null), 2600);
+    }
+    if (!lb.battle) return;
+    if (lb.turn > shownTurn.current) {
+      shownTurn.current = lb.turn;
+      (async () => {
+        setBusy(true);
+        for (const f of lb.last) await playFrame(f);
+        setBattle(lb.battle);
+        if (lb.battle!.over) await endBattle(lb.battle!.over === 'win', lb.battle);
+        else setLine(`What will ${B.active(lb.battle!, 'me').nickname} do?`);
+        setBusy(false);
+      })();
+      return;
+    }
+    if (busy) return;
+    if (lb.battle.over || lb.status === 'done') {
+      // Opened after it ended, or someone gave up / ran out of time.
+      setBattle(lb.battle);
+      endBattle(lb.won ?? false, lb.battle);
+      return;
+    }
+    if (lb.iMoved) setLine(`Move locked in! Waiting for ${opponent.name}…`);
+    else if (!line || line.startsWith('Move locked')) setLine(lb.turn === 0 ? (lb.theyMoved ? `${opponent.name} picked a move. Your turn!` : `${opponent.name} is ready. Pick your first move!`) : `What will ${B.active(lb.battle, 'me').nickname} do?`);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lb?.turn, lb?.status, lb?.iMoved, lb?.theirReact?.at, lb?.battle]);
+
+  const sendReact = (e: string) => {
+    if (!live) return;
+    L.react(live, e);
+    setMyBubble(e);
+    buzz('light', 'pop');
+    setTimeout(() => setMyBubble(null), 2000);
+  };
+  const late = !!lb && lb.status === 'active' && lb.iMoved && !lb.theyMoved && new Date(lb.deadline).getTime() < Date.now();
 
   if (phase === 'pick') {
     const theirNames = opponent.team.slice(0, B.TEAM_SIZE).map((p) => `${p.nickname} (Lv ${Math.max(1, B.makeFighter(p, 'x').level)})`).join(', ');
@@ -186,9 +269,12 @@ export default function BattleScreen({ opponent, onClose, onResult }: { opponent
         <TeamDots fighters={battle.theirs} index={battle.ti} style={{ top: 10, right: 12 }} />
         <TeamDots fighters={battle.mine} index={battle.mi} style={{ bottom: 32, left: 16 }} />
         <FighterCard f={them} label={opponent.name} style={{ top: 34, left: 12 }} />
-        <FighterCard f={me} label="You" style={{ bottom: 40, right: 12 }} buffs={setup.buffs} />
+        <FighterCard f={me} label="You" style={{ bottom: 40, right: 12 }} buffs={buffs} />
         <FighterSprite f={them} side="them" lunge={lunge.them} hit={hit.them} faint={faint.them} style={{ top: 78, right: 24 }} />
-        <FighterSprite f={me} side="me" lunge={lunge.me} hit={hit.me} faint={faint.me} style={{ bottom: 56, left: 20 }} glow={setup.buffs.length} />
+        <FighterSprite f={me} side="me" lunge={lunge.me} hit={hit.me} faint={faint.me} style={{ bottom: 56, left: 20 }} glow={buffs.length} />
+        {bubble ? <View style={[styles.bubble, { top: 64, right: 120 }]}><PopIn from={0.3}><Text style={styles.bubbleText}>{bubble}</Text></PopIn></View> : null}
+        {myBubble ? <View style={[styles.bubble, { bottom: 150, left: 110 }]}><PopIn from={0.3}><Text style={styles.bubbleText}>{myBubble}</Text></PopIn></View> : null}
+        {live ? <View style={styles.liveTag}><Text style={styles.liveTagText}>● LIVE · Turn {(lb?.turn ?? 0) + 1}</Text></View> : null}
         {pops.map((p) => (
           <DamagePop key={p.id} side={p.side} text={p.text} color={p.color} onDone={() => setPops((list) => list.filter((x) => x.id !== p.id))} />
         ))}
@@ -229,22 +315,37 @@ export default function BattleScreen({ opponent, onClose, onResult }: { opponent
                 </View>
                 <View style={styles.moves}>
                   {me.moves.map((m) => (
-                    <MoveButton key={m.id} m={m} foe={them} energy={me.energy} disabled={busy} onPress={() => act({ type: 'move', moveId: m.id })} />
+                    <MoveButton key={m.id} m={m} foe={them} energy={me.energy} disabled={busy || !!lb?.iMoved} onPress={() => act({ type: 'move', moveId: m.id })} />
                   ))}
                 </View>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <Pressable onPress={() => !busy && battle.mine.filter((f) => f.hp > 0).length > 1 && setSwitching(true)} accessibilityRole="button" style={{ opacity: battle.mine.filter((f) => f.hp > 0).length > 1 ? 1 : 0.4 }}>
+                  <Pressable onPress={() => !busy && !lb?.iMoved && battle.mine.filter((f) => f.hp > 0).length > 1 && setSwitching(true)} accessibilityRole="button" style={{ opacity: battle.mine.filter((f) => f.hp > 0).length > 1 ? 1 : 0.4 }}>
                     <Text style={styles.link}>🔄 Switch pet</Text>
                   </Pressable>
+                  {live ? (
+                    <Pressable onPress={() => { if (!sureQuit) { setSureQuit(true); setTimeout(() => setSureQuit(false), 4000); } else if (live) L.forfeit(live); }} accessibilityRole="button">
+                      <Text style={[styles.run, sureQuit && { color: '#C4562F' }]}>{sureQuit ? 'Tap again to give up' : 'Give up'}</Text>
+                    </Pressable>
+                  ) : null}
                   <Pressable onPress={onClose} accessibilityRole="button">
-                    <Text style={styles.run}>Run away</Text>
+                    <Text style={styles.run}>{live ? 'Close' : 'Run away'}</Text>
                   </Pressable>
                 </View>
+                {live ? (
+                  <View style={styles.reactRow}>
+                    {REACTIONS.map((e) => (
+                      <Pressable key={e} onPress={() => sendReact(e)} style={styles.reactBtn} accessibilityRole="button" accessibilityLabel={`React ${e}`}>
+                        <Text style={{ fontSize: 20 }}>{e}</Text>
+                      </Pressable>
+                    ))}
+                  </View>
+                ) : null}
+                {late ? <Button small primary label={`${opponent.name} ran out of time. Claim the win`} onPress={() => live && L.claimTimeout(live)} /> : null}
               </>
             )}
           </>
         ) : (
-          <Result won={battle.over === 'win'} reward={reward} raid={raid} rp={rp} points={ranked?.points ?? null} name={opponent.name} onRematch={() => { setRaid(null); setRp(null); setPhase('pick'); }} onClose={onClose} />
+          <Result won={battle.over === 'win'} reward={reward} raid={raid} rp={rp} points={ranked?.points ?? null} name={opponent.name} onRematch={live ? undefined : () => { setRaid(null); setRp(null); setPhase('pick'); }} onClose={onClose} />
         )}
       </View>
     </View>
@@ -283,7 +384,7 @@ function MoveButton({ m, foe, energy, disabled, onPress }: { m: MoveDef; foe: B.
   );
 }
 
-function Result({ won, reward, raid, rp, points, name, onRematch, onClose }: { won: boolean; reward: B.BattleReward | null; raid: { dmg: number; boss: string } | null; rp: number | null; points: number | null; name: string; onRematch: () => void; onClose: () => void }) {
+function Result({ won, reward, raid, rp, points, name, onRematch, onClose }: { won: boolean; reward: B.BattleReward | null; raid: { dmg: number; boss: string } | null; rp: number | null; points: number | null; name: string; onRematch?: () => void; onClose: () => void }) {
   const { width, height } = useWindowDimensions();
   const nm = name === 'Wild pets' ? 'the wild pets' : name;
   return (
@@ -316,7 +417,7 @@ function Result({ won, reward, raid, rp, points, name, onRematch, onClose }: { w
         </PopIn>
       ) : null}
       <View style={{ flexDirection: 'row', gap: 10, alignSelf: 'stretch' }}>
-        <Button label="Rematch" onPress={onRematch} style={{ flex: 1 }} />
+        {onRematch ? <Button label="Rematch" onPress={onRematch} style={{ flex: 1 }} /> : null}
         <Button primary label="Done" onPress={onClose} style={{ flex: 1 }} />
       </View>
     </View>
@@ -422,6 +523,12 @@ function DamagePop({ side, text, color, onDone }: { side: B.Side; text: string; 
 }
 
 const styles = StyleSheet.create({
+  bubble: { position: 'absolute', backgroundColor: '#fff', borderRadius: 18, paddingHorizontal: 10, paddingVertical: 4, shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 6, shadowOffset: { width: 0, height: 2 }, elevation: 4 },
+  bubbleText: { fontSize: 30 },
+  liveTag: { position: 'absolute', top: 10, left: 12, backgroundColor: 'rgba(214,40,57,0.9)', borderRadius: 10, paddingHorizontal: 8, paddingVertical: 3 },
+  liveTagText: { color: '#fff', fontSize: 11, fontWeight: '800', letterSpacing: 0.5 },
+  reactRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 4 },
+  reactBtn: { width: 44, height: 40, borderRadius: 12, backgroundColor: '#F4F1EA', alignItems: 'center', justifyContent: 'center' },
   full: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: '#1B2240', zIndex: 90 },
   arena: { flex: 1, overflow: 'hidden', minHeight: 330 },
   panel: { backgroundColor: '#FFFFFF', borderTopLeftRadius: 26, borderTopRightRadius: 26, padding: space.md, gap: 8, marginTop: -20 },

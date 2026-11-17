@@ -524,4 +524,31 @@ ok(A.applyShields(shielded.state).used === 0, 'shields are not used twice');
   const md = mergeSaves(base, a, b).days[d];
   ok(md.steps === 4000 && md.water === 5 && md.sleepHours === 7, 'merge keeps the higher value of each habit');
 }
+// Live battles: both phones replay the same history and see the same battle
+{
+  const g = newGame();
+  const sp = SPECIES.slice(0, 3);
+  const mk = (i: number, n: string) => ({ id: `${n}${i}`, speciesId: sp[i].id, nickname: `${n}${i}`, xp: 900 + i * 300, shiny: false }) as B.PetLike;
+  const cT: B.LiveTeam = { pets: [mk(0, 'c'), mk(1, 'c')], buffs: [], care: 1, streak: 2 };
+  const oT: B.LiveTeam = { pets: [mk(1, 'o'), mk(2, 'o')], buffs: [], care: 1, streak: 0 };
+  const hist: B.LiveTurn[] = [];
+  let r = B.liveReplay(cT, oT, 'seed123', hist);
+  for (let i = 0; i < 60 && !r.battle.over; i++) {
+    const c = B.aiAction(r.battle, 'me');
+    const o = B.aiAction(r.battle, 'them');
+    hist.push({ c, o });
+    r = B.liveReplay(cT, oT, 'seed123', hist);
+  }
+  ok(!!r.battle.over, 'a live battle finishes');
+  const again = B.liveReplay(cT, oT, 'seed123', JSON.parse(JSON.stringify(hist)));
+  ok(JSON.stringify(again.battle) === JSON.stringify(r.battle), 'replaying the same live history gives the same battle on both phones');
+  const f = B.flipBattle(r.battle);
+  ok(f.mine[0].nickname === 'o0' || f.mine[0].nickname === 'o1', 'the opponent sees their own pets on their side');
+  ok((r.battle.over === 'win') === (f.over === 'lose'), 'the opponent sees the opposite result');
+  const ff = B.flipFrames(r.last);
+  ok(ff.every((x, i) => x.event.side !== r.last[i].event.side), 'flipped events swap sides');
+  ok(!r.last.some((x) => /They send out|Go /.test(x.event.text ?? '')), 'faint lines read the same from both sides');
+  const team = B.liveTeamFrom(g, g.pets.map((p) => p.id));
+  ok(team.pets.length === Math.min(3, g.pets.length) && Array.isArray(team.buffs), 'a live team is built from your pets and today\'s buffs');
+}
 console.log(fails ? `${fails} FAILED` : 'ALL PASSED'); process.exit(fails ? 1 : 0);
