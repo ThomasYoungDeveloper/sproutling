@@ -64,7 +64,7 @@
                   "systemSmall",
                   "systemMedium"
                 ],
-                "initialLayout": "./src/widgets/PetWidget.tsx"
+                "initialLayout": "./src/widgets/PetWidget.layout.tsx"
               },
               "android": null
             }

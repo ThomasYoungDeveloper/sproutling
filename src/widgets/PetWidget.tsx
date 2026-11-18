@@ -21,7 +21,7 @@ export type PetWidgetProps = {
   trip?: null | { place: string; startAt: number; endAt: number; hp: number; knockedOut: boolean };
 };
 
-const PetWidget = (props: PetWidgetProps, env: WidgetEnvironment) => {
+export const PetWidget = (props: PetWidgetProps, env: WidgetEnvironment) => {
   'widget';
   const small = env.widgetFamily === 'systemSmall';
   const now = env.date ? env.date.getTime() : Date.now();
@@ -113,12 +113,8 @@ const PetWidget = (props: PetWidgetProps, env: WidgetEnvironment) => {
   );
 };
 
-/**
- * Made on first use (not when this file loads) so an iOS error here is an ordinary catchable error.
- * An error while a file loads counts as fatal in React Native and closes the app.
- */
-export function makePetWidget() {
-  return createWidget<PetWidgetProps>('PetWidget', PetWidget, {
+/** Starting values before the first update. No null values: iOS can't store them in the shared widget storage. */
+export const PET_WIDGET_INITIAL: PetWidgetProps = {
   name: 'Your pet',
   level: 1,
   mood: 'Happy',
@@ -127,6 +123,13 @@ export function makePetWidget() {
   waterPct: 0,
   sleepPct: 0,
   streak: 0,
-  // No null values here: iOS can't store them in the shared widget storage and closes the app.
-  });
+};
+
+/**
+ * For the app: made on first use (not when this file loads), so an iOS error here is an ordinary
+ * catchable error. An error while a file loads counts as fatal in React Native and closes the app.
+ * (PetWidget.layout.tsx registers the same widget at load time, but only the iPhone build step reads that file.)
+ */
+export function makePetWidget() {
+  return createWidget<PetWidgetProps>('PetWidget', PetWidget, PET_WIDGET_INITIAL);
 }
