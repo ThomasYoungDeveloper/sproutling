@@ -27,8 +27,8 @@ type Mods = {
   Asset: typeof import('expo-asset').Asset;
   FS: typeof import('expo-file-system/legacy');
   widgetsDirectory: string | null;
-  PetWidget: typeof import('../widgets/PetWidget').default;
-  TripActivity: typeof import('../widgets/TripActivity').default;
+  PetWidget: ReturnType<typeof import('../widgets/PetWidget').makePetWidget>;
+  TripActivity: ReturnType<typeof import('../widgets/TripActivity').makeTripActivity>;
 };
 let mods: Mods | null | undefined;
 
@@ -38,7 +38,7 @@ let mods: Mods | null | undefined;
  * marker still there, the last widget call closed the app, so widgets stay off on this phone until
  * a new build (GUARD_KEY changes with WIDGET_VERSION).
  */
-const WIDGET_VERSION = 13;
+const WIDGET_VERSION = 15;
 const GUARD_KEY = `sproutling/widget-guard-${WIDGET_VERSION}`;
 let guardChecked: boolean | undefined;
 async function widgetsAllowed(): Promise<boolean> {
@@ -85,8 +85,8 @@ function load(): Mods | null {
       Asset: require('expo-asset').Asset,
       FS: require('expo-file-system/legacy'),
       widgetsDirectory: require('expo-widgets').widgetsDirectory ?? null,
-      PetWidget: require('../widgets/PetWidget').default,
-      TripActivity: require('../widgets/TripActivity').default,
+      PetWidget: require('../widgets/PetWidget').makePetWidget(),
+      TripActivity: require('../widgets/TripActivity').makeTripActivity(),
     };
   } catch (e) {
     reportCrash(e, 'widgets-load');

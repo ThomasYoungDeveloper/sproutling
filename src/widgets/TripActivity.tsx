@@ -86,4 +86,7 @@ const TripActivity = (props: TripActivityProps, env: LiveActivityEnvironment) =>
   };
 };
 
-export default createLiveActivity<TripActivityProps>('TripActivity', TripActivity);
+/** Made on first use, for the same reason as makePetWidget. */
+export function makeTripActivity() {
+  return createLiveActivity<TripActivityProps>('TripActivity', TripActivity);
+}

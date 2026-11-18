@@ -8,6 +8,9 @@ const g = globalThis as any;
 const previous = g.ErrorUtils?.getGlobalHandler?.();
 g.ErrorUtils?.setGlobalHandler?.((error: unknown, isFatal?: boolean) => {
   reportCrash(error, isFatal ? 'fatal' : null);
+  // Widgets are a bonus: an error from widget code is reported but never allowed to close the app.
+  const stack = error instanceof Error ? `${error.message}\n${error.stack ?? ''}` : String(error);
+  if (/createWidget|createLiveActivity|expo-widgets|widgetSync/i.test(stack)) return;
   previous?.(error, isFatal);
 });
 

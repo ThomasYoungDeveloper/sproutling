@@ -113,15 +113,20 @@ const PetWidget = (props: PetWidgetProps, env: WidgetEnvironment) => {
   );
 };
 
-export default createWidget<PetWidgetProps>('PetWidget', PetWidget, {
+/**
+ * Made on first use (not when this file loads) so an iOS error here is an ordinary catchable error.
+ * An error while a file loads counts as fatal in React Native and closes the app.
+ */
+export function makePetWidget() {
+  return createWidget<PetWidgetProps>('PetWidget', PetWidget, {
   name: 'Your pet',
   level: 1,
   mood: 'Happy',
-  image: null,
   steps: 0,
   stepGoal: 8000,
   waterPct: 0,
   sleepPct: 0,
   streak: 0,
   // No null values here: iOS can't store them in the shared widget storage and closes the app.
-});
+  });
+}
