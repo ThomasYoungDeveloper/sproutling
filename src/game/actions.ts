@@ -149,6 +149,22 @@ export function newEgg(s: GameState, rarity: Rarity, rng: Rng = defaultRng): Egg
   return { id: makeId(rng), rarity, stepsWalked: 0, incubating: false, foundOn: todayKey(s) };
 }
 
+/** Eggs waiting to hatch (not counting ones in an incubator) are kept in a basket that holds this many. */
+export const EGG_BASKET = 9;
+/** A new egg that doesn't fit in a full basket is turned into this many coins instead. */
+export const EGG_COINS: Record<Rarity, number> = { common: 15, uncommon: 25, rare: 50, epic: 100, legendary: 200 };
+export const basketCount = (s: GameState) => s.eggs.filter((e) => !e.incubating).length;
+export const basketFull = (s: GameState) => basketCount(s) >= EGG_BASKET;
+
+/** Adds a found egg, or turns it into coins when the basket is full. `coins` > 0 means it became coins. */
+export function addEgg(s: GameState, rarity: Rarity, rng: Rng = defaultRng): { state: GameState; coins: number } {
+  if (basketFull(s)) {
+    const coins = EGG_COINS[rarity];
+    return { state: { ...s, coins: s.coins + coins }, coins };
+  }
+  return { state: { ...s, eggs: [...s.eggs, newEgg(s, rarity, rng)] }, coins: 0 };
+}
+
 export interface OpenedChest {
   state: GameState;
   result: ChestResult;
@@ -166,7 +182,12 @@ export function openChestById(s: GameState, chestId: string, rng: Rng = defaultR
   if (!chest) return null;
   const result = openChest(chest.kind, rng);
   let next: GameState = { ...s, chests: s.chests.filter((c) => c.id !== chestId), coins: s.coins + result.coins };
-  if (result.eggRarity) next = { ...next, eggs: [...next.eggs, newEgg(next, result.eggRarity, rng)] };
+  let eggCoins = 0;
+  if (result.eggRarity) {
+    const r = addEgg(next, result.eggRarity, rng);
+    next = r.state;
+    eggCoins = r.coins;
+  }
   if (result.item) next = { ...next, items: { ...next.items, [result.item]: (next.items[result.item] ?? 0) + 1 } };
   const cosmetic = rollChestCosmetic(next, chest.kind, rng);
   if (cosmetic) next = grantCosmetic(next, cosmetic);
@@ -176,7 +197,9 @@ export function openChestById(s: GameState, chestId: string, rng: Rng = defaultR
   if (potions.small) next = addPotions(next, 'small', potions.small);
   if (potions.full) next = addPotions(next, 'full', potions.full);
   next = bump(next, 'chests');
-  return { state: next, result: { ...result, cosmetic, crystals, potions } };
+  // An egg that didn't fit in a full basket shows up as extra coins instead.
+  const shown = eggCoins ? { ...result, eggRarity: null, coins: result.coins + eggCoins, basketFull: true } : result;
+  return { state: next, result: { ...shown, cosmetic, crystals, potions } };
 }
 
 export const incubatingCount = (s: GameState) => s.eggs.filter((e) => e.incubating).length;

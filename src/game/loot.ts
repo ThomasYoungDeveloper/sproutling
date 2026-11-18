@@ -22,7 +22,7 @@ export const CHESTS: Record<ChestKind, ChestTable> = {
     label: 'Bronze chest',
     howToEarn: 'Finish all 3 daily quests',
     coins: [20, 40],
-    eggChance: 35,
+    eggChance: 15,
     eggRarity: { common: 60, uncommon: 28, rare: 10, epic: 2, legendary: 0 },
     itemChance: 50,
   },
@@ -49,6 +49,8 @@ export const COLLECTIBLES = ['Ember Sticker', 'Moon Seed', 'Tide Shell', 'Star S
 export interface ChestResult {
   coins: number;
   eggRarity: Rarity | null;
+  /** The chest had an egg, but the basket was full, so it became coins (already in `coins`). */
+  basketFull?: boolean;
   item: string | null;
   /** A dress-up item, if the chest held one (added when opened). */
   cosmetic?: string | null;

@@ -446,6 +446,7 @@ ok(A.applyShields(shielded.state).used === 0, 'shields are not used twice');
   ok(W.rollWalkFinds(r1.state, false, hit).finds.length === 0, 'the same steps never roll twice');
   ok(nf(W.rollWalkFinds(walked, false, eggRoll).finds).every((f: any) => f.kind === 'chest'), 'typed-in steps never find eggs');
   ok(nf(W.rollWalkFinds(walked, true, eggRoll).finds).every((f: any) => f.kind === 'egg'), 'Apple Health steps can find eggs');
+  ok(nf(W.rollWalkFinds(walked, true, eggRoll).finds).filter((f: any) => f.kind === 'egg').length === 1, 'at most one egg a day from walking');
   ok(W.rollWalkFinds(A.addSteps(base, 900), false, hit).finds.length === 0, 'nothing before the first 1,000 steps');
   const a = W.rollWalkFinds(walked, true), b = W.rollWalkFinds(walked, true);
   ok(JSON.stringify(a.finds) === JSON.stringify(b.finds), 'each 1,000-step mark has one fixed roll');
@@ -659,5 +660,26 @@ ok(A.applyShields(shielded.state).used === 0, 'shields are not used twice');
   ok(Tw.towerOf(nd).restDay !== A.todayKey(nd), 'the rest is over the next day');
   const top = Tw.finishFloor({ ...healed, tower: { ...healed.tower!, floor: 9 } }, true);
   ok(top.chest === 'gold' && top.crystals === 2 && !top.state.tower!.choose && !Tw.canClimb(top.state).ok, 'the boss gives a Gold chest and crystals, and the tower is done');
+}
+
+console.log('\nEgg basket');
+{
+  const base = newGame();
+  const full = { ...base, eggs: Array.from({ length: A.EGG_BASKET }, (_, i) => ({ ...A.newEgg(base, 'common'), id: `b${i}` })) };
+  ok(A.basketFull(full), `the basket holds ${A.EGG_BASKET}`);
+  const r = A.addEgg(full, 'rare');
+  ok(r.coins === A.EGG_COINS.rare && r.state.eggs.length === A.EGG_BASKET && r.state.coins === full.coins + A.EGG_COINS.rare, 'a new egg in a full basket becomes coins');
+  const inc = { ...full, eggs: full.eggs.map((e, i) => (i === 0 ? { ...e, incubating: true } : e)) };
+  ok(!A.basketFull(inc) && A.addEgg(inc, 'common').coins === 0, 'eggs in an incubator do not count toward the basket');
+  // A full basket: chests turn their egg into coins and say so.
+  let saw = false;
+  for (let i = 0; i < 40 && !saw; i++) {
+    const g = A.grantChest(full, 'silver', 'test');
+    const o = A.openChestById(g, g.chests[g.chests.length - 1].id)!;
+    if (o.result.basketFull) saw = o.result.eggRarity === null && o.state.eggs.length === A.EGG_BASKET;
+  }
+  ok(saw, 'a Silver chest opened with a full basket gives coins instead of an egg');
+  ok(stepsToHatch('common') === 3 * 1300 && stepsToHatch('legendary') === 25 * 1300, 'eggs take longer to hatch (Common 3 km, Legendary 25 km)');
+  ok(CHESTS.bronze.eggChance === 15, 'Bronze chests have a 15% egg chance');
 }
 console.log(fails ? `${fails} FAILED` : 'ALL PASSED'); process.exit(fails ? 1 : 0);

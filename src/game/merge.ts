@@ -189,7 +189,7 @@ function newerWalkFinds(m: GameState['walkFinds'], t: GameState['walkFinds']) {
   if (!m) return t;
   if (!t) return m;
   if (m.day !== t.day) return m.day > t.day ? m : t;
-  return { day: m.day, checked: Math.max(m.checked, t.checked), found: Math.max(m.found, t.found), foraged: Math.max(m.foraged ?? 0, t.foraged ?? 0), potions: Math.max(m.potions ?? 0, t.potions ?? 0), wild: Math.max(m.wild ?? 0, t.wild ?? 0) };
+  return { day: m.day, checked: Math.max(m.checked, t.checked), found: Math.max(m.found, t.found), foraged: Math.max(m.foraged ?? 0, t.foraged ?? 0), potions: Math.max(m.potions ?? 0, t.potions ?? 0), wild: Math.max(m.wild ?? 0, t.wild ?? 0), eggs: Math.max(m.eggs ?? 0, t.eggs ?? 0) };
 }
 
 function newerTower(m: GameState['tower'], t: GameState['tower']) {

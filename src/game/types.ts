@@ -144,7 +144,7 @@ export interface GameState {
   /** Completed trades already swapped into this save. */
   appliedTrades?: Record<string, true>;
   /** Walking finds today: how many 1,000-step marks were rolled and how many finds came up. */
-  walkFinds?: { day: string; checked: number; found: number; foraged?: number; potions?: number; wild?: number };
+  walkFinds?: { day: string; checked: number; found: number; foraged?: number; potions?: number; wild?: number; eggs?: number };
   /** Wild pets met on walks, waiting for you to battle or let go. */
   wildPending?: import('./walkFinds').WildEncounter[];
   /** What was bought at today's Food Market (stock is limited per day). */

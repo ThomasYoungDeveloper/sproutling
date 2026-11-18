@@ -15,7 +15,8 @@ import { levelFor } from './scoring';
 export const FIND_EVERY = 1000;
 export const MAX_FINDS_PER_DAY = 3;
 export const CHEST_CHANCE = 12; // % per 1,000 steps
-export const EGG_CHANCE = 8; // % per 1,000 verified steps
+export const EGG_CHANCE = 3; // % per 1,000 verified steps
+export const MAX_EGGS_PER_DAY = 1;
 /** Food found while walking: its own roll, so it never takes the place of a chest or egg. */
 export const FORAGE_CHANCE = 35; // % per 1,000 steps
 export const MAX_FORAGE_PER_DAY = 4;
@@ -46,11 +47,11 @@ export type WalkFind =
   | { kind: 'potion'; at: number }
   | { kind: 'wild'; wild: WildEncounter; at: number };
 
-export function walkFindsToday(s: GameState): { checked: number; found: number; foraged: number; potions: number; wild: number } {
+export function walkFindsToday(s: GameState): { checked: number; found: number; foraged: number; potions: number; wild: number; eggs: number } {
   const w = s.walkFinds;
   return w && w.day === A.todayKey(s)
-    ? { checked: w.checked, found: w.found, foraged: w.foraged ?? 0, potions: w.potions ?? 0, wild: w.wild ?? 0 }
-    : { checked: 0, found: 0, foraged: 0, potions: 0, wild: 0 };
+    ? { checked: w.checked, found: w.found, foraged: w.foraged ?? 0, potions: w.potions ?? 0, wild: w.wild ?? 0, eggs: w.eggs ?? 0 }
+    : { checked: 0, found: 0, foraged: 0, potions: 0, wild: 0, eggs: 0 };
 }
 
 /** Wild pets waiting for you (from today and earlier, up to 3). */
@@ -73,7 +74,7 @@ function makeWild(s: GameState, rng: Rng, at: number): WildEncounter {
 export function rollWalkFinds(s: GameState, verified: boolean, rngFor?: (mark: number) => Rng): { state: GameState; finds: WalkFind[] } {
   const day = A.todayKey(s);
   const steps = A.today(s).steps;
-  let { checked, found, foraged, potions, wild } = walkFindsToday(s);
+  let { checked, found, foraged, potions, wild, eggs } = walkFindsToday(s);
   const target = Math.floor(steps / FIND_EVERY);
   if (target <= checked) return { state: s, finds: [] };
   let next = s;
@@ -105,11 +106,12 @@ export function rollWalkFinds(s: GameState, verified: boolean, rngFor?: (mark: n
     if (found >= MAX_FINDS_PER_DAY) continue;
     const rng = rngFor ? rngFor(k) : seededRng(`${s.pets[0]?.id ?? 'me'}:${day}:${k}`);
     const r = rng() * 100;
-    if (verified && r < EGG_CHANCE) {
+    if (verified && r < EGG_CHANCE && eggs < MAX_EGGS_PER_DAY && !A.basketFull(next)) {
       const rarity = pickWeighted(EGG_ODDS as Record<Rarity, number>, rng);
-      next = { ...next, eggs: [...next.eggs, A.newEgg(next, rarity, rng)] };
+      next = A.addEgg(next, rarity, rng).state;
       finds.push({ kind: 'egg', rarity, at: k * FIND_EVERY });
       found++;
+      eggs++;
     } else if (r >= (verified ? EGG_CHANCE : 0) && r < (verified ? EGG_CHANCE : 0) + CHEST_CHANCE) {
       const chest = pickWeighted(CHEST_ODDS as Record<ChestKind, number>, rng);
       next = A.grantChest(next, chest, 'Found on your walk', rng);
@@ -117,5 +119,5 @@ export function rollWalkFinds(s: GameState, verified: boolean, rngFor?: (mark: n
       found++;
     }
   }
-  return { state: { ...next, walkFinds: { day, checked: target, found, foraged, potions, wild } }, finds };
+  return { state: { ...next, walkFinds: { day, checked: target, found, foraged, potions, wild, eggs } }, finds };
 }

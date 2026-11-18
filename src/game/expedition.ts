@@ -43,11 +43,11 @@ export const PLACES: Place[] = [
     events: ['followed glowing crystals deep underground', 'heard a mysterious echo singing back', 'slid down a sparkly crystal slide', 'woke up a very polite bat'],
   },
   {
-    id: 'shrine', fights: [2, 4], name: 'Sakura Shrine', emoji: '⛩️', minLevel: 5, hours: 6, steps: 7000, coins: [50, 90], chest: { kind: 'bronze', chance: 70 }, egg: { chance: 30, rarity: { common: 60, uncommon: 35, rare: 5 } }, itemChance: 60, cosmeticChance: 15,
+    id: 'shrine', fights: [2, 4], name: 'Sakura Shrine', emoji: '⛩️', minLevel: 5, hours: 6, steps: 7000, coins: [50, 90], chest: { kind: 'bronze', chance: 70 }, egg: { chance: 15, rarity: { common: 60, uncommon: 35, rare: 5 } }, itemChance: 60, cosmeticChance: 15,
     events: ['rang the shrine bell for good luck', 'caught falling cherry blossoms', 'shared mochi with a friendly fox spirit', 'climbed a thousand stone steps'],
   },
   {
-    id: 'mountain', fights: [2, 5], name: 'Moon Mountain', emoji: '🌙', minLevel: 8, hours: 12, steps: 12000, coins: [80, 150], chest: { kind: 'silver', chance: 45 }, egg: { chance: 30, rarity: { uncommon: 50, rare: 40, epic: 10 } }, itemChance: 70, cosmeticChance: 25,
+    id: 'mountain', fights: [2, 5], name: 'Moon Mountain', emoji: '🌙', minLevel: 8, hours: 12, steps: 12000, coins: [80, 150], chest: { kind: 'silver', chance: 45 }, egg: { chance: 15, rarity: { uncommon: 50, rare: 40, epic: 10 } }, itemChance: 70, cosmeticChance: 25,
     events: ['climbed above the clouds to touch the moon', 'counted shooting stars until sunrise', 'found a cave full of moonflowers', 'surfed down the mountain on a snow cloud'],
   },
 ];
@@ -250,16 +250,21 @@ export function finish(s: GameState, rng: Rng = defaultRng, now = Date.now()): {
   if (pet && fights.length) next = H.setHp(next, pet.id, fights[fights.length - 1].hpAfter);
   if (pet) next = { ...next, pets: next.pets.map((x) => (x.id === pet.id ? { ...x, xp: x.xp + xp } : x)) };
   if (chest) next = A.grantChest(next, chest, `Found at ${place.name}`, rng);
-  if (egg) next = { ...next, eggs: [...next.eggs, A.newEgg(next, egg, rng)] };
+  let eggCoins = 0;
+  if (egg) {
+    const r = A.addEgg(next, egg, rng);
+    next = r.state;
+    eggCoins = r.coins;
+  }
   if (item) next = { ...next, items: { ...next.items, [item]: (next.items[item] ?? 0) + 1 } };
   if (cosmetic) next = grantCosmetic(next, cosmetic);
   const event = pickOne(place.events, rng);
-  const found = [item ? `a ${item}` : null, chest ? `a ${chest[0].toUpperCase() + chest.slice(1)} chest` : null, egg ? 'a mysterious egg' : null].filter(Boolean);
+  const found = [item ? `a ${item}` : null, chest ? `a ${chest[0].toUpperCase() + chest.slice(1)} chest` : null, egg && !eggCoins ? 'a mysterious egg' : null, eggCoins ? `an egg that became ${eggCoins} coins (basket full)` : null].filter(Boolean);
   const lostTo = fights.find((f) => !f.won);
   const story = knockedOut
     ? `${name} was knocked out by a ${lostTo?.name ?? 'wild pet'} and came home early.`
     : `${name} ${event}${found.length ? `, and came home with ${found.join(' and ')}` : ''}!`;
-  return { state: next, loot: { coins, xp, chest, egg, item, cosmetic, story, petName: name, speciesId: pet?.speciesId ?? 'p01', fights, knockedOut, foods, placeName: place.name, placeId: place.id } };
+  return { state: next, loot: { coins: coins + eggCoins, xp, chest, egg: eggCoins ? null : egg, item, cosmetic, story, petName: name, speciesId: pet?.speciesId ?? 'p01', fights, knockedOut, foods, placeName: place.name, placeId: place.id } };
 }
 
 /** Cancels an expedition early. The pet comes home with nothing, but nothing is lost either. */

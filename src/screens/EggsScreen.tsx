@@ -126,8 +126,11 @@ export default function EggsScreen() {
       </View>
 
       <Card>
-        <SectionHead title="Your eggs" meta={`${waiting.length} waiting`} />
+        <SectionHead title="Your eggs" meta={`Basket ${waiting.length}/${A.EGG_BASKET}`} />
         {waiting.length === 0 ? <Text style={font.small}>Open chests, go on expeditions and walk to find more eggs.</Text> : null}
+        {waiting.length >= A.EGG_BASKET ? (
+          <Text style={[font.small, { color: '#C76A1A', fontWeight: '800' }]}>Your basket is full. New eggs you find will turn into coins until you hatch some.</Text>
+        ) : null}
         {waiting.map((e) => (
           <View key={e.id} style={styles.eggRow}>
             <EggSprite rarity={e.rarity} size={46} spots={e.bred ? NURSERY_SPOTS : undefined} />

@@ -12,6 +12,8 @@ import { colors, font, space } from '../theme';
 import { useTeam } from '../state/TeamContext';
 import { planReminders } from '../game/reminders';
 import { getRemindersOn, onRemindersChange, remindersSupported, setRemindersOn } from '../lib/remindersState';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { appBuild } from '../lib/appBuild';
 
 function SoundToggle() {
   const [muted, setM] = useState(isMuted());
@@ -99,6 +101,12 @@ function PremiumRow() {
   );
 }
 
+const TEST_KEY = 'sproutling/test-mode';
+const appVersion = () => {
+  const b = appBuild();
+  return `1.0${b ? ` (build ${b})` : ''}`;
+};
+
 export default function AccountSheet({ onClose }: { onClose: () => void }) {
   const { user, username, signOut, saveUsername, deleteAccount } = useAuth();
   const [askDelete, setAskDelete] = useState(false);
@@ -106,6 +114,22 @@ export default function AccountSheet({ onClose }: { onClose: () => void }) {
   const [deleteErr, setDeleteErr] = useState<string | null>(null);
   const { sync, apply, reset } = useGame();
   const [confirmReset, setConfirmReset] = useState(false);
+  const [testMode, setTestModeState] = useState(false);
+  const taps = React.useRef(0);
+  React.useEffect(() => {
+    AsyncStorage.getItem(TEST_KEY).then((v) => setTestModeState(v === '1')).catch(() => {});
+  }, []);
+  const setTestMode = (on: boolean) => {
+    setTestModeState(on);
+    AsyncStorage.setItem(TEST_KEY, on ? '1' : '0').catch(() => {});
+  };
+  const tapVersion = () => {
+    taps.current += 1;
+    if (taps.current >= 7) {
+      taps.current = 0;
+      setTestMode(!testMode);
+    }
+  };
   const [name, setName] = useState(username ?? '');
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ text: string; ok?: boolean } | null>(null);
@@ -147,7 +171,8 @@ export default function AccountSheet({ onClose }: { onClose: () => void }) {
             <ChatSettings />
             <View style={{ height: 1, backgroundColor: '#E3ECE7', marginVertical: 6 }} />
             <HelpRows />
-            <PremiumRow />
+            {/* Premium stays hidden until it's real: Apple rejects "coming soon" features. */}
+            {testMode ? (
             <View style={styles.testing}>
               <Text style={[font.small, { fontWeight: '900' }]}>Testing (preview build)</Text>
               <View style={[styles.row, { flexWrap: 'wrap' }]}>
@@ -168,7 +193,10 @@ export default function AccountSheet({ onClose }: { onClose: () => void }) {
                   }}
                 />
               </View>
+              <PremiumRow />
+              <Pressable onPress={() => setTestMode(false)} hitSlop={8} accessibilityRole="button"><Text style={styles.link}>Hide testing tools</Text></Pressable>
             </View>
+            ) : null}
             <View style={[styles.row, { marginTop: space.md }]}>
               <Button label="Sign out" onPress={signOut} />
               <Button primary label="Done" onPress={onClose} style={{ flex: 1 }} />
@@ -181,6 +209,10 @@ export default function AccountSheet({ onClose }: { onClose: () => void }) {
                 <Text style={[styles.link, { color: '#C4562F' }]}>Delete account</Text>
               </Pressable>
             </View>
+            {/* Testers: tap the version 7 times to show the testing tools (skip a day, reset). */}
+            <Pressable onPress={tapVersion} accessibilityRole="text">
+              <Text style={styles.version}>Version {appVersion()}</Text>
+            </Pressable>
             {askDelete ? (
               <View style={styles.danger}>
                 <Text style={[font.body, { fontWeight: '900', color: '#A23B1B' }]}>Delete your account for good?</Text>
@@ -223,6 +255,7 @@ const styles = StyleSheet.create({
   sheet: { backgroundColor: '#FFFFFF', borderRadius: 22, padding: space.lg, width: '100%', maxWidth: 420, maxHeight: '92%' },
   footer: { flexDirection: 'row', justifyContent: 'space-between', paddingTop: space.sm },
   link: { fontSize: 13, fontWeight: '800', color: colors.mintDark },
+  version: { fontSize: 12, fontWeight: '700', color: colors.muted, textAlign: 'center', paddingTop: 10 },
   deleteBtn: { flex: 1, height: 48, borderRadius: 14, backgroundColor: '#D9483B', alignItems: 'center', justifyContent: 'center' },
   deleteText: { color: '#FFFFFF', fontSize: 16, fontWeight: '900' },
   danger: { backgroundColor: '#FFF1EC', borderRadius: 14, padding: 12, gap: 8 },
