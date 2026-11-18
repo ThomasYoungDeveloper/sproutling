@@ -8,7 +8,7 @@ export const SPECIES: Species[] = [
   { id: 'p01', name: 'Prism', rarity: 'uncommon', element: 'tide', blurb: 'A shimmering water spirit who sparkles brighter with every glass you drink.' },
   { id: 'p02', name: 'Flushy', rarity: 'common', element: 'tide', blurb: 'Cries a lot, but always reminds you to hydrate.' },
   { id: 'p03', name: 'Maid Major', rarity: 'rare', element: 'ember', blurb: 'Keeps the house spotless and the workouts intense.' },
-  { id: 'p04', name: 'Halo Hank', rarity: 'uncommon', element: 'moon', blurb: 'A laid-back angel who swears he\'s quitting bad habits. Help him!' },
+  { id: 'p04', name: 'Halo Hank', rarity: 'uncommon', element: 'moon', blurb: 'A laid-back angel who finally kicked his bad habits. Now he just needs help with the rest of them.' },
   { id: 'p05', name: 'Chompack', rarity: 'common', element: 'ember', blurb: 'A hungry backpack that loves long hikes.' },
   { id: 'p06', name: 'Yuki', rarity: 'rare', element: 'moon', blurb: 'Sweet, a little intense, and very protective of her trainer.' },
   { id: 'p07', name: 'Coinbot', rarity: 'common', element: 'moon', blurb: 'Saves coins and steps with equal joy.' },
