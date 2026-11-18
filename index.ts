@@ -2,6 +2,7 @@ import { registerRootComponent } from 'expo';
 import React from 'react';
 import { ScrollView, Text } from 'react-native';
 import { reportCrash } from './src/lib/crashReport';
+import { startLiveUpdates } from './src/lib/liveUpdates';
 
 // Report any crash (error text and app build only) so a white screen on a phone can be traced.
 const g = globalThis as any;
@@ -13,6 +14,13 @@ g.ErrorUtils?.setGlobalHandler?.((error: unknown, isFatal?: boolean) => {
   if (/createWidget|createLiveActivity|expo-widgets|widgetSync/i.test(stack)) return;
   previous?.(error, isFatal);
 });
+
+// Live updates start before the game loads, so a fix can still arrive even if the game itself can't start.
+try {
+  startLiveUpdates();
+} catch (e) {
+  reportCrash(e, 'live-update');
+}
 
 /** Shown instead of a white screen if the app can't start. */
 function StartupError({ error }: { error: unknown }) {
