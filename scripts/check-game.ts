@@ -119,7 +119,7 @@ ok(ap.received.id !== 'theirs' && ap.state.dex['p15'] === true, 'received pet ge
 ok(T.applyTrade(ap.state, 'trade1', notActive.id, incoming) === null, 'a trade is applied only once');
 const ap2 = T.applyTrade(TR, 'trade2', TR.activePetId!, incoming)!; ok(ap2.state.activePetId === ap2.received.id, 'if your active pet left, the new pet becomes active');
 // Battles
-ok(B.effectiveness('flower', 'tide') === 1.5 && B.effectiveness('tide', 'flower') === 0.75 && B.effectiveness('flower', 'ember') === 1, 'element strengths');
+ok(B.effectiveness('flower', 'tide') === 1.3 && B.effectiveness('tide', 'flower') === 0.85 && B.effectiveness('flower', 'ember') === 1, 'element strengths');
 let seed = 7; const rr = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
 const mk = (id: string, lv: number, extra: Partial<B.PetLike> = {}): B.PetLike => ({ id: id + lv + rr(), speciesId: id, nickname: id, xp: 25 * lv * (lv - 1), shiny: false, ...extra });
 const sim = (a: B.PetLike[], b: B.PetLike[], buffs: B.HabitBuff[] = [], opts = {}) => { const r = B.simulate(B.startBattle(a, b, buffs, opts), rr); return { over: r.battle.over, n: r.turns }; };

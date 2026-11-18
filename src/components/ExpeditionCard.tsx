@@ -232,6 +232,12 @@ function PlaceSheet({ onPick, onClose }: { onPick: (place: Ex.Place) => void; on
         <View style={styles.places}>
           {Ex.PLACES.map((pl) => {
             const locked = best < pl.minLevel;
+            // Places unlock with your best pet, but only pets at the level can go: say how many can.
+            const canGo = state.pets.filter((p) => levelFor(p.xp) >= pl.minLevel && !H.isKnockedOut(p)).length;
+            const sub = locked
+              ? `Level ${pl.minLevel}+`
+              : `${pl.hours}h or ${(pl.steps / 1000).toLocaleString()}k steps`;
+            const who = locked ? null : canGo === 0 ? `Lv ${pl.minLevel}+ · pets resting` : `Lv ${pl.minLevel}+ · ${canGo} ${canGo === 1 ? 'pet' : 'pets'} can go`;
             return (
               <Pressable
                 key={pl.id}
@@ -242,7 +248,8 @@ function PlaceSheet({ onPick, onClose }: { onPick: (place: Ex.Place) => void; on
               >
                 <Text style={{ fontSize: 28 }}>{locked ? '🔒' : pl.emoji}</Text>
                 <Text style={styles.placeName}>{pl.name}</Text>
-                <Text style={styles.placeSub}>{locked ? `Level ${pl.minLevel}+` : `${pl.hours}h or ${(pl.steps / 1000).toLocaleString()}k steps`}</Text>
+                <Text style={styles.placeSub}>{sub}</Text>
+                {who ? <Text style={[styles.placeWho, canGo === 0 && { color: '#C4562F' }]}>{who}</Text> : null}
               </Pressable>
             );
           })}
@@ -418,6 +425,7 @@ const styles = StyleSheet.create({
   places: { flexDirection: 'row', flexWrap: 'wrap', gap: '3%', rowGap: space.sm },
   place: { width: '48.5%', alignItems: 'center', gap: 2, padding: space.sm, borderRadius: 16, borderWidth: 1.5, borderColor: colors.line, backgroundColor: '#FAFCFB' },
   placeName: { fontWeight: '900', fontSize: 14, color: colors.ink },
+  placeWho: { fontSize: 12, fontWeight: '800', color: '#1E8A68', marginTop: 2 },
   placeSub: { fontWeight: '700', fontSize: 11, color: colors.muted },
   backdrop: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(22,28,46,0.92)', justifyContent: 'center', alignItems: 'center', padding: space.lg },
   sheet: { backgroundColor: '#FFFFFF', borderRadius: 24, padding: space.lg, gap: space.sm, width: '100%', maxWidth: 420 },

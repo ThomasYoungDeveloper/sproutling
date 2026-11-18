@@ -22,8 +22,8 @@ export const NORMAL_COLOR = '#8A9AA0';
 
 export function effectiveness(attacker: Element | 'normal', defender: Element): number {
   if (attacker === 'normal') return 1;
-  if (BEATS[attacker] === defender) return 1.5;
-  if (BEATS[defender] === attacker) return 0.75;
+  if (BEATS[attacker] === defender) return 1.3;
+  if (BEATS[defender] === attacker) return 0.85;
   return 1;
 }
 
@@ -53,27 +53,27 @@ export interface HabitBuff {
 export function habitBuffs(s: GameState): HabitBuff[] {
   const d = A.today(s);
   const out: HabitBuff[] = [];
-  if (d.sleepHours >= 7) out.push({ id: 'rested', label: 'Well Rested', emoji: '😴', text: '+8% Speed (slept 7+ hours)' });
-  if (d.water >= 6) out.push({ id: 'hydrated', label: 'Hydrated', emoji: '💧', text: '+8% Defense (6+ glasses of water)' });
+  if (d.sleepHours >= 7) out.push({ id: 'rested', label: 'Well Rested', emoji: '😴', text: '+5% Speed (slept 7+ hours)' });
+  if (d.water >= 6) out.push({ id: 'hydrated', label: 'Hydrated', emoji: '💧', text: '+5% Defense (6+ glasses of water)' });
   if (d.steps >= 8000) out.push({ id: 'energized', label: 'Energized', emoji: '👟', text: 'Start with +1 ⚡ (8,000+ steps)' });
   const care = careMultiplier(d);
-  if (care > 1) out.push({ id: 'cared', label: 'Well Cared For', emoji: '💖', text: `+${Math.round(((care - 1) / 2) * 100)}% Attack (pet care today)` });
-  if ((d.exerciseMin ?? 0) >= EXERCISE_MINUTES || (d.rings?.exercise ?? 0) >= 1) out.push({ id: 'trained', label: 'Trained', emoji: '🏋️', text: '+8% Attack (30+ exercise minutes)' });
+  if (care > 1) out.push({ id: 'cared', label: 'Well Cared For', emoji: '💖', text: `+${Math.round(((care - 1) / 4) * 100)}% Attack (pet care today)` });
+  if ((d.exerciseMin ?? 0) >= EXERCISE_MINUTES || (d.rings?.exercise ?? 0) >= 1) out.push({ id: 'trained', label: 'Trained', emoji: '🏋️', text: '+5% Attack (30+ exercise minutes)' });
   if ((d.mindfulMin ?? 0) >= MINDFUL_MINUTES) out.push({ id: 'calm', label: 'Calm', emoji: '🧘', text: "Can't be made drowsy (5+ mindful minutes)" });
   if (ringsClosed(d) === 3) out.push({ id: 'rings', label: 'Rings Closed', emoji: '⭕', text: '+5% to all stats (all 3 activity rings)' });
   const st = Math.min(A.streak(s), 10);
-  if (st > 0) out.push({ id: 'streak', label: `${st}-Day Streak`, emoji: '⭐', text: `+${Math.round(st / 2)}% to all stats` });
+  if (st > 0) out.push({ id: 'streak', label: `${st}-Day Streak`, emoji: '⭐', text: `+${Math.round(st / 3)}% to all stats` });
   return out;
 }
 
 function applyHabitBuffs(b: StatBlock, buffs: HabitBuff[], care = 1, streak = 0): StatBlock {
   const out = { ...b };
-  const all = 1 + streak / 200;
+  const all = 1 + streak / 300;
   STATS.forEach((k) => (out[k] = out[k] * all));
-  if (buffs.some((x) => x.id === 'rested')) out.spd *= 1.08;
-  if (buffs.some((x) => x.id === 'hydrated')) out.def *= 1.08;
-  if (buffs.some((x) => x.id === 'cared')) out.atk *= 1 + (care - 1) / 2;
-  if (buffs.some((x) => x.id === 'trained')) out.atk *= 1.08;
+  if (buffs.some((x) => x.id === 'rested')) out.spd *= 1.05;
+  if (buffs.some((x) => x.id === 'hydrated')) out.def *= 1.05;
+  if (buffs.some((x) => x.id === 'cared')) out.atk *= 1 + (care - 1) / 4;
+  if (buffs.some((x) => x.id === 'trained')) out.atk *= 1.05;
   if (buffs.some((x) => x.id === 'rings')) STATS.forEach((k) => (out[k] *= 1.05));
   STATS.forEach((k) => (out[k] = Math.round(out[k])));
   return out;
