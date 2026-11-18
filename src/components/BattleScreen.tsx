@@ -1,7 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as H from '../game/hp';
 import PotionIcon, { POTION_COLOR } from './PotionIcon';
-import { Animated, Easing, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { Animated, AppState, Easing, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { supabase } from '../lib/supabase';
 import { useGame } from '../state/GameContext';
 import { useTeam } from '../state/TeamContext';
 import { useRanked } from '../state/RankedContext';
@@ -68,6 +69,23 @@ export default function BattleScreen({ opponent, onClose, onResult, live, specia
   const [reward, setReward] = useState<B.BattleReward | null>(null);
   const [switching, setSwitching] = useState(false);
   const [peek, setPeek] = useState<string | null>(null);
+
+  // While a live battle is open, tell the server you're here (every 20 seconds), so your friend's moves
+  // don't send you notifications you'd see on screen anyway. Leaving or backgrounding the app says you've gone.
+  useEffect(() => {
+    if (!live) return;
+    const seen = (here: boolean) => {
+      supabase.rpc('live_seen', { battle: live, here }).then(() => {}, () => {});
+    };
+    seen(AppState.currentState === 'active');
+    const t = setInterval(() => AppState.currentState === 'active' && seen(true), 20_000);
+    const sub = AppState.addEventListener('change', (st) => seen(st === 'active'));
+    return () => {
+      clearInterval(t);
+      sub.remove();
+      seen(false);
+    };
+  }, [live]);
   const [sky] = useState(skyNow);
   const [lines, setLines] = useState<ResultLine[] | null>(null);
   const { team: guild, raidHit } = useTeam();
