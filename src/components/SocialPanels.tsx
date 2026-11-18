@@ -302,23 +302,33 @@ function TradeRow({ t, onDismiss }: { t: Trade; onDismiss?: () => void }) {
     actions = <Button small label="Cancel" onPress={() => cancelTrade(t.id)} />;
   } else if (t.status === 'declined') {
     text = t.fromMe ? `${t.friendName} said no thanks to this trade.` : 'You passed on this trade.';
-    actions = <Button small label="OK" onPress={() => onDismiss?.()} />;
+    actions = <Button small primary label="OK" onPress={() => onDismiss?.()} />;
   } else if (t.status === 'cancelled') {
     text = t.fromMe ? 'You cancelled this trade.' : `${t.friendName} cancelled this trade.`;
-    actions = <Button small label="OK" onPress={() => onDismiss?.()} />;
+    actions = <Button small primary label="OK" onPress={() => onDismiss?.()} />;
   }
 
   const closed = t.status === 'declined' || t.status === 'cancelled';
   return (
-    <View style={[styles.trade, closed && { opacity: 0.55 }]}>
-      <View style={styles.swap}>
+    <View style={styles.trade}>
+      {/* A finished trade: only the pets fade; the message and OK stay clear, side by side. */}
+      <View style={[styles.swap, closed && { opacity: 0.5 }]}>
         <MiniPet p={mine} label="Your pet" />
         <Text style={styles.arrow}>⇄</Text>
         <MiniPet p={theirs} label={t.fromMe ? 'They pick' : 'You pick'} />
       </View>
-      <Text style={[font.small, { color: colors.ink }]}>{text}</Text>
-      {msg ? <Text style={[font.small, { color: '#C4562F' }]}>{msg}</Text> : null}
-      {actions ? <View style={styles.actions}>{actions}</View> : null}
+      {closed ? (
+        <View style={styles.closedRow}>
+          <Text style={[font.small, { color: colors.ink, flex: 1 }]}>{text}</Text>
+          {actions}
+        </View>
+      ) : (
+        <>
+          <Text style={[font.small, { color: colors.ink }]}>{text}</Text>
+          {msg ? <Text style={[font.small, { color: '#C4562F' }]}>{msg}</Text> : null}
+          {actions ? <View style={styles.actions}>{actions}</View> : null}
+        </>
+      )}
     </View>
   );
 }
@@ -356,6 +366,7 @@ const styles = StyleSheet.create({
   buff: { flexDirection: 'row', alignItems: 'center', gap: 4, borderRadius: 999, paddingHorizontal: 9, paddingVertical: 4, backgroundColor: 'rgba(255,255,255,0.12)' },
   buffOn: { backgroundColor: colors.gold },
   buffText: { fontWeight: '900', fontSize: 11, color: '#D6DCF5' },
+  closedRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   trade: { borderTopWidth: 1, borderTopColor: colors.line, paddingTop: space.sm, gap: 6 },
   swap: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: space.sm },
   arrow: { fontSize: 26, fontWeight: '900', color: colors.mintDark },

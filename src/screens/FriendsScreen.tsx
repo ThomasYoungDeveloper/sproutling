@@ -135,7 +135,7 @@ export default function FriendsScreen({ initialAdd, onUsedInitialAdd, initialGui
       <View style={styles.segs}>
         {SECTIONS.map((sec) => (
           <Pressable key={sec.id} onPress={() => setSection(sec.id)} style={[styles.seg, section === sec.id && styles.segOn]} accessibilityRole="tab" accessibilityState={{ selected: section === sec.id }} accessibilityLabel={sec.label}>
-            <Text style={[styles.segText, section === sec.id && { color: '#fff' }]}>{sec.icon} {sec.label}</Text>
+            <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8} style={[styles.segText, section === sec.id && { color: '#fff' }]}>{sec.label}</Text>
             {sec.id === 'friends' && incoming.length + tradesForMe + liveWaiting > 0 ? <View style={styles.segDot} /> : null}
             {sec.id === 'battle' && liveWaiting > 0 ? <View style={styles.segDot} /> : null}
             {sec.id === 'chat' && chatUnread > 0 ? <View style={styles.segDot} /> : null}
@@ -260,9 +260,9 @@ const styles = StyleSheet.create({
   msgDot: { backgroundColor: '#E0567A', borderRadius: 999, paddingHorizontal: 7, paddingVertical: 1 },
   msgDotText: { color: '#fff', fontWeight: '900', fontSize: 11 },
   segs: { flexDirection: 'row', gap: 4, backgroundColor: '#B9E2D1', borderRadius: 18, padding: 4 },
-  seg: { flex: 1, alignItems: 'center', paddingVertical: 10, borderRadius: 14 },
+  seg: { flex: 1, alignItems: 'center', paddingVertical: 11, paddingHorizontal: 2, borderRadius: 14 },
   segOn: { backgroundColor: colors.ink },
-  segText: { fontWeight: '900', fontSize: 12, color: '#2E5E50' },
+  segText: { fontWeight: '900', fontSize: 14, color: '#2E5E50' },
   request: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: colors.card, borderRadius: 22, borderWidth: 3, borderColor: colors.gold, padding: 12, marginTop: 6 },
   newTag: { position: 'absolute', top: -11, left: 14, backgroundColor: '#FF6B5B', borderRadius: 999, paddingHorizontal: 8, paddingVertical: 2 },
   newTagText: { color: '#FFFFFF', fontSize: 10, fontWeight: '900', letterSpacing: 0.6 },
