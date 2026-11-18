@@ -1,5 +1,5 @@
 import { HStack, Image, ProgressView, Spacer, Text, VStack } from '@expo/ui/swift-ui';
-import { font, foregroundStyle, frame, padding } from '@expo/ui/swift-ui/modifiers';
+import { aspectRatio, font, foregroundStyle, frame, labelsHidden, lineLimit, monospacedDigit, padding, resizable, tint } from '@expo/ui/swift-ui/modifiers';
 import { createLiveActivity, type LiveActivityEnvironment } from 'expo-widgets';
 
 /**
@@ -26,24 +26,50 @@ const TripActivity = (props: TripActivityProps, env: LiveActivityEnvironment) =>
   void env;
   const now = Date.now();
   const home = now >= props.endAt;
-  const pet = props.image ? <Image uiImage={props.image} modifiers={[frame({ width: 48, height: 48 })]} /> : <Image systemName="pawprint.fill" size={28} color="#7CF0B5" />;
+  // Pet pictures are large PNGs: resizable + fit so they shrink into the frame instead of being cropped.
+  const petAt = (size: number) =>
+    props.image ? (
+      <Image uiImage={props.image} modifiers={[resizable(), aspectRatio({ contentMode: 'fit' }), frame({ width: size, height: size })]} />
+    ) : (
+      <Image systemName="pawprint.fill" size={Math.round(size * 0.6)} color="#7CF0B5" />
+    );
+  const pet = petAt(52);
+  // One small icon per stop (no text, so the row stays tidy); stops ahead stay a muted '?'.
   const stopRow = (
-    <HStack spacing={6}>
+    <HStack spacing={5}>
       {props.stops.map((s, i) => {
         const reached = now >= s.at;
-        const color = !reached ? '#8C84B8' : s.kind === 'fight' ? (s.won ? '#7CF0B5' : '#FF9A8A') : s.kind === 'food' ? '#FFD98A' : '#FFC08A';
-        const text = !reached ? '?' : s.label;
+        const color = !reached ? '#6F679C' : s.kind === 'fight' ? (s.won ? '#7CF0B5' : '#FF9A8A') : s.kind === 'food' ? '#FFD98A' : '#FFC08A';
         return (
-          <HStack key={i} spacing={3}>
-            <Image systemName={!reached ? 'questionmark.circle.fill' : s.kind === 'fight' ? (s.won ? 'checkmark.circle.fill' : 'xmark.circle.fill') : s.kind === 'food' ? 'leaf.circle.fill' : 'gift.circle.fill'} size={14} color={color} />
-            <Text modifiers={[font({ weight: 'heavy', size: 11 }), foregroundStyle(color)]}>{text}</Text>
-          </HStack>
+          <Image
+            key={i}
+            systemName={!reached ? 'questionmark.circle.fill' : s.kind === 'fight' ? (s.won ? 'checkmark.circle.fill' : 'xmark.circle.fill') : s.kind === 'food' ? 'leaf.circle.fill' : 'gift.circle.fill'}
+            size={15}
+            color={color}
+          />
         );
       })}
     </HStack>
   );
+  const lastReached = [...props.stops].reverse().find((s) => now >= s.at);
+  const latest = lastReached
+    ? lastReached.kind === 'fight'
+      ? lastReached.won
+        ? 'Won a fight'
+        : 'Knocked out in a fight'
+      : lastReached.kind === 'food'
+        ? `Found ${lastReached.label}`
+        : `Found a ${lastReached.label}`
+    : 'On the way…';
+  const bar = (
+    <ProgressView timerInterval={{ lower: new Date(props.startAt), upper: new Date(props.endAt) }} countsDown={false} modifiers={[labelsHidden(), tint('#7CF0B5')]} />
+  );
   const title = home ? (props.knockedOut ? `${props.name} was knocked out` : `${props.name} is home!`) : `${props.name} · ${props.place}`;
-  const timer = <Text timerInterval={{ lower: new Date(now), upper: new Date(props.endAt) }} modifiers={[font({ weight: 'heavy', size: 14 }), foregroundStyle('#7CF0B5')]} />;
+  const timer = <Text timerInterval={{ lower: new Date(now), upper: new Date(props.endAt) }} modifiers={[font({ weight: 'heavy', size: 14 }), monospacedDigit(), foregroundStyle('#7CF0B5')]} />;
+  // The Dynamic Island's small side has little room: a fixed width keeps the countdown from being cut off.
+  const smallTimer = (
+    <Text timerInterval={{ lower: new Date(now), upper: new Date(props.endAt) }} modifiers={[font({ weight: 'heavy', size: 13 }), monospacedDigit(), foregroundStyle('#7CF0B5'), frame({ width: 56 })]} />
+  );
 
   return {
     banner: (
@@ -51,7 +77,7 @@ const TripActivity = (props: TripActivityProps, env: LiveActivityEnvironment) =>
         <HStack spacing={10}>
           {pet}
           <VStack alignment="leading" spacing={2}>
-            <Text modifiers={[font({ weight: 'heavy', size: 16 }), foregroundStyle('#FFFFFF')]}>{title}</Text>
+            <Text modifiers={[font({ weight: 'heavy', size: 16 }), foregroundStyle('#FFFFFF'), lineLimit(1)]}>{title}</Text>
             {home ? (
               <Text modifiers={[font({ weight: 'bold', size: 12 }), foregroundStyle('#E6E0FF')]}>{props.knockedOut ? 'Came home early with what it found' : 'Tap to open the loot'}</Text>
             ) : (
@@ -67,20 +93,28 @@ const TripActivity = (props: TripActivityProps, env: LiveActivityEnvironment) =>
             <Text modifiers={[font({ weight: 'heavy', size: 16 }), foregroundStyle(props.hp < 50 ? '#F0B429' : '#7CF0B5')]}>{`${props.hp}%`}</Text>
           </VStack>
         </HStack>
-        {home ? null : <ProgressView timerInterval={{ lower: new Date(props.startAt), upper: new Date(props.endAt) }} countsDown={false} />}
-        {stopRow}
+        {home ? null : bar}
+        <HStack spacing={8}>
+          {stopRow}
+          <Spacer />
+          <Text modifiers={[font({ weight: 'bold', size: 12 }), foregroundStyle('#E6E0FF'), lineLimit(1)]}>{latest}</Text>
+        </HStack>
       </VStack>
     ),
-    compactLeading: pet,
-    compactTrailing: home ? <Text modifiers={[font({ weight: 'heavy', size: 13 }), foregroundStyle('#7CF0B5')]}>Home</Text> : timer,
+    compactLeading: petAt(24),
+    compactTrailing: home ? <Text modifiers={[font({ weight: 'heavy', size: 13 }), foregroundStyle('#7CF0B5')]}>Home</Text> : smallTimer,
     minimal: <Image systemName="pawprint.fill" size={14} color="#7CF0B5" />,
-    expandedLeading: pet,
+    expandedLeading: petAt(44),
     expandedTrailing: home ? null : timer,
     expandedCenter: <Text modifiers={[font({ weight: 'heavy', size: 15 }), foregroundStyle('#FFFFFF')]}>{title}</Text>,
     expandedBottom: (
       <VStack alignment="leading" spacing={6}>
-        {home ? null : <ProgressView timerInterval={{ lower: new Date(props.startAt), upper: new Date(props.endAt) }} countsDown={false} />}
-        {stopRow}
+        {home ? null : bar}
+        <HStack spacing={8}>
+          {stopRow}
+          <Spacer />
+          <Text modifiers={[font({ weight: 'bold', size: 12 }), foregroundStyle('#E6E0FF'), lineLimit(1)]}>{latest}</Text>
+        </HStack>
       </VStack>
     ),
   };

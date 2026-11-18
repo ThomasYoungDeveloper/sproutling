@@ -1,5 +1,5 @@
 import { HStack, Image, ProgressView, Spacer, Text, VStack, ZStack } from '@expo/ui/swift-ui';
-import { containerBackground, font, foregroundStyle, frame, padding } from '@expo/ui/swift-ui/modifiers';
+import { aspectRatio, containerBackground, font, foregroundStyle, frame, labelsHidden, lineLimit, minimumScaleFactor, padding, resizable, tint } from '@expo/ui/swift-ui/modifiers';
 import { createWidget, type WidgetEnvironment } from 'expo-widgets';
 
 /**
@@ -29,7 +29,7 @@ export const PetWidget = (props: PetWidgetProps, env: WidgetEnvironment) => {
   const home = !!trip && now >= trip.endAt;
   const stepsK = props.steps >= 1000 ? `${(props.steps / 1000).toFixed(1)}k` : `${props.steps}`;
   const stepPct = Math.min(1, props.steps / Math.max(1, props.stepGoal));
-  const pet = props.image ? <Image uiImage={props.image} modifiers={[frame({ width: small ? 84 : 104, height: small ? 84 : 104 })]} /> : <Image systemName="pawprint.fill" size={44} color="#2EB88A" />;
+  const pet = props.image ? <Image uiImage={props.image} modifiers={[resizable(), aspectRatio({ contentMode: 'fit' }), frame({ width: small ? 76 : 96, height: small ? 76 : 96 })]} /> : <Image systemName="pawprint.fill" size={44} color="#2EB88A" />;
 
   if (small) {
     return (
@@ -47,9 +47,9 @@ export const PetWidget = (props: PetWidgetProps, env: WidgetEnvironment) => {
           <Spacer />
         </HStack>
         {trip && !home ? (
-          <ProgressView timerInterval={{ lower: new Date(trip.startAt), upper: new Date(trip.endAt) }} countsDown={false} />
+          <ProgressView timerInterval={{ lower: new Date(trip.startAt), upper: new Date(trip.endAt) }} countsDown={false} modifiers={[labelsHidden(), tint('#7CF0B5')]} />
         ) : (
-          <ProgressView value={stepPct} />
+          <ProgressView value={stepPct} modifiers={[labelsHidden(), tint('#2EB88A')]} />
         )}
         <HStack>
           <Text modifiers={[font({ weight: 'heavy', size: 11 }), foregroundStyle('#1F3A33')]}>{`${props.streak}-day streak`}</Text>
@@ -70,7 +70,7 @@ export const PetWidget = (props: PetWidgetProps, env: WidgetEnvironment) => {
         {pet}
         <VStack alignment="leading" spacing={4}>
           <Text modifiers={[font({ weight: 'heavy', size: 10 }), foregroundStyle('#C9C0F0')]}>{home ? (trip.knockedOut ? 'CAME HOME EARLY' : 'BACK HOME') : 'ON AN ADVENTURE'}</Text>
-          <Text modifiers={[font({ weight: 'heavy', size: 16 }), foregroundStyle('#FFFFFF')]}>{home ? (trip.knockedOut ? `${props.name} was knocked out` : `${props.name} is back!`) : `${props.name} is in ${trip.place}`}</Text>
+          <Text modifiers={[font({ weight: 'heavy', size: 16 }), foregroundStyle('#FFFFFF'), lineLimit(2), minimumScaleFactor(0.85)]}>{home ? (trip.knockedOut ? `${props.name} was knocked out` : `${props.name} is back!`) : `${props.name} is in ${trip.place}`}</Text>
           {home ? (
             <Text modifiers={[font({ weight: 'bold', size: 12 }), foregroundStyle('#E6E0FF')]}>Tap to see what it found</Text>
           ) : (
@@ -79,7 +79,7 @@ export const PetWidget = (props: PetWidgetProps, env: WidgetEnvironment) => {
               <Text timerInterval={{ lower: new Date(now), upper: new Date(trip.endAt) }} modifiers={[font({ weight: 'heavy', size: 12 }), foregroundStyle('#FFFFFF')]} />
             </HStack>
           )}
-          {home ? null : <ProgressView timerInterval={{ lower: new Date(trip.startAt), upper: new Date(trip.endAt) }} countsDown={false} />}
+          {home ? null : <ProgressView timerInterval={{ lower: new Date(trip.startAt), upper: new Date(trip.endAt) }} countsDown={false} modifiers={[labelsHidden(), tint('#7CF0B5')]} />}
           <Text modifiers={[font({ weight: 'heavy', size: 11 }), foregroundStyle('#E6E0FF')]}>{`HP ${trip.hp}%`}</Text>
         </VStack>
       </HStack>
@@ -96,16 +96,16 @@ export const PetWidget = (props: PetWidgetProps, env: WidgetEnvironment) => {
         <ZStack>
           <VStack alignment="leading" spacing={2}>
             <Text modifiers={[font({ weight: 'heavy', size: 12 }), foregroundStyle('#24323A')]}>{`Steps ${stepsK}`}</Text>
-            <ProgressView value={stepPct} />
+            <ProgressView value={stepPct} modifiers={[labelsHidden(), tint('#2EB88A')]} />
           </VStack>
         </ZStack>
         <VStack alignment="leading" spacing={2}>
           <Text modifiers={[font({ weight: 'heavy', size: 12 }), foregroundStyle('#24323A')]}>Water</Text>
-          <ProgressView value={props.waterPct} />
+          <ProgressView value={props.waterPct} modifiers={[labelsHidden(), tint('#2EB88A')]} />
         </VStack>
         <VStack alignment="leading" spacing={2}>
           <Text modifiers={[font({ weight: 'heavy', size: 12 }), foregroundStyle('#24323A')]}>Sleep</Text>
-          <ProgressView value={props.sleepPct} />
+          <ProgressView value={props.sleepPct} modifiers={[labelsHidden(), tint('#2EB88A')]} />
         </VStack>
         <Text modifiers={[font({ weight: 'heavy', size: 11 }), foregroundStyle(props.waiting ? '#C2365C' : '#5C6F69'), padding({ top: 2 })]}>{props.waiting ?? `${props.streak}-day streak`}</Text>
       </VStack>
