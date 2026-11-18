@@ -13,6 +13,9 @@ import { buzz } from './fx';
 import { colors, font, space } from '../theme';
 import { SPECIES_BY_ID } from '../game/species';
 import * as A from '../game/actions';
+import { stageFor } from '../game/scoring';
+import { supabase } from '../lib/supabase';
+import { appBuild } from '../lib/appBuild';
 
 const ago = (iso: string | null) => {
   if (!iso) return '';
@@ -27,12 +30,69 @@ const ago = (iso: string | null) => {
 /** Opens a chat room full screen. */
 export function useOpenChat() {
   const { open, close } = useOverlay();
-  return (room: string, title: string, otherId?: string) => open(<ChatRoomScreen room={room} title={title} otherId={otherId} onClose={close} />);
+  const { rulesOk, acceptRules } = useChat();
+  return (room: string, title: string, otherId?: string) => {
+    const room$ = <ChatRoomScreen room={room} title={title} otherId={otherId} onClose={close} />;
+    if (rulesOk) return open(room$);
+    open(
+      <ChatRules
+        onAgree={async () => {
+          await acceptRules();
+          open(room$);
+        }}
+        onClose={close}
+      />,
+    );
+  };
+}
+
+const RULES = [
+  { t: 'Be kind', s: 'No bullying, mean names or hateful words.' },
+  { t: 'Keep your info private', s: 'Don’t share your address, school, phone number or other apps.' },
+  { t: 'Report anything that feels wrong', s: 'Press and hold a message to report or block. We review every report.' },
+  { t: 'Breaking the rules', s: 'Can turn chat off for your account.' },
+];
+
+/** The chat rules: shown once before the first chat (with I agree), and from the account page to read again. */
+export function ChatRules({ onAgree, onClose }: { onAgree?: () => void; onClose: () => void }) {
+  const insets = useSafeAreaInsets();
+  const pet = A.activePet(useGame().state);
+  return (
+    <View style={[styles.full, styles.rulesBack, { paddingBottom: insets.bottom + 14 }]}>
+      <Pressable style={{ flex: 1 }} onPress={onClose} accessibilityLabel="Close" />
+      <View style={styles.rulesCard}>
+        {pet && SPECIES_BY_ID[pet.speciesId] ? <View style={{ alignSelf: 'center' }}><PetSprite species={SPECIES_BY_ID[pet.speciesId]} stage={stageFor(pet.xp)} size={84} shiny={pet.shiny} skin={pet.skin} /></View> : null}
+        <Text style={styles.rulesTitle}>{onAgree ? 'Before you chat' : 'Community rules'}</Text>
+        <Text style={styles.rulesSub}>Chat is for friends and your guild. Keep it kind and safe.</Text>
+        {RULES.map((r, i) => (
+          <View key={r.t} style={styles.ruleRow}>
+            <View style={styles.ruleNum}><Text style={styles.ruleNumText}>{i + 1}</Text></View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.ruleT}>{r.t}</Text>
+              <Text style={styles.ruleS}>{r.s}</Text>
+            </View>
+          </View>
+        ))}
+        {onAgree ? (
+          <>
+            <Text style={styles.rulesFine}>By chatting you agree to follow these rules.</Text>
+            <Button primary label="I agree, start chatting" onPress={onAgree} />
+            <Pressable onPress={onClose} style={{ paddingVertical: 10 }} accessibilityRole="button">
+              <Text style={styles.notNow}>Not now</Text>
+            </Pressable>
+          </>
+        ) : (
+          <View style={{ marginTop: 10 }}><Button label="Close" onPress={onClose} /></View>
+        )}
+      </View>
+    </View>
+  );
 }
 
 /** Social › Chat: your guild chat and friend chats, newest first. */
 export function ChatList() {
-  const { rooms, mode, refresh } = useChat();
+  const { rooms, mode, refresh, rulesOk, acceptRules } = useChat();
+  const overlay = useOverlay();
   const { friends } = useFriends();
   const { team } = useTeam();
   const { user } = useAuth();
@@ -44,6 +104,15 @@ export function ChatList() {
   const otherOf = (room: string) => room.split(':').slice(1).find((x) => x !== me) ?? '';
   const shown = rooms.filter((r) => r.room.startsWith('team:') || friends.some((f) => f.id === otherOf(r.room)));
 
+  if (mode !== 'off' && !rulesOk) {
+    return (
+      <View style={[styles.card, { gap: 10 }]}>
+        <Text style={font.h2}>Chat with friends and your guild</Text>
+        <Text style={font.small}>Send messages, pet stickers and quick phrases. First, a few quick rules.</Text>
+        <Button primary label="See the chat rules" onPress={() => overlay.open(<ChatRules onAgree={async () => { await acceptRules(); overlay.close(); }} onClose={overlay.close} />)} />
+      </View>
+    );
+  }
   if (mode === 'off') {
     return (
       <View style={styles.card}>
@@ -263,6 +332,68 @@ export function useFriendUnread() {
   return (friendId: string) => rooms.find((r) => r.room === dmRoom(friendId))?.unread ?? 0;
 }
 
+/** Help and support: a short message to Tom (no email address needed on either side). */
+export function SupportSheet({ onClose }: { onClose: () => void }) {
+  const insets = useSafeAreaInsets();
+  const [text, setText] = useState('');
+  const [state, setState] = useState<'idle' | 'sending' | 'sent' | string>('idle');
+  const send = async () => {
+    setState('sending');
+    const { data, error } = await supabase.rpc('support_send', { p_body: text, p_build: String(appBuild() ?? Platform.OS) });
+    if (error) return setState('Couldn’t send. Check your connection and try again.');
+    if (data === 'slow_down') return setState('You’ve sent a few already. Please wait a bit and try again.');
+    if (data !== 'ok') return setState('Couldn’t send that. Try a shorter message.');
+    setState('sent');
+  };
+  return (
+    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={[styles.full, styles.rulesBack, { paddingBottom: insets.bottom + 14 }]}>
+      <Pressable style={{ flex: 1 }} onPress={onClose} accessibilityLabel="Close" />
+      <View style={[styles.rulesCard, { gap: 10 }]}>
+        <Text style={styles.rulesTitle}>Help and support</Text>
+        {state === 'sent' ? (
+          <>
+            <Text style={styles.rulesSub}>Thanks! Your message was sent. We read every one and will reply as soon as we can.</Text>
+            <Button primary label="Done" onPress={onClose} />
+          </>
+        ) : (
+          <>
+            <Text style={styles.rulesSub}>Found a bug, stuck on something, or need to report a player? Tell us here.</Text>
+            <TextInput
+              value={text}
+              onChangeText={setText}
+              placeholder="What's going on?"
+              multiline
+              maxLength={2000}
+              style={styles.supportInput}
+              accessibilityLabel="Your message"
+            />
+            {state !== 'idle' && state !== 'sending' ? <Text style={styles.err}>{state}</Text> : null}
+            <Button primary label={state === 'sending' ? 'Sending…' : 'Send'} disabled={state === 'sending' || !text.trim()} onPress={send} />
+            <Pressable onPress={onClose} style={{ paddingVertical: 6 }} accessibilityRole="button"><Text style={styles.notNow}>Cancel</Text></Pressable>
+          </>
+        )}
+      </View>
+    </KeyboardAvoidingView>
+  );
+}
+
+/** Help and support + Community rules, for the account page. */
+export function HelpRows() {
+  const overlay = useOverlay();
+  return (
+    <View style={{ gap: 2 }}>
+      <Pressable onPress={() => overlay.open(<SupportSheet onClose={overlay.close} />)} style={styles.toggleRow} accessibilityRole="button">
+        <Text style={font.body}>Help and support</Text>
+        <Text style={font.small}>›</Text>
+      </Pressable>
+      <Pressable onPress={() => overlay.open(<ChatRules onClose={overlay.close} />)} style={styles.toggleRow} accessibilityRole="button">
+        <Text style={font.body}>Community rules</Text>
+        <Text style={font.small}>›</Text>
+      </Pressable>
+    </View>
+  );
+}
+
 /** Chat settings for the account page. */
 export function ChatSettings() {
   const chat = useChat();
@@ -302,6 +433,18 @@ export function ChatSettings() {
 
 const styles = StyleSheet.create({
   card: { backgroundColor: '#FFFBF2', borderRadius: 22, padding: space.md, gap: 4 },
+  rulesBack: { backgroundColor: 'rgba(20,30,28,0.55)', paddingHorizontal: 14 },
+  rulesCard: { backgroundColor: '#FFFBF2', borderRadius: 28, padding: 20, gap: 2 },
+  rulesTitle: { fontSize: 24, fontWeight: '900', color: colors.ink, textAlign: 'center', marginTop: 4 },
+  rulesSub: { fontSize: 14, fontWeight: '700', color: colors.muted, textAlign: 'center', marginBottom: 8 },
+  ruleRow: { flexDirection: 'row', gap: 12, alignItems: 'flex-start', paddingVertical: 10, borderTopWidth: 1, borderTopColor: '#E3ECE7' },
+  ruleNum: { width: 28, height: 28, borderRadius: 14, backgroundColor: '#DDF3EA', alignItems: 'center', justifyContent: 'center' },
+  ruleNumText: { color: '#1E8A68', fontWeight: '900', fontSize: 14 },
+  ruleT: { fontSize: 15, fontWeight: '900', color: colors.ink },
+  ruleS: { fontSize: 13, fontWeight: '700', color: colors.muted, lineHeight: 18, marginTop: 2 },
+  supportInput: { minHeight: 110, borderRadius: 16, borderWidth: 2, borderColor: '#DCE7E2', backgroundColor: '#fff', padding: 12, fontSize: 15, fontWeight: '700', color: colors.ink, textAlignVertical: 'top' },
+  rulesFine: { fontSize: 12, fontWeight: '700', color: colors.muted, marginVertical: 10 },
+  notNow: { textAlign: 'center', color: colors.muted, fontWeight: '800', fontSize: 14 },
   guildRow: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: '#2A3366', borderRadius: 18, paddingHorizontal: 14, paddingVertical: 10 },
   guildRowTitle: { color: '#fff', fontWeight: '900', fontSize: 15 },
   guildRowPrev: { color: '#C9D3FF', fontWeight: '700', fontSize: 13 },

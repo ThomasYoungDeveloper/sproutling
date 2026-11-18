@@ -38,6 +38,9 @@ interface Ctx {
   unblock: (userId: string) => Promise<void>;
   blocked: () => Promise<{ id: string; name: string }[]>;
   setSettings: (s: { mode?: ChatMode; push?: boolean }) => Promise<void>;
+  /** Has this player agreed to the chat rules? (Shown once, before their first chat.) */
+  rulesOk: boolean;
+  acceptRules: () => Promise<void>;
   refresh: () => Promise<void>;
   dmRoom: (friendId: string) => string;
   nameOf: (userId: string | null) => string;
@@ -48,6 +51,7 @@ const ChatCtx = createContext<Ctx | null>(null);
 export const QUICK_PHRASES = ['Good game!', 'Battle?', 'Nice pet!', 'Thanks!', 'Let’s go!', 'Good morning!', 'Good night!', 'Walking now'];
 
 const SEND_ERRORS: Record<string, string> = {
+  accept_rules: 'Agree to the chat rules first (open the chat again).',
   chat_off: 'Your chat is off. Turn it on in Account › Chat.',
   phrases_only: 'Your chat is set to quick phrases and stickers only.',
   bad_length: 'Messages can be up to 300 characters.',
@@ -68,6 +72,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
   const [byRoom, setByRoom] = useState<Record<string, ChatMessage[]>>({});
   const [mode, setMode] = useState<ChatMode>('on');
   const [push, setPush] = useState(true);
+  const [rulesOk, setRulesOk] = useState(true);
   const openRoom = useRef<string | null>(null);
 
   const refresh = useCallback(async () => {
@@ -77,6 +82,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     if (st && typeof st === 'object') {
       setMode(((st as any).mode ?? 'on') as ChatMode);
       setPush((st as any).push !== false);
+      setRulesOk((st as any).rules !== false);
     }
   }, [me]);
 
@@ -120,6 +126,12 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
   const close = () => {
     openRoom.current = null;
     refresh();
+  };
+
+  const acceptRules = async () => {
+    setRulesOk(true);
+    const { data } = await supabase.rpc('chat_settings', { p_accept_rules: true });
+    if (data && typeof data === 'object') setRulesOk((data as any).rules !== false);
   };
 
   const send: Ctx['send'] = async (room, kind, body, sticker) => {
@@ -168,7 +180,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
 
   const unread = rooms.reduce((a, r) => a + (r.unread || 0), 0);
   return (
-    <ChatCtx.Provider value={{ rooms, unread, mode, push, messages: (room) => byRoom[room] ?? [], open, close, send, report, block, unblock, blocked, setSettings, refresh, dmRoom, nameOf }}>
+    <ChatCtx.Provider value={{ rulesOk, acceptRules, rooms, unread, mode, push, messages: (room) => byRoom[room] ?? [], open, close, send, report, block, unblock, blocked, setSettings, refresh, dmRoom, nameOf }}>
       {children}
     </ChatCtx.Provider>
   );
