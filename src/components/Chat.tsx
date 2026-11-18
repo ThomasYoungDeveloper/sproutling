@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { KeyboardAvoidingView, Linking, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useChat, QUICK_PHRASES, type ChatMessage, type ChatRoom } from '../state/ChatContext';
 import { useFriends } from '../state/FriendsContext';
@@ -75,7 +75,10 @@ export function ChatRules({ onAgree, onClose }: { onAgree?: () => void; onClose:
         ))}
         {onAgree ? (
           <>
-            <Text style={styles.rulesFine}>By chatting you agree to follow these rules.</Text>
+            <Text style={styles.rulesFine}>
+              By chatting you agree to follow these rules and our{' '}
+              <Text style={{ color: '#1E8A68', textDecorationLine: 'underline' }} onPress={() => Linking.openURL('https://sproutling.vercel.app/terms')}>Terms</Text>.
+            </Text>
             <Button primary label="I agree, start chatting" onPress={onAgree} />
             <Pressable onPress={onClose} style={{ paddingVertical: 10 }} accessibilityRole="button">
               <Text style={styles.notNow}>Not now</Text>

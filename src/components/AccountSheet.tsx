@@ -205,6 +205,9 @@ export default function AccountSheet({ onClose }: { onClose: () => void }) {
               <Pressable onPress={() => Linking.openURL('https://sproutling.vercel.app/privacy')} hitSlop={8} accessibilityRole="link">
                 <Text style={styles.link}>Privacy policy</Text>
               </Pressable>
+              <Pressable onPress={() => Linking.openURL('https://sproutling.vercel.app/terms')} hitSlop={8} accessibilityRole="link">
+                <Text style={styles.link}>Terms</Text>
+              </Pressable>
               <Pressable onPress={() => { setAskDelete(true); setDeleteErr(null); }} hitSlop={8} accessibilityRole="button">
                 <Text style={[styles.link, { color: '#C4562F' }]}>Delete account</Text>
               </Pressable>
