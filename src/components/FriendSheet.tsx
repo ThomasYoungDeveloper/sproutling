@@ -52,7 +52,7 @@ export default function FriendSheet({ friend, onClose }: { friend: Friend; onClo
   const possessive = `${live.username}${/s$/i.test(live.username) ? '’' : '’s'}`;
 
   return (
-    <View style={styles.screen}>
+    <View style={[styles.screen, { paddingLeft: insets.left, paddingRight: insets.right }]}>
       <ScrollView contentContainerStyle={{ paddingBottom: space.xl }}>
         <View style={styles.yard}>
           {activeSpecies ? <YardBackdrop element={activeSpecies.element} sky="day" scene={card?.scene} /> : <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.sky }]} />}

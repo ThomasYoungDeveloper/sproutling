@@ -318,7 +318,7 @@ export default function BattleScreen({ opponent, onClose, onResult, live, specia
   const them = B.active(battle, 'them');
 
   return (
-    <View style={[styles.full, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
+    <View style={[styles.full, { paddingTop: insets.top, paddingBottom: insets.bottom, paddingLeft: insets.left, paddingRight: insets.right }]}>
       <Animated.View style={[styles.arena, { transform: [{ translateX: shake }] }]}>
         <Backdrop element={me.element} sky={sky} scene={state.scene} />
         <TeamDots fighters={battle.theirs} index={battle.ti} style={{ top: 10, right: 12 }} />

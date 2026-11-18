@@ -58,7 +58,7 @@ export function ChatRules({ onAgree, onClose }: { onAgree?: () => void; onClose:
   const insets = useSafeAreaInsets();
   const pet = A.activePet(useGame().state);
   return (
-    <View style={[styles.full, styles.rulesBack, { paddingBottom: insets.bottom + 14 }]}>
+    <View style={[styles.full, styles.rulesBack, { paddingBottom: insets.bottom + 14, paddingLeft: 14 + insets.left, paddingRight: 14 + insets.right }]}>
       <Pressable style={{ flex: 1 }} onPress={onClose} accessibilityLabel="Close" />
       <View style={styles.rulesCard}>
         {pet && SPECIES_BY_ID[pet.speciesId] ? <View style={{ alignSelf: 'center' }}><PetSprite species={SPECIES_BY_ID[pet.speciesId]} stage={stageFor(pet.xp)} size={84} shiny={pet.shiny} skin={pet.skin} /></View> : null}
@@ -191,7 +191,7 @@ function ChatRoomScreen({ room, title, otherId, onClose }: { room: string; title
 
   return (
     <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={[styles.full, { backgroundColor: isTeam ? '#E9EEFA' : '#EAF6F0' }]}>
-      <View style={[styles.head, { paddingTop: insets.top + 8, backgroundColor: isTeam ? '#2A3366' : '#FFFBF2' }]}>
+      <View style={[styles.head, { paddingTop: insets.top + 8, paddingLeft: 14 + insets.left, paddingRight: 14 + insets.right, backgroundColor: isTeam ? '#2A3366' : '#FFFBF2' }]}>
         <Pressable onPress={onClose} accessibilityRole="button" accessibilityLabel="Back" style={{ paddingVertical: 6, paddingRight: 8 }}>
           <Text style={[styles.back, isTeam && { color: '#BFD0FF' }]}>‹ Back</Text>
         </Pressable>
@@ -201,7 +201,7 @@ function ChatRoomScreen({ room, title, otherId, onClose }: { room: string; title
         </View>
       </View>
 
-      <ScrollView ref={scroll} style={{ flex: 1 }} contentContainerStyle={{ padding: space.md, gap: 8 }}>
+      <ScrollView ref={scroll} style={{ flex: 1 }} contentContainerStyle={{ padding: space.md, paddingLeft: space.md + insets.left, paddingRight: space.md + insets.right, gap: 8 }}>
         {msgs.length === 0 ? <Text style={[font.small, { textAlign: 'center', marginTop: 20 }]}>No messages yet. Say hi!</Text> : null}
         {msgs.map((m) => {
           if (m.kind === 'system') {
@@ -238,14 +238,14 @@ function ChatRoomScreen({ room, title, otherId, onClose }: { room: string; title
         <Text style={[styles.err, { paddingBottom: insets.bottom + 12 }]}>Your chat is off. Turn it on in your account settings.</Text>
       ) : (
         <>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flexGrow: 0 }} contentContainerStyle={styles.phrases}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flexGrow: 0 }} contentContainerStyle={[styles.phrases, { paddingLeft: 12 + insets.left, paddingRight: 12 + insets.right }]}>
             {QUICK_PHRASES.map((p) => (
               <Pressable key={p} onPress={() => (stickers ? sendSticker(p) : send('phrase', p))} style={[styles.chip, stickers && { borderColor: '#B497EA' }]} accessibilityRole="button" accessibilityLabel={stickers ? `Send a sticker: ${p}` : `Send: ${p}`}>
                 <Text style={styles.chipText}>{p}</Text>
               </Pressable>
             ))}
           </ScrollView>
-          <View style={[styles.inputRow, { paddingBottom: insets.bottom + 10 }]}>
+          <View style={[styles.inputRow, { paddingBottom: insets.bottom + 10, paddingLeft: 12 + insets.left, paddingRight: 12 + insets.right }]}>
             <Pressable onPress={() => setStickers((v) => !v)} disabled={!pet} style={[styles.petBtn, stickers && { backgroundColor: '#B497EA' }]} accessibilityRole="button" accessibilityLabel={stickers ? 'Back to phrases' : 'Send a pet sticker'}>
               {pet && SPECIES_BY_ID[pet.speciesId] ? <PetSprite species={SPECIES_BY_ID[pet.speciesId]} stage="adult" size={30} skin={pet.skin} /> : <Text style={styles.petBtnText}>PET</Text>}
             </Pressable>
@@ -275,7 +275,7 @@ function ChatRoomScreen({ room, title, otherId, onClose }: { room: string; title
       {menu ? (
         <View style={styles.menuBack}>
           <Pressable style={StyleSheet.absoluteFill} onPress={() => setMenu(null)} accessibilityLabel="Close" />
-          <View style={[styles.menu, { paddingBottom: insets.bottom + 16 }]}>
+          <View style={[styles.menu, { paddingBottom: insets.bottom + 16, paddingLeft: 16 + insets.left, paddingRight: 16 + insets.right }]}>
             <Text style={styles.menuQuote} numberOfLines={3}>“{menu.body}”</Text>
             <Button
               label="Report message"
@@ -346,7 +346,7 @@ export function SupportSheet({ onClose }: { onClose: () => void }) {
     setState('sent');
   };
   return (
-    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={[styles.full, styles.rulesBack, { paddingBottom: insets.bottom + 14 }]}>
+    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={[styles.full, styles.rulesBack, { paddingBottom: insets.bottom + 14, paddingLeft: 14 + insets.left, paddingRight: 14 + insets.right }]}>
       <Pressable style={{ flex: 1 }} onPress={onClose} accessibilityLabel="Close" />
       <View style={[styles.rulesCard, { gap: 10 }]}>
         <Text style={styles.rulesTitle}>Help and support</Text>
