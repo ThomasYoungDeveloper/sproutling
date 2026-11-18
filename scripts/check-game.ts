@@ -689,4 +689,24 @@ console.log('\nEgg basket');
   ok(t.items[Pw2.CRYSTAL] === 5 && t.items['Moon Seed'] === 0, 'Treat uses a trinket, never a Training Crystal');
   ok(C.trinketCount({ ...newGame(), items: { [Pw2.CRYSTAL]: 3 } }) === 0 && C.treat({ ...newGame(), items: { [Pw2.CRYSTAL]: 3 } }).items[Pw2.CRYSTAL] === 3, 'crystals alone do not count as treats');
 }
+{
+  // Trade requests: friends' cards carry pet ids and trip flags; the asked-for pet is a small snapshot.
+  const mk = (id: string, nickname: string) => ({ id, speciesId: 'p01', nickname, xp: 400, shiny: false, hatchedOn: '2026-11-01' }) as any;
+  let g: GameState = { ...newGame(), pets: [mk('pA', 'Ace'), mk('pB', 'Bun'), mk('pC', 'Cog')], activePetId: 'pA' };
+  g = { ...g, expedition: { petId: 'pC', placeId: 'meadow', startedAt: Date.now(), startSteps: 0 } as any };
+  const card = buildCard(g);
+  ok(card.team.every((p) => !!p.id), 'friend cards include each pet id');
+  ok(card.team.find((p) => p.id === 'pC')?.away === true && !card.team.find((p) => p.id === 'pB')?.away, 'a pet on a trip shows as away on the card');
+  const want = T.toWantPet(card.team.find((p) => p.id === 'pB')!)!;
+  ok(want.id === 'pB' && JSON.stringify(want).length < 600 && !(want as any).moves, 'the asked-for pet is a small snapshot that fits the trade check');
+  ok(T.toWantPet({ speciesId: 'p01', nickname: 'Old', xp: 1, shiny: false }) === null, 'pets on old cards (no id) cannot be asked for');
+  const busy = new Set<string>();
+  ok(T.canGive(g, g.activePetId!, busy).ok, 'you can give your active pet when a friend asks for it');
+  ok(!T.canGive(g, 'pC', busy).ok && !T.canOffer(g, 'pC', busy).ok, 'a pet on a trip cannot be traded');
+  ok(!T.canGive(g, 'pB', new Set(['pB'])).ok, 'a pet already in another trade cannot be given');
+  ok(!T.canGive({ ...g, pets: [g.pets[0]] }, g.pets[0].id, busy).ok, 'you cannot give away your only pet');
+  // Accepting completes the swap through the usual path: the asker gets the friend's pet.
+  const got = T.applyTrade(g, 'req1', 'pB', { id: 'x9', speciesId: 'p15', nickname: 'Kitsune', xp: 5000, shiny: false });
+  ok(!!got && !got.state.pets.some((p) => p.id === 'pB') && got.state.pets.some((p) => p.speciesId === 'p15'), 'an accepted request swaps the pets');
+}
 console.log(fails ? `${fails} FAILED` : 'ALL PASSED'); process.exit(fails ? 1 : 0);

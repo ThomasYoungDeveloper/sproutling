@@ -15,7 +15,7 @@ import { activeToday, lastSeen } from '../screens/friendsShared';
 import { YardBackdrop } from './PetScene';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import PetZoom from './PetZoom';
-import { friendOpponent, useBattle, useLiveBattle, useTradeOffer } from './SocialPanels';
+import { AskForPet, friendOpponent, useBattle, useLiveBattle, useTradeOffer } from './SocialPanels';
 import { useLive } from '../state/LiveBattleContext';
 
 export default function FriendSheet({ friend, onClose }: { friend: Friend; onClose: () => void }) {
@@ -24,6 +24,7 @@ export default function FriendSheet({ friend, onClose }: { friend: Friend; onClo
   const { gift, giftsLeft, remove, friends } = useFriends();
   const battle = useBattle();
   const tradeOffer = useTradeOffer();
+  const [askPet, setAskPet] = useState<any>(null);
   const liveB = useLiveBattle();
   const chat = useChat();
   const openChat = useOpenChat();
@@ -181,13 +182,18 @@ export default function FriendSheet({ friend, onClose }: { friend: Friend; onClo
 
           {card && card.team.length > 0 ? (
             <View style={styles.teamCard}>
-              <Text style={styles.teamTitle}>{possessive} team</Text>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                <Text style={styles.teamTitle}>{possessive} pets</Text>
+                <Text style={font.tiny}>{card.team.length} pet{card.team.length === 1 ? '' : 's'}</Text>
+              </View>
+              <Text style={styles.hint}>See one you like? Tap it to make an offer.</Text>
               <View style={styles.grid}>
                 {card.team.map((p, i) => {
                   const sp = SPECIES_BY_ID[p.speciesId];
                   if (!sp) return null;
                   return (
-                    <Pressable key={i} onPress={() => setZoomPet(p)} style={({ pressed }) => [styles.tile, { backgroundColor: RARITY_TINT[sp.rarity] ?? '#F2F6F4' }, pressed && { transform: [{ scale: 0.96 }] }]} accessibilityRole="button" accessibilityLabel={`See ${p.nickname} up close`}>
+                    <Pressable key={p.id ?? i} onPress={() => setAskPet(p)} style={({ pressed }) => [styles.tile, { backgroundColor: RARITY_TINT[sp.rarity] ?? '#F2F6F4' }, p.away && { opacity: 0.55 }, pressed && { transform: [{ scale: 0.96 }] }]} accessibilityRole="button" accessibilityLabel={`${p.nickname}, level ${levelFor(p.xp)}${p.away ? ', on a trip' : ''}. See stats and make an offer`}>
+                      {p.away ? <View style={styles.away}><Text style={styles.awayText}>On a trip</Text></View> : null}
                       <View style={styles.lv}><Text style={styles.lvText}>Lv {levelFor(p.xp)} · {gradeOf(p)}%</Text></View>
                       <PetSprite species={sp} stage={stageFor(p.xp)} size={64} shiny={p.shiny} skin={p.skin} hat={p.hat} aura={p.aura} />
                       <Text style={styles.name} numberOfLines={1}>{p.nickname}</Text>
@@ -218,6 +224,7 @@ export default function FriendSheet({ friend, onClose }: { friend: Friend; onClo
       </ScrollView>
       {zoom && active ? <PetZoom pet={active} scene={card?.scene} onClose={() => setZoom(false)} /> : null}
       {zoomPet ? <PetZoom pet={zoomPet} onClose={() => setZoomPet(null)} /> : null}
+      {askPet ? <AskForPet friend={live} pet={askPet} onClose={() => setAskPet(null)} /> : null}
     </View>
   );
 }
@@ -298,6 +305,9 @@ const styles = StyleSheet.create({
   actionText: { fontSize: 15, fontWeight: '900', color: '#FFFFFF' },
   teamCard: { backgroundColor: colors.card, borderRadius: 22, padding: space.md, gap: space.sm },
   teamTitle: { fontSize: 18, fontWeight: '900', color: colors.ink },
+  hint: { fontSize: 13, fontWeight: '800', color: '#3E6B5E', backgroundColor: '#E4F2EC', borderRadius: 12, paddingHorizontal: 10, paddingVertical: 8, overflow: 'hidden' },
+  away: { position: 'absolute', bottom: 40, zIndex: 2, backgroundColor: '#E8590C', borderRadius: 999, paddingHorizontal: 7, paddingVertical: 1 },
+  awayText: { color: '#FFFFFF', fontSize: 10, fontWeight: '900' },
   remove: { alignSelf: 'center', padding: 10 },
   removeText: { fontSize: 13, fontWeight: '800', color: colors.muted },
   back: { alignSelf: 'flex-start', minHeight: 40, paddingHorizontal: 10, marginLeft: -8, marginTop: -6, marginBottom: 4, justifyContent: 'center' },

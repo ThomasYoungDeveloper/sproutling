@@ -1,5 +1,5 @@
 import { HStack, Image, ProgressView, Spacer, Text, VStack } from '@expo/ui/swift-ui';
-import { aspectRatio, font, foregroundStyle, frame, labelsHidden, lineLimit, monospacedDigit, padding, resizable, tint } from '@expo/ui/swift-ui/modifiers';
+import { aspectRatio, font, foregroundStyle, frame, labelsHidden, lineLimit, minimumScaleFactor, monospacedDigit, padding, resizable, tint } from '@expo/ui/swift-ui/modifiers';
 import { createLiveActivity, type LiveActivityEnvironment } from 'expo-widgets';
 
 /**
@@ -66,9 +66,10 @@ const TripActivity = (props: TripActivityProps, env: LiveActivityEnvironment) =>
   );
   const title = home ? (props.knockedOut ? `${props.name} was knocked out` : `${props.name} is home!`) : `${props.name} · ${props.place}`;
   const timer = <Text timerInterval={{ lower: new Date(now), upper: new Date(props.endAt) }} modifiers={[font({ weight: 'heavy', size: 14 }), monospacedDigit(), foregroundStyle('#7CF0B5')]} />;
-  // The Dynamic Island's small side has little room: a fixed width keeps the countdown from being cut off.
+  // The Dynamic Island's small side has little room, and on phones with an upright camera pill even less:
+  // let the countdown shrink to fit instead of cutting off its first digit.
   const smallTimer = (
-    <Text timerInterval={{ lower: new Date(now), upper: new Date(props.endAt) }} modifiers={[font({ weight: 'heavy', size: 13 }), monospacedDigit(), foregroundStyle('#7CF0B5'), frame({ width: 56 })]} />
+    <Text timerInterval={{ lower: new Date(now), upper: new Date(props.endAt) }} modifiers={[font({ weight: 'heavy', size: 13 }), monospacedDigit(), foregroundStyle('#7CF0B5'), lineLimit(1), minimumScaleFactor(0.5), frame({ maxWidth: 52 })]} />
   );
 
   return {
@@ -101,7 +102,8 @@ const TripActivity = (props: TripActivityProps, env: LiveActivityEnvironment) =>
         </HStack>
       </VStack>
     ),
-    compactLeading: petAt(24),
+    // The pet picture doesn't load at this tiny size on some phones (it shows a grey box), so use the paw.
+    compactLeading: <Image systemName="pawprint.fill" size={15} color="#7CF0B5" />,
     compactTrailing: home ? <Text modifiers={[font({ weight: 'heavy', size: 13 }), foregroundStyle('#7CF0B5')]}>Home</Text> : smallTimer,
     minimal: <Image systemName="pawprint.fill" size={14} color="#7CF0B5" />,
     expandedLeading: petAt(44),

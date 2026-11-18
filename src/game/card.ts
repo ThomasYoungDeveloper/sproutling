@@ -5,6 +5,10 @@ import { scoreDay } from './scoring';
 
 /** A pet as friends see it. */
 export interface CardPet {
+  /** The owner's pet id, so friends can ask to trade for this exact pet. Missing on old cards. */
+  id?: string;
+  /** Out on a trip right now (can't be asked for). */
+  away?: boolean;
   speciesId: string;
   nickname: string;
   xp: number;
@@ -33,7 +37,9 @@ export interface PublicCard {
   badges?: number;
 }
 
-const toCardPet = (p: { id: string; speciesId: string; nickname: string; xp: number; shiny: boolean; skin?: Skin; look?: { hat?: string; aura?: string }; personality?: Personality; train?: Training; foodBoost?: Training; moves?: string[]; ivs?: Ivs }): CardPet => ({
+const toCardPet = (p: { id: string; speciesId: string; nickname: string; xp: number; shiny: boolean; skin?: Skin; look?: { hat?: string; aura?: string }; personality?: Personality; train?: Training; foodBoost?: Training; moves?: string[]; ivs?: Ivs }, away = false): CardPet => ({
+  id: p.id,
+  ...(away ? { away: true } : {}),
   speciesId: p.speciesId,
   nickname: p.nickname.slice(0, 24),
   xp: p.xp,
@@ -56,7 +62,7 @@ export function buildCard(s: GameState): PublicCard {
   const team = [...s.pets]
     .sort((a, b) => Number(b.id === s.activePetId) - Number(a.id === s.activePetId) || b.xp - a.xp)
     .slice(0, TEAM_SIZE)
-    .map(toCardPet);
+    .map((p) => toCardPet(p, s.expedition?.petId === p.id));
   return {
     v: 1,
     active: active ? toCardPet(active) : undefined,

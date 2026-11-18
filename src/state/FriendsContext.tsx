@@ -32,7 +32,7 @@ export interface SentRequest {
   to: Trainer;
 }
 
-export type TradeStatus = 'offered' | 'countered' | 'completed' | 'declined' | 'cancelled';
+export type TradeStatus = 'offered' | 'countered' | 'completed' | 'declined' | 'cancelled' | 'expired';
 
 export interface Trade {
   id: string;
@@ -42,6 +42,9 @@ export interface Trade {
   status: TradeStatus;
   offer: T.TradePet;
   counter: T.TradePet | null;
+  /** Set on a request: the friend's pet that was asked for (offer is the pet given for it). */
+  want: T.TradePet | null;
+  expiresAt: string | null;
   updatedAt: string;
 }
 
@@ -74,6 +77,10 @@ interface Ctx {
   counterTrade: (tradeId: string, petId: string) => Promise<{ ok: boolean; text: string }>;
   confirmTrade: (tradeId: string) => Promise<{ ok: boolean; text: string }>;
   cancelTrade: (tradeId: string) => Promise<void>;
+  /** Ask a friend for one of their pets, offering one of yours. */
+  requestTrade: (friendId: string, want: T.TradePet, petId: string) => Promise<{ ok: boolean; text: string }>;
+  /** Say yes to a friend's request: the swap happens right away. */
+  acceptRequest: (tradeId: string) => Promise<{ ok: boolean; text: string }>;
   recordBattle: (friendId: string, won: boolean) => void;
 }
 
@@ -146,7 +153,7 @@ export function FriendsProvider({ children }: { children: React.ReactNode }) {
       supabase.from('profiles').select('friend_code').eq('id', me).maybeSingle(),
       supabase.from('friendships').select('id, requester, addressee, status, created_at').order('created_at', { ascending: false }),
       supabase.from('gifts').select('recipient').eq('sender', me).eq('day', utcDay()),
-      supabase.from('trades').select('id, from_user, to_user, status, offer_pet, counter_pet, updated_at').order('updated_at', { ascending: false }).limit(60),
+      supabase.from('trades').select('id, from_user, to_user, status, offer_pet, counter_pet, want_pet, expires_at, updated_at').order('updated_at', { ascending: false }).limit(60),
     ]);
     if (links.error) {
       setError('Couldn’t load your friends. Try again in a moment.');
@@ -188,15 +195,19 @@ export function FriendsProvider({ children }: { children: React.ReactNode }) {
       tRows
         .map((t) => {
           const otherId = t.from_user === me ? t.to_user : t.from_user;
+          // A request past its 3 days is closed even before the server tidies it up.
+          const expired = t.status === 'offered' && t.expires_at && new Date(t.expires_at).getTime() < Date.now();
           return {
             id: t.id,
             fromMe: t.from_user === me,
             friendId: otherId,
             friendName: people[otherId]?.username ?? 'A friend',
-            status: t.status as TradeStatus,
+            status: (expired ? 'expired' : t.status) as TradeStatus,
             offer: t.offer_pet as T.TradePet,
             counter: (t.counter_pet as T.TradePet | null) ?? null,
-            updatedAt: t.updated_at,
+            want: (t.want_pet as T.TradePet | null) ?? null,
+            expiresAt: t.expires_at ?? null,
+            updatedAt: expired ? t.expires_at! : t.updated_at,
           };
         })
         .filter((t) => t.status === 'offered' || t.status === 'countered' || t.status === 'completed' || new Date(t.updatedAt).getTime() > dayAgo),
@@ -323,6 +334,7 @@ export function FriendsProvider({ children }: { children: React.ReactNode }) {
     too_many: 'You have 5 open trades. Finish or cancel one first.',
     pet_busy: 'That pet is already in another trade.',
     not_found: 'That trade isn’t open anymore.',
+    already_asked: 'You already have an offer waiting for that pet.',
   };
 
   const offerTrade = useCallback(
@@ -372,13 +384,43 @@ export function FriendsProvider({ children }: { children: React.ReactNode }) {
     [refresh],
   );
 
+  const requestTrade = useCallback(
+    async (friendId: string, want: T.TradePet, petId: string) => {
+      const s = stateRef.current;
+      const check = T.canOffer(s, petId, busyPetIds);
+      if (!check.ok) return { ok: false, text: check.reason };
+      const pet = s.pets.find((p) => p.id === petId)!;
+      const { data, error: err } = await supabase.rpc('request_trade', { friend: friendId, want, pet: T.toTradePet(pet) });
+      await refresh();
+      if (err) return { ok: false, text: 'Couldn’t reach Sproutling. Try again in a moment.' };
+      return data === 'sent' ? { ok: true, text: 'Offer sent! The trade happens if they accept.' } : { ok: false, text: TRADE_MESSAGES[data as string] ?? 'Something went wrong.' };
+    },
+    [refresh, busyPetIds],
+  );
+
+  const acceptRequest = useCallback(
+    async (tradeId: string) => {
+      const s = stateRef.current;
+      const t = trades.find((x) => x.id === tradeId);
+      if (!t?.want) return { ok: false, text: TRADE_MESSAGES.not_found };
+      const check = T.canGive(s, t.want.id, busyPetIds);
+      if (!check.ok) return { ok: false, text: check.reason };
+      const pet = s.pets.find((p) => p.id === t.want!.id)!;
+      const { data, error: err } = await supabase.rpc('accept_trade_request', { trade_id: tradeId, pet: T.toTradePet(pet) });
+      await refresh();
+      if (err) return { ok: false, text: 'Couldn’t reach Sproutling. Try again in a moment.' };
+      return data === 'ok' ? { ok: true, text: 'Trade complete!' } : { ok: false, text: TRADE_MESSAGES[data as string] ?? 'Something went wrong.' };
+    },
+    [refresh, busyPetIds, trades],
+  );
+
   const recordBattle = useCallback((friendId: string, won: boolean) => {
     supabase.rpc('record_battle', { friend: friendId, won }).then(() => {});
   }, []);
 
   return (
     <FriendsCtx.Provider
-      value={{ myCode, friends, incoming, outgoing, loading, error, refresh, addFriend, respond, remove, gift, giftsLeft, notice, dismissNotice: () => setNotice(null), trades, busyPetIds, tradesForMe, offerTrade, counterTrade, confirmTrade, cancelTrade, recordBattle }}
+      value={{ myCode, friends, incoming, outgoing, loading, error, refresh, addFriend, respond, remove, gift, giftsLeft, notice, dismissNotice: () => setNotice(null), trades, busyPetIds, tradesForMe, offerTrade, counterTrade, confirmTrade, cancelTrade, requestTrade, acceptRequest, recordBattle }}
     >
       {children}
     </FriendsCtx.Provider>

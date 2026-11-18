@@ -31,6 +31,7 @@ export default function PetPicker({
   onClose,
   busy,
   message,
+  header,
 }: {
   title: string;
   subtitle?: string;
@@ -42,6 +43,8 @@ export default function PetPicker({
   onClose: () => void;
   busy?: boolean;
   message?: { ok: boolean; text: string } | null;
+  /** Shown above the grid, given the pets picked so far (e.g. a 'You get / You give' summary). */
+  header?: (picked: string[]) => React.ReactNode;
 }) {
   const [picked, setPicked] = useState<string[]>(initial);
   const [why, setWhy] = useState<string | null>(null);
@@ -62,6 +65,7 @@ export default function PetPicker({
       <View style={styles.sheet}>
         <Text style={font.title}>{title}</Text>
         {subtitle ? <Text style={font.small}>{subtitle}</Text> : null}
+        {header ? header(picked) : null}
         <ScrollView style={{ maxHeight: 420 }} contentContainerStyle={styles.grid}>
           {pets.map((p) => {
             const sp = SPECIES_BY_ID[p.pet.speciesId];

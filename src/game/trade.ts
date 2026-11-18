@@ -37,6 +37,7 @@ export function canOffer(s: GameState, petId: string, busy: Set<string>): OfferC
   if (!pet) return { ok: false, reason: 'That pet isn’t on your team anymore.' };
   if (s.pets.length <= 1) return { ok: false, reason: 'You can’t trade your only pet.' };
   if (pet.id === s.activePetId) return { ok: false, reason: 'Your active pet can’t be traded. Pick a different active pet first.' };
+  if (s.expedition?.petId === pet.id) return { ok: false, reason: `${pet.nickname} is out on a trip.` };
   if (busy.has(pet.id)) return { ok: false, reason: 'That pet is already in another trade.' };
   return { ok: true };
 }
@@ -73,4 +74,30 @@ export function applyTrade(s: GameState, tradeId: string, giveId: string, get: T
     received,
     isNew,
   };
+}
+
+/** The friend's pet being asked for, sent as a small snapshot taken from their public card. */
+export function toWantPet(p: { id?: string; speciesId: string; nickname: string; xp: number; shiny: boolean; skin?: Skin }): TradePet | null {
+  if (!p.id || !SPECIES_BY_ID[p.speciesId]) return null;
+  return {
+    id: p.id,
+    speciesId: p.speciesId,
+    nickname: (p.nickname || SPECIES_BY_ID[p.speciesId].name).slice(0, 24),
+    xp: Math.max(0, Math.floor(p.xp)),
+    shiny: !!p.shiny,
+    ...(p.skin ? { skin: p.skin } : {}),
+  };
+}
+
+/**
+ * Can you give this pet to answer a friend's request? Like canOffer, except your active pet is allowed:
+ * they asked for it by name, and the pet you get back becomes your active pet.
+ */
+export function canGive(s: GameState, petId: string, busy: Set<string>): OfferCheck {
+  const pet = s.pets.find((p) => p.id === petId);
+  if (!pet) return { ok: false, reason: 'You don’t have that pet anymore.' };
+  if (s.pets.length <= 1) return { ok: false, reason: 'You can’t trade your only pet.' };
+  if (s.expedition?.petId === pet.id) return { ok: false, reason: `${pet.nickname} is out on a trip. Try again when they’re back.` };
+  if (busy.has(pet.id)) return { ok: false, reason: 'That pet is already in another trade.' };
+  return { ok: true };
 }

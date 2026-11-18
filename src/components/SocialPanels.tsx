@@ -17,10 +17,11 @@ import * as B from '../game/battle';
 import { healthProvider, isVerified } from '../lib/health';
 import * as T from '../game/trade';
 import type { TradePet } from '../game/trade';
+import FriendPetSheet, { type ViewPet } from './FriendPetSheet';
 
 /* ---------- Picking a pet to trade ---------- */
 
-function TradePicker({ title, subtitle, onSend, onClose }: { title: string; subtitle: string; onSend: (petId: string) => Promise<{ ok: boolean; text: string }>; onClose: () => void }) {
+function TradePicker({ title, subtitle, onSend, onClose, want, confirm }: { title: string; subtitle: string; onSend: (petId: string) => Promise<{ ok: boolean; text: string }>; onClose: () => void; /** Asking for this pet: shows a You get / You give summary. */ want?: TradePet; confirm?: string }) {
   const { state } = useGame();
   const { busyPetIds } = useFriends();
   const [busy, setBusy] = useState(false);
@@ -38,7 +39,21 @@ function TradePicker({ title, subtitle, onSend, onClose }: { title: string; subt
       pets={pets}
       busy={busy}
       message={msg}
-      confirmLabel={() => (msg?.ok ? 'Sent!' : 'Offer this pet')}
+      confirmLabel={() => (msg?.ok ? 'Sent!' : confirm ?? 'Offer this pet')}
+      header={
+        want
+          ? (picked) => {
+              const mine = state.pets.find((p) => p.id === picked[0]);
+              return (
+                <View style={styles.swap}>
+                  <MiniPet p={want} label="You get" top="YOU GET" />
+                  <Text style={styles.arrow}>⇄</Text>
+                  <MiniPet p={mine ? T.toTradePet(mine) : null} label="Pick below" top="YOU GIVE" />
+                </View>
+              );
+            }
+          : undefined
+      }
       onConfirm={async ([id]) => {
         if (msg?.ok) return onClose();
         setBusy(true);
@@ -67,6 +82,42 @@ export function useTradeOffer() {
         onClose={close}
       />,
     );
+}
+
+/** Tap a friend's pet: see its stats and moves, then offer one of your pets for it. Lives inside the friend's profile. */
+export function AskForPet({ friend, pet, onClose }: { friend: Friend; pet: ViewPet; onClose: () => void }) {
+  const { requestTrade, trades } = useFriends();
+  const [picking, setPicking] = useState(false);
+  const want = T.toWantPet(pet);
+  const asked = want && trades.some((t) => t.status === 'offered' && t.fromMe && t.friendId === friend.id && t.want?.id === want.id);
+  const disabled = !want
+    ? `${friend.username} needs to update Sproutling before you can ask for this pet.`
+    : pet.away
+      ? `${pet.nickname} is out on a trip. Try again when they’re back.`
+      : asked
+        ? 'You already have an offer waiting for this pet.'
+        : undefined;
+  if (picking && want) {
+    return (
+      <View style={[StyleSheet.absoluteFill, { zIndex: 95 }]}>
+        <TradePicker
+          title="Your offer"
+          subtitle={`Pick one of your pets to offer for ${want.nickname}. It’s held for this trade until ${friend.username} answers. Offers last 3 days.`}
+          want={want}
+          confirm={`Send offer to ${friend.username}`}
+          onSend={(petId) => requestTrade(friend.id, want, petId)}
+          onClose={onClose}
+        />
+      </View>
+    );
+  }
+  return <FriendPetSheet pet={pet} owner={friend.username} onClose={onClose} action={{ label: 'Make a trade offer', disabled, onPress: () => setPicking(true) }} />;
+}
+
+/** See a pet that's part of a trade up close (stats and moves). */
+function useViewTradePet() {
+  const { open, close } = useOverlay();
+  return (p: TradePet, owner: string) => open(<FriendPetSheet pet={p} owner={owner} onClose={close} />);
 }
 
 /* ---------- Starting a battle ---------- */
@@ -231,28 +282,65 @@ export function ArenaCard() {
 
 /* ---------- Trades card ---------- */
 
-function MiniPet({ p, label }: { p: TradePet | null; label: string }) {
+function MiniPet({ p, label, top, onPress }: { p: TradePet | null; label: string; top?: string; onPress?: () => void }) {
   const sp = p ? SPECIES_BY_ID[p.speciesId] : null;
   return (
-    <View style={styles.mini}>
+    <Pressable onPress={onPress} disabled={!onPress || !p} style={styles.mini} accessibilityRole={onPress && p ? 'button' : undefined} accessibilityLabel={onPress && p ? `See ${p.nickname}’s stats and moves` : undefined}>
+      {top ? <Text style={[styles.miniTop, { color: top === 'YOU GET' ? colors.mintDark : '#B4532A' }]}>{top}</Text> : null}
       <View style={styles.miniArt}>{sp && p ? <PetSprite species={sp} stage={stageFor(p.xp)} size={60} shiny={p.shiny} skin={p.skin} hat={(p as any).hat} aura={(p as any).aura} /> : <Text style={{ fontSize: 28 }}>❔</Text>}</View>
       <Text style={styles.miniName} numberOfLines={1}>{p ? p.nickname : '???'}</Text>
       <Text style={styles.miniSub} numberOfLines={1}>{p && sp ? `Lv ${levelFor(p.xp)} · ${sp.rarity[0].toUpperCase() + sp.rarity.slice(1)}` : label}</Text>
-    </View>
+      {/* Same height on both sides so the two pets line up. */}
+      {top ? <Text style={[styles.miniLink, !(onPress && p) && { opacity: 0 }]}>Stats ›</Text> : null}
+    </Pressable>
   );
 }
 
 function TradeRow({ t, onDismiss }: { t: Trade; onDismiss?: () => void }) {
-  const { counterTrade, confirmTrade, cancelTrade } = useFriends();
+  const { counterTrade, confirmTrade, cancelTrade, acceptRequest } = useFriends();
+  const { state } = useGame();
+  const view = useViewTradePet();
   const { open, close } = useOverlay();
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
-  const mine = t.fromMe ? t.offer : t.counter;
-  const theirs = t.fromMe ? t.counter : t.offer;
+  // On a request, the friend's side of the swap is the pet that was asked for.
+  const mine = t.fromMe ? t.offer : (t.want ?? t.counter);
+  const theirs = t.fromMe ? (t.want ?? t.counter) : t.offer;
+  const stillHave = !t.want || t.fromMe || state.pets.some((p) => p.id === t.want!.id);
 
   let text = '';
   let actions: React.ReactNode = null;
-  if (t.status === 'offered' && t.fromMe) {
+  if (t.want && t.status === 'offered' && t.fromMe) {
+    text = `Waiting for ${t.friendName}. Your ${t.offer.nickname} for their ${t.want.nickname}.${t.expiresAt ? ` ${leftText(t.expiresAt)}` : ''}`;
+    actions = <Button small label="Cancel" onPress={() => cancelTrade(t.id)} />;
+  } else if (t.want && t.status === 'offered') {
+    text = stillHave
+      ? `${t.friendName} wants your ${t.want.nickname} and offers ${t.offer.nickname}. Tap a pet to see its stats.${t.expiresAt ? ` ${leftText(t.expiresAt)}` : ''}`
+      : `${t.friendName} asked for ${t.want.nickname}, but you don’t have that pet anymore.`;
+    actions = (
+      <>
+        <Button small label="Decline" onPress={() => cancelTrade(t.id)} />
+        {stillHave ? (
+          <Button
+            small
+            primary
+            label={busy ? 'Trading…' : 'Accept trade'}
+            disabled={busy}
+            onPress={async () => {
+              setBusy(true);
+              buzz('medium');
+              const r = await acceptRequest(t.id);
+              if (!r.ok) setMsg(r.text);
+              setBusy(false);
+            }}
+          />
+        ) : null}
+      </>
+    );
+  } else if (t.status === 'expired') {
+    text = t.fromMe ? `Your offer for ${t.friendName}’s ${t.want?.nickname ?? 'pet'} ran out of time.` : `${t.friendName}’s offer ran out of time.`;
+    actions = <Button small primary label="OK" onPress={() => onDismiss?.()} />;
+  } else if (t.status === 'offered' && t.fromMe) {
     text = `Waiting for ${t.friendName} to pick a pet to offer back.`;
     actions = <Button small label="Cancel" onPress={() => cancelTrade(t.id)} />;
   } else if (t.status === 'offered') {
@@ -301,21 +389,21 @@ function TradeRow({ t, onDismiss }: { t: Trade; onDismiss?: () => void }) {
     text = `Waiting for ${t.friendName} to confirm the trade.`;
     actions = <Button small label="Cancel" onPress={() => cancelTrade(t.id)} />;
   } else if (t.status === 'declined') {
-    text = t.fromMe ? `${t.friendName} said no thanks to this trade.` : 'You passed on this trade.';
+    text = t.fromMe ? (t.want ? `${t.friendName} passed on your offer for ${t.want.nickname}.` : `${t.friendName} said no thanks to this trade.`) : 'You passed on this trade.';
     actions = <Button small primary label="OK" onPress={() => onDismiss?.()} />;
   } else if (t.status === 'cancelled') {
     text = t.fromMe ? 'You cancelled this trade.' : `${t.friendName} cancelled this trade.`;
     actions = <Button small primary label="OK" onPress={() => onDismiss?.()} />;
   }
 
-  const closed = t.status === 'declined' || t.status === 'cancelled';
+  const closed = t.status === 'declined' || t.status === 'cancelled' || t.status === 'expired';
   return (
     <View style={styles.trade}>
       {/* A finished trade: only the pets fade; the message and OK stay clear, side by side. */}
       <View style={[styles.swap, closed && { opacity: 0.5 }]}>
-        <MiniPet p={mine} label="Your pet" />
+        <MiniPet p={mine} label="Your pet" top={t.want ? 'YOU GIVE' : undefined} />
         <Text style={styles.arrow}>⇄</Text>
-        <MiniPet p={theirs} label={t.fromMe ? 'They pick' : 'You pick'} />
+        <MiniPet p={theirs} label={t.fromMe ? 'They pick' : 'You pick'} top={t.want ? 'YOU GET' : undefined} onPress={theirs && !closed ? () => view(theirs, t.friendName) : undefined} />
       </View>
       {closed ? (
         <View style={styles.closedRow}>
@@ -333,6 +421,12 @@ function TradeRow({ t, onDismiss }: { t: Trade; onDismiss?: () => void }) {
   );
 }
 
+/** "2 days left" for an offer that expires. */
+function leftText(at: string): string {
+  const h = Math.max(0, Math.round((new Date(at).getTime() - Date.now()) / 3_600_000));
+  return h >= 36 ? `${Math.round(h / 24)} days left.` : h >= 1 ? `${h} hour${h === 1 ? '' : 's'} left.` : 'Ends soon.';
+}
+
 const DISMISSED_KEY = 'sproutling/trades-dismissed';
 
 export function TradesCard() {
@@ -347,7 +441,7 @@ export function TradesCard() {
     setDismissed(next);
     AsyncStorage.setItem(DISMISSED_KEY, JSON.stringify(next)).catch(() => {});
   };
-  const shown = trades.filter((t) => t.status !== 'completed' && !((t.status === 'declined' || t.status === 'cancelled') && (dismissed === null || dismissed.includes(t.id))));
+  const shown = trades.filter((t) => t.status !== 'completed' && !((t.status === 'declined' || t.status === 'cancelled' || t.status === 'expired') && (dismissed === null || dismissed.includes(t.id))));
   if (!shown.length) return null;
   const waiting = shown.filter((t) => (t.status === 'offered' && !t.fromMe) || (t.status === 'countered' && t.fromMe)).length;
   return (
@@ -374,6 +468,8 @@ const styles = StyleSheet.create({
   miniArt: { width: 72, height: 72, borderRadius: 18, backgroundColor: colors.sky, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
   miniName: { fontWeight: '900', fontSize: 13, color: colors.ink, marginTop: 2 },
   miniSub: { fontWeight: '700', fontSize: 11, color: colors.muted },
+  miniTop: { fontWeight: '900', fontSize: 10, letterSpacing: 0.5, marginBottom: 2 },
+  miniLink: { fontWeight: '900', fontSize: 11, color: colors.mintDark },
   actions: { flexDirection: 'row', gap: space.sm, justifyContent: 'flex-end' },
   liveRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm, borderTopWidth: 1, borderTopColor: colors.line, paddingTop: space.sm },
   liveDot: { width: 10, height: 10, borderRadius: 5 },
