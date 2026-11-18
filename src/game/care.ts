@@ -1,3 +1,4 @@
+import { COLLECTIBLES } from './loot';
 import { claimableCount, currentEvent } from './events';
 import type { DayLog, Element, GameState } from './types';
 import { scoreDay } from './scoring';
@@ -82,12 +83,14 @@ export const playToy = (s: GameState) => A.bump(play(s), 'toys');
 
 export const play = (s: GameState, now = Date.now()) => A.updateToday(s, (d) => ({ ...d, care: { ...d.care, played: (d.care?.played ?? 0) + 1, ...funAfterPlay(d, now) } }));
 
-export const trinketCount = (s: GameState) => Object.values(s.items).reduce((a, n) => a + n, 0);
+/** Trinkets are the trip collectibles (Moon Seed, Tide Shell…). Training Crystals share the item bag but aren't treats. */
+const isTrinket = (name: string) => COLLECTIBLES.includes(name);
+export const trinketCount = (s: GameState) => Object.entries(s.items).reduce((a, [k, n]) => (isTrinket(k) ? a + n : a), 0);
 
 /** Gives one trinket from your bag (the one you have most of) as today's treat. */
 export function treat(s: GameState): GameState {
   if (A.today(s).care?.treat) return s;
-  const pick = Object.entries(s.items).filter(([, n]) => n > 0).sort((a, b) => b[1] - a[1])[0];
+  const pick = Object.entries(s.items).filter(([k, n]) => n > 0 && isTrinket(k)).sort((a, b) => b[1] - a[1])[0];
   if (!pick) return s;
   const next = A.updateToday(s, (d) => ({ ...d, care: { ...d.care, treat: true } }));
   return { ...next, items: { ...next.items, [pick[0]]: pick[1] - 1 } };

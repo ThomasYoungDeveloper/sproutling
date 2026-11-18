@@ -682,4 +682,11 @@ console.log('\nEgg basket');
   ok(stepsToHatch('common') === 3 * 1300 && stepsToHatch('legendary') === 25 * 1300, 'eggs take longer to hatch (Common 3 km, Legendary 25 km)');
   ok(CHESTS.bronze.eggChance === 15, 'Bronze chests have a 15% egg chance');
 }
+{
+  const Pw2 = require('../src/game/powerups');
+  const g = { ...newGame(), items: { [Pw2.CRYSTAL]: 5, 'Moon Seed': 1 } };
+  const t = C.treat(g);
+  ok(t.items[Pw2.CRYSTAL] === 5 && t.items['Moon Seed'] === 0, 'Treat uses a trinket, never a Training Crystal');
+  ok(C.trinketCount({ ...newGame(), items: { [Pw2.CRYSTAL]: 3 } }) === 0 && C.treat({ ...newGame(), items: { [Pw2.CRYSTAL]: 3 } }).items[Pw2.CRYSTAL] === 3, 'crystals alone do not count as treats');
+}
 console.log(fails ? `${fails} FAILED` : 'ALL PASSED'); process.exit(fails ? 1 : 0);
