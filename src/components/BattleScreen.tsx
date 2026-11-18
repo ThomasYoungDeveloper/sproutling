@@ -67,6 +67,7 @@ export default function BattleScreen({ opponent, onClose, onResult, live, specia
   const [line, setLine] = useState('');
   const [reward, setReward] = useState<B.BattleReward | null>(null);
   const [switching, setSwitching] = useState(false);
+  const [peek, setPeek] = useState<string | null>(null);
   const [sky] = useState(skyNow);
   const [lines, setLines] = useState<ResultLine[] | null>(null);
   const { team: guild, raidHit } = useTeam();
@@ -346,20 +347,56 @@ export default function BattleScreen({ opponent, onClose, onResult, live, specia
             <Text style={styles.line} numberOfLines={2}>{line}</Text>
             {switching ? (
               <View style={{ gap: 8 }}>
-                <Text style={styles.tip}>Switching uses your turn. Pick a pet:</Text>
-                <View style={styles.switchRow}>
+                <Text style={styles.tip}>Switching uses your turn. Tap a pet to see its moves.</Text>
+                <ScrollView style={{ maxHeight: 340 }} contentContainerStyle={{ gap: 8 }}>
                   {battle.mine.map((f, i) => {
                     const sp = SPECIES_BY_ID[f.speciesId];
-                    const disabled = f.hp <= 0 || i === battle.mi;
+                    const out = i === battle.mi;
+                    const down = f.hp <= 0;
+                    const open = peek === f.key;
+                    const pct = f.maxHp ? f.hp / f.maxHp : 0;
                     return (
-                      <Pressable key={f.key} onPress={() => !disabled && act({ type: 'switch', index: i })} style={[styles.switchPet, disabled && { opacity: 0.4 }]} accessibilityRole="button" accessibilityLabel={`Switch to ${f.nickname}`}>
-                        <PetSprite species={sp} stage={stageFor(f.xp)} size={52} skin={f.skin} hat={f.hat} />
-                        <Text style={styles.switchName} numberOfLines={1}>{f.nickname}</Text>
-                        <Text style={styles.switchHp}>{f.hp > 0 ? `${f.hp}/${f.maxHp}` : 'Fainted'}</Text>
-                      </Pressable>
+                      <View key={f.key} style={[styles.swCard, open && { borderColor: colors.mint }, (out || down) && { opacity: 0.5 }]}>
+                        <Pressable
+                          onPress={() => setPeek(open ? null : f.key)}
+                          style={styles.swHead}
+                          accessibilityRole="button"
+                          accessibilityLabel={`${f.nickname}, ${B.ELEMENT_LABEL[f.element]}, ${down ? 'knocked out' : `${f.hp} of ${f.maxHp} HP`}. Show moves`}
+                        >
+                          <PetSprite species={sp} stage={stageFor(f.xp)} size={46} skin={f.skin} hat={f.hat} />
+                          <View style={{ flex: 1, gap: 3 }}>
+                            <Text style={styles.switchName} numberOfLines={1}>
+                              {f.nickname} <Text style={styles.swLv}>Lv {f.level}{out ? ' · out now' : ''}</Text>
+                            </Text>
+                            <View style={styles.swTags}>
+                              <View style={[styles.el, { backgroundColor: B.ELEMENT_COLOR[f.element] }]}><Text style={styles.elText}>{B.ELEMENT_LABEL[f.element]}</Text></View>
+                              <Text style={styles.switchHp}>{down ? 'Knocked out' : `${f.hp}/${f.maxHp} HP`}</Text>
+                            </View>
+                            <View style={styles.swBar}><View style={[styles.swFill, { width: `${Math.round(pct * 100)}%`, backgroundColor: pct > 0.5 ? '#2EB88A' : pct > 0.2 ? '#F2A23C' : '#E5533D' }]} /></View>
+                          </View>
+                          <Text style={styles.swChevron}>{open ? '⌃' : '⌄'}</Text>
+                        </Pressable>
+                        {open ? (
+                          <View style={{ gap: 2, marginTop: 6 }}>
+                            {!out && !down ? <Button primary label={`Send in ${f.nickname}`} onPress={() => { setPeek(null); act({ type: 'switch', index: i }); }} style={{ marginBottom: 4 }} /> : null}
+                            {f.moves.map((m) => (
+                              <View key={m.id} style={styles.swMove}>
+                                <View style={[styles.swMoveBar, { backgroundColor: moveColor(m) }]} />
+                                <View style={{ flex: 1 }}>
+                                  <Text style={styles.swMoveName}>
+                                    {m.name} <Text style={{ color: moveColor(m) }}>{m.element === 'normal' ? 'Normal' : B.ELEMENT_LABEL[m.element]}</Text>
+                                  </Text>
+                                  <Text style={styles.swMoveDesc} numberOfLines={2}>{[m.power ? `${m.power} power` : null, m.desc].filter(Boolean).join(' · ')}</Text>
+                                </View>
+                                <Text style={styles.swCost}>{m.cost} energy</Text>
+                              </View>
+                            ))}
+                          </View>
+                        ) : null}
+                      </View>
                     );
                   })}
-                </View>
+                </ScrollView>
                 <Button small label="Back to moves" onPress={() => setSwitching(false)} />
               </View>
             ) : (
@@ -704,9 +741,21 @@ const styles = StyleSheet.create({
   cost: { fontWeight: '900', fontSize: 11, color: '#5A3E00', borderRadius: 999, paddingHorizontal: 6, paddingVertical: 1, overflow: 'hidden', flexShrink: 0, marginLeft: 4 },
   eff: { fontWeight: '900', fontSize: 10.5 },
   switchRow: { flexDirection: 'row', gap: 8, justifyContent: 'center' },
+  swCard: { backgroundColor: '#fff', borderRadius: 16, padding: 10, borderWidth: 2, borderColor: colors.line },
+  swHead: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  swLv: { fontWeight: '800', fontSize: 11, color: colors.muted },
+  swTags: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  swBar: { height: 5, borderRadius: 3, backgroundColor: '#E3ECE7', overflow: 'hidden' },
+  swFill: { height: '100%', borderRadius: 3 },
+  swChevron: { fontSize: 18, fontWeight: '900', color: colors.muted, paddingHorizontal: 4 },
+  swMove: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 6, borderTopWidth: 1, borderTopColor: '#EEF2F0' },
+  swMoveBar: { width: 5, alignSelf: 'stretch', borderRadius: 3 },
+  swMoveName: { fontSize: 13, fontWeight: '900', color: colors.ink },
+  swMoveDesc: { fontSize: 11, fontWeight: '700', color: colors.muted },
+  swCost: { fontSize: 11, fontWeight: '900', color: '#C98A12' },
   switchPet: { alignItems: 'center', width: 96, padding: 6, borderRadius: 14, borderWidth: 1.5, borderColor: colors.line, backgroundColor: '#FAFCFB' },
-  switchName: { fontWeight: '900', fontSize: 12, color: colors.ink },
-  switchHp: { fontWeight: '700', fontSize: 10, color: colors.muted },
+  switchName: { fontWeight: '900', fontSize: 14, color: colors.ink },
+  switchHp: { fontWeight: '800', fontSize: 11, color: colors.muted },
   tip: { fontSize: 12, fontWeight: '700', color: colors.muted, textAlign: 'center' },
   link: { fontSize: 13, fontWeight: '900', color: colors.mintDark, paddingVertical: 4 },
   run: { fontSize: 13, fontWeight: '800', color: colors.muted, paddingVertical: 4, textDecorationLine: 'underline' },
