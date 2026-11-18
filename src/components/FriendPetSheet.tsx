@@ -23,6 +23,7 @@ export interface ViewPet {
   personality?: St.Personality;
   ivs?: St.Ivs;
   train?: St.Training;
+  foodBoost?: St.Training;
   moves?: string[];
   away?: boolean;
 }
@@ -54,7 +55,7 @@ function MoveRow({ m, locked }: { m: St.MoveDef; locked?: number }) {
 
 /**
  * A close look at someone else's pet: level, stats and moves, with an optional action pinned at the bottom
- * (Make a trade offer). Stats are shown without training, since training points reset for a new owner.
+ * (Make a trade offer). Stats include training and food boosts, which stay with the pet in a trade.
  */
 export default function FriendPetSheet({ pet, owner, action, onClose }: { pet: ViewPet; owner: string; action?: { label: string; onPress: () => void; disabled?: string }; onClose: () => void }) {
   const insets = useSafeAreaInsets();
@@ -62,7 +63,7 @@ export default function FriendPetSheet({ pet, owner, action, onClose }: { pet: V
   const sp = SPECIES_BY_ID[pet.speciesId];
   if (!sp) return null;
   const lv = levelFor(pet.xp);
-  const stats = St.statsFor({ ...pet, train: undefined, foodBoost: undefined });
+  const stats = St.statsFor(pet);
   const equipped = St.equippedMoves(pet);
   const known = St.learned(pet.speciesId, pet.xp);
   const also = known.filter((m) => !equipped.some((e) => e.id === m.id));
@@ -114,7 +115,7 @@ export default function FriendPetSheet({ pet, owner, action, onClose }: { pet: V
                 ))}
               </View>
               <Text style={styles.note}>
-                {personality.label} · {St.gradeOf(pet)}% grade{points > 0 ? ` · ${points} training point${points === 1 ? '' : 's'} to spend${trained ? ' (training resets with a new owner)' : ''}` : ''}
+                {personality.label} · {St.gradeOf(pet)}% grade{points > 0 ? ` · ${trained} of ${points} training point${points === 1 ? '' : 's'} used` : ''}
               </Text>
               <Head title="Moves" meta={`${equipped.length} in use`} />
               {equipped.map((m) => <MoveRow key={m.id} m={m} />)}

@@ -709,4 +709,17 @@ console.log('\nEgg basket');
   const got = T.applyTrade(g, 'req1', 'pB', { id: 'x9', speciesId: 'p15', nickname: 'Kitsune', xp: 5000, shiny: false });
   ok(!!got && !got.state.pets.some((p) => p.id === 'pB') && got.state.pets.some((p) => p.speciesId === 'p15'), 'an accepted request swaps the pets');
 }
+{
+  // Trained pets arrive as trained: points, food boosts and moves travel with them (checked).
+  const mk = { id: 'tA', speciesId: 'p15', nickname: 'Foxy', xp: 5000, shiny: false, hatchedOn: '2026-11-01', train: { atk: 3, spd: 2 }, foodBoost: { hp: 2.5 }, moves: ['beam', 'tackle'] } as any;
+  const tp = T.toTradePet(mk);
+  ok(JSON.stringify(tp).length < 600, 'a trained pet still fits the trade size check');
+  const g: GameState = { ...newGame(), pets: [{ id: 'm1', speciesId: 'p01', nickname: 'Mine', xp: 10, shiny: false, hatchedOn: '' } as any, { id: 'm2', speciesId: 'p01', nickname: 'Two', xp: 10, shiny: false, hatchedOn: '' } as any], activePetId: 'm1' };
+  const r = T.applyTrade(g, 'tt1', 'm2', tp)!;
+  ok(r.received.train?.atk === 3 && r.received.train?.spd === 2, 'training points stay with a traded pet');
+  ok(r.received.foodBoost?.hp === 2.5 && r.received.moves?.join() === 'beam,tackle', 'food boosts and chosen moves stay with a traded pet');
+  ok(St.statsFor(r.received).atk === St.statsFor(mk).atk, 'a traded pet has the same stats it had before');
+  const cheat = T.applyTrade(g, 'tt2', 'm2', { ...tp, xp: 0, train: { atk: 50 }, foodBoost: { atk: 999 }, moves: ['eclipse'] })!;
+  ok(!cheat.received.train && (cheat.received.foodBoost?.atk ?? 0) <= 10 && !cheat.received.moves, 'a traded pet cannot arrive with more training, boosts or moves than it could have');
+}
 console.log(fails ? `${fails} FAILED` : 'ALL PASSED'); process.exit(fails ? 1 : 0);

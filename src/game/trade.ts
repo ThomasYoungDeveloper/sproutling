@@ -2,7 +2,8 @@ import type { GameState, OwnedPet, Skin } from './types';
 import { SKINS, noteSkin } from './skins';
 import { makeId, type Rng, defaultRng } from './random';
 import { SPECIES_BY_ID } from './species';
-import { ivsOf, personalityOf, readIvs, PERSONALITIES, type Ivs, type Personality } from './stats';
+import { ivsOf, personalityOf, readIvs, PERSONALITIES, STATS, pointsEarned, learned, MAX_MOVES, type Ivs, type Personality, type Training } from './stats';
+import { foodCapFor } from './food';
 
 /** A pet as it travels in a trade. */
 export interface TradePet {
@@ -15,6 +16,10 @@ export interface TradePet {
   skin?: Skin;
   ivs?: Ivs;
   personality?: Personality;
+  /** Training points spent, food boosts and chosen moves travel with the pet. */
+  train?: Training;
+  foodBoost?: Training;
+  moves?: string[];
 }
 
 export const toTradePet = (p: OwnedPet): TradePet => ({
@@ -27,7 +32,37 @@ export const toTradePet = (p: OwnedPet): TradePet => ({
   ...(p.skin ? { skin: p.skin } : {}),
   ivs: ivsOf(p),
   personality: personalityOf(p),
+  ...(p.train && Object.keys(p.train).length ? { train: p.train } : {}),
+  ...(p.foodBoost && Object.keys(p.foodBoost).length ? { foodBoost: p.foodBoost } : {}),
+  ...(p.moves?.length ? { moves: p.moves.slice(0, MAX_MOVES) } : {}),
 });
+
+/** Training from a trade: whole points, and never more than the pet's level has earned. */
+export function readTraining(t: unknown, xp: number): Training | undefined {
+  if (!t || typeof t !== 'object') return undefined;
+  const out: Training = {};
+  let sum = 0;
+  for (const k of STATS) {
+    const v = (t as Record<string, unknown>)[k];
+    if (typeof v === 'number' && Number.isInteger(v) && v > 0) {
+      out[k] = v;
+      sum += v;
+    }
+  }
+  if (!sum || sum > pointsEarned(xp)) return undefined;
+  return out;
+}
+
+/** Food boosts from a trade, each kept within that stat's food cap. */
+export function readFoodBoost(b: unknown): Training | undefined {
+  if (!b || typeof b !== 'object') return undefined;
+  const out: Training = {};
+  for (const k of STATS) {
+    const v = (b as Record<string, unknown>)[k];
+    if (typeof v === 'number' && v > 0) out[k] = Math.round(Math.min(v, foodCapFor(k)) * 10) / 10;
+  }
+  return Object.keys(out).length ? out : undefined;
+}
 
 export type OfferCheck = { ok: true } | { ok: false; reason: string };
 
@@ -66,6 +101,14 @@ export function applyTrade(s: GameState, tradeId: string, giveId: string, get: T
     ...(readIvs(get.ivs) ? { ivs: readIvs(get.ivs) } : {}),
     ...(get.personality && PERSONALITIES[get.personality] ? { personality: get.personality } : {}),
   };
+  // The pet arrives as it was trained: same points, food boosts and moves (checked, so a bad copy can't add stats).
+  const train = readTraining(get.train, received.xp);
+  if (train) received.train = train;
+  const foodBoost = readFoodBoost(get.foodBoost);
+  if (foodBoost) received.foodBoost = foodBoost;
+  const known = new Set(learned(get.speciesId, received.xp).map((m) => m.id));
+  const moves = Array.isArray(get.moves) ? get.moves.filter((m) => typeof m === 'string' && known.has(m)).slice(0, MAX_MOVES) : [];
+  if (moves.length) received.moves = moves;
   const isNew = !s.dex[get.speciesId];
   const pets = [...s.pets.filter((p) => p.id !== giveId), received];
   const activePetId = s.activePetId === giveId || !pets.some((p) => p.id === s.activePetId) ? received.id : s.activePetId;
