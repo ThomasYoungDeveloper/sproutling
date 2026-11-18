@@ -81,6 +81,21 @@ export const nativeProvider: HealthProvider = {
       return false;
     }
   },
+  async averageSteps(days: number): Promise<number | null> {
+    try {
+      const end = new Date();
+      end.setHours(0, 0, 0, 0);
+      const start = new Date(end.getTime() - days * 86_400_000);
+      const stats = await queryStatisticsForQuantity('HKQuantityTypeIdentifierStepCount', ['cumulativeSum'], {
+        filter: { date: { startDate: start, endDate: end } },
+        unit: 'count',
+      });
+      const total = stats.sumQuantity?.quantity ?? 0;
+      return total > 0 ? Math.round(total / days) : null;
+    } catch {
+      return null;
+    }
+  },
   async readDay(date: string): Promise<HealthDay | null> {
     try {
       // Steps: midnight to midnight. Statistics merge iPhone and Watch without double counting.

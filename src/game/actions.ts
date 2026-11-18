@@ -19,7 +19,11 @@ import { makeId, pickOne, type Rng, defaultRng } from './random';
 
 export const todayKey = (s: GameState) => dateKey(s.dayOffset);
 export const getDay = (s: GameState, offset = 0): DayLog | undefined => s.days[dateKey(s.dayOffset + offset)];
-export const today = (s: GameState): DayLog => getDay(s) ?? emptyDay();
+/** Today's log, carrying the player's own step and water goals (past days keep the goals they had). */
+export const today = (s: GameState): DayLog => {
+  const d = getDay(s) ?? emptyDay();
+  return d.stepGoal !== undefined && d.waterGoal !== undefined ? d : { ...d, stepGoal: d.stepGoal ?? s.goals?.steps ?? 8000, waterGoal: d.waterGoal ?? s.goals?.water ?? 8 };
+};
 export const streak = (s: GameState) => streakFrom((o) => getDay(s, o));
 export const activePet = (s: GameState): OwnedPet | undefined => s.pets.find((p) => p.id === s.activePetId);
 export const activeElement = (s: GameState) => { const p = activePet(s); return p ? SPECIES_BY_ID[p.speciesId]?.element : undefined; };
@@ -126,6 +130,11 @@ export const addSteps = (s: GameState, n: number) => updateToday(s, (d) => ({ ..
 /** Brings an older or edited save in line with today's rules (step cap per day). */
 export function cleanSave(s: GameState): GameState {
   let changed = false;
+  // Saves from before the unlock plan keep everything open; they only answer the quick setup once.
+  if (!s.onboard && s.pets.length > 0) {
+    s = { ...s, onboard: { legacy: true, hatched: true } };
+    changed = true;
+  }
   const days = { ...s.days };
   for (const k of Object.keys(days)) {
     if ((days[k]?.steps ?? 0) > MAX_DAY_STEPS) {

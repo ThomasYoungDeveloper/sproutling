@@ -1,3 +1,5 @@
+import Coin from './Coin';
+import BagSheet from './BagSheet';
 import React, { useEffect, useRef, useState } from 'react';
 import { Animated, Easing, PanResponder, Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import Svg, { Circle, Defs, Ellipse, LinearGradient, Path, Rect, Stop } from 'react-native-svg';
@@ -809,7 +811,8 @@ export default function PetScene({ onTrinketsEmpty, onDressUp, onShop, onAccount
             <Text style={styles.statText}>🔥 {streak}{state.shields ? ` 🛡️${state.shields}` : ''}</Text>
           </View>
           <Pressable style={styles.stat} hitSlop={8} onPress={() => onShop?.()} accessibilityRole="button" accessibilityLabel={`${state.coins} coins, open shop`}>
-            <RollingNumber value={state.coins} prefix="🪙 " style={styles.statText} />
+            <Coin size={18} />
+            <RollingNumber value={state.coins} prefix="" style={styles.statText} />
             <View style={styles.plus}><Text style={styles.plusText}>+</Text></View>
           </Pressable>
           <Pressable style={[styles.avatar, account?.warn && { backgroundColor: '#E8590C' }]} hitSlop={8} onPress={onAccount} accessibilityRole="button" accessibilityLabel={account?.label ?? 'Account'}>
@@ -839,6 +842,15 @@ export default function PetScene({ onTrinketsEmpty, onDressUp, onShop, onAccount
       <Pressable onPress={() => onDressUp?.()} style={styles.side} accessibilityRole="button" accessibilityLabel="Style">
         <View style={styles.sideBtn}><Text style={{ fontSize: 22 }}>🎨</Text></View>
         <Text style={styles.sideLabel}>Style</Text>
+      </Pressable>
+      <Pressable onPress={() => overlay.open(<BagSheet onClose={overlay.close} />)} style={[styles.side, { top: 182 }]} accessibilityRole="button" accessibilityLabel="Bag: your food, potions and items">
+        <View style={[styles.sideBtn, { borderColor: '#C98A3E' }]}>
+          <Svg width={24} height={24} viewBox="0 0 24 24">
+            <Path d="M5 9h14l-1.2 10.5a1.5 1.5 0 0 1-1.5 1.5H7.7a1.5 1.5 0 0 1-1.5-1.5z" fill="#F3D3A6" stroke="#9A6427" strokeWidth={2} strokeLinejoin="round" />
+            <Path d="M9 9V7a3 3 0 0 1 6 0v2" fill="none" stroke="#9A6427" strokeWidth={2} strokeLinecap="round" />
+          </Svg>
+        </View>
+        <Text style={styles.sideLabel}>Bag</Text>
       </Pressable>
 
       {showToys ? (

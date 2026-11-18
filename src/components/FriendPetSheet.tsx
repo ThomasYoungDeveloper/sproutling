@@ -115,7 +115,7 @@ export default function FriendPetSheet({ pet, owner, action, onClose }: { pet: V
                 ))}
               </View>
               <Text style={styles.note}>
-                {personality.label} · {St.gradeOf(pet)}% grade{points > 0 ? ` · ${trained} of ${points} training point${points === 1 ? '' : 's'} used` : ''}
+                Nature: {personality.label} ({personality.text}) · {St.gradeOf(pet)}% grade{points > 0 ? ` · ${trained} of ${points} training point${points === 1 ? '' : 's'} used` : ''}
               </Text>
               <Head title="Moves" meta={`${equipped.length} in use`} />
               {equipped.map((m) => <MoveRow key={m.id} m={m} />)}

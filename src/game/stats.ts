@@ -121,7 +121,8 @@ export function gradeInfo(g: number): { label: string; stars: number; color: str
   if (g >= 51) return { label: 'Good', stars: 1, color: '#3D8FD6' };
   return { label: 'Okay', stars: 0, color: '#6B9E86' };
 }
-export const gradeStars = (g: number) => { const n = gradeInfo(g).stars; return n === 4 ? '💯' : '⭐'.repeat(n) || '·'; };
+/** Stars for a grade (empty for the lowest grades, so text never starts with a stray dot). */
+export const gradeStars = (g: number) => { const n = gradeInfo(g).stars; return n === 4 ? '💯' : '⭐'.repeat(n); };
 
 const RARITY_TIER: Record<Rarity, number> = { common: 0, uncommon: 1, rare: 2, epic: 3, legendary: 4 };
 const ELEMENT_BONUS: Record<Element, Partial<Record<Stat, number>>> = {
@@ -175,7 +176,6 @@ export function train(p: OwnedPet, stat: Stat): OwnedPet {
   return { ...p, train: { ...p.train, [stat]: (p.train?.[stat] ?? 0) + 1 } };
 }
 
-export const RESPEC_COST = 100;
 
 /* ====================== Moves ====================== */
 

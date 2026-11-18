@@ -45,7 +45,8 @@ export default function TabBar<T extends string>({ tabs, active, badges, onPick 
   const insets = useSafeAreaInsets();
   const bottom = insets.bottom;
   return (
-    <View style={[styles.wrap, { marginBottom: -bottom, paddingBottom: Math.max(bottom - 12, 6) }]}>
+    // Square, edge to edge (under the side camera column too), so there's no stray gap at the corners.
+    <View style={[styles.wrap, { marginBottom: -bottom, paddingBottom: Math.max(bottom - 24, 4), marginLeft: -insets.left, marginRight: -insets.right, paddingLeft: insets.left + 8, paddingRight: insets.right + 8 }]}>
       <View style={styles.bar}>
         {tabs.map((t) => {
           const on = t.id === active;
@@ -67,7 +68,7 @@ export default function TabBar<T extends string>({ tabs, active, badges, onPick 
 }
 
 const styles = StyleSheet.create({
-  wrap: { backgroundColor: '#24323A', borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingHorizontal: 8, paddingTop: 6 },
+  wrap: { backgroundColor: '#24323A', paddingTop: 6 },
   bar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-around', paddingHorizontal: 2, height: 60, maxWidth: 520, width: '100%', alignSelf: 'center' },
   btn: { width: 64, height: 54, borderRadius: 18, alignItems: 'center', justifyContent: 'center', gap: 2 },
   on: { backgroundColor: '#2FB58A' },

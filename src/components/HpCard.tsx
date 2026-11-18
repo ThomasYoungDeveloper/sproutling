@@ -51,22 +51,25 @@ export default function HpCard({ pet }: { pet: OwnedPet }) {
         {now} / {max} HP.{' '}
         {st === 'out'
           ? `${pet.nickname} is resting. HP starts coming back in about ${H.minutesToWake(pet, state)} min (10% an hour). Potions can’t wake a knocked-out pet.`
-          : pct < H.REST_UP_TO
-            ? `Healing by itself: 10% an hour, up to ${H.REST_UP_TO}%. Potions heal faster.`
-            : pct < 100
-            ? `Pets heal by themselves up to ${H.REST_UP_TO}%. Use a potion to heal the rest.`
+          : pct < 100
+            ? `Healing by itself: 10% an hour, about ${Math.ceil((100 - pct) / H.REST_PER_HOUR)} hour${Math.ceil((100 - pct) / H.REST_PER_HOUR) === 1 ? '' : 's'} to full. Potions heal right away.`
             : 'Fights on trips and with wild pets lower HP. Friend battles never do.'}
       </Text>
       {pct < 100 && pct > 0 ? (
         <View style={styles.potions}>
           {(['small', 'full'] as const).map((k) => {
             const n = H.potionsOf(state, k);
+            // Say what it does in plain terms: how much HP it gives back and where that leaves your pet.
+            const gain = Math.round((Math.min(100, pct + H.POTION_HEAL[k]) - pct) / 100 * max);
+            const after = Math.min(100, Math.round(pct + H.POTION_HEAL[k]));
+            const what = k === 'full' ? 'Heals to full' : `Heals ${H.POTION_HEAL[k]}% of max HP`;
             return (
-              <Pressable key={k} disabled={!n} onPress={() => use(k)} style={[styles.potion, { borderColor: POTION_COLOR[k] }, !n && { opacity: 0.4 }]} accessibilityRole="button" accessibilityLabel={`Use ${H.POTION_ITEM[k]}, ${n} left`}>
+              <Pressable key={k} disabled={!n} onPress={() => use(k)} style={[styles.potion, { borderColor: POTION_COLOR[k] }, !n && { opacity: 0.4 }]} accessibilityRole="button" accessibilityLabel={`Use ${H.POTION_ITEM[k]}: ${what}. Gives back ${gain} HP, to ${after}%. ${n} left`}>
                 <PotionIcon kind={k} size={34} />
                 <View style={{ flex: 1 }}>
                   <Text style={styles.potionName}>{H.POTION_ITEM[k]}</Text>
-                  <Text style={styles.potionSub}>{n ? `${n} left · +${H.POTION_HEAL[k]}%` : 'None left'}</Text>
+                  <Text style={styles.potionSub}>{what}</Text>
+                  <Text style={styles.potionSub}>{n ? `+${gain} HP, to ${after}% · ${n} left` : 'None left'}</Text>
                 </View>
               </Pressable>
             );

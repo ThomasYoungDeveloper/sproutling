@@ -34,21 +34,20 @@ const TripActivity = (props: TripActivityProps, env: LiveActivityEnvironment) =>
       <Image systemName="pawprint.fill" size={Math.round(size * 0.6)} color="#7CF0B5" />
     );
   const pet = petAt(52);
-  // One small icon per stop (no text, so the row stays tidy); stops ahead stay a muted '?'.
+  // One small icon for each thing that has happened so far. Nothing is shown for what's ahead,
+  // so the trip stays a surprise (no row of question marks hinting how many things are coming).
   const stopRow = (
     <HStack spacing={5}>
-      {props.stops.map((s, i) => {
-        const reached = now >= s.at;
-        const color = !reached ? '#6F679C' : s.kind === 'fight' ? (s.won ? '#7CF0B5' : '#FF9A8A') : s.kind === 'food' ? '#FFD98A' : '#FFC08A';
-        return (
+      {props.stops
+        .filter((s) => now >= s.at)
+        .map((s, i) => (
           <Image
             key={i}
-            systemName={!reached ? 'questionmark.circle.fill' : s.kind === 'fight' ? (s.won ? 'checkmark.circle.fill' : 'xmark.circle.fill') : s.kind === 'food' ? 'leaf.circle.fill' : 'gift.circle.fill'}
+            systemName={s.kind === 'fight' ? (s.won ? 'checkmark.circle.fill' : 'xmark.circle.fill') : s.kind === 'food' ? 'leaf.circle.fill' : 'gift.circle.fill'}
             size={15}
-            color={color}
+            color={s.kind === 'fight' ? (s.won ? '#7CF0B5' : '#FF9A8A') : s.kind === 'food' ? '#FFD98A' : '#FFC08A'}
           />
-        );
-      })}
+        ))}
     </HStack>
   );
   const lastReached = [...props.stops].reverse().find((s) => now >= s.at);

@@ -15,10 +15,10 @@ export type PotionKind = 'small' | 'full';
 export const POTION_ITEM: Record<PotionKind, string> = { small: SMALL, full: FULL };
 export const POTION_HEAL: Record<PotionKind, number> = { small: 50, full: 100 };
 export const POTION_PRICE: Record<PotionKind, number> = { small: 60, full: 150 };
-export const POTION_INFO: Record<PotionKind, string> = { small: 'Heals half your pet’s HP', full: 'Heals all of your pet’s HP' };
-/** Every pet slowly heals by itself: 10% an hour, up to half its HP. Potions heal the rest (and can’t wake a knocked-out pet). */
+export const POTION_INFO: Record<PotionKind, string> = { small: 'Heals 50% of your pet’s max HP (e.g. 25% → 75%)', full: 'Heals your pet to full HP' };
+/** Every pet heals by itself: 10% an hour, all the way to full. Potions are for when you don't want to wait. */
 export const REST_PER_HOUR = 10;
-export const REST_UP_TO = 50;
+export const REST_UP_TO = 100;
 const HOUR = 3_600_000;
 /** Below this a pet is "hurt" and a trip is risky. */
 export const HURT_BELOW = 50;
@@ -81,7 +81,7 @@ export function takePotion(s: GameState, kind: PotionKind): GameState | null {
   return { ...s, items };
 }
 
-/** Heals every pet a little over time (10% an hour, up to 50%). Run it now and then. */
+/** Heals every pet a little over time (10% an hour, up to full). Run it now and then. */
 export function restPets(s: GameState, now = Date.now()): GameState {
   const t = nowOf(s, now);
   let changed = false;
@@ -101,10 +101,7 @@ export function restPets(s: GameState, now = Date.now()): GameState {
     if (gained < 0.1) return p;
     changed = true;
     const next = Math.min(REST_UP_TO, Math.round((hp + gained) * 10) / 10);
-    if (next >= REST_UP_TO) {
-      const { hpAt: _a, ...rest } = p;
-      return { ...rest, hpPct: next };
-    }
+    if (next >= REST_UP_TO) return withoutHp(p);
     return { ...p, hpPct: next, hpAt: t };
   });
   return changed ? { ...s, pets } : s;

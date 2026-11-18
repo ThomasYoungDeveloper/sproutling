@@ -1,7 +1,7 @@
 import { COLLECTIBLES } from './loot';
 import { claimableCount, currentEvent } from './events';
 import type { DayLog, Element, GameState } from './types';
-import { scoreDay } from './scoring';
+import { glassesText, scoreDay, stepGoalOf, waterGoalOf } from './scoring';
 import { stepsToHatch, RARITY_INFO } from './rarity';
 import * as A from './actions';
 import { progress } from './expedition';
@@ -129,13 +129,14 @@ export function reminders(s: GameState): Reminder[] {
   if (!c.fed) out.push({ id: 'feed', icon: '🍙', text: `Feed ${name} for +10% XP today`, action: 'feed' });
   if ((c.played ?? 0) < PLAYS_NEEDED) out.push({ id: 'play', icon: '🎾', text: `Play with ${name} (${Math.min(c.played ?? 0, PLAYS_NEEDED)}/${PLAYS_NEEDED}) for +10% XP`, action: 'play' });
   if (d.sleepHours === 0) out.push({ id: 'sleep', icon: '🌙', text: 'Log last night’s sleep', action: 'sleep' });
-  if (d.water < 6) out.push({ id: 'water', icon: '💧', text: `${6 - d.water} more glass${6 - d.water === 1 ? '' : 'es'} of water for today’s quest`, action: 'water' });
+  const wLeft = waterGoalOf(d) - d.water;
+  if (wLeft > 0) out.push({ id: 'water', icon: '💧', text: `${glassesText(wLeft)} more glass${wLeft === 1 ? '' : 'es'} of water for today’s quest`, action: 'water' });
   const close = s.eggs
     .filter((e) => e.incubating && !A.isReady(e))
     .map((e) => ({ e, left: stepsToHatch(e.rarity) - e.stepsWalked }))
     .sort((a, b) => a.left - b.left)[0];
   if (close && close.left <= 1500) out.push({ id: 'egg', icon: '👣', text: `Your ${RARITY_INFO[close.e.rarity].label} egg hatches in ${close.left.toLocaleString()} steps!`, action: 'steps' });
-  if (d.steps < 8000) out.push({ id: 'steps', icon: '👟', text: `${(8000 - d.steps).toLocaleString()} steps to today’s walking quest`, action: 'steps' });
+  if (d.steps < stepGoalOf(d)) out.push({ id: 'steps', icon: '👟', text: `${(stepGoalOf(d) - d.steps).toLocaleString()} steps to today’s walking quest`, action: 'steps' });
   if (!c.treat && trinketCount(s) > 0) out.push({ id: 'treat', icon: '✨', text: `Give ${name} a treat from your bag for +10% XP`, action: 'treat' });
   if (s.chests.length) out.push({ id: 'chests', icon: '🎁', text: s.chests.length === 1 ? 'You have a chest to open' : `You have ${s.chests.length} chests to open`, action: 'chests' });
   return out;

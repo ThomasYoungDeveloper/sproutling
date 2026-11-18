@@ -1,3 +1,4 @@
+import { useResetIn } from '../lib/useResetIn';
 import React, { useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
@@ -17,6 +18,7 @@ import * as B from '../game/battle';
 import { healthProvider, isVerified } from '../lib/health';
 import * as T from '../game/trade';
 import type { TradePet } from '../game/trade';
+import { BuffSheet } from './BuffInfo';
 import FriendPetSheet, { type ViewPet } from './FriendPetSheet';
 
 /* ---------- Picking a pet to trade ---------- */
@@ -223,10 +225,12 @@ export function friendOpponent(f: Friend): Opponent | null {
 
 export function ArenaCard() {
   const { state } = useGame();
+  const overlay = useOverlay();
   const battle = useBattle();
   const buffs = B.habitBuffs(state);
   const has = (id: string) => buffs.some((b) => b.id === id);
   const left = B.battlesLeftToday(state);
+  const resetIn = useResetIn();
   const rec = state.battle;
   return (
     <Card style={styles.arena}>
@@ -244,8 +248,8 @@ export function ArenaCard() {
       <View style={styles.buffs}>
         {[
           { id: 'rested', emoji: '😴', label: 'Rested', hint: 'Sleep 7+ h' },
-          { id: 'hydrated', emoji: '💧', label: 'Hydrated', hint: '6 glasses' },
-          { id: 'energized', emoji: '👟', label: 'Energized', hint: '8k steps' },
+          { id: 'hydrated', emoji: '💧', label: 'Hydrated', hint: 'Water goal' },
+          { id: 'energized', emoji: '👟', label: 'Energized', hint: 'Step goal' },
           { id: 'cared', emoji: '💖', label: 'Cared for', hint: 'Pet care' },
           ...(isVerified(healthProvider())
             ? [
@@ -255,14 +259,14 @@ export function ArenaCard() {
               ]
             : []),
         ].map((b) => (
-          <View key={b.id} style={[styles.buff, has(b.id) && styles.buffOn]}>
+          <Pressable key={b.id} onPress={() => overlay.open(<BuffSheet id={b.id as B.BuffInfo['id']} onClose={overlay.close} />)} style={({ pressed }) => [styles.buff, has(b.id) && styles.buffOn, pressed && { transform: [{ scale: 0.95 }] }]} accessibilityRole="button" accessibilityLabel={`${b.label}${has(b.id) ? ', on today' : ''}. Tap to see how to earn it`}>
             <Text style={{ fontSize: 16, opacity: has(b.id) ? 1 : 0.5 }}>{b.emoji}</Text>
             <Text style={[styles.buffText, has(b.id) && { color: '#1B2240' }]}>{has(b.id) ? b.label : b.hint}</Text>
-          </View>
+          </Pressable>
         ))}
       </View>
       <Text style={[font.small, { color: '#D6DCF5' }]}>
-        {left > 0 ? `${left} rewarded battle${left === 1 ? '' : 's'} left today (first win gets a chest!).` : 'Rewards are used up for today, but you can still battle for fun.'} Train pets and pick moves on the Pets tab.
+        {left > 0 ? `${left} rewarded battle${left === 1 ? '' : 's'} left today (first win gets a chest!).` : `Rewards are used up for today (back in ${resetIn}), but you can still battle for fun.`} Train pets and pick moves on the Pets tab.
       </Text>
       <View style={{ flexDirection: 'row', gap: space.sm }}>
         <Button

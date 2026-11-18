@@ -1,3 +1,4 @@
+import { useResetIn } from '../lib/useResetIn';
 import React, { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useGame } from '../state/GameContext';
@@ -14,6 +15,7 @@ export default function FeedSheet({ onFeed, onClose, onShop }: { onFeed: (foodId
   const day = A.today(state);
   const needs = F.needsFor(day);
   const used = F.boostsUsedToday(day);
+  const resetIn = useResetIn();
   const [msg, setMsg] = useState<string | null>(null);
   if (!pet) return null;
 
@@ -57,7 +59,7 @@ export default function FeedSheet({ onFeed, onClose, onShop }: { onFeed: (foodId
             </View>
             <View style={[styles.chip, { backgroundColor: '#E6F4EE' }]} accessibilityLabel={`${F.BOOSTS_PER_DAY - used} of ${F.BOOSTS_PER_DAY} stat bonuses left today`}>
               <Text style={styles.chipEmoji}>💪</Text>
-              <Text style={[styles.chipText, { color: colors.mintDark }]}>Stat bonuses: {F.BOOSTS_PER_DAY - used} of {F.BOOSTS_PER_DAY} left</Text>
+              <Text style={[styles.chipText, { color: colors.mintDark }]}>{used >= F.BOOSTS_PER_DAY ? `Stat bonuses back in ${resetIn}` : `Stat bonuses: ${F.BOOSTS_PER_DAY - used} of ${F.BOOSTS_PER_DAY} left`}</Text>
             </View>
           </View>
           <Text style={styles.small}>

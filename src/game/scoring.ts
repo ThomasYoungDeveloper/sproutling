@@ -25,10 +25,18 @@ export interface Quest {
   progress: string;
 }
 
+/** Days saved before personal goals had 8,000 steps and 6 glasses. Today's log carries the player's own goals. */
+export const stepGoalOf = (d: DayLog) => d.stepGoal ?? 8000;
+export const waterGoalOf = (d: DayLog) => d.waterGoal ?? 6;
+/** Glasses as a short number: 1.5, 2, 8. */
+export const glassesText = (n: number) => String(Math.round(n * 10) / 10);
+
 export function dailyQuests(d: DayLog): Quest[] {
+  const sg = stepGoalOf(d);
+  const wg = waterGoalOf(d);
   return [
-    { id: 'walk', label: 'Walk 8,000 steps', done: d.steps >= 8000, progress: `${Math.min(d.steps, 8000).toLocaleString()} / 8,000` },
-    { id: 'water', label: 'Drink 6 glasses of water', done: d.water >= 6, progress: `${Math.min(d.water, 6)} / 6` },
+    { id: 'walk', label: `Walk ${sg.toLocaleString()} steps`, done: d.steps >= sg, progress: `${Math.min(d.steps, sg).toLocaleString()} / ${sg.toLocaleString()}` },
+    { id: 'water', label: `Drink ${wg} glasses of water`, done: d.water >= wg, progress: `${glassesText(Math.min(d.water, wg))} / ${wg}` },
     { id: 'sleep', label: 'Sleep 7 hours or more', done: d.sleepHours >= 7, progress: `${d.sleepHours} / 7 h` },
   ];
 }
@@ -55,11 +63,11 @@ export function ringsClosed(d: DayLog): number {
 }
 
 export function scoreDay(d: DayLog, element?: Element): DayScore {
-  let steps = Math.min(Math.floor(d.steps / 100), 120) + (d.steps >= 8000 ? 20 : 0);
+  let steps = Math.min(Math.floor(d.steps / 100), 120) + (d.steps >= stepGoalOf(d) ? 20 : 0);
   let sleep = 0;
   if (d.sleepHours >= 7 && d.sleepHours <= 9) sleep = 30;
   else if ((d.sleepHours >= 6 && d.sleepHours < 7) || (d.sleepHours > 9 && d.sleepHours <= 10)) sleep = 15;
-  let water = Math.min(d.water, 8) * 4;
+  let water = Math.floor(Math.min(d.water, 8) * 4);
   const workout = Math.min(d.workoutMinutes, 60);
   const logged = d.meals.slice(0, 4);
   const meals = logged.length * 5 + logged.filter((m) => m.veggies).length * 5;

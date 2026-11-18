@@ -1,3 +1,4 @@
+import Coin from './src/components/Coin';
 import React, { useEffect, useRef, useState } from 'react';
 import { Linking, Platform, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
@@ -8,6 +9,9 @@ import { GameProvider, useGame } from './src/state/GameContext';
 import { AuthProvider, useAuth } from './src/state/AuthContext';
 import AccountSheet from './src/components/AccountSheet';
 import AuthFlow from './src/screens/AuthFlow';
+import IntroFlow from './src/screens/IntroFlow';
+import * as I from './src/game/intro';
+import { dateKey } from './src/game/dates';
 import HomeScreen from './src/screens/HomeScreen';
 import EggsScreen from './src/screens/EggsScreen';
 import ChestsScreen from './src/screens/ChestsScreen';
@@ -94,7 +98,10 @@ function Shell() {
   const [confirmReset, setConfirmReset] = useState(false);
   const readyEggs = state.eggs.filter(A.isReady).length;
   const reveal = useReveal();
-  const starter = A.needsStarter(state);
+  // Brand-new players (and, once, players from before the intro) go through the intro first.
+  const intro = I.needsIntro(state);
+  const introShown = useRef(false);
+  const starter = A.needsStarter(state) || intro;
   const login = A.loginStatus(state);
   const today = A.todayKey(state);
 
@@ -193,6 +200,12 @@ function Shell() {
     }
   }, [settled, starter, state.tutorialDone, login.canClaim, today]);
 
+  // Once a week the step goal moves with you (up after a strong week, down after a slow one).
+  useEffect(() => {
+    if (!settled || intro) return;
+    apply((s) => I.adjustGoal(s, new Date(), (o) => dateKey(s.dayOffset + o)));
+  }, [settled, intro, today]);
+
   // Notices (like opened gifts) fade away on their own.
   useEffect(() => {
     if (!notice) return;
@@ -212,6 +225,18 @@ function Shell() {
     last.current = { id: pet?.id ?? null, stage };
   }, [pet?.id, stage]);
 
+  // Once the intro is showing, keep it up while the save syncs (otherwise it would restart mid-way).
+  if (intro && (settled || introShown.current)) {
+    introShown.current = true;
+    return <IntroFlow />;
+  }
+  if (intro) {
+    return (
+      <View style={[styles.root, { alignItems: 'center', justifyContent: 'center' }]}>
+        <Text style={styles.brand}>Sprout<Text style={{ color: colors.mint }}>ling</Text></Text>
+      </View>
+    );
+  }
   return (
     <SafeAreaView style={styles.root}>
       {/* Sky colour only behind the status bar; the rest of the edges stay mint so no stray band shows by the tab bar. */}
@@ -225,7 +250,7 @@ function Shell() {
           </View>
           <View style={styles.pills}>
             <View style={styles.pill}><Text style={styles.pillText}>🔥 {A.streak(state)}{state.shields ? ` 🛡️${state.shields}` : ''}</Text></View>
-            <View style={styles.pill}><RollingNumber value={state.coins} prefix="🪙 " style={styles.pillText} /></View>
+            <View style={[styles.pill, { flexDirection: 'row', alignItems: 'center', gap: 5 }]}><Coin size={20} /><RollingNumber value={state.coins} prefix="" style={styles.pillText} /></View>
             <Pressable onPress={() => setShowAccount(true)} style={[styles.avatar, (!user || sync === 'error') && { backgroundColor: '#E8590C' }]} accessibilityRole="button" accessibilityLabel={user ? `Account: ${username ?? 'you'}${sync === 'error' ? ', offline' : ''}` : 'Sign in to save your pets'}>
               <Text style={styles.avatarText}>{!user || sync === 'error' ? '!' : (username ?? 'T')[0].toUpperCase()}</Text>
             </Pressable>

@@ -1,3 +1,5 @@
+import { useResetIn } from '../lib/useResetIn';
+import Coin from './Coin';
 import React, { useState } from 'react';
 import PotionIcon from './PotionIcon';
 import { Animated, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
@@ -14,7 +16,7 @@ const CHEST_COLOR: Record<ChestKind, string> = { bronze: '#C98A4B', silver: '#8F
 function RewardLabel({ r, big }: { r: A.LoginReward; big?: boolean }) {
   return (
     <View style={{ alignItems: 'center', gap: 2 }}>
-      {r.chest ? <Text style={{ fontSize: big ? 44 : 22 }}>🎁</Text> : <Text style={{ fontSize: big ? 44 : 22 }}>🪙</Text>}
+      {r.chest ? <Text style={{ fontSize: big ? 44 : 22 }}>🎁</Text> : <Coin size={big ? 44 : 24} />}
       {r.chest ? <Text style={[big ? styles.bigText : styles.tileText, { color: CHEST_COLOR[r.chest] }]}>{big ? CHEST_LABEL[r.chest] : r.chest[0].toUpperCase() + r.chest.slice(1)}</Text> : null}
       {r.coins ? <Text style={big ? styles.bigText : styles.tileText}>{r.chest ? '+ ' : ''}{r.coins}{big ? ' coins' : ''}</Text> : null}
     </View>
@@ -26,6 +28,7 @@ export default function DailyLoginSheet({ onClose }: { onClose: () => void }) {
   const { width, height } = useWindowDimensions();
   const wobble = useIdleWobble();
   const status = A.loginStatus(state);
+  const resetIn = useResetIn();
   const [got, setGot] = useState<{ reward: A.LoginReward; day: number } | null>(null);
 
   const collect = () => {
@@ -82,7 +85,7 @@ export default function DailyLoginSheet({ onClose }: { onClose: () => void }) {
           <Button primary label={`Collect day ${status.index + 1} reward`} onPress={collect} />
         ) : (
           <>
-            {!got ? <Text style={[font.small, { textAlign: 'center' }]}>You’ve collected today’s reward. Come back tomorrow for day {((status.index + 1) % 7) + 1}!</Text> : null}
+            {!got ? <Text style={[font.small, { textAlign: 'center' }]}>You’ve collected today’s reward. Day {((status.index + 1) % 7) + 1} unlocks in {resetIn}!</Text> : null}
             <Button primary label={got ? 'Awesome!' : 'Done'} onPress={onClose} />
           </>
         )}

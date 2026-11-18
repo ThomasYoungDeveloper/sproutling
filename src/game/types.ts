@@ -35,6 +35,9 @@ export interface DayLog {
   exerciseMin?: number;
   /** Mindful minutes (meditation, breathing). Only from Apple Health. */
   mindfulMin?: number;
+  /** This day's step and water goals (water in 8 oz glasses), saved so past days keep the goal they had. */
+  stepGoal?: number;
+  waterGoal?: number;
 }
 
 export interface DayCare {
@@ -161,4 +164,35 @@ export interface GameState {
   tower?: import('./tower').TowerState;
   /** Live battles whose rewards were already collected (so a second phone can't collect them again). */
   liveDone?: string[];
+  /** The new player intro and what has unlocked. */
+  onboard?: {
+    /** Picked an egg and hatched the first pet in the intro. */
+    hatched?: boolean;
+    /** Finished the intro questions (new players) or the quick setup (existing players). */
+    done?: boolean;
+    /** Saved before the unlock plan: everything stays open. */
+    legacy?: boolean;
+    birthYear?: number;
+    focus?: import('./intro').Focus[];
+    activity?: import('./intro').Activity;
+    health?: 'connected' | 'skipped';
+    /** Features whose "now open" card was already shown or dismissed. */
+    seen?: string[];
+  };
+  /** Daily goals. Water is in 8 oz glasses. */
+  goals?: {
+    steps: number;
+    water: number;
+    unit?: 'oz' | 'ml';
+    /** Glass size in oz used by the + button. */
+    glass?: number;
+    /** The step goal moves with you each week (set up in the intro). */
+    auto?: boolean;
+    /** The week (its Monday) the goal was last checked. */
+    week?: string;
+    /** The last weekly change, shown once on the Today card. */
+    changed?: 'up' | 'down';
+  };
+  /** The daily tip already read today. */
+  tipSeen?: string;
 }

@@ -1,3 +1,4 @@
+import { CoinText } from './Coin';
 import React, { useEffect, useRef, useState } from 'react';
 import * as H from '../game/hp';
 import PotionIcon, { POTION_COLOR } from './PotionIcon';
@@ -562,7 +563,7 @@ function Result({ won, lines, special, reward, raid, rp, points, name, onRematch
       ) : reward && reward.rewarded ? (
         <PopIn delay={200}>
           <View style={styles.rewardRow}>
-            <View style={styles.reward}><Text style={styles.rewardText}>🪙 +{reward.coins}</Text></View>
+            <View style={styles.reward}><CoinText style={styles.rewardText}>+{reward.coins}</CoinText></View>
             {reward.chest ? <View style={styles.reward}><Text style={styles.rewardText}>🎁 Bronze chest</Text></View> : null}
           </View>
         </PopIn>

@@ -1,3 +1,5 @@
+import * as U from '../game/unlocks';
+import { PersonalitySheet } from './BuffInfo';
 import React, { useRef, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useGame } from '../state/GameContext';
@@ -24,7 +26,9 @@ import { useFriends } from '../state/FriendsContext';
 export default function PetSheet({ petId, onClose }: { petId: string; onClose: () => void }) {
   const { state, apply } = useGame();
   const pet = state.pets.find((p) => p.id === petId);
-  const [confirmReset, setConfirmReset] = useState(false);
+  // Training is permanent, so points are placed first and only saved when you tap Lock in.
+  const [pending, setPending] = useState<St.Training>({});
+  const [info, setInfo] = useState<'personality' | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
   const [sharing, setSharing] = useState(false);
   const [preview, setPreview] = useState(false);
@@ -36,8 +40,10 @@ export default function PetSheet({ petId, onClose }: { petId: string; onClose: (
   if (!pet) return null;
   const sp = SPECIES_BY_ID[pet.speciesId];
   const lv = levelFor(pet.xp);
-  const stats = St.statsFor(pet);
-  const left = St.pointsLeft(pet);
+  const placed = St.pointsSpent(pending);
+  const trainPreview = { ...pet, train: Object.fromEntries(St.STATS.map((k) => [k, (pet.train?.[k] ?? 0) + (pending[k] ?? 0)])) as St.Training };
+  const stats = St.statsFor(trainPreview);
+  const left = St.pointsLeft(pet) - placed;
   const pers = St.PERSONALITIES[St.personalityOf(pet)];
   const ivs = St.ivsOf(pet);
   const grade = St.gradeOf(pet);
@@ -69,7 +75,7 @@ export default function PetSheet({ petId, onClose }: { petId: string; onClose: (
               <View style={{ flexDirection: 'row', gap: 6, flexWrap: 'wrap' }}>
                 <RarityBadge rarity={sp.rarity} />
                 <View style={[styles.chip, { backgroundColor: ELEMENT_COLOR[sp.element] }]}><Text style={styles.chipText}>{ELEMENT_LABEL[sp.element]}</Text></View>
-                <View style={[styles.chip, { backgroundColor: '#F1EAFB' }]}><Text style={[styles.chipText, { color: '#6E56CF' }]}>{pers.emoji} {pers.label}: {pers.text}</Text></View>
+                <Pressable onPress={() => setInfo('personality')} style={[styles.chip, { backgroundColor: '#F1EAFB' }]} accessibilityRole="button" accessibilityLabel={`Nature: ${pers.label}, ${pers.text}. Born with it. Tap for more`}><Text style={[styles.chipText, { color: '#6E56CF' }]}>Nature: {pers.label} ({pers.text}) ⓘ</Text></Pressable>
               </View>
               <Text style={[font.tiny, { fontWeight: '800' }]}>{ELEMENT_HABIT[sp.element].emoji} While active: {ELEMENT_HABIT[sp.element].label}</Text>
               {isActive ? (
@@ -88,7 +94,7 @@ export default function PetSheet({ petId, onClose }: { petId: string; onClose: (
               <Text style={[styles.gradeBig, { color: gi.color }]}>{grade >= 100 ? '💯 100%' : `${grade}%`}</Text>
             </View>
             <Text style={[font.small, { fontWeight: '800' }]}>
-              {St.gradeStars(grade)} {gi.label}. {grade >= 100 ? 'A perfect pet: the best of the best!' : 'Every pet is born with hidden quality from 0 to 15 in each stat. A perfect 15 makes that stat up to 10% stronger. Raise it with Training Crystals or by combining a spare.'}
+              {St.gradeStars(grade) ? `${St.gradeStars(grade)} ` : ''}{grade}% grade: {gi.label}. {grade >= 100 ? 'A perfect pet: the best of the best!' : 'Every pet is born with hidden quality from 0 to 15 in each stat. A perfect 15 makes that stat up to 10% stronger. Raise it with Training Crystals or by combining a spare.'}
             </Text>
             <View style={styles.ivGrid}>
               {St.STATS.map((k) => (
@@ -101,7 +107,7 @@ export default function PetSheet({ petId, onClose }: { petId: string; onClose: (
                 </View>
               ))}
             </View>
-            <PowerUps pet={pet} />
+            {U.unlocked(state, 'breeding') ? <PowerUps pet={pet} /> : <Text style={font.tiny}>{U.lockedText('breeding')} to power up with Training Crystals.</Text>}
           </View>
 
           <View style={styles.section}>
@@ -125,12 +131,12 @@ export default function PetSheet({ petId, onClose }: { petId: string; onClose: (
                     <View style={{ width: `${Math.min(100, (stats[k] / maxStat[k]) * 100)}%`, height: '100%', borderRadius: 999, backgroundColor: info.color }} />
                   </View>
                   <Text style={styles.statVal}>{stats[k]}</Text>
-                  <Text style={styles.trained}>{pet.train?.[k] ? `+${pet.train[k]}` : ''}</Text>
+                  <Text style={[styles.trained, pending[k] ? { color: '#E8590C' } : null]}>{trainPreview.train?.[k] ? `+${trainPreview.train[k]}` : ''}</Text>
                   <Pressable
                     onPress={() => {
                       if (left <= 0) return;
                       buzz('light', 'pop');
-                      update((p) => St.train(p, k));
+                      setPending((p) => ({ ...p, [k]: (p[k] ?? 0) + 1 }));
                     }}
                     style={[styles.plus, left <= 0 && { opacity: 0.3 }]}
                     accessibilityRole="button"
@@ -142,23 +148,30 @@ export default function PetSheet({ petId, onClose }: { petId: string; onClose: (
                 </View>
               );
             })}
-            {St.pointsSpent(pet.train) > 0 ? (
-              <Pressable
-                onPress={() => {
-                  if (!confirmReset) {
-                    setConfirmReset(true);
-                    setTimeout(() => setConfirmReset(false), 3000);
-                    return;
-                  }
-                  if (state.coins < St.RESPEC_COST) return setMsg(`Resetting costs ${St.RESPEC_COST} coins.`);
-                  buzz('medium');
-                  apply((s) => ({ ...s, coins: s.coins - St.RESPEC_COST, pets: s.pets.map((p) => (p.id === pet.id ? { ...p, train: {} } : p)) }));
-                  setConfirmReset(false);
-                  setMsg('Points reset. Spend them again however you like!');
-                }}
-              >
-                <Text style={styles.reset}>{confirmReset ? `Tap again to reset points (🪙 ${St.RESPEC_COST})` : 'Reset points'}</Text>
-              </Pressable>
+            {placed > 0 ? (
+              <View style={{ gap: 6 }}>
+                <Text style={[font.small, { fontWeight: '800', color: '#C4562F' }]}>Training is permanent. Once you lock these in, they can’t be moved.</Text>
+                <View style={{ flexDirection: 'row', gap: 8 }}>
+                  <Button small label="Undo" onPress={() => setPending({})} />
+                  <Button
+                    small
+                    primary
+                    label={`Lock in ${placed} point${placed === 1 ? '' : 's'}`}
+                    onPress={() => {
+                      buzz('medium');
+                      update((p) => {
+                        let q = p;
+                        for (const k of St.STATS) for (let i = 0; i < (pending[k] ?? 0); i++) q = St.train(q, k);
+                        return q;
+                      });
+                      setPending({});
+                      setMsg('Training locked in!');
+                    }}
+                  />
+                </View>
+              </View>
+            ) : left > 0 ? (
+              <Text style={font.tiny}>Choose wisely: training points can’t be reset.</Text>
             ) : null}
           </View>
 
@@ -228,6 +241,7 @@ export default function PetSheet({ petId, onClose }: { petId: string; onClose: (
           </View>
         </View>
       ) : null}
+      {info === 'personality' ? <PersonalitySheet personality={St.personalityOf(pet)} name={pet.nickname} onClose={() => setInfo(null)} /> : null}
     </View>
   );
 }

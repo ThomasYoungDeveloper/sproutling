@@ -1,3 +1,5 @@
+import * as I from '../game/intro';
+import { healthAvailable, nativeHealth } from '../lib/health';
 import * as A from '../game/actions';
 import { ChatSettings, HelpRows } from './Chat';
 import React, { useEffect, useState } from 'react';
@@ -168,6 +170,8 @@ export default function AccountSheet({ onClose }: { onClose: () => void }) {
             <SoundToggle />
             <RemindersToggle />
             <View style={{ height: 1, backgroundColor: '#E3ECE7', marginVertical: 6 }} />
+            <GoalSettings />
+            <View style={{ height: 1, backgroundColor: '#E3ECE7', marginVertical: 6 }} />
             <ChatSettings />
             <View style={{ height: 1, backgroundColor: '#E3ECE7', marginVertical: 6 }} />
             <HelpRows />
@@ -178,6 +182,7 @@ export default function AccountSheet({ onClose }: { onClose: () => void }) {
               <View style={[styles.row, { flexWrap: 'wrap' }]}>
                 <Button small label="Skip to tomorrow" onPress={() => { apply(A.nextDay); onClose(); }} />
                 <Button small label="Replay tutorial" onPress={() => { apply((s) => ({ ...s, tutorialDone: false })); onClose(); }} />
+                <Button small label="Replay intro" onPress={() => { apply((s) => ({ ...s, onboard: { ...s.onboard, done: false } })); onClose(); }} />
                 <Button
                   small
                   label={confirmReset ? 'Tap again to reset' : 'Reset game'}
@@ -269,3 +274,51 @@ const styles = StyleSheet.create({
   testing: { borderTopWidth: 1, borderTopColor: colors.line, paddingTop: space.sm, gap: 6, marginTop: space.sm },
   status: { backgroundColor: colors.mintSoft, borderRadius: 10, paddingVertical: 6, paddingHorizontal: 10, alignSelf: 'flex-start' },
 });
+
+/** Daily step goal, water units, and Apple Health for players who skipped it. */
+function GoalSettings() {
+  const { state, apply } = useGame();
+  const goal = I.stepGoal(state);
+  const unit = state.goals?.unit ?? 'oz';
+  const skipped = state.onboard?.health === 'skipped';
+  const set = (patch: Partial<NonNullable<typeof state.goals>>) =>
+    apply((s) => {
+      const goals = { steps: I.stepGoal(s), water: I.waterGoal(s), ...s.goals, ...patch };
+      const key = A.todayKey(s);
+      const d = s.days[key];
+      return { ...s, goals, days: d ? { ...s.days, [key]: { ...d, stepGoal: goals.steps, waterGoal: goals.water } } : s.days };
+    });
+  return (
+    <View style={{ gap: 8 }}>
+      <Text style={[font.body, { fontWeight: '800' }]}>Daily goals</Text>
+      <View style={[styles.row, { alignItems: 'center', justifyContent: 'space-between' }]}>
+        <Text style={font.small}>Steps a day</Text>
+        <View style={[styles.row, { alignItems: 'center' }]}>
+          <Button small label="−" onPress={() => set({ steps: I.clampGoal(goal - 500) })} />
+          <Text style={[font.body, { fontWeight: '900', minWidth: 64, textAlign: 'center' }]}>{goal.toLocaleString()}</Text>
+          <Button small label="+" onPress={() => set({ steps: I.clampGoal(goal + 500) })} />
+        </View>
+      </View>
+      <View style={[styles.row, { alignItems: 'center', justifyContent: 'space-between' }]}>
+        <Text style={font.small}>Water ({I.waterText(I.waterGoal(state), unit)} a day)</Text>
+        <View style={styles.row}>
+          <Button small primary={unit === 'oz'} label="oz" onPress={() => set({ unit: 'oz' })} />
+          <Button small primary={unit === 'ml'} label="mL" onPress={() => set({ unit: 'ml' })} />
+        </View>
+      </View>
+      {state.goals?.auto ? <Text style={font.tiny}>Your step goal moves with you each week: up after good weeks, down after slow ones.</Text> : null}
+      {skipped && healthAvailable() ? (
+        <Button
+          small
+          label="Connect Apple Health"
+          onPress={async () => {
+            const h = nativeHealth();
+            if (!h) return;
+            await h.requestAccess();
+            apply((s) => ({ ...s, onboard: { ...s.onboard, health: 'connected' } }));
+          }}
+        />
+      ) : null}
+    </View>
+  );
+}

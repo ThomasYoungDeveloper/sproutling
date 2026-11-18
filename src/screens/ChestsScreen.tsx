@@ -1,3 +1,4 @@
+import { useResetIn } from '../lib/useResetIn';
 import React, { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Svg, { Path, Rect } from 'react-native-svg';
@@ -124,12 +125,13 @@ export default function ChestsScreen() {
   const streak = A.streak(state);
   const intoWeek = streak % 7;
   const finds = walkFindsToday(state);
+  const resetIn = useResetIn();
   const toNext = FIND_EVERY - (A.today(state).steps % FIND_EVERY);
   const rows: NextRow[] = [
     {
       key: 'bronze', kind: 'bronze', title: 'Bronze: today’s 3 habits',
       count: bronzeEarned ? 'Earned ✓' : `${done} of 3`, pct: bronzeEarned ? 1 : done / 3,
-      hint: bronzeEarned ? 'Come back tomorrow for another' : left.length === 0 ? 'All done! Your chest is on its way' : left.length === 1 ? `Just your ${left[0]} left` : `Still to do: ${left.join(', ')}`,
+      hint: bronzeEarned ? `Next one in ${resetIn}` : left.length === 0 ? 'All done! Your chest is on its way' : left.length === 1 ? `Just your ${left[0]} left` : `Still to do: ${left.join(', ')}`,
     },
     {
       key: 'silver', kind: 'silver', title: 'Silver: 7-day streak',
@@ -147,7 +149,7 @@ export default function ChestsScreen() {
     {
       key: 'walk', kind: 'walk', title: 'Walking finds',
       count: `${finds.found} of ${MAX_FINDS_PER_DAY} today`, pct: finds.found >= MAX_FINDS_PER_DAY ? 1 : 1 - toNext / FIND_EVERY,
-      hint: finds.found >= MAX_FINDS_PER_DAY ? 'All found today. More tomorrow!' : `Next lucky roll in ${toNext.toLocaleString()} steps`,
+      hint: finds.found >= MAX_FINDS_PER_DAY ? `All found today. More in ${resetIn}` : `Next lucky roll in ${toNext.toLocaleString()} steps`,
     },
   ];
 

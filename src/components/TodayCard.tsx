@@ -10,6 +10,11 @@ import { dailyQuests, ELEMENT_HABIT, EXERCISE_MINUTES, MINDFUL_MINUTES, RING_XP,
 import * as A from '../game/actions';
 import * as C from '../game/care';
 import { healthProvider, isVerified } from '../lib/health';
+import * as I from '../game/intro';
+import { tipFor, WHY } from '../game/tips';
+import { stepsToHatch } from '../game/rarity';
+import { glassesText, stepGoalOf, waterGoalOf } from '../game/scoring';
+import { NextUnlockLine } from './Unlocks';
 
 type Habit = 'steps' | 'water' | 'sleep';
 
@@ -24,7 +29,7 @@ const TINT: Record<string, string> = { steps: '#DDF4EA', water: '#DCEBFB', sleep
 
 /** Today's three habits as tiles with progress rings. Tap a tile to log it. */
 export default function TodayCard() {
-  const { state } = useGame();
+  const { state, apply } = useGame();
   const overlay = useOverlay();
   const d = A.today(state);
   const el = A.activeElement(state);
@@ -32,8 +37,25 @@ export default function TodayCard() {
   const pet = A.activePet(state);
   const quests = dailyQuests(d);
   const allDone = quests.every((q) => q.done);
+  const unit = state.goals?.unit ?? 'oz';
+  const goalOf: Record<Habit, number> = { steps: stepGoalOf(d), water: waterGoalOf(d), sleep: 7 };
   const value: Record<Habit, number> = { steps: d.steps, water: d.water, sleep: d.sleepHours };
-  const shown: Record<Habit, string> = { steps: d.steps.toLocaleString(), water: `${d.water} / 8`, sleep: `${d.sleepHours} h` };
+  const shown: Record<Habit, string> = { steps: d.steps.toLocaleString(), water: I.waterText(d.water, unit), sleep: `${d.sleepHours} h` };
+  const label: Record<Habit, string> = { steps: `of ${goalOf.steps.toLocaleString()}`, water: `of ${I.waterText(goalOf.water, unit)}`, sleep: 'sleep' };
+  const name = pet?.nickname ?? 'your pet';
+  const fed = !!d.care?.fed;
+  const egg = state.eggs.filter((e) => e.incubating && !A.isReady(e)).map((e) => stepsToHatch(e.rarity) - e.stepsWalked).sort((a, b) => a - b)[0];
+  const next = !fed
+    ? `Next: feed ${name}`
+    : d.water < goalOf.water
+      ? 'Next: log a glass of water'
+      : d.steps < goalOf.steps
+        ? `Next: a walk (${(goalOf.steps - d.steps).toLocaleString()} steps to go)`
+        : d.sleepHours === 0
+          ? 'Next: log last night’s sleep'
+          : null;
+  const tip = tipFor(A.todayKey(state));
+  const changed = state.goals?.changed;
   const done: Record<Habit, boolean> = { steps: quests[0].done, water: quests[1].done, sleep: quests[2].done };
 
   return (
@@ -67,14 +89,33 @@ export default function TodayCard() {
               {boosted ? (
                 <View style={[styles.mult, { backgroundColor: INFO[h].color }]}><Text style={styles.multText}>{eb!.mult === 2 ? '2×' : `${eb!.mult}×`} XP</Text></View>
               ) : null}
-              <Ring frac={Math.min(1, value[h] / INFO[h].goal)} color={INFO[h].color} done={done[h]} icon={INFO[h].icon} />
+              <Ring frac={Math.min(1, value[h] / goalOf[h])} color={INFO[h].color} done={done[h]} icon={INFO[h].icon} />
               <Text style={styles.value}>{shown[h]}</Text>
-              <Text style={styles.label}>{INFO[h].label}</Text>
+              <Text style={styles.label}>{label[h]}</Text>
             </Pressable>
           );
         })}
       </View>
       {d.rings || d.mindfulMin !== undefined ? <ActivityRow d={d} /> : null}
+      <View style={styles.extras}>
+        <Row done={fed} text={`Feed ${name}`} meta={fed ? 'Done' : '+10% XP'} />
+        {egg !== undefined ? <Row done={false} text="Hatch your egg" meta={`${egg.toLocaleString()} steps to go`} /> : null}
+      </View>
+      {changed ? (
+        <Pressable onPress={() => apply((s) => ({ ...s, goals: s.goals ? { ...s.goals, changed: undefined } : s.goals }))} style={styles.changed} accessibilityRole="button" accessibilityLabel="Dismiss">
+          <Text style={styles.changedText}>
+            {changed === 'up' ? `Great week! Your step goal went up to ${goalOf.steps.toLocaleString()}.` : `Your step goal eased to ${goalOf.steps.toLocaleString()} for this week. You’ve got this.`}
+          </Text>
+          <Text style={styles.changedX}>OK</Text>
+        </Pressable>
+      ) : null}
+      {next && !allDone ? <Text style={styles.next}>{next}</Text> : null}
+      <View style={styles.tip}>
+        <Text style={styles.tipTag}>DAILY TIP</Text>
+        <Text style={styles.tipText}>{tip.text}</Text>
+        <Text style={styles.tipSource}>Source: {tip.source} · Not medical advice</Text>
+      </View>
+      <NextUnlockLine />
     </Card>
   );
 }
@@ -146,12 +187,18 @@ function LogSheet({ habit, onClose }: { habit: Habit; onClose: () => void }) {
   const title = { steps: 'Steps', water: 'Water', sleep: 'Sleep' }[habit];
   const xp = { steps: score.steps, water: score.water, sleep: score.sleep }[habit];
   const questDone = { steps: q[0].done, water: q[1].done, sleep: q[2].done }[habit];
+  const unit = state.goals?.unit ?? 'oz';
+  const glass = state.goals?.glass ?? 8;
+  const wg = waterGoalOf(d);
+  const pet = A.activePet(state);
   const line = {
     steps: `${d.steps.toLocaleString()} steps today. Walking also warms your eggs.`,
-    water: `${d.water} of 8 glasses. Tap a glass to fill it.`,
+    water: `${glassesText(d.water)} of ${wg} glasses · ${I.waterText(d.water, unit)} of ${I.waterText(wg, unit)}`,
     sleep: `${d.sleepHours} hours last night. The sweet spot is 7–9 hours.`,
   }[habit];
-  const goal = { steps: 'Quest done at 8,000 steps.', water: 'Quest done at 6 glasses.', sleep: 'Quest done at 7 hours.' }[habit];
+  const goal = { steps: `Quest done at ${stepGoalOf(d).toLocaleString()} steps.`, water: `Quest done at ${I.waterText(wg, unit)}.`, sleep: 'Quest done at 7 hours.' }[habit];
+  const why = WHY[habit];
+  const sizeText = (oz: number) => (unit === 'ml' ? `${Math.round((oz * I.ML_PER_OZ) / 5) * 5} mL` : `${oz} oz`);
 
   return (
     <View style={styles.backdrop}>
@@ -183,12 +230,29 @@ function LogSheet({ habit, onClose }: { habit: Habit; onClose: () => void }) {
             <Button label="+ 30 min" onPress={() => { buzz(); apply((s) => A.setSleep(s, d.sleepHours + 0.5)); }} style={{ flex: 1 }} />
           </View>
         ) : (
-          <View style={styles.glasses}>
-            {Array.from({ length: 8 }, (_, i) => (
-              <Glass key={i} on={i < d.water} index={i} onPress={() => { buzz(); apply((s) => A.setWater(s, d.water === i + 1 ? i : i + 1)); }} />
-            ))}
+          <View style={{ gap: space.sm }}>
+            <View style={styles.glasses}>
+              {Array.from({ length: Math.max(8, wg) }, (_, i) => (
+                <Glass key={i} on={i < d.water} part={d.water - i} index={i} />
+              ))}
+            </View>
+            <View style={styles.controls}>
+              <Button label="−" onPress={() => { buzz(); apply((s) => A.setWater(s, Math.round((A.today(s).water - glass / I.OZ_PER_GLASS) * 100) / 100)); }} style={{ flex: 1 }} />
+              <Button primary label={`+ 1 glass (${sizeText(glass)})`} onPress={() => { buzz(); apply((s) => A.setWater(s, Math.round((A.today(s).water + glass / I.OZ_PER_GLASS) * 100) / 100)); }} style={{ flex: 3 }} />
+            </View>
+            <Text style={styles.small}>YOUR GLASS SIZE</Text>
+            <View style={styles.controls}>
+              {[8, 12, 16, 24].map((oz) => (
+                <Button key={oz} small primary={glass === oz} label={sizeText(oz)} onPress={() => apply((s) => ({ ...s, goals: { steps: I.stepGoal(s), water: I.waterGoal(s), ...s.goals, glass: oz } }))} style={{ flex: 1 }} />
+              ))}
+            </View>
           </View>
         )}
+        <View style={styles.why}>
+          <Text style={styles.small}>WHY IT MATTERS</Text>
+          <Text style={styles.whyText}>{why.text} {why.pet.split('{pet}').join(pet?.nickname ?? 'Your pet')}</Text>
+          <Text style={styles.tipSource}>Source: {why.source} · Not medical advice</Text>
+        </View>
 
         <View style={[styles.goal, questDone && { backgroundColor: colors.mintSoft }]}>
           <Text style={[styles.goalText, questDone && { color: colors.mintDark }]}>{questDone ? `✓ ${goal} Keep going for more XP.` : goal}</Text>
@@ -200,24 +264,52 @@ function LogSheet({ habit, onClose }: { habit: Habit; onClose: () => void }) {
   );
 }
 
-/** A water glass that fills with a little bounce. */
-function Glass({ on, index, onPress }: { on: boolean; index: number; onPress: () => void }) {
+/** A row under the habit tiles: pet care and your next egg. */
+function Row({ done, text, meta }: { done: boolean; text: string; meta: string }) {
+  return (
+    <View style={styles.row}>
+      <View style={[styles.rowDot, done && { backgroundColor: colors.mint }]}>{done ? <Text style={styles.rowCheck}>✓</Text> : null}</View>
+      <Text style={[styles.rowText, done && { color: colors.muted }]}>{text}</Text>
+      <Text style={[styles.rowMeta, done && { color: colors.mintDark }]}>{meta}</Text>
+    </View>
+  );
+}
+
+/** A water glass that fills with a little bounce (part-full for bigger or smaller glasses). */
+function Glass({ on, index, part }: { on: boolean; index: number; part: number }) {
   const v = useRef(new Animated.Value(on ? 1 : 0)).current;
   useEffect(() => {
     Animated.spring(v, { toValue: on ? 1 : 0, friction: 4, tension: 160, useNativeDriver: true }).start();
   }, [on]);
   return (
-    <Pressable accessibilityLabel={`${index + 1} glasses`} onPress={onPress} style={[styles.glass, on && styles.glassOn]}>
+    <View accessibilityLabel={`Glass ${index + 1}${on ? ', full' : ''}`} style={[styles.glass, on && styles.glassOn]}>
       <Animated.View style={{ transform: [{ scale: v.interpolate({ inputRange: [0, 0.6, 1], outputRange: [1, 1.25, 1] }) }] }}>
         <Svg width={26} height={30} viewBox="0 0 28 32">
-          <Path d="M5 4 H23 L20.5 28 Q20 30 18 30 H10 Q8 30 7.5 28 Z" fill={on ? '#8FC9F0' : '#fff'} stroke={on ? '#2E7FB8' : '#B9CDD6'} strokeWidth={2.2} strokeLinejoin="round" />
+          <Path d="M5 4 H23 L20.5 28 Q20 30 18 30 H10 Q8 30 7.5 28 Z" fill={part >= 1 ? '#8FC9F0' : part > 0 ? '#CFE6F8' : '#fff'} stroke={on ? '#2E7FB8' : '#B9CDD6'} strokeWidth={2.2} strokeLinejoin="round" />
         </Svg>
       </Animated.View>
-    </Pressable>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  extras: { gap: 6 },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: '#F6FAF8', borderRadius: 12, paddingVertical: 8, paddingHorizontal: 10 },
+  rowDot: { width: 20, height: 20, borderRadius: 10, borderWidth: 2, borderColor: '#B9C9C2', alignItems: 'center', justifyContent: 'center' },
+  rowCheck: { color: '#FFFFFF', fontSize: 12, fontWeight: '900' },
+  rowText: { flex: 1, fontSize: 14, fontWeight: '900', color: colors.ink },
+  rowMeta: { fontSize: 12, fontWeight: '900', color: '#B07A00' },
+  next: { fontSize: 13, fontWeight: '900', color: colors.mintDark },
+  changed: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#FFF4D6', borderRadius: 12, padding: 10 },
+  changedText: { flex: 1, fontSize: 13, fontWeight: '800', color: '#6A4A00' },
+  changedX: { fontSize: 13, fontWeight: '900', color: '#B06A00' },
+  tip: { backgroundColor: '#EEF5FB', borderRadius: 14, padding: 10, gap: 3 },
+  tipTag: { fontSize: 10, fontWeight: '900', color: '#3D6E9C', letterSpacing: 1 },
+  tipText: { fontSize: 13, fontWeight: '800', color: '#24323A' },
+  tipSource: { fontSize: 11, fontWeight: '700', color: colors.muted },
+  why: { backgroundColor: '#F6FAF8', borderRadius: 12, padding: 10, gap: 3 },
+  whyText: { fontSize: 13, fontWeight: '700', color: colors.ink },
+  small: { fontSize: 11, fontWeight: '900', color: colors.muted, letterSpacing: 0.8 },
   activity: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: '#FFF0F3', borderRadius: 14, padding: 10 },
   actTitle: { fontSize: 14, fontWeight: '900', color: colors.ink },
   actSub: { fontSize: 12, fontWeight: '800', color: colors.muted },

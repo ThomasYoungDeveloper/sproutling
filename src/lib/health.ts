@@ -29,6 +29,8 @@ export interface HealthProvider {
   requestAccess(): Promise<boolean>;
   /** Steps and sleep for a local date (YYYY-MM-DD). */
   readDay(date: string): Promise<HealthDay | null>;
+  /** Average steps a day over the last few weeks, for suggesting a goal. */
+  averageSteps?(days: number): Promise<number | null>;
 }
 
 const manual: HealthProvider = {
@@ -39,8 +41,19 @@ const manual: HealthProvider = {
 
 /** The provider for this device: Apple Health on iPhone, manual everywhere else (for now). */
 export function healthProvider(): HealthProvider {
-  if (Platform.OS === 'web' || !nativeProvider) return manual;
+  if (Platform.OS === 'web' || !nativeProvider || skipped) return manual;
   return nativeProvider;
 }
+
+/** Apple Health is on this phone (whether or not the player chose to use it). */
+export const healthAvailable = () => Platform.OS !== 'web' && !!nativeProvider;
+
+/** Players who skip Apple Health in the intro type their habits in, like the web version. */
+let skipped = false;
+export function setHealthSkipped(v: boolean) {
+  skipped = v;
+}
+/** The real provider, ignoring a skip (for the intro's Connect button). */
+export const nativeHealth = (): HealthProvider | null => (Platform.OS === 'web' ? null : nativeProvider ?? null);
 
 export const isVerified = (p: HealthProvider) => p.source !== 'manual';

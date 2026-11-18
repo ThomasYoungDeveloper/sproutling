@@ -1,3 +1,4 @@
+import * as U from '../game/unlocks';
 import React, { useState } from 'react';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useGame } from '../state/GameContext';
@@ -36,16 +37,31 @@ export default function Tutorial() {
       body: 'Walking, drinking water and sleeping well all earn XP for your pet.',
       tips: ['✅ Finish all 3 each day for a free chest', '🔥 Keep your streak going for bigger rewards', '❤️ On iPhone, Apple Health fills these in for you'],
     },
-    {
-      art: '🥚', tint: '#FFF4CC', title: 'Hatch and collect',
-      body: 'Eggs come from chests and adventures, and they hatch as you walk.',
-      tips: ['🎒 Send pets on expeditions to find loot', '✨ Hunt for rare skins, shinies and perfect grades'],
-    },
-    {
-      art: '⚔️', tint: '#E9E3FF', title: 'Battle and team up',
-      body: 'Battle wild pets and friends from the Social tab. Your healthy habits power up your pet in battle.',
-      tips: ['🏆 Climb the ranked season', '🛡️ Join a guild and beat the weekly raid boss together'],
-    },
+    ...(U.allOpen(state)
+      ? [
+          {
+            art: '🥚', tint: '#FFF4CC', title: 'Hatch and collect',
+            body: 'Eggs come from chests and adventures, and they hatch as you walk.',
+            tips: ['🎒 Send pets on expeditions to find loot', '✨ Hunt for rare skins, shinies and perfect grades'],
+          },
+          {
+            art: '⚔️', tint: '#E9E3FF', title: 'Battle and team up',
+            body: 'Battle wild pets and friends from the Social tab. Your healthy habits power up your pet in battle.',
+            tips: ['🏆 Climb the ranked season', '🛡️ Join a guild and beat the weekly raid boss together'],
+          },
+        ]
+      : [
+          {
+            art: '🥚', tint: '#FFF4CC', title: 'Hatch and collect',
+            body: 'Eggs come from chests, and they hatch as you walk. Put your first one in the incubator on the Eggs tab.',
+            tips: ['Add friends from the Social tab to send gifts and trade pets', 'Hunt for rare skins, shinies and perfect grades'],
+          },
+          {
+            art: '🔓', tint: '#E9E3FF', title: 'More opens as you level up',
+            body: 'One new thing at a time, so it never gets overwhelming.',
+            tips: ['Level 2: the shops', 'Level 3: trips', 'Level 4: battles', 'Level 5: guilds'],
+          },
+        ]),
     {
       art: '🔔', tint: '#FFE9F0', title: 'Want a nudge?',
       body: remindersSupported

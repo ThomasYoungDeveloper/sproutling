@@ -21,6 +21,9 @@ import * as Pw from '../src/game/powerups';
 import * as Hp from '../src/game/hp';
 import * as Wd from '../src/game/wild';
 import * as Tw from '../src/game/tower';
+import * as In from '../src/game/intro';
+import * as Un from '../src/game/unlocks';
+import { dailyQuests } from '../src/game/scoring';
 const F_count = (s: any, id: string) => s.foods?.[id] ?? 0;
 
 let fails = 0;
@@ -56,13 +59,13 @@ ok(!!h && h.state.pets.length === 2 && h.state.eggs.length === 1, 'hatch adds pe
 ok(speciesOfRarity('common').some((x) => x.id === h.pet.speciesId), 'hatched species matches egg rarity');
 s = h.state;
 const chestsBefore = s.chests.length;
-s = A.addSteps(s, 8000 - A.today(s).steps); s = A.setWater(s, 6); s = A.addMeal(s, { name: 'a', calories: null, veggies: false }); s = A.addMeal(s, { name: 'b', calories: null, veggies: true });
+s = A.addSteps(s, 8000 - A.today(s).steps); s = A.setWater(s, 8); s = A.addMeal(s, { name: 'a', calories: null, veggies: false }); s = A.addMeal(s, { name: 'b', calories: null, veggies: true });
 ok(s.chests.length === chestsBefore + 1, 'bronze chest granted when all quests done');
 s = A.addSteps(s, 500);
 ok(s.chests.length === chestsBefore + 1, 'bronze chest only once per day');
 const c = s.chests[0]; const r = A.openChestById(s, c.id, () => 0.01)!;
 ok(r.state.chests.length === s.chests.length - 1 && r.result.coins >= CHESTS[c.kind].coins[0], 'opening chest pays coins and removes it');
-const before = A.activePet(s)!.xp; s = A.setWater(s, 5);
+const before = A.activePet(s)!.xp; s = A.setWater(s, 7);
 ok(A.activePet(s)!.xp === before - 4 - 15, 'undoing a habit removes its XP (and the quest bonus)');
 s = A.incubate(A.incubate(s, s.eggs[0].id), 'nope');
 ok(A.incubatingCount(s) <= s.incubatorSlots, 'incubator slots respected');
@@ -251,12 +254,13 @@ ok(fin.state.pets.find((p) => p.id === epet.id)!.hpPct === 70 && fin.loot.foods.
   const half = Hp.restPets(kf.state, realAt(90 * 60_000));
   ok(Hp.hpPct(half.pets.find((p) => p.id === kp.id)) === 15 && Ex.canStart(half, kp.id, 'meadow').ok, 'HP comes back by itself over time (15% after 90 minutes)');
   const woke = Hp.restPets(Hp.restPets(half, realAt(3 * 3_600_000)), realAt(20 * 3_600_000));
-  ok(Hp.hpPct(woke.pets.find((p) => p.id === kp.id)) === Hp.REST_UP_TO && woke.pets.find((p) => p.id === kp.id)!.hpAt == null, 'healing by itself stops at 50%');
+  ok(Hp.hpPct(woke.pets.find((p) => p.id === kp.id)) === Hp.REST_UP_TO && woke.pets.find((p) => p.id === kp.id)!.hpAt == null, 'healing by itself goes all the way to full');
   const hurt = Hp.setHp(woke, kp.id, 70);
-  ok(Hp.restPets(hurt, realAt(40 * 3_600_000)).pets.find((p) => p.id === kp.id)!.hpPct === 70, 'pets above 50% only heal with potions');
-  const healed = Hp.usePotion(Hp.addPotions(woke, 'small'), kp.id, 'small');
+  ok(Hp.restPets(hurt, realAt(40 * 3_600_000)).pets.find((p) => p.id === kp.id)!.hpPct === undefined, 'pets above 50% heal to full over time too');
+  const at50 = Hp.setHp(woke, kp.id, 50);
+  const healed = Hp.usePotion(Hp.addPotions(at50, 'small'), kp.id, 'small');
   ok(healed.ok && Hp.hpPct(healed.state.pets.find((p) => p.id === kp.id)) === 100, 'a Small Potion heals half (50% + 50%)');
-  const full = Hp.usePotion(Hp.addPotions(woke, 'full'), kp.id, 'full');
+  const full = Hp.usePotion(Hp.addPotions(at50, 'full'), kp.id, 'full');
   ok(full.ok && full.state.pets.find((p) => p.id === kp.id)!.hpPct === undefined, 'a Full Potion heals to full');
   {
     const bb = B.startBattle([kp], [kp]);
@@ -368,7 +372,7 @@ ok(A.applyShields(shielded.state).used === 0, 'shields are not used twice');
   for (const e of Ev.EVENTS) for (const m of e.milestones) if (m.item) ok(!!K2.COSMETIC_BY_ID[m.item], 'event item exists: ' + m.item);
   // Tokens from quests during the event only
   const run = { start: '2026-11-01', end: '2026-11-30' };
-  const full = { ...A.today(newGame()), steps: 9000, water: 6, sleepHours: 8 };
+  const full = { ...A.today(newGame()), steps: 9000, water: 8, sleepHours: 8 };
   const ES = { ...newGame(), days: { '2026-10-31': full, '2026-11-02': full, '2026-11-03': { ...full, water: 0 } } } as GameState;
   ok(Ev.eventTokens(ES, run) === 5, 'tokens: 3 + 2, days outside the event ignored');
 }
@@ -424,7 +428,7 @@ ok(A.applyShields(shielded.state).used === 0, 'shields are not used twice');
   const plan = R.planReminders(S0, { now: morning.getTime() });
   ok(plan.some((r: any) => r.id === 'habits-0' && new Date(r.at).getHours() === 19), 'evening reminder tonight when habits are not done');
   ok(plan.every((r: any) => r.at > morning.getTime()), 'reminders are always in the future');
-  const doneDay = A.setWater(A.setSleep(A.addSteps(S0, 9000), 8), 6);
+  const doneDay = A.setWater(A.setSleep(A.addSteps(S0, 9000), 8), 8);
   ok(!R.planReminders(doneDay, { now: morning.getTime() }).some((r: any) => r.id === 'habits-0'), 'no reminder tonight once habits are done');
   const late = new Date(morning); late.setHours(21);
   ok(!R.planReminders(S0, { now: late.getTime() }).some((r: any) => r.id === 'habits-0'), 'no reminder for an evening that already passed');
@@ -721,5 +725,40 @@ console.log('\nEgg basket');
   ok(St.statsFor(r.received).atk === St.statsFor(mk).atk, 'a traded pet has the same stats it had before');
   const cheat = T.applyTrade(g, 'tt2', 'm2', { ...tp, xp: 0, train: { atk: 50 }, foodBoost: { atk: 999 }, moves: ['eclipse'] })!;
   ok(!cheat.received.train && (cheat.received.foodBoost?.atk ?? 0) <= 10 && !cheat.received.moves, 'a traded pet cannot arrive with more training, boosts or moves than it could have');
+}
+{
+  // New player intro: starter egg odds, hatching, age check, goals, unlocks.
+  let seed = 42; const rng = () => ((seed = (seed * 1103515245 + 12345) & 0x7fffffff) / 0x80000000);
+  const n = 20000; const count: Record<string, number> = {}; let skins = 0;
+  for (let i = 0; i < n; i++) { const e = In.rollStarterEgg(rng); count[e.rarity] = (count[e.rarity] ?? 0) + 1; if (e.skin) skins++; }
+  ok(Math.abs(count.common / n - 0.85) < 0.015 && Math.abs((count.uncommon ?? 0) / n - 0.12) < 0.01 && Math.abs((count.rare ?? 0) / n - 0.03) < 0.006, 'starter eggs: 85% common, 12% uncommon, 3% rare');
+  ok(Math.abs(skins / n - 0.09) < 0.008 && !count.epic && !count.legendary, 'starter skins about 9% (Ink 5, Silver 3, Gold 1), never epic or legendary');
+  const h = In.hatchStarter(newGame(), { rarity: 'uncommon', skin: 'gold' }, rng);
+  ok(h.state.pets.length === 1 && h.state.activePetId === h.pet.id && h.pet.skin === 'gold' && h.state.chests.length === 1 && !!h.state.onboard?.hatched, 'hatching the starter gives an active pet with its skin and a welcome chest');
+  const yr = new Date().getFullYear();
+  ok(In.tooYoung(yr - 12) && !In.tooYoung(yr - 13) && !In.tooYoung(yr - 30), 'under 13 by year is turned away; 13 and up can play');
+  ok(In.suggestGoal(4700) === 5200 && In.suggestGoal(10000) === 11000 && In.suggestGoal(0) === In.ACTIVITY_GOAL.low, 'suggested goal is a little above the 4-week average');
+  // Personal goals carry into today's quests; past days keep the goals they had.
+  const g: GameState = { ...h.state, goals: { steps: 5200, water: 8 } };
+  ok(dailyQuests(A.today(g))[0].label === 'Walk 5,200 steps', 'today’s walking quest uses your own goal');
+  const walked = A.addSteps(g, 5200);
+  ok(dailyQuests(A.today(walked))[0].done && A.today(walked).stepGoal === 5200, 'reaching your own goal finishes the quest, and the day remembers it');
+  ok(dailyQuests({ ...A.today(newGame()), stepGoal: undefined, waterGoal: undefined, steps: 8000, water: 6 })[1].done, 'old days keep the old 8,000 / 6 glass goals');
+  // Weekly goal: up after a strong week, down after a slow one.
+  const monday = new Date(2026, 10, 16, 9);
+  const key = (o: number) => { const d = new Date(monday); d.setDate(d.getDate() + o); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
+  const weekOf = (steps: number) => Object.fromEntries(Array.from({ length: 7 }, (_, i) => [key(-1 - i), { ...A.today(newGame()), steps, stepGoal: 6000 }]));
+  const base: GameState = { ...newGame(), goals: { steps: 6000, water: 8, auto: true, week: '2026-11-09' } };
+  ok(In.adjustGoal({ ...base, days: weekOf(7000) }, monday, key).goals!.steps === 6300, 'a strong week raises the goal about 5%');
+  ok(In.adjustGoal({ ...base, days: weekOf(1000) }, monday, key).goals!.steps === 5700, 'a slow week lowers it about 5%');
+  ok(In.adjustGoal(In.adjustGoal({ ...base, days: weekOf(7000) }, monday, key), monday, key).goals!.steps === 6300, 'the goal changes only once a week');
+  // Unlocks: new players open things one at a time; older saves keep everything.
+  const fresh = h.state;
+  ok(!Un.unlocked(fresh, 'trips') && !Un.unlocked(fresh, 'battles') && Un.nextUnlock(fresh)?.id === 'shop', 'a new player starts with the core game; shops open next');
+  const lv3 = { ...fresh, pets: fresh.pets.map((p) => ({ ...p, xp: 200 })) };
+  ok(Un.unlocked(lv3, 'shop') && Un.unlocked(lv3, 'trips') && !Un.unlocked(lv3, 'battles') && Un.newUnlock(lv3)?.id === 'shop', 'level 3 opens shops and trips, one card at a time');
+  ok(Un.newUnlock(Un.markSeen(lv3, 'shop'))?.id === 'trips', 'after the shop card comes the trips card');
+  const old = A.cleanSave({ ...newGame(), pets: [{ id: 'x', speciesId: 'p01', nickname: 'Old', xp: 0, shiny: false, hatchedOn: '' } as any], activePetId: 'x' });
+  ok(!!old.onboard?.legacy && Un.unlocked(old, 'breeding') && !Un.newUnlock(old) && In.needsIntro(old), 'older saves keep everything open and only get the quick setup');
 }
 console.log(fails ? `${fails} FAILED` : 'ALL PASSED'); process.exit(fails ? 1 : 0);

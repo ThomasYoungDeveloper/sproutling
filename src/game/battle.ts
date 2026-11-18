@@ -1,5 +1,5 @@
 import type { Element, GameState, Rarity, Skin } from './types';
-import { EXERCISE_MINUTES, MINDFUL_MINUTES, levelFor, ringsClosed, xpForLevel } from './scoring';
+import { EXERCISE_MINUTES, MINDFUL_MINUTES, levelFor, ringsClosed, stepGoalOf, waterGoalOf, xpForLevel } from './scoring';
 import { SPECIES, SPECIES_BY_ID } from './species';
 import { careMultiplier } from './care';
 import { pickOne, randInt, seededRng, type Rng, defaultRng } from './random';
@@ -54,8 +54,8 @@ export function habitBuffs(s: GameState): HabitBuff[] {
   const d = A.today(s);
   const out: HabitBuff[] = [];
   if (d.sleepHours >= 7) out.push({ id: 'rested', label: 'Well Rested', emoji: '😴', text: '+5% Speed (slept 7+ hours)' });
-  if (d.water >= 6) out.push({ id: 'hydrated', label: 'Hydrated', emoji: '💧', text: '+5% Defense (6+ glasses of water)' });
-  if (d.steps >= 8000) out.push({ id: 'energized', label: 'Energized', emoji: '👟', text: 'Start with +1 ⚡ (8,000+ steps)' });
+  if (d.water >= waterGoalOf(d)) out.push({ id: 'hydrated', label: 'Hydrated', emoji: '💧', text: `+5% Defense (water goal reached)` });
+  if (d.steps >= stepGoalOf(d)) out.push({ id: 'energized', label: 'Energized', emoji: '👟', text: `Start with +1 ⚡ (step goal reached)` });
   const care = careMultiplier(d);
   if (care > 1) out.push({ id: 'cared', label: 'Well Cared For', emoji: '💖', text: `+${Math.round(((care - 1) / 4) * 100)}% Attack (pet care today)` });
   if ((d.exerciseMin ?? 0) >= EXERCISE_MINUTES || (d.rings?.exercise ?? 0) >= 1) out.push({ id: 'trained', label: 'Trained', emoji: '🏋️', text: '+5% Attack (30+ exercise minutes)' });
@@ -64,6 +64,39 @@ export function habitBuffs(s: GameState): HabitBuff[] {
   const st = Math.min(A.streak(s), 10);
   if (st > 0) out.push({ id: 'streak', label: `${st}-Day Streak`, emoji: '⭐', text: `+${Math.round(st / 3)}% to all stats` });
   return out;
+}
+
+/** Every habit buff, with what it does, how to earn it, and what you did today (for the tap-to-explain sheet). */
+export interface BuffInfo {
+  id: HabitBuff['id'];
+  label: string;
+  effect: string;
+  how: string;
+  have: boolean;
+  /** What you did today toward it, e.g. "You slept 7.5 hours". */
+  today: string;
+  healthOnly?: boolean;
+}
+
+export function buffInfo(s: GameState): BuffInfo[] {
+  const d = A.today(s);
+  const have = new Set(habitBuffs(s).map((b) => b.id));
+  const care = careMultiplier(d);
+  const c = d.care ?? {};
+  const careDone = [c.fed && 'fed', (c.played ?? 0) >= 3 && 'played with', c.treat && 'gave a treat to'].filter(Boolean) as string[];
+  const st = Math.min(A.streak(s), 10);
+  const sg = stepGoalOf(d);
+  const wg = waterGoalOf(d);
+  return [
+    { id: 'rested', label: 'Well Rested', effect: '+5% Speed', how: 'Sleep 7 or more hours.', have: have.has('rested'), today: d.sleepHours ? `You slept ${d.sleepHours} hours last night.` : 'No sleep logged yet today.' },
+    { id: 'hydrated', label: 'Hydrated', effect: '+5% Defense', how: `Reach your water goal (${wg} glasses, ${wg * 8} oz).`, have: have.has('hydrated'), today: `You’ve had ${Math.round(d.water * 10) / 10} of ${wg} glasses today.` },
+    { id: 'energized', label: 'Energized', effect: 'Start battles with +1 energy', how: `Reach your step goal (${sg.toLocaleString()} steps).`, have: have.has('energized'), today: `You’ve walked ${d.steps.toLocaleString()} of ${sg.toLocaleString()} steps today.` },
+    { id: 'cared', label: 'Well Cared For', effect: 'Up to +7.5% Attack', how: 'Feed, play with (3 times) and give a treat to your pet each day. Each one adds more.', have: have.has('cared'), today: careDone.length ? `Today you ${careDone.join(', ')} your pet (+${Math.round(((care - 1) / 4) * 1000) / 10}% Attack).` : 'No pet care yet today.' },
+    { id: 'streak', label: 'Streak', effect: 'Up to +3% to all stats', how: 'Finish your daily quests day after day. Each day adds a little, up to 10 days.', have: st > 0, today: st > 0 ? `You’re on a ${st}-day streak (+${Math.round((st / 3) * 10) / 10}% to all stats).` : 'No streak yet. Finish today’s quests to start one.' },
+    { id: 'trained', label: 'Trained', effect: '+5% Attack', how: '30 or more exercise minutes, or close your Exercise ring.', have: have.has('trained'), today: `${d.exerciseMin ?? 0} exercise minutes today.`, healthOnly: true },
+    { id: 'calm', label: 'Calm', effect: 'Can’t be made drowsy', how: '5 or more mindful minutes (meditation or breathing).', have: have.has('calm'), today: `${d.mindfulMin ?? 0} mindful minutes today.`, healthOnly: true },
+    { id: 'rings', label: 'Rings Closed', effect: '+5% to all stats', how: 'Close all 3 activity rings.', have: have.has('rings'), today: `${ringsClosed(d)} of 3 rings closed today.`, healthOnly: true },
+  ];
 }
 
 function applyHabitBuffs(b: StatBlock, buffs: HabitBuff[], care = 1, streak = 0): StatBlock {

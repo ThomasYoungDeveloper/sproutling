@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { AppState } from 'react-native';
 import { useGame } from '../state/GameContext';
-import { healthProvider, isVerified } from './health';
+import { healthProvider, isVerified, setHealthSkipped } from './health';
 import * as A from '../game/actions';
 
 /**
@@ -15,9 +15,14 @@ export function useHealthSync() {
   const stateRef = useRef(state);
   stateRef.current = state;
 
+  // New players choose in the intro: wait until then, and leave Apple Health alone if they skipped it.
+  const choice = state.onboard?.health;
+  const waiting = !!state.onboard && !state.onboard.legacy && !state.onboard.done;
+  setHealthSkipped(choice === 'skipped');
+
   useEffect(() => {
     const provider = healthProvider();
-    if (!loaded || !isVerified(provider)) return;
+    if (!loaded || waiting || !isVerified(provider)) return;
     let busy = false;
     const sync = async () => {
       if (busy) return;
@@ -52,5 +57,5 @@ export function useHealthSync() {
       sub.remove();
       clearInterval(t);
     };
-  }, [loaded]);
+  }, [loaded, waiting, choice]);
 }

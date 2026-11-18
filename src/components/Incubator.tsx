@@ -84,7 +84,7 @@ export function IncubatorOffer() {
               <Button
                 primary
                 small
-                label={`Buy · 🪙 ${p.toLocaleString()}`}
+                label={`Buy for ${p.toLocaleString()} coins`}
                 disabled={state.coins < p}
                 onPress={() => {
                   const r = buyIncubator(state);
@@ -100,12 +100,12 @@ export function IncubatorOffer() {
                 }}
               />
             ) : (
-              <Text style={styles.slotNote}>🪙 {p.toLocaleString()} after the {['', '', '2nd', '3rd'][slot - 1]}</Text>
+              <Text style={styles.slotNote}>{p.toLocaleString()} coins after the {['', '', '2nd', '3rd'][slot - 1]}</Text>
             )}
           </View>
         );
       })}
-      {price !== null && state.coins < price ? <Text style={font.tiny}>You have 🪙 {state.coins.toLocaleString()}. Earn coins from habits, quests, chests and battles.</Text> : null}
+      {price !== null && state.coins < price ? <Text style={font.tiny}>You have {state.coins.toLocaleString()} coins. Earn coins from habits, quests, chests and battles.</Text> : null}
       {msg ? (
         <PopIn key={msg.text}>
           <Text style={[styles.msg, msg.ok && { color: colors.mintDark }]}>{msg.text}</Text>

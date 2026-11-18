@@ -1,3 +1,4 @@
+import { useResetIn } from '../lib/useResetIn';
 import React, { useEffect, useRef, useState } from 'react';
 import { useOpenChat } from './Chat';
 import { useChat } from '../state/ChatContext';
@@ -22,6 +23,7 @@ export default function FriendSheet({ friend, onClose }: { friend: Friend; onClo
   // This screen covers the whole phone, so keep the Back button below the clock and camera.
   const insets = useSafeAreaInsets();
   const { gift, giftsLeft, remove, friends } = useFriends();
+  const resetIn = useResetIn();
   const battle = useBattle();
   const tradeOffer = useTradeOffer();
   const [askPet, setAskPet] = useState<any>(null);
@@ -44,7 +46,7 @@ export default function FriendSheet({ friend, onClose }: { friend: Friend; onClo
     const r = await gift(live.id);
     setMsg(
       r === 'limit'
-        ? `You’ve sent all ${GIFTS_PER_DAY} gifts for today. More tomorrow!`
+        ? `You’ve sent all ${GIFTS_PER_DAY} gifts for today. More in ${resetIn}.`
         : r === 'error' || r === 'not_friends'
           ? 'Couldn’t send that. Try again.'
           : `Gift sent! ${live.username} gets ${GIFT_COINS} coins, maybe more.`,
@@ -98,7 +100,7 @@ export default function FriendSheet({ friend, onClose }: { friend: Friend; onClo
           <View style={styles.actions}>
             <Pressable onPress={doGift} disabled={live.giftedToday || giftsLeft === 0} style={[styles.action, { backgroundColor: colors.gold }, (live.giftedToday || giftsLeft === 0) && { opacity: 0.55 }]} accessibilityRole="button" accessibilityLabel={live.giftedToday ? 'Gift sent today' : 'Send a gift'}>
               <Text style={styles.actionIcon}>🎁</Text>
-              <Text style={[styles.actionText, { color: '#5A3A00' }]}>{live.giftedToday ? 'Sent' : 'Gift'}</Text>
+              <Text style={[styles.actionText, { color: '#5A3A00' }]}>{live.giftedToday ? 'Sent' : giftsLeft === 0 ? resetIn : 'Gift'}</Text>
             </Pressable>
             <Pressable
               disabled={!friendOpponent(live)}
@@ -176,7 +178,7 @@ export default function FriendSheet({ friend, onClose }: { friend: Friend; onClo
               </Pressable>
             </View>
           ) : null}
-          {!live.giftedToday && giftsLeft > 0 ? <Text style={[font.tiny, { textAlign: 'center' }]}>{giftsLeft} of {GIFTS_PER_DAY} gifts left today</Text> : null}
+          {!live.giftedToday && giftsLeft > 0 ? <Text style={[font.tiny, { textAlign: 'center' }]}>{giftsLeft} of {GIFTS_PER_DAY} gifts left today</Text> : <Text style={[font.tiny, { textAlign: 'center' }]}>{live.giftedToday ? `You can gift ${live.username} again in ${resetIn}.` : `More gifts in ${resetIn}.`}</Text>}
           {!friendOpponent(live) ? <Text style={[font.tiny, { textAlign: 'center' }]}>{live.username} needs to hatch a pet before you can battle.</Text> : null}
           {msg ? <Text style={[font.small, { textAlign: 'center', color: colors.mintDark }]}>{msg}</Text> : null}
 

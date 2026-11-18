@@ -1,3 +1,4 @@
+import { unlocked } from './unlocks';
 import type { ChestKind, GameState, Rarity } from './types';
 import * as A from './actions';
 import { pickWeighted, seededRng, type Rng } from './random';
@@ -97,7 +98,8 @@ export function rollWalkFinds(s: GameState, verified: boolean, rngFor?: (mark: n
       finds.push({ kind: 'potion', at: k * FIND_EVERY });
       potions++;
     }
-    if (wild < MAX_WILD_PER_DAY && (next.wildPending ?? []).length < MAX_WILD_PER_DAY && next.pets.length && xrng() * 100 < WILD_CHANCE) {
+    // Wild pets only show up once battles are open (level 4 for new players).
+    if (unlocked(next, 'battles') && wild < MAX_WILD_PER_DAY && (next.wildPending ?? []).length < MAX_WILD_PER_DAY && next.pets.length && xrng() * 100 < WILD_CHANCE) {
       const w = makeWild(next, xrng, k * FIND_EVERY);
       next = { ...next, wildPending: [...(next.wildPending ?? []), w] };
       finds.push({ kind: 'wild', wild: w, at: k * FIND_EVERY });

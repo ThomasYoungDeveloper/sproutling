@@ -1,3 +1,7 @@
+import { useResetIn } from '../lib/useResetIn';
+import Coin, { CoinText } from './Coin';
+import * as U from '../game/unlocks';
+import { LockedSheet } from './Unlocks';
 import React, { useEffect, useState } from 'react';
 import * as H from '../game/hp';
 import PotionIcon from './PotionIcon';
@@ -61,6 +65,7 @@ function CrystalOffer() {
   const { state, apply } = useGame();
   const today = A.todayKey(state);
   const bought = Pw.crystalBoughtToday(state, today);
+  const resetIn = useResetIn();
   const [msg, setMsg] = useState<string | null>(null);
   return (
     <View style={styles.crystal}>
@@ -79,9 +84,9 @@ function CrystalOffer() {
         }}
         style={[styles.crystalBtn, (bought || state.coins < Pw.CRYSTAL_PRICE) && { opacity: 0.5 }]}
         accessibilityRole="button"
-        accessibilityLabel={bought ? 'Bought today, back tomorrow' : `Buy a Training Crystal for ${Pw.CRYSTAL_PRICE} coins`}
+        accessibilityLabel={bought ? `Bought today, back in ${resetIn}` : `Buy a Training Crystal for ${Pw.CRYSTAL_PRICE} coins`}
       >
-        <Text style={styles.crystalBtnText}>{bought ? 'Tomorrow' : `🪙 ${Pw.CRYSTAL_PRICE}`}</Text>
+        {bought ? <Text style={styles.crystalBtnText}>{resetIn}</Text> : <CoinText style={styles.crystalBtnText}>{Pw.CRYSTAL_PRICE}</CoinText>}
       </Pressable>
     </View>
   );
@@ -112,7 +117,7 @@ function PotionOffer() {
             accessibilityRole="button"
             accessibilityLabel={`Buy a ${H.POTION_ITEM[k]} for ${H.POTION_PRICE[k]} coins`}
           >
-            <Text style={styles.crystalBtnText}>🪙 {H.POTION_PRICE[k]}</Text>
+            <CoinText style={styles.crystalBtnText}>{H.POTION_PRICE[k]}</CoinText>
           </Pressable>
         </View>
       ))}
@@ -160,7 +165,7 @@ function GeneralStore({ onClose, onWardrobe, onBack }: { onClose: () => void; on
             <Text style={font.title}>🧺 General Store</Text>
             <Text style={font.small}>New outfits and toys in {left}</Text>
           </View>
-          <View style={styles.coins}><Text style={styles.coinsText}>🪙 {state.coins.toLocaleString()}</Text></View>
+          <View style={styles.coins}><CoinText style={styles.coinsText}>{state.coins.toLocaleString()}</CoinText></View>
         </View>
         <ScrollView style={{ maxHeight: 520 }} contentContainerStyle={{ gap: space.sm, paddingBottom: space.sm }}>
           {slots.map((slot) => {
@@ -185,7 +190,7 @@ function GeneralStore({ onClose, onWardrobe, onBack }: { onClose: () => void; on
                           )
                         ) : (
                           <Pressable onPress={() => purchase(c)} style={[styles.price, !afford && { opacity: 0.55 }]} accessibilityRole="button" accessibilityLabel={`Buy ${c.name} for ${c.price} coins`}>
-                            <Text style={styles.priceText}>🪙 {c.price}</Text>
+                            <CoinText style={styles.priceText}>{c.price}</CoinText>
                           </Pressable>
                         )}
                       </Tile>
@@ -236,6 +241,7 @@ export function ShopSheet({ onClose, onWardrobe, start }: { onClose: () => void;
   const day = A.todayKey(state);
   const special = M.specialFor(day);
   const pick = K.shopToday(state).slice().sort((a, b) => b.price - a.price)[0];
+  if (!U.unlocked(state, 'shop')) return <LockedSheet feature="shop" onClose={onClose} />;
   if (store === 'food') return <FoodMarket onClose={onClose} onBack={() => setStore(null)} />;
   if (store === 'general') return <GeneralStore onClose={onClose} onWardrobe={onWardrobe} onBack={() => setStore(null)} />;
   return (
@@ -244,7 +250,7 @@ export function ShopSheet({ onClose, onWardrobe, start }: { onClose: () => void;
       <View style={styles.sheet}>
         <View style={styles.head}>
           <Text style={[font.title, { flex: 1 }]}>Shop</Text>
-          <View style={styles.coins}><Text style={styles.coinsText}>🪙 {state.coins.toLocaleString()}</Text></View>
+          <View style={styles.coins}><CoinText style={styles.coinsText}>{state.coins.toLocaleString()}</CoinText></View>
         </View>
         <Text style={font.small}>Pick a store</Text>
         <Pressable onPress={() => setStore('food')} style={({ pressed }) => [styles.store, { backgroundColor: '#FFE3B8' }, pressed && { transform: [{ scale: 0.98 }] }]} accessibilityRole="button" accessibilityLabel={`Food Market. Today's special: ${special.food.name}`}>
@@ -307,7 +313,7 @@ function FoodMarket({ onClose, onBack }: { onClose: () => void; onBack: () => vo
           accessibilityRole="button"
           accessibilityLabel={remaining ? `Buy ${slot.food.name} for ${slot.price} coins` : `${slot.food.name} sold out`}
         >
-          <Text style={styles.buyText}>{remaining ? `🪙 ${slot.price}` : 'Sold out'}</Text>
+          {remaining ? <CoinText style={styles.buyText}>{slot.price}</CoinText> : <Text style={styles.buyText}>Sold out</Text>}
         </Pressable>
       </View>
     );
@@ -319,7 +325,7 @@ function FoodMarket({ onClose, onBack }: { onClose: () => void; onBack: () => vo
       <View style={[styles.sheet, { backgroundColor: '#FFF8EC' }]}>
         <View style={styles.head}>
           <Pressable onPress={onBack} hitSlop={8} accessibilityRole="button" style={{ flex: 1 }}><Text style={styles.back}>‹ Shop</Text></Pressable>
-          <View style={styles.coins}><Text style={styles.coinsText}>🪙 {state.coins.toLocaleString()}</Text></View>
+          <View style={styles.coins}><CoinText style={styles.coinsText}>{state.coins.toLocaleString()}</CoinText></View>
         </View>
         <View style={{ alignItems: 'center' }}>
           <Text style={{ fontSize: 40 }}>🍙</Text>

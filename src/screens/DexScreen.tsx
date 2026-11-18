@@ -1,3 +1,5 @@
+import * as U from '../game/unlocks';
+import { LockedCard } from '../components/Unlocks';
 import React, { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useGame } from '../state/GameContext';
@@ -79,7 +81,7 @@ export default function DexScreen() {
   return (
     <View style={{ gap: space.md }}>
       <BadgeBanner />
-      <NurseryCard />
+      {U.unlocked(state, 'breeding') ? <NurseryCard /> : <LockedCard feature="breeding" compact />}
       <Card>
         <SectionHead title="Your team" meta={`${state.pets.length} pets`} />
         <View style={styles.grid}>

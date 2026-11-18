@@ -1,3 +1,4 @@
+import { useResetIn } from '../lib/useResetIn';
 import React, { useEffect, useState } from 'react';
 import { ChatList, GuildChatRow, useFriendUnread } from '../components/Chat';
 import { useChat } from '../state/ChatContext';
@@ -21,6 +22,9 @@ import RankedCard from '../components/RankedCard';
 import TeamCard from '../components/TeamCard';
 import FashionShow from '../components/FashionShow';
 import { SocialIcon } from '../components/SocialIcons';
+import { LockedCard } from '../components/Unlocks';
+import { useGame } from '../state/GameContext';
+import * as U from '../game/unlocks';
 
 const SECTIONS = [
   { id: 'friends', label: 'Friends' },
@@ -32,6 +36,10 @@ const SECTIONS = [
 
 export default function FriendsScreen({ initialAdd, onUsedInitialAdd, initialGuild, onUsedInitialGuild }: { initialAdd?: string | null; onUsedInitialAdd?: () => void; initialGuild?: string | null; onUsedInitialGuild?: () => void }) {
   const { waiting: liveWaiting } = useLive();
+  const { state } = useGame();
+  const resetIn = useResetIn();
+  const battlesOpen = U.unlocked(state, 'battles');
+  const guildOpen = U.unlocked(state, 'guild');
   const { unread: chatUnread } = useChat();
   const friendUnread = useFriendUnread();
   const { myCode, friends, incoming, outgoing, loading, error, addFriend, respond, remove, gift, giftsLeft, refresh, tradesForMe } = useFriends();
@@ -146,12 +154,13 @@ export default function FriendsScreen({ initialAdd, onUsedInitialAdd, initialGui
       </View>
       {section === 'chat' && <ChatList />}
       {section === 'team' && <GuildChatRow />}
-      {section === 'team' && <TeamCard initialJoin={initialGuild} onUsedInitialJoin={onUsedInitialGuild} />}
-      {section === 'battle' && <WildCard />}
-      {section === 'battle' && <LiveBattlesCard />}
-      {section === 'battle' && <TowerCard />}
-      {section === 'battle' && <ArenaCard />}
-      {section === 'battle' && <RankedCard />}
+      {section === 'team' && (guildOpen ? <TeamCard initialJoin={initialGuild} onUsedInitialJoin={onUsedInitialGuild} /> : <LockedCard feature="guild" />)}
+      {section === 'battle' && !battlesOpen && <LockedCard feature="battles" />}
+      {section === 'battle' && battlesOpen && <WildCard />}
+      {section === 'battle' && battlesOpen && <LiveBattlesCard />}
+      {section === 'battle' && battlesOpen && (U.unlocked(state, 'tower') ? <TowerCard /> : <LockedCard feature="tower" compact />)}
+      {section === 'battle' && battlesOpen && <ArenaCard />}
+      {section === 'battle' && battlesOpen && <RankedCard />}
       {section === 'show' && <FashionShow />}
       {section === 'friends' && (
         <>
@@ -183,7 +192,7 @@ export default function FriendsScreen({ initialAdd, onUsedInitialAdd, initialGui
       <TradesCard />
 
       <Card>
-        <SectionHead title="Friends" meta={friends.length ? `🎁 ${giftsLeft} of ${GIFTS_PER_DAY} gifts left today` : undefined} />
+        <SectionHead title="Friends" meta={friends.length ? (giftsLeft > 0 ? `${giftsLeft} of ${GIFTS_PER_DAY} gifts left today` : `More gifts in ${resetIn}`) : undefined} />
         {error ? <Text style={styles.msg}>{error}</Text> : null}
         {!loading && !error && friends.length === 0 ? (
           <View style={styles.empty}>
@@ -214,7 +223,7 @@ export default function FriendsScreen({ initialAdd, onUsedInitialAdd, initialGui
             <Button
               small
               primary={!f.giftedToday && giftsLeft > 0}
-              label={f.giftedToday ? 'Sent ✓' : '🎁 Gift'}
+              label={f.giftedToday ? `Again in ${resetIn}` : giftsLeft === 0 ? resetIn : 'Gift'}
               disabled={f.giftedToday || giftsLeft === 0}
               onPress={() => {
                 buzz('success');

@@ -1,3 +1,4 @@
+import { CoinText } from './Coin';
 import React, { useEffect, useRef, useState } from 'react';
 import * as H from '../game/hp';
 import { FOOD_BY_ID } from '../game/food';
@@ -186,7 +187,7 @@ function ReturnSheet({ loot, onClose }: { loot: Ex.ExpeditionLoot; onClose: () =
           </View>
         ) : null}
         <View style={styles.lootRow}>
-          {loot.coins > 0 ? <PopIn delay={400}><View style={styles.loot}><Text style={styles.lootBig}>🪙 +{loot.coins}</Text></View></PopIn> : null}
+          {loot.coins > 0 ? <PopIn delay={400}><View style={styles.loot}><CoinText size={22} style={styles.lootBig}>+{loot.coins}</CoinText></View></PopIn> : null}
           {loot.xp > 0 ? <PopIn delay={500}><View style={styles.loot}><Text style={styles.lootBig}>⭐ +{loot.xp} XP</Text></View></PopIn> : null}
           {loot.chest ? <PopIn delay={600}><View style={styles.loot}><Text style={styles.lootBig}>🎁 {loot.chest[0].toUpperCase() + loot.chest.slice(1)} chest</Text></View></PopIn> : null}
           {loot.egg ? (

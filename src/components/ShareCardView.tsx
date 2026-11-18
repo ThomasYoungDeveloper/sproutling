@@ -74,7 +74,7 @@ export const ShareCardView = forwardRef<any, { pet: OwnedPet; trainer: string; f
           {pet.nickname}
         </Text>
         <Text style={{ textAlign: 'center', fontWeight: '700', color: '#5B6B70', fontSize: s(12.5) }} numberOfLines={1}>
-          Level {levelFor(pet.xp)} {sp.name} · {PERSONALITIES[personalityOf(pet)].label}
+          Level {levelFor(pet.xp)} {sp.name} · {PERSONALITIES[personalityOf(pet)].label} nature
         </Text>
         <View style={{ flexDirection: 'row', gap: s(5), marginTop: s(9) }}>
           {([['HP', st.hp], ['ATK', st.atk], ['DEF', st.def], ['SPD', st.spd]] as const).map(([label, v]) => (

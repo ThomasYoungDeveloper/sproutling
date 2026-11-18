@@ -18,8 +18,10 @@ import { colors, font, space } from '../theme';
 import { RARITY_INFO } from '../game/rarity';
 import * as A from '../game/actions';
 import * as C from '../game/care';
+import * as U from '../game/unlocks';
+import { LockedSheet, UnlockCard } from '../components/Unlocks';
 
-type Tab = 'eggs' | 'chests';
+type Tab = 'eggs' | 'chests' | 'friends' | 'dex';
 
 /** Reminders that get a chip. Everything else already shows up on Home (tray, Today card, event and expedition rows). */
 const CHIP_IDS = ['chests', 'badges', 'egg'];
@@ -40,7 +42,8 @@ export default function HomeScreen({ onNavigate, onAccount, account, banner }: {
   const { state, apply } = useGame();
   const pet = A.activePet(state);
   const overlay = useOverlay();
-  const openShop = (start?: 'food' | 'general') => overlay.open(<ShopSheet onClose={overlay.close} onWardrobe={openWardrobe} start={start} />);
+  const openShop = (start?: 'food' | 'general') =>
+    U.unlocked(state, 'shop') ? overlay.open(<ShopSheet onClose={overlay.close} onWardrobe={openWardrobe} start={start} />) : overlay.open(<LockedSheet feature="shop" onClose={overlay.close} />);
   const openWardrobe = () => overlay.open(<WardrobeSheet onClose={overlay.close} onShop={() => openShop('general')} />);
   const readyEggs = state.eggs.filter(A.isReady);
   const chips = C.reminders(state).filter((r) => CHIP_IDS.includes(r.id));
@@ -58,6 +61,7 @@ export default function HomeScreen({ onNavigate, onAccount, account, banner }: {
       {pet ? <PetScene onShop={openShop} onDressUp={openWardrobe} onAccount={onAccount} account={account} /> : null}
       <View style={styles.homeSheet}>
       {banner}
+      <UnlockCard onGo={(g) => (g === 'shop' ? openShop() : g === 'home' ? undefined : onNavigate?.(g))} />
       <TodayCard />
 
       {readyEggs.length ? <HatchCard rarity={readyEggs[0].rarity} count={readyEggs.length} onPress={() => { buzz('success'); onNavigate?.('eggs'); }} /> : null}
@@ -86,9 +90,9 @@ export default function HomeScreen({ onNavigate, onAccount, account, banner }: {
         </View>
       ) : null}
 
-      <WildCard />
+      {U.unlocked(state, 'battles') ? <WildCard /> : null}
       <EventCard />
-      <ExpeditionCard />
+      {U.unlocked(state, 'trips') ? <ExpeditionCard /> : null}
       {pet ? <TrainingCard onOpen={() => overlay.open(<PetSheet petId={pet.id} onClose={overlay.close} />)} /> : null}
       </View>
     </View>
