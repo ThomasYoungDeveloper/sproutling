@@ -56,7 +56,7 @@ MSG=$(node -e 'try{const n=require("./release-note.json");console.log(n.message|
 
 step "Sending the update"
 echo "Message: $MSG"
-$EAS update --channel production --platform ios --message "$MSG" --non-interactive
+$EAS update --channel production --environment production --platform ios --message "$MSG" --non-interactive
 
 bold "🎉 Sent!"
 cat <<'TXT'
