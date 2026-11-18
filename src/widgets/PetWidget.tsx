@@ -11,14 +11,14 @@ export type PetWidgetProps = {
   name: string;
   level: number;
   mood: string;
-  image: string | null;
+  image?: string | null;
   steps: number;
   stepGoal: number;
   waterPct: number;
   sleepPct: number;
   streak: number;
-  waiting: string | null;
-  trip: null | { place: string; startAt: number; endAt: number; hp: number; knockedOut: boolean };
+  waiting?: string | null;
+  trip?: null | { place: string; startAt: number; endAt: number; hp: number; knockedOut: boolean };
 };
 
 const PetWidget = (props: PetWidgetProps, env: WidgetEnvironment) => {
@@ -123,6 +123,5 @@ export default createWidget<PetWidgetProps>('PetWidget', PetWidget, {
   waterPct: 0,
   sleepPct: 0,
   streak: 0,
-  waiting: null,
-  trip: null,
+  // No null values here: iOS can't store them in the shared widget storage and closes the app.
 });

@@ -1,4 +1,5 @@
 import { Platform } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { PetWidgetProps } from '../widgets/PetWidget';
 import type { TripActivityProps } from '../widgets/TripActivity';
 import { reportCrash } from './crashReport';
@@ -30,6 +31,53 @@ type Mods = {
   TripActivity: typeof import('../widgets/TripActivity').default;
 };
 let mods: Mods | null | undefined;
+
+/**
+ * Safety net for errors iOS raises inside widget code, which JavaScript can't catch and which close the
+ * app. A marker is saved before each widget call and cleared after. If the app starts and finds the
+ * marker still there, the last widget call closed the app, so widgets stay off on this phone until
+ * a new build (GUARD_KEY changes with WIDGET_VERSION).
+ */
+const WIDGET_VERSION = 13;
+const GUARD_KEY = `sproutling/widget-guard-${WIDGET_VERSION}`;
+let guardChecked: boolean | undefined;
+async function widgetsAllowed(): Promise<boolean> {
+  if (guardChecked !== undefined) return guardChecked;
+  try {
+    const v = await AsyncStorage.getItem(GUARD_KEY);
+    if (v === 'pending' || v === 'off') {
+      if (v === 'pending') {
+        reportCrash(new Error('Widgets closed the app last time; turned off on this phone'), 'widgets-guard');
+        await AsyncStorage.setItem(GUARD_KEY, 'off');
+      }
+      guardChecked = false;
+    } else guardChecked = true;
+  } catch {
+    guardChecked = true;
+  }
+  return guardChecked;
+}
+async function guarded<T>(fn: () => T | Promise<T>): Promise<T> {
+  await AsyncStorage.setItem(GUARD_KEY, 'pending');
+  try {
+    return await fn();
+  } finally {
+    // Runs for ordinary JavaScript errors too; only a crash that closes the app leaves 'pending'.
+    await AsyncStorage.setItem(GUARD_KEY, 'ok');
+  }
+}
+
+/** Drops null and undefined values (deeply): iOS can't store them in the widget's shared storage. */
+function noNulls<T>(v: T): T {
+  if (Array.isArray(v)) return v.map(noNulls) as T;
+  if (v && typeof v === 'object') {
+    const out: Record<string, unknown> = {};
+    for (const [k, x] of Object.entries(v)) if (x !== null && x !== undefined) out[k] = noNulls(x);
+    return out as T;
+  }
+  return v;
+}
+
 function load(): Mods | null {
   if (mods !== undefined) return mods;
   try {
@@ -73,7 +121,13 @@ let lastKey = '';
 
 export async function syncWidgets(s: GameState, waiting: string | null): Promise<void> {
   if (Platform.OS !== 'ios') return;
-  const m = load();
+  if (!(await widgetsAllowed())) return;
+  let m: Mods | null = null;
+  try {
+    m = await guarded(() => load());
+  } catch (e) {
+    reportCrash(e, 'widgets-load');
+  }
   if (!m) return;
   const { PetWidget } = m;
   try {
@@ -96,7 +150,7 @@ export async function syncWidgets(s: GameState, waiting: string | null): Promise
             knockedOut: !!s.expedition.koAt,
           }
         : null;
-    const props: PetWidgetProps = {
+    const props: PetWidgetProps = noNulls({
       name: shown.nickname,
       level: levelFor(shown.xp),
       mood: MOOD_INFO[moodFor(day)]?.label ?? 'Happy',
@@ -108,21 +162,23 @@ export async function syncWidgets(s: GameState, waiting: string | null): Promise
       streak: A.streak(s),
       waiting,
       trip,
-    };
+    });
     const key = JSON.stringify({ ...props, trip: trip ? { ...trip, startAt: Math.round(trip.startAt / 60000), endAt: Math.round(trip.endAt / 60000) } : null });
     if (key !== lastKey) {
       lastKey = key;
       if (trip && trip.endAt > now) {
         // One entry now and one when the pet gets home; the countdown and bar tick on their own in between.
-        PetWidget.updateTimeline([
-          { date: new Date(now), props },
-          { date: new Date(trip.endAt), props },
-        ]);
+        await guarded(() =>
+          PetWidget.updateTimeline([
+            { date: new Date(now), props },
+            { date: new Date(trip.endAt), props },
+          ]),
+        );
       } else {
-        PetWidget.updateSnapshot(props);
+        await guarded(() => PetWidget.updateSnapshot(props));
       }
     }
-    await syncTripActivity(m, s, tripPet?.nickname ?? '', image, trip);
+    await guarded(() => syncTripActivity(m!, s, tripPet?.nickname ?? '', image, trip));
   } catch (e) {
     // Widgets are a bonus; never let them break the game.
     reportCrash(e, 'widgets-sync');
