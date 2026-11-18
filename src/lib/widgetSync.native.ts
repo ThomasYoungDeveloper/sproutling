@@ -185,7 +185,14 @@ export async function syncWidgets(s: GameState, waiting: string | null): Promise
           ]),
         );
       } else {
-        await guarded(() => PetWidget.updateSnapshot(props));
+        // Redraw at each change of sky (5am, 8am, 5pm, 8pm) for the next day, even if the app isn't opened.
+        const base = new Date(now);
+        const marks = [5, 8, 17, 20]
+          .flatMap((h) => [0, 1].map((d) => new Date(base.getFullYear(), base.getMonth(), base.getDate() + d, h).getTime()))
+          .filter((t) => t > now)
+          .sort((a, b) => a - b)
+          .slice(0, 4);
+        await guarded(() => PetWidget.updateTimeline([{ date: new Date(now), props }, ...marks.map((t) => ({ date: new Date(t), props }))]));
       }
     }
     await guarded(() => syncTripActivity(m!, s, tripPet?.nickname ?? '', image, trip));
