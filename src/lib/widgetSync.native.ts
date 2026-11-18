@@ -35,22 +35,30 @@ let mods: Mods | null | undefined;
 /**
  * Safety net for errors iOS raises inside widget code, which JavaScript can't catch and which close the
  * app. A marker is saved before each widget call and cleared after. If the app starts and finds the
- * marker still there, the last widget call closed the app, so widgets stay off on this phone until
- * a new build (GUARD_KEY changes with WIDGET_VERSION).
+ * marker still there, the last widget call may have closed the app. That also happens when the player
+ * simply swipes the app away mid-update, so widgets are only turned off after it happens twice in a row.
+ * They come back on with a new version (GUARD_KEY changes with WIDGET_VERSION).
  */
-const WIDGET_VERSION = 15;
+const WIDGET_VERSION = 16;
 const GUARD_KEY = `sproutling/widget-guard-${WIDGET_VERSION}`;
+const STRIKES_TO_STOP = 2;
 let guardChecked: boolean | undefined;
 async function widgetsAllowed(): Promise<boolean> {
   if (guardChecked !== undefined) return guardChecked;
   try {
-    const v = await AsyncStorage.getItem(GUARD_KEY);
-    if (v === 'pending' || v === 'off') {
-      if (v === 'pending') {
-        reportCrash(new Error('Widgets closed the app last time; turned off on this phone'), 'widgets-guard');
+    const v = (await AsyncStorage.getItem(GUARD_KEY)) ?? 'ok';
+    if (v === 'off') guardChecked = false;
+    else if (v.startsWith('pending')) {
+      // The marker holds how many interrupted updates came before this one.
+      const strikes = Number(v.split(':')[1] ?? 0) + 1;
+      if (strikes >= STRIKES_TO_STOP) {
+        reportCrash(new Error('Widgets were interrupted twice in a row; turned off on this phone'), 'widgets-guard');
         await AsyncStorage.setItem(GUARD_KEY, 'off');
+        guardChecked = false;
+      } else {
+        await AsyncStorage.setItem(GUARD_KEY, `strike:${strikes}`);
+        guardChecked = true;
       }
-      guardChecked = false;
     } else guardChecked = true;
   } catch {
     guardChecked = true;
@@ -58,11 +66,13 @@ async function widgetsAllowed(): Promise<boolean> {
   return guardChecked;
 }
 async function guarded<T>(fn: () => T | Promise<T>): Promise<T> {
-  await AsyncStorage.setItem(GUARD_KEY, 'pending');
+  const before = (await AsyncStorage.getItem(GUARD_KEY).catch(() => null)) ?? 'ok';
+  const strikes = before.startsWith('strike:') ? Number(before.split(':')[1]) : 0;
+  await AsyncStorage.setItem(GUARD_KEY, `pending:${strikes}`);
   try {
     return await fn();
   } finally {
-    // Runs for ordinary JavaScript errors too; only a crash that closes the app leaves 'pending'.
+    // Finished (even with an ordinary error): the app is fine, so the count starts over.
     await AsyncStorage.setItem(GUARD_KEY, 'ok');
   }
 }
@@ -189,7 +199,8 @@ async function syncTripActivity(m: Mods, s: GameState, name: string, image: stri
   const { TripActivity } = m;
   const running = TripActivity.getInstances();
   if (!trip || !s.expedition) {
-    for (const a of running) await a.end('default');
+    // Loot collected (or no trip): clear it from the Lock Screen right away.
+    for (const a of running) await a.end('immediate');
     return;
   }
   const total = trip.endAt - trip.startAt;
@@ -209,6 +220,11 @@ async function syncTripActivity(m: Mods, s: GameState, name: string, image: stri
     await first.update(props, new Date(trip.endAt));
     for (const a of rest) await a.end('immediate');
   } else if (trip.endAt > Date.now()) {
-    TripActivity.start(props, undefined, new Date(trip.endAt));
+    try {
+      TripActivity.start(props, undefined, new Date(trip.endAt));
+    } catch (e) {
+      // iPads and phones with Live Activities turned off: nothing to show, nothing to report.
+      if (!/not supported|disabled|not enabled/i.test(String((e as Error)?.message ?? e))) throw e;
+    }
   }
 }

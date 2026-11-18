@@ -58,8 +58,8 @@ const TripActivity = (props: TripActivityProps, env: LiveActivityEnvironment) =>
         ? 'Won a fight'
         : 'Knocked out in a fight'
       : lastReached.kind === 'food'
-        ? `Found ${lastReached.label}`
-        : `Found a ${lastReached.label}`
+        ? `Found ${lastReached.label.toLowerCase()}`
+        : `Found ${/^[aeiou]/i.test(lastReached.label) ? 'an' : 'a'} ${lastReached.label.toLowerCase()}`
     : 'On the way…';
   const bar = (
     <ProgressView timerInterval={{ lower: new Date(props.startAt), upper: new Date(props.endAt) }} countsDown={false} modifiers={[labelsHidden(), tint('#7CF0B5')]} />
