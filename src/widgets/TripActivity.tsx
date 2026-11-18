@@ -68,9 +68,15 @@ const TripActivity = (props: TripActivityProps, env: LiveActivityEnvironment) =>
   const timer = <Text timerInterval={{ lower: new Date(now), upper: new Date(props.endAt) }} modifiers={[font({ weight: 'heavy', size: 14 }), monospacedDigit(), foregroundStyle('#7CF0B5')]} />;
   // The Dynamic Island's small side has little room, and on phones with an upright camera pill even less:
   // let the countdown shrink to fit instead of cutting off its first digit.
-  const smallTimer = (
-    <Text timerInterval={{ lower: new Date(now), upper: new Date(props.endAt) }} modifiers={[font({ weight: 'heavy', size: 13 }), monospacedDigit(), foregroundStyle('#7CF0B5'), lineLimit(1), minimumScaleFactor(0.5), frame({ maxWidth: 52 })]} />
-  );
+  // With an hour or more left, "2:59:46" can't fit, so show the time they get home ("8:29") instead.
+  const end = new Date(props.endAt);
+  const homeAt = `${end.getHours() % 12 || 12}:${String(end.getMinutes()).padStart(2, '0')}`;
+  const smallTimer =
+    props.endAt - now >= 3_600_000 ? (
+      <Text modifiers={[font({ weight: 'heavy', size: 13 }), monospacedDigit(), foregroundStyle('#7CF0B5'), lineLimit(1), minimumScaleFactor(0.6), frame({ maxWidth: 52 })]}>{homeAt}</Text>
+    ) : (
+      <Text timerInterval={{ lower: new Date(now), upper: new Date(props.endAt) }} modifiers={[font({ weight: 'heavy', size: 13 }), monospacedDigit(), foregroundStyle('#7CF0B5'), lineLimit(1), minimumScaleFactor(0.5), frame({ maxWidth: 52 })]} />
+    );
 
   return {
     banner: (
