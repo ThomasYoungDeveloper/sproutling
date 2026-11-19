@@ -205,13 +205,16 @@ export function wildTeam(myLevels: number[], rng: Rng = defaultRng): PetLike[] {
 /* ---------------- Battle ---------------- */
 
 export type Side = 'me' | 'them';
-export type Action = { type: 'move'; moveId: string } | { type: 'switch'; index: number } | { type: 'potion'; heal: number; label: string };
+/** `lead`: after one of your pets fainted, the pet you chose to send in (free, before the turn). */
+export type Action = ({ type: 'move'; moveId: string } | { type: 'switch'; index: number } | { type: 'potion'; heal: number; label: string }) & { lead?: number };
 
 export interface Battle {
   mine: Fighter[];
   theirs: Fighter[];
   mi: number;
   ti: number;
+  /** Sides that just lost a pet and may pick who goes in next (otherwise the next one in line steps in). */
+  choose?: Side[];
   turn: number;
   over: null | 'win' | 'lose';
 }
@@ -293,12 +296,32 @@ export function aiAction(b: Battle, side: Side = 'them', rng: Rng = defaultRng):
 }
 
 /** Plays one turn and returns each step so the screen can animate it. */
+/** Shows the pet the player picked right away (the next turn makes it official). */
+export function previewLead(b: Battle, side: Side, index: number): Battle {
+  const t = team(b, side);
+  if (!(b.choose ?? []).includes(side) || !t[index] || !alive(t[index])) return b;
+  return side === 'me' ? { ...b, mi: index } : { ...b, ti: index };
+}
+
 export function playTurn(b0: Battle, myAction: Action, theirAction: Action, rng: Rng = defaultRng): Frame[] {
   if (b0.over) return [];
   const b = clone(b0);
   const frames: Frame[] = [];
   const push = (event: BattleEvent) => frames.push({ event, battle: clone(b) });
   const actions: Record<Side, Action> = { me: myAction, them: theirAction };
+
+  // A side whose pet fainted last turn sends in the pet it picked (free).
+  const choosing = b.choose ?? [];
+  b.choose = undefined;
+  (['me', 'them'] as Side[]).forEach((side) => {
+    const lead = actions[side].lead;
+    if (!choosing.includes(side) || lead === undefined) return;
+    const t = team(b, side);
+    if (!t[lead] || !alive(t[lead]) || lead === activeIdx(b, side)) return;
+    if (side === 'me') b.mi = lead;
+    else b.ti = lead;
+    push({ side, kind: 'switch', text: `Go, ${active(b, side).nickname}!` });
+  });
 
   // Switches happen first.
   (['me', 'them'] as Side[]).forEach((side) => {
@@ -451,6 +474,8 @@ function faint(b: Battle, side: Side, push: (e: BattleEvent) => void) {
   }
   if (side === 'me') b.mi = next;
   else b.ti = next;
+  // With more than one pet left, the player gets to choose who goes in.
+  if (team(b, side).filter(alive).length > 1) b.choose = [...(b.choose ?? []).filter((x) => x !== side), side];
   push({ side, kind: 'faint', target: side, text: `${f.nickname} fainted! ${active(b, side).nickname} steps in!` });
 }
 
@@ -508,7 +533,7 @@ export function liveReplay(c: LiveTeam, o: LiveTeam, seed: string, history: Live
 
 /** Turns the challenger's view into the opponent's view (swap sides). */
 export function flipBattle(b: Battle): Battle {
-  return { ...b, mine: b.theirs, theirs: b.mine, mi: b.ti, ti: b.mi, over: b.over === 'win' ? 'lose' : b.over === 'lose' ? 'win' : null };
+  return { ...b, mine: b.theirs, theirs: b.mine, mi: b.ti, ti: b.mi, ...(b.choose ? { choose: b.choose.map((x): Side => (x === 'me' ? 'them' : 'me')) } : {}), over: b.over === 'win' ? 'lose' : b.over === 'lose' ? 'win' : null };
 }
 export function flipFrames(frames: Frame[]): Frame[] {
   const sw = (x: Side): Side => (x === 'me' ? 'them' : 'me');

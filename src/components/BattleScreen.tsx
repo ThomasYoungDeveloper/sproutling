@@ -70,6 +70,8 @@ export default function BattleScreen({ opponent, onClose, onResult, live, specia
   const [line, setLine] = useState('');
   const [reward, setReward] = useState<B.BattleReward | null>(null);
   const [switching, setSwitching] = useState(false);
+  /** After one of your pets faints: the pet you picked to go in next (sent with your next move). */
+  const [lead, setLead] = useState<number | null>(null);
   const [peek, setPeek] = useState<string | null>(null);
 
   // While a live battle is open, tell the server you're here (every 20 seconds), so your friend's moves
@@ -249,9 +251,13 @@ export default function BattleScreen({ opponent, onClose, onResult, live, specia
     setPhase('result');
   };
 
-  const act = async (action: B.Action) => {
+  const mustChoose = !!battle && !battle.over && !busy && lead === null && (battle.choose ?? []).includes('me') && !(live && lb?.iMoved);
+
+  const act = async (action0: B.Action) => {
     if (!battle || busy || battle.over) return;
     setSwitching(false);
+    const action: B.Action = lead !== null ? { ...action0, lead } : action0;
+    setLead(null);
     if (live && lb) {
       setBusy(true);
       const res = await L.move(live, lb.turn, action);
@@ -365,7 +371,34 @@ export default function BattleScreen({ opponent, onClose, onResult, live, specia
         {phase === 'fight' ? (
           <>
             <Text style={styles.line} numberOfLines={2}>{line}</Text>
-            {switching ? (
+            {mustChoose ? (
+              <View style={{ gap: 8 }}>
+                <Text style={styles.tip}>Your pet fainted. Choose who goes in next (this is free).</Text>
+                <View style={{ gap: 8 }}>
+                  {battle.mine.map((f, i) => {
+                    if (f.hp <= 0) return null;
+                    const sp = SPECIES_BY_ID[f.speciesId];
+                    const pct = f.maxHp ? f.hp / f.maxHp : 0;
+                    return (
+                      <Pressable key={f.key} onPress={() => { setLead(i); setBattle(B.previewLead(battle, 'me', i)); setLine(`Go, ${f.nickname}! What will ${f.nickname} do?`); buzz('light', 'whoosh'); }} style={styles.swCard} accessibilityRole="button" accessibilityLabel={`Send in ${f.nickname}, ${f.hp} of ${f.maxHp} HP`}>
+                        <View style={styles.swHead}>
+                          <PetSprite species={sp} stage={stageFor(f.xp)} size={46} skin={f.skin} hat={f.hat} />
+                          <View style={{ flex: 1, gap: 3 }}>
+                            <Text style={styles.switchName} numberOfLines={1}>{f.nickname} <Text style={styles.swLv}>Lv {f.level}</Text></Text>
+                            <View style={styles.swTags}>
+                              <View style={[styles.el, { backgroundColor: B.ELEMENT_COLOR[f.element] }]}><Text style={styles.elText}>{B.ELEMENT_LABEL[f.element]}</Text></View>
+                              <Text style={styles.switchHp}>{`${f.hp}/${f.maxHp} HP`}</Text>
+                            </View>
+                            <View style={styles.swBar}><View style={[styles.swFill, { width: `${Math.round(pct * 100)}%`, backgroundColor: pct > 0.5 ? '#2EB88A' : pct > 0.2 ? '#F2A23C' : '#E5533D' }]} /></View>
+                          </View>
+                          <Text style={styles.swGo}>Send in</Text>
+                        </View>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              </View>
+            ) : switching ? (
               <View style={{ gap: 8 }}>
                 <Text style={styles.tip}>Switching uses your turn. Tap a pet to see its moves.</Text>
                 <ScrollView style={{ maxHeight: 340 }} contentContainerStyle={{ gap: 8 }}>
@@ -728,6 +761,7 @@ function DamagePop({ side, text, color, onDone }: { side: B.Side; text: string; 
 }
 
 const styles = StyleSheet.create({
+  swGo: { fontWeight: '900', fontSize: 14, color: colors.mintDark },
   potionRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   potionBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, borderWidth: 2, borderRadius: 12, paddingHorizontal: 8, paddingVertical: 3, backgroundColor: '#FFFBF2' },
   potionText: { fontWeight: '900', fontSize: 13, color: colors.ink },

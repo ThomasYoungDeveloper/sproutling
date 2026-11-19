@@ -895,4 +895,17 @@ console.log('\nEgg basket');
   ok(ups <= 1, `lucky Gold chests turn Rainbow at most once a week (${ups})`);
 }
 
+// Choosing who goes in after a faint
+{
+  const B2 = require('../src/game/battle');
+  const mk = (id: string, sp: string) => ({ id, speciesId: sp, nickname: id, xp: 5000 });
+  let b = B2.startBattle([mk('a', 'p01'), mk('b', 'p02'), mk('c', 'p03')], [mk('x', 'p04'), mk('y', 'p05')]);
+  b = { ...b, mine: b.mine.map((f: any, i: number) => (i === 0 ? { ...f, hp: 1 } : f)) };
+  let guard = 0;
+  while (!b.over && b.mine[0].hp > 0 && guard++ < 20) { const fr = B2.playTurn(b, { type: 'move', moveId: b.mine[0].moves[0].id }, B2.aiAction(b, 'them')); b = fr[fr.length - 1].battle; }
+  ok((b.choose ?? []).includes('me') && b.mi === 1, 'after a faint with 2 pets left, you get to choose (next in line shows for now)');
+  const fr2 = B2.playTurn(b, { type: 'move', moveId: b.mine[2].moves[0].id, lead: 2 }, B2.aiAction(b, 'them'));
+  ok(fr2[0].event.kind === 'switch' && fr2[0].battle.mi === 2 && !fr2[fr2.length - 1].battle.choose?.includes('me'), 'the pet you pick goes in for free before the turn');
+}
+
 console.log(fails ? `${fails} FAILED` : 'ALL PASSED'); process.exit(fails ? 1 : 0);
