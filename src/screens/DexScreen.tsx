@@ -53,19 +53,21 @@ const badgeStyles = StyleSheet.create({
 });
 
 type DexFilter = 'all' | Skin | 'shiny';
-const FILTERS: DexFilter[] = ['all', 'mono', 'silver', 'gold', 'rainbow', 'shiny'];
-const FILTER_LABEL: Record<DexFilter, string> = { all: 'All', mono: 'Ink', silver: 'Silver', gold: 'Gold', rainbow: 'Rainbow', shiny: 'Shiny' };
-const FILTER_DOT: Record<DexFilter, string> = { all: '#FFFFFF', mono: SKIN_INFO.mono.color, silver: SKIN_INFO.silver.color, gold: SKIN_INFO.gold.color, rainbow: SKIN_INFO.rainbow.color, shiny: '#F2C230' };
+const DYE_SKINS: Skin[] = ['pastel', 'retro', 'sakura', 'ocean', 'ember', 'moonlit', 'crystal', 'shadow', 'galaxy', 'harvest'];
+const FILTERS: DexFilter[] = ['all', 'mono', 'silver', 'gold', 'rainbow', ...DYE_SKINS, 'shiny'];
+const FILTER_LABEL = { all: 'All', mono: 'Ink', silver: 'Silver', gold: 'Gold', rainbow: 'Rainbow', shiny: 'Shiny', ...Object.fromEntries(DYE_SKINS.map((k) => [k, SKIN_INFO[k].label])) } as Record<DexFilter, string>;
+const FILTER_DOT = { all: '#FFFFFF', mono: SKIN_INFO.mono.color, silver: SKIN_INFO.silver.color, gold: SKIN_INFO.gold.color, rainbow: SKIN_INFO.rainbow.color, shiny: '#F2C230', ...Object.fromEntries(DYE_SKINS.map((k) => [k, SKIN_INFO[k].color])) } as Record<DexFilter, string>;
 /** Darker tag colors so white text stays readable. */
-const FILTER_TAG: Record<DexFilter, string> = { all: colors.mintDark, mono: '#3B3B4F', silver: '#5F7385', gold: '#9A6F00', rainbow: '#8A3DB8', shiny: '#9A6F00' };
-const FILTER_HINT: Record<DexFilter, string> = {
+const FILTER_TAG = { all: colors.mintDark, mono: '#3B3B4F', silver: '#5F7385', gold: '#9A6F00', rainbow: '#8A3DB8', shiny: '#9A6F00', ...Object.fromEntries(DYE_SKINS.map((k) => [k, SKIN_INFO[k].color])) } as Record<DexFilter, string>;
+const FILTER_HINT = {
+  ...Object.fromEntries(DYE_SKINS.map((k) => [k, k === 'harvest' ? 'Only from the Harvest Festival: the Festival Dye and Harvest Eggs.' : `From a ${SKIN_INFO[k].label} Dye (shop, Lucky Wheel) or, rarely, a lucky hatch.`])),
   all: '',
   mono: 'Ink hatches from about 1 in 20 eggs.',
   silver: 'Silver hatches from about 1 in 33 eggs. Nursery eggs make it more likely.',
   gold: 'Gold hatches from about 1 in 67 eggs. Breed two skinned pets for better odds.',
   rainbow: 'The rarest style: about 1 in 200 eggs.',
   shiny: 'Shiny pets sparkle. Keep hatching!',
-};
+} as Record<DexFilter, string>;
 
 const ELEMENT_TINT: Record<string, string> = { flower: '#DDF2D2', moon: '#E8E1FA', ember: '#FFE4CC', tide: '#D6EDF8' };
 const RARITY_TINT: Record<string, string> = { common: '#E8F6FF', uncommon: '#E2F6E6', rare: '#F1E8FF', epic: '#FFE8F2', legendary: '#FFF2D6' };
@@ -92,7 +94,7 @@ export default function DexScreen() {
               <Pressable key={p.id} onPress={() => overlay.open(<PetSheet petId={p.id} onClose={overlay.close} />)} style={[styles.tile, { backgroundColor: ELEMENT_TINT[sp.element], borderColor: 'transparent' }, active && styles.active]} accessibilityLabel={`Open ${p.nickname}`}>
                 <PetSprite species={sp} stage={stageFor(p.xp)} size={86} shiny={p.shiny} skin={p.skin} hat={p.look?.hat} aura={p.look?.aura} />
                 <View style={styles.lv}><Text style={styles.lvText}>Lv {levelFor(p.xp)}</Text></View>
-                {p.skin ? <Text style={[styles.skinBadge, { color: SKIN_INFO[p.skin].color }]}>{SKIN_INFO[p.skin].emoji}</Text> : null}
+                {p.skin ? <Text style={[styles.skinBadge, { color: SKIN_INFO[p.skin].color }]}>{SKIN_INFO[p.skin].label}</Text> : null}
                 {pointsLeft(p) > 0 ? <View style={styles.pts}><Text style={styles.ptsText}>+{pointsLeft(p)}</Text></View> : null}
                 <Text style={styles.name} numberOfLines={1}>{p.nickname}</Text>
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 4, alignItems: 'center' }}>
@@ -184,7 +186,7 @@ const styles = StyleSheet.create({
   lv: { position: 'absolute', top: 6, left: 6, backgroundColor: colors.ink, borderRadius: 8, paddingHorizontal: 6, paddingVertical: 2 },
   pts: { position: 'absolute', bottom: 58, right: 8, backgroundColor: colors.gold, borderRadius: 999, paddingHorizontal: 7, paddingVertical: 1 },
   ptsText: { fontWeight: '900', fontSize: 11, color: '#5A3E00' },
-  skinBadge: { position: 'absolute', top: 4, right: 8, fontSize: 16 },
+  skinBadge: { position: 'absolute', top: 4, right: 6, fontSize: 9, fontWeight: '900', backgroundColor: '#FFFFFFDD', borderRadius: 6, paddingHorizontal: 4, overflow: 'hidden' },
   lvText: { color: '#fff', fontWeight: '900', fontSize: 11 },
   skinRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, alignItems: 'center' },
   skinLegend: { flexDirection: 'row', alignItems: 'center', gap: 4 },

@@ -29,7 +29,7 @@ function Slot({ petId, label, onPress }: { petId: string | null; label: string; 
         <>
           <PetSprite species={sp} stage={stageFor(pet.xp)} size={86} shiny={pet.shiny} skin={pet.skin} hat={pet.look?.hat} aura={pet.look?.aura} />
           <Text style={styles.slotName} numberOfLines={1}>{pet.nickname}</Text>
-          <Text style={styles.slotSub}>Lv {levelFor(pet.xp)}{pet.skin ? ` · ${SKIN_INFO[pet.skin].emoji}` : ''}</Text>
+          <Text style={styles.slotSub}>Lv {levelFor(pet.xp)}{pet.skin ? ` · ${SKIN_INFO[pet.skin].label}` : ''}</Text>
         </>
       ) : (
         <>

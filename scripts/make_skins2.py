@@ -71,7 +71,9 @@ def make(path, skin, seed):
         res = np.clip(res + wave[..., None] * 255, 0, 255)
         alpha = alpha * 0.85
     elif skin == 'ember':
-        res = ramp(lum, [(0, '#2a0600'), (0.35, '#a3260a'), (0.65, '#ff7a1f'), (1, '#ffe08a')])
+        hi = np.percentile(lum[alpha > 0.8], 90) if (alpha > 0.8).any() else 1.0
+        l2 = np.clip(lum / max(hi, 1e-3) * 0.8, 0, 1)
+        res = ramp(l2, [(0, '#1a0000'), (0.35, '#8c0c12'), (0.62, '#e2302a'), (0.85, '#ff7b3a'), (1, '#ffd36b')])
         halo, halo_color = glow(alpha, 5, 1.8), hexc('#ff8a2a')
     elif skin == 'frost':
         res = ramp(lum, [(0, '#1b3550'), (0.4, '#6fa6d6'), (0.75, '#cfe8ff'), (1, '#ffffff')])
@@ -79,7 +81,10 @@ def make(path, skin, seed):
         res = res * (1 - sp[..., None]) + 255 * sp[..., None]
         halo, halo_color = glow(alpha, 3, 1.6), hexc('#e8f6ff')
     elif skin == 'harvest':
-        res = ramp(lum, [(0, '#2b1400'), (0.35, '#7a3b0a'), (0.65, '#d9862b'), (1, '#ffe2a6')])
+        # Deep autumn tones; the brightest parts land on pumpkin and gold rather than cream.
+        hi = np.percentile(lum[alpha > 0.8], 90) if (alpha > 0.8).any() else 1.0
+        l2 = np.clip(lum / max(hi, 1e-3) * 0.82, 0, 1)
+        res = ramp(l2, [(0, '#28120a'), (0.25, '#78300e'), (0.5, '#d25c1c'), (0.75, '#f69832'), (0.9, '#ffc86e'), (1, '#ffe8b4')])
     elif skin == 'spooky':
         res = ramp(lum, [(0, '#140a26'), (0.45, '#6a3fb5'), (0.8, '#c7a6ff'), (1, '#f4ecff')])
         alpha = alpha * (0.62 + 0.25 * (yy < h * 0.7))
@@ -111,8 +116,11 @@ def make(path, skin, seed):
         res = res * (1 - lines[..., None]) + hexc('#b86bff') * lines[..., None]
         halo, halo_color = glow(alpha, 6, 1.5), hexc('#7a3cff')
     elif skin == 'pastel':
-        res = rgb * 255 * 0.55 + 255 * 0.45
-        res = res * 0.9 + hexc('#ffe6f5') * 0.1
+        # Soft candy colors that drift pink to lavender to mint from top to bottom.
+        t = (yy / max(h - 1, 1))[..., None]
+        tint = np.where(t < 0.5, hexc('#ffb8d9') * (1 - t * 2) + hexc('#c9b8ff') * (t * 2), hexc('#c9b8ff') * (2 - t * 2) + hexc('#a8f0d2') * (t * 2 - 1))
+        l3 = np.clip(lum * 0.5 + 0.45, 0, 1)[..., None]
+        res = tint * l3 + 255 * np.clip(l3 - 0.8, 0, 1) * 0.8
         dark = (lum < 0.18)[..., None]
         res = np.where(dark, rgb * 255 * 0.8 + hexc('#6a5a80') * 0.2, res)
     elif skin == 'retro':
@@ -133,7 +141,8 @@ def make(path, skin, seed):
 
     res = np.clip(res, 0, 255)
     a_out = alpha
-    if halo is not None:
+    # Skins only recolor the pet itself: anything around the pet is an aura's job.
+    if halo is not None and os.environ.get('SKIN_HALO'):
         res = res * alpha[..., None] + halo_color * (1 - alpha[..., None])
         a_out = np.clip(alpha + halo, 0, 1)
     outarr = np.dstack([res, a_out * 255]).astype(np.uint8)

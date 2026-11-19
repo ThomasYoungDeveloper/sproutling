@@ -71,7 +71,7 @@ export default function PetSheet({ petId, onClose }: { petId: string; onClose: (
             </Pressable>
             <View style={{ flex: 1, gap: 4 }}>
               <Text style={font.title} numberOfLines={1}>{pet.nickname}</Text>
-              <Text style={font.small}>Lv {lv} {sp.name}{pet.skin ? ` · ${SKIN_INFO[pet.skin].emoji} ${SKIN_INFO[pet.skin].label}` : ''}{pet.shiny ? ' · ✦ Shiny' : ''}</Text>
+              <Text style={font.small}>Lv {lv} {sp.name}{pet.skin ? ` · ${SKIN_INFO[pet.skin].label}` : ''}{pet.shiny ? ' · ✦ Shiny' : ''}</Text>
               <View style={{ flexDirection: 'row', gap: 6, flexWrap: 'wrap' }}>
                 <RarityBadge rarity={sp.rarity} />
                 <View style={[styles.chip, { backgroundColor: ELEMENT_COLOR[sp.element] }]}><Text style={styles.chipText}>{ELEMENT_LABEL[sp.element]}</Text></View>

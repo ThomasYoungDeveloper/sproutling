@@ -51,7 +51,7 @@ export default function PetZoom({ pet, scene, onClose, dex }: { pet: ZoomPet; sc
           <View style={{ flexDirection: 'row', gap: 6, alignItems: 'center', flexWrap: 'wrap', justifyContent: 'center' }}>
             {dex ? null : <Text style={styles.sub}>Lv {levelFor(pet.xp)} {sp.name}</Text>}
             <RarityBadge rarity={sp.rarity} />
-            {pet.skin ? <Text style={[styles.sub, { color: SKIN_INFO[pet.skin].color }]}>{SKIN_INFO[pet.skin].emoji} {SKIN_INFO[pet.skin].label}</Text> : null}
+            {pet.skin ? <Text style={[styles.sub, { color: SKIN_INFO[pet.skin].color }]}>{SKIN_INFO[pet.skin].label} skin</Text> : null}
             {pet.shiny ? <Text style={[styles.sub, { color: '#C99212' }]}>✦ Shiny</Text> : null}
           </View>
           {dex ? <Text style={styles.blurb}>{sp.blurb}</Text> : null}

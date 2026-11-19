@@ -99,7 +99,7 @@ function hash(str: string): number {
   return h >>> 0;
 }
 
-export const SHOP_SIZE = 6;
+export const SHOP_SIZE = 5;
 
 /** Today's shop: the same items for everyone on a given day, always with hats, an aura and a scene. Toys aren't sold (the free ball stays). */
 export function shopToday(s: GameState): Cosmetic[] {

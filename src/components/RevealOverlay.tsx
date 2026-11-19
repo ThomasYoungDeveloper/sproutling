@@ -118,7 +118,7 @@ function EggReveal({ r, onClose }: { r: Extract<Reveal, { kind: 'egg' }>; onClos
           {r.pet.skin ? (
             <PopIn delay={330}>
               <View style={[styles.skinTag, { borderColor: SKIN_INFO[r.pet.skin].color }]}>
-                <Text style={[styles.skinText, { color: SKIN_INFO[r.pet.skin].color }]}>{SKIN_INFO[r.pet.skin].emoji} {SKIN_INFO[r.pet.skin].label.toUpperCase()} SKIN!</Text>
+                <Text style={[styles.skinText, { color: SKIN_INFO[r.pet.skin].color }]}>{SKIN_INFO[r.pet.skin].label.toUpperCase()} SKIN!</Text>
               </View>
             </PopIn>
           ) : null}

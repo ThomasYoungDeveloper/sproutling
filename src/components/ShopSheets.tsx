@@ -21,9 +21,10 @@ import { stageFor } from '../game/scoring';
 import * as A from '../game/actions';
 import * as K from '../game/cosmetics';
 import * as Pw from '../game/powerups';
-import * as F from '../game/food';
-import * as M from '../game/market';
-import { RARITY_INFO } from '../game/rarity';
+import * as Dy from '../game/dyes';
+import { SKIN_INFO } from '../game/skins';
+import { DyeIcon, UseDyeSheet } from './Dyes';
+import type { Skin } from '../game/types';
 import type { Cosmetic, Slot } from '../game/cosmetics';
 
 const SLOT_TITLE: Record<Slot, string> = { toy: 'Toys', hat: 'Hats', aura: 'Auras', scene: 'Scenes' };
@@ -126,228 +127,198 @@ function PotionOffer() {
   );
 }
 
-function GeneralStore({ onClose, onWardrobe, onBack }: { onClose: () => void; onWardrobe: () => void; onBack: () => void }) {
-  const { state, apply } = useGame();
-  const items = K.shopToday(state);
-  const left = useCountdown();
-  const [justBought, setJustBought] = useState<string | null>(null);
-  const [msg, setMsg] = useState<string | null>(null);
-  const slots: Slot[] = ['toy', 'hat', 'aura', 'scene'];
-  const premium = K.COSMETICS.filter((c) => c.premium);
-  const overlay = useOverlay();
-
-  const purchase = (c: Cosmetic) => {
-    const r = K.buy(state, c.id);
-    if (!r.ok) {
-      setMsg(r.reason);
-      buzz('light');
-      return;
-    }
-    buzz('success');
-    setMsg(null);
-    setJustBought(c.id);
-    apply(() => r.state);
-  };
-
-  const wear = (c: Cosmetic) => {
-    buzz('success');
-    apply((s) => K.equip(s, c.slot, c.id));
-    setMsg(c.slot === 'scene' ? `${c.name} is your new scene!` : `${A.activePet(state)?.nickname} is wearing the ${c.name}!`);
-  };
-
-  return (
-    <View style={styles.backdrop}>
-      <Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessibilityLabel="Close" />
-      <View style={styles.sheet}>
-        <Pressable onPress={onBack} hitSlop={8} accessibilityRole="button"><Text style={styles.back}>‹ Shop</Text></Pressable>
-        <View style={styles.head}>
-          <View style={{ flex: 1 }}>
-            <Text style={font.title}>🧺 General Store</Text>
-            <Text style={font.small}>New outfits and toys in {left}</Text>
-          </View>
-          <View style={styles.coins}><CoinText style={styles.coinsText}>{state.coins.toLocaleString()}</CoinText></View>
-        </View>
-        <ScrollView style={{ maxHeight: 520 }} contentContainerStyle={{ gap: space.sm, paddingBottom: space.sm }}>
-          {slots.map((slot) => {
-            const list = items.filter((c) => c.slot === slot);
-            if (!list.length) return null;
-            return (
-              <View key={slot} style={{ gap: 6 }}>
-                <Text style={styles.section}>{SLOT_TITLE[slot]}</Text>
-                <View style={styles.grid}>
-                  {list.map((c) => {
-                    const owned = K.owns(state, c.id);
-                    const afford = state.coins >= c.price;
-                    return (
-                      <Tile key={c.id} c={c}>
-                        {owned ? (
-                          justBought === c.id && slot !== 'toy' ? (
-                            <PopIn>
-                              <Pressable onPress={() => wear(c)} style={[styles.price, styles.wear]}><Text style={[styles.priceText, { color: '#fff' }]}>{slot === 'scene' ? 'Use it' : 'Wear it'}</Text></Pressable>
-                            </PopIn>
-                          ) : (
-                            <View style={[styles.price, styles.owned]}><Text style={[styles.priceText, { color: colors.mintDark }]}>Owned ✓</Text></View>
-                          )
-                        ) : (
-                          <Pressable onPress={() => purchase(c)} style={[styles.price, !afford && { opacity: 0.55 }]} accessibilityRole="button" accessibilityLabel={`Buy ${c.name} for ${c.price} coins`}>
-                            <CoinText style={styles.priceText}>{c.price}</CoinText>
-                          </Pressable>
-                        )}
-                      </Tile>
-                    );
-                  })}
-                </View>
-              </View>
-            );
-          })}
-          <View style={{ gap: 6 }}>
-            <Text style={styles.section}>💎 Training Crystal</Text>
-            <CrystalOffer />
-            <PotionOffer />
-          </View>
-          <View style={{ gap: 6 }}>
-            <Text style={styles.section}>🥚 Incubators</Text>
-            <IncubatorOffer />
-          </View>
-          <View style={{ gap: 6 }}>
-            <Text style={styles.section}>⭐ Premium (coming soon)</Text>
-            <View style={styles.grid}>
-              {premium.map((c) => (
-                <Tile key={c.id} c={c} dim onPress={() => overlay.open(<PremiumSheet onClose={overlay.close} />)}>
-                  <View style={[styles.price, { backgroundColor: '#F1EAFB' }]}><Text style={[styles.priceText, { color: '#7A4BC2' }]}>🔒 Premium</Text></View>
-                </Tile>
-              ))}
-            </View>
-          </View>
-        </ScrollView>
-        {msg ? <Text style={styles.msg}>{msg}</Text> : null}
-        <View style={styles.row}>
-          <Button label="🎨 My wardrobe" onPress={onWardrobe} style={{ flex: 1 }} />
-          <Button primary label="Done" onPress={onClose} style={{ flex: 1 }} />
-        </View>
-        <Text style={[font.tiny, { textAlign: 'center' }]}>Earn coins from healthy habits, quests, chests, battles and gifts. Chests can hold items too!</Text>
-      </View>
-    </View>
-  );
-}
-
 export type Store = 'food' | 'general';
 
-/** The shop: pick the Food Market or the General Store. Both restock at midnight. */
-export function ShopSheet({ onClose, onWardrobe, start }: { onClose: () => void; onWardrobe: () => void; start?: Store }) {
+/** A look in today's shop: tap to try it on your pet first. */
+function LookTile({ c, onPress }: { c: Cosmetic; onPress: () => void }) {
   const { state } = useGame();
-  const [store, setStore] = useState<Store | null>(start ?? null);
-  const left = useCountdown();
+  const owned = K.owns(state, c.id);
+  return (
+    <Pressable onPress={onPress} style={({ pressed }) => [styles.look, pressed && { transform: [{ scale: 0.97 }] }]} accessibilityRole="button" accessibilityLabel={`${c.name}, ${owned ? 'owned' : `${c.price} coins`}. Tap to try it on.`}>
+      <View style={[styles.lookArt, { backgroundColor: LOOK_TINT[c.slot] }]}><ItemIcon id={c.id} size={58} /></View>
+      <Text style={styles.tileName} numberOfLines={1}>{c.name}</Text>
+      <Text style={[styles.rarity, { color: K.ITEM_RARITY_COLOR[c.rarity] }]}>{c.rarity}</Text>
+      <View style={[styles.price, owned && styles.owned]}>
+        {owned ? <Text style={[styles.priceText, { color: colors.mintDark }]}>Owned</Text> : <CoinText style={styles.priceText}>{c.price.toLocaleString()}</CoinText>}
+      </View>
+    </Pressable>
+  );
+}
+
+const LOOK_TINT: Record<Slot, string> = { toy: '#E8F6EE', hat: '#EFE7FA', aura: '#FFF8DA', scene: '#FDEBF1' };
+
+/** Try a look on the active pet before buying it. */
+function TryOn({ c, onBack }: { c: Cosmetic; onBack: () => void }) {
+  const { state, apply } = useGame();
+  const pet = A.activePet(state);
+  const sp = pet ? SPECIES_BY_ID[pet.speciesId] : undefined;
+  const owned = K.owns(state, c.id);
+  const [msg, setMsg] = useState<string | null>(null);
+  const buy = () => {
+    const r = K.buy(state, c.id);
+    if (!r.ok) {
+      buzz('light');
+      return setMsg(r.reason);
+    }
+    buzz('success', 'coin');
+    apply(() => K.equip(r.state, c.slot, c.id));
+    setMsg(c.slot === 'scene' ? `${c.name} is your new yard!` : `${pet?.nickname ?? 'Your pet'} is wearing the ${c.name}!`);
+  };
+  return (
+    <View style={{ gap: space.sm, alignItems: 'center' }}>
+      <Pressable onPress={onBack} hitSlop={8} accessibilityRole="button" style={{ alignSelf: 'flex-start' }}><Text style={styles.back}>‹ Shop</Text></Pressable>
+      <View style={[styles.tryBox, { backgroundColor: LOOK_TINT[c.slot] }]}>
+        {c.slot === 'scene' ? (
+          <View style={StyleSheet.absoluteFill}><Backdrop scene={c.id} sky={skyNow()} element={(sp?.element ?? 'flower') as never} /></View>
+        ) : null}
+        {pet && sp ? (
+          <PetSprite species={sp} stage={stageFor(pet.xp)} size={150} skin={pet.skin} hat={c.slot === 'hat' ? c.id : pet.look?.hat} aura={c.slot === 'aura' ? c.id : pet.look?.aura} noShadow />
+        ) : (
+          <ItemIcon id={c.id} size={120} />
+        )}
+      </View>
+      <Text style={styles.tryName}>{c.name}</Text>
+      <Text style={[font.small, { textAlign: 'center' }]}>{c.slot === 'scene' ? 'A new yard behind your pet.' : `Here it is on ${pet?.nickname ?? 'your pet'}.`} Looks are just for fun and don’t change stats.</Text>
+      {msg ? <Text style={styles.msg}>{msg}</Text> : null}
+      <View style={[styles.row, { alignSelf: 'stretch' }]}>
+        <Button label={owned || msg ? 'Back' : 'Not now'} onPress={onBack} style={{ flex: 1 }} />
+        {owned ? (
+          <Button primary label={c.slot === 'scene' ? 'Use it' : 'Wear it'} onPress={() => { apply((s) => K.equip(s, c.slot, c.id)); buzz('success'); setMsg('Done!'); }} style={{ flex: 1.6 }} />
+        ) : (
+          <Button primary label={`Buy for ${c.price.toLocaleString()}`} onPress={buy} disabled={state.coins < c.price} style={{ flex: 1.6 }} />
+        )}
+      </View>
+    </View>
+  );
+}
+
+/** The featured spot on a dye day: a dark, gold-trimmed card that leaves at midnight. */
+function DyeFeature({ onUse }: { onUse: (skin: Skin) => void }) {
+  const { state, apply } = useGame();
   const day = A.todayKey(state);
-  const special = M.specialFor(day);
-  const pick = K.shopToday(state).slice().sort((a, b) => b.price - a.price)[0];
+  const d = Dy.dyeOfDay(day)!;
+  const left = useCountdown();
+  const pet = A.activePet(state);
+  const sp = pet ? SPECIES_BY_ID[pet.speciesId] : undefined;
+  const price = Dy.DYE_PRICE[d.rarity];
+  const bought = state.boughtDye === day;
+  const [msg, setMsg] = useState<string | null>(null);
+  const info = SKIN_INFO[d.skin];
+  const buy = () => {
+    const r = Dy.buyDye(state, day);
+    if (!r.ok) {
+      buzz('light');
+      return setMsg(r.reason);
+    }
+    buzz('success', 'coin');
+    apply(() => r.state);
+  };
+  return (
+    <View style={styles.dyeCard}>
+      <View style={styles.dyeTop}><Text style={styles.dyeTopText}>{Dy.DYE_RARITY_LABEL[d.rarity].toUpperCase()} DYE · LEAVES IN {left.toUpperCase()}</Text></View>
+      <View style={styles.dyeRow}>
+        <View style={styles.dyeBottle}><DyeIcon skin={d.skin} size={58} /></View>
+        <Text style={styles.dyeArrow}>›</Text>
+        <View style={[styles.dyePet, { shadowColor: info.color }]}>
+          {pet && sp ? <PetSprite species={sp} stage={stageFor(pet.xp)} size={96} skin={d.skin} noShadow /> : null}
+        </View>
+      </View>
+      <Text style={styles.dyeName}>{Dy.dyeName(d.skin)}</Text>
+      <Text style={styles.dyeBody}>Gives one pet the {info.label} skin for good.</Text>
+      {bought ? (
+        <Pressable onPress={() => onUse(d.skin)} style={[styles.dyeBtn, { backgroundColor: '#2FB58A' }]} accessibilityRole="button">
+          <Text style={[styles.dyeBtnText, { color: '#FFFFFF' }]}>{Dy.dyesOwned(state, d.skin) ? 'Use it now' : 'Bought today'}</Text>
+        </Pressable>
+      ) : (
+        <Pressable onPress={buy} style={[styles.dyeBtn, state.coins < price && { opacity: 0.6 }]} accessibilityRole="button" accessibilityLabel={`Buy ${Dy.dyeName(d.skin)} for ${price} coins`}>
+          <CoinText style={styles.dyeBtnText}>{price.toLocaleString()}</CoinText>
+        </Pressable>
+      )}
+      {msg ? <Text style={[styles.dyeBody, { color: '#FFE27A' }]}>{msg}</Text> : null}
+    </View>
+  );
+}
+
+/** The featured look of the day (on days without a dye): the priciest look in the shop. */
+function FeaturedLook({ c, onPress }: { c: Cosmetic; onPress: () => void }) {
+  const { state } = useGame();
+  const pet = A.activePet(state);
+  const sp = pet ? SPECIES_BY_ID[pet.speciesId] : undefined;
+  const owned = K.owns(state, c.id);
+  return (
+    <Pressable onPress={onPress} style={({ pressed }) => [styles.featured, pressed && { transform: [{ scale: 0.98 }] }]} accessibilityRole="button" accessibilityLabel={`Featured look: ${c.name}. Tap to try it on.`}>
+      <View style={styles.featTag}><Text style={styles.featTagText}>TODAY ONLY</Text></View>
+      <View style={styles.featArt}>
+        {pet && sp && c.slot !== 'scene' ? (
+          <PetSprite species={sp} stage={stageFor(pet.xp)} size={86} skin={pet.skin} hat={c.slot === 'hat' ? c.id : pet.look?.hat} aura={c.slot === 'aura' ? c.id : pet.look?.aura} noShadow />
+        ) : (
+          <ItemIcon id={c.id} size={72} />
+        )}
+      </View>
+      <View style={{ flex: 1, gap: 2 }}>
+        <Text style={styles.featKicker}>FEATURED LOOK</Text>
+        <Text style={styles.featName}>{c.name}</Text>
+        <Text style={styles.featBody}>{c.rarity[0].toUpperCase() + c.rarity.slice(1)} {c.slot === 'scene' ? 'yard' : c.slot}. Tap to try it on.</Text>
+        <View style={styles.featPrice}>{owned ? <Text style={styles.featPriceText}>Owned</Text> : <CoinText style={styles.featPriceText}>{c.price.toLocaleString()}</CoinText>}</View>
+      </View>
+    </Pressable>
+  );
+}
+
+/**
+ * The shop: one screen. A featured look (or a rare dye on dye days), today's 4 looks,
+ * then supplies that are always there: potions, the daily crystal and incubators.
+ */
+export function ShopSheet({ onClose, onWardrobe }: { onClose: () => void; onWardrobe: () => void; start?: Store }) {
+  const { state } = useGame();
+  const left = useCountdown();
+  const [trying, setTrying] = useState<Cosmetic | null>(null);
+  const [dyeFor, setDyeFor] = useState<Skin | null>(null);
   if (!U.unlocked(state, 'shop')) return <LockedSheet feature="shop" onClose={onClose} />;
-  if (store === 'food') return <FoodMarket onClose={onClose} onBack={() => setStore(null)} />;
-  if (store === 'general') return <GeneralStore onClose={onClose} onWardrobe={onWardrobe} onBack={() => setStore(null)} />;
+  if (dyeFor) return <UseDyeSheet skin={dyeFor} onClose={() => setDyeFor(null)} />;
+  const items = K.shopToday(state);
+  const dye = Dy.dyeOfDay(A.todayKey(state));
+  const featured = dye ? null : items.slice().sort((a, b) => b.price - a.price)[0];
+  const looks = items.filter((c) => c !== featured).slice(0, 4);
+  const ownedLooks = K.COSMETICS.filter((c) => c.slot !== 'toy' && c.price > 0 && K.owns(state, c.id)).length;
   return (
     <View style={styles.backdrop}>
       <Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessibilityLabel="Close" />
       <View style={styles.sheet}>
         <View style={styles.head}>
-          <Text style={[font.title, { flex: 1 }]}>Shop</Text>
+          <View style={{ flex: 1 }}>
+            <Text style={font.title}>Shop</Text>
+            <Text style={font.small}>New looks in {left}</Text>
+          </View>
           <View style={styles.coins}><CoinText style={styles.coinsText}>{state.coins.toLocaleString()}</CoinText></View>
         </View>
-        <Text style={font.small}>Pick a store</Text>
-        <Pressable onPress={() => setStore('food')} style={({ pressed }) => [styles.store, { backgroundColor: '#FFE3B8' }, pressed && { transform: [{ scale: 0.98 }] }]} accessibilityRole="button" accessibilityLabel={`Food Market. Today's special: ${special.food.name}`}>
-          <Text style={styles.storeIcon}>🍙</Text>
-          <View style={{ flex: 1, gap: 2 }}>
-            <Text style={styles.storeName}>Food Market</Text>
-            <Text style={[styles.storeSub, { color: '#8A5A00' }]}>Today's special: {special.food.emoji} {special.food.name} ({RARITY_INFO[special.food.rarity].label})</Text>
-          </View>
-          <View style={[styles.newTag, { backgroundColor: '#E07A3F' }]}><Text style={styles.newTagText}>NEW TODAY</Text></View>
-        </Pressable>
-        <Pressable onPress={() => setStore('general')} style={({ pressed }) => [styles.store, { backgroundColor: '#D8E9FB' }, pressed && { transform: [{ scale: 0.98 }] }]} accessibilityRole="button" accessibilityLabel="General Store">
-          <Text style={styles.storeIcon}>🧺</Text>
-          <View style={{ flex: 1, gap: 2 }}>
-            <Text style={styles.storeName}>General Store</Text>
-            <Text style={[styles.storeSub, { color: '#1F5E99' }]}>{pick ? `Today's pick: ${pick.name}` : 'Outfits, toys, incubators and crystals'}</Text>
-          </View>
-          <View style={[styles.newTag, { backgroundColor: '#4A8FE0' }]}><Text style={styles.newTagText}>NEW TODAY</Text></View>
-        </Pressable>
-        <Text style={[font.small, { textAlign: 'center' }]}>Both stores restock at midnight · {left}</Text>
-        <Button primary label="Done" onPress={onClose} />
+        {trying ? (
+          <TryOn c={trying} onBack={() => setTrying(null)} />
+        ) : (
+          <>
+            <ScrollView style={{ maxHeight: 560 }} contentContainerStyle={{ gap: space.sm, paddingBottom: space.sm }}>
+              {dye ? <DyeFeature onUse={setDyeFor} /> : featured ? <FeaturedLook c={featured} onPress={() => setTrying(featured)} /> : null}
+              <View style={styles.sectionRow}>
+                <Text style={styles.section}>Looks</Text>
+                <Text style={font.tiny}>Just for fun · changes daily</Text>
+              </View>
+              <View style={styles.lookGrid}>{looks.map((c) => <LookTile key={c.id} c={c} onPress={() => setTrying(c)} />)}</View>
+              <Text style={styles.section}>Supplies</Text>
+              <PotionOffer />
+              <CrystalOffer />
+              <IncubatorOffer />
+              <Pressable onPress={onWardrobe} style={styles.yours} accessibilityRole="button" accessibilityLabel="Open your looks">
+                <Text style={[font.small, { flex: 1 }]}>{ownedLooks} look{ownedLooks === 1 ? '' : 's'} owned</Text>
+                <Text style={styles.yoursBtn}>Your looks ›</Text>
+              </Pressable>
+            </ScrollView>
+            <Button primary label="Done" onPress={onClose} />
+          </>
+        )}
       </View>
     </View>
   );
 }
-
-/** Food Market: today's special plus 4 everyday foods, limited stock, new every day. */
-function FoodMarket({ onClose, onBack }: { onClose: () => void; onBack: () => void }) {
-  const { state, apply } = useGame();
-  const day = A.todayKey(state);
-  const stock = M.marketFor(day);
-  const tomorrow = M.specialFor(M.nextDay(day));
-  const left = useCountdown();
-  const [msg, setMsg] = useState<string | null>(null);
-
-  const row = (slot: M.MarketSlot) => {
-    const remaining = M.leftToday(state, day, slot);
-    const rare = RARITY_INFO[slot.food.rarity];
-    const have = F.foodCount(state, slot.food.id);
-    return (
-      <View key={slot.food.id} style={[styles.foodRow, slot.special && styles.specialRow]}>
-        <Text style={{ fontSize: 34 }}>{slot.food.emoji}</Text>
-        <View style={{ flex: 1 }}>
-          <Text style={styles.foodName}>{slot.food.name}{have ? <Text style={styles.have}>  · you have {have}</Text> : null}</Text>
-          <Text style={[styles.foodMeta, { color: rare.color }]}>{rare.label.toUpperCase()} · {F.pct(F.boostOf(slot.food))} {F.statLabel(slot.food.stat)}</Text>
-          <Text style={styles.foodLeft}>{remaining ? `${remaining} left today` : 'Sold out'}</Text>
-        </View>
-        <Pressable
-          disabled={!remaining}
-          onPress={() => {
-            const r = M.buyFromMarket(state, day, slot.food.id);
-            if (!r.ok) {
-              buzz('light');
-              return setMsg(r.reason);
-            }
-            buzz('success', 'coin');
-            apply(() => r.state);
-            setMsg(`Bought ${slot.food.name}! Feed it from the Feed button.`);
-          }}
-          style={[styles.buyBtn, !remaining && { opacity: 0.4 }, state.coins < slot.price && { opacity: 0.55 }]}
-          accessibilityRole="button"
-          accessibilityLabel={remaining ? `Buy ${slot.food.name} for ${slot.price} coins` : `${slot.food.name} sold out`}
-        >
-          {remaining ? <CoinText style={styles.buyText}>{slot.price}</CoinText> : <Text style={styles.buyText}>Sold out</Text>}
-        </Pressable>
-      </View>
-    );
-  };
-
-  return (
-    <View style={styles.backdrop}>
-      <Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessibilityLabel="Close" />
-      <View style={[styles.sheet, { backgroundColor: '#FFF8EC' }]}>
-        <View style={styles.head}>
-          <Pressable onPress={onBack} hitSlop={8} accessibilityRole="button" style={{ flex: 1 }}><Text style={styles.back}>‹ Shop</Text></Pressable>
-          <View style={styles.coins}><CoinText style={styles.coinsText}>{state.coins.toLocaleString()}</CoinText></View>
-        </View>
-        <View style={{ alignItems: 'center' }}>
-          <Text style={{ fontSize: 40 }}>🍙</Text>
-          <Text style={font.title}>Food Market</Text>
-          <Text style={font.small}>New food every day · restocks in {left}</Text>
-        </View>
-        <ScrollView style={{ maxHeight: 460 }} contentContainerStyle={{ gap: 8 }}>
-          <Text style={[styles.section, { color: '#9A6A00' }]}>✨ Today's special</Text>
-          {row(stock[0])}
-          <Text style={styles.section}>Everyday</Text>
-          {stock.slice(1).map(row)}
-          <Text style={styles.section}>Tomorrow's hint</Text>
-          <Text style={font.small}>A {RARITY_INFO[tomorrow.food.rarity].label.toLowerCase()} special is on the way… 🤫</Text>
-        </ScrollView>
-        {msg ? <Text style={styles.msg}>{msg}</Text> : null}
-        <Button primary label="Done" onPress={onClose} />
-      </View>
-    </View>
-  );
-}
-
-/* ---------------- Wardrobe ---------------- */
 
 export function WardrobeSheet({ onClose, onShop }: { onClose: () => void; onShop: () => void }) {
   const { state, apply } = useGame();
@@ -419,7 +390,35 @@ const styles = StyleSheet.create({
   head: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   coins: { backgroundColor: '#FFF6DD', borderRadius: 999, paddingHorizontal: 12, paddingVertical: 6, borderWidth: 1.5, borderColor: colors.gold },
   coinsText: { fontWeight: '900', color: '#5A3E00', fontSize: 15 },
-  section: { fontWeight: '900', fontSize: 15, color: colors.ink, marginTop: 4 },
+  section: { fontWeight: '900', fontSize: 17, color: colors.ink, marginTop: 4 },
+  sectionRow: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', marginTop: 4 },
+  lookGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: '4%', rowGap: space.sm },
+  look: { width: '48%', alignItems: 'center', gap: 2, padding: 8, borderRadius: 18, backgroundColor: '#FFFFFF', borderWidth: 1.5, borderColor: colors.line },
+  lookArt: { alignSelf: 'stretch', height: 84, borderRadius: 14, alignItems: 'center', justifyContent: 'center', marginBottom: 4 },
+  tryBox: { width: 220, height: 220, borderRadius: 24, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
+  tryName: { fontSize: 22, fontWeight: '900', color: colors.ink },
+  featured: { flexDirection: 'row', alignItems: 'center', gap: 12, borderRadius: 22, padding: 14, paddingTop: 18, backgroundColor: '#4E3EA8' },
+  featTag: { position: 'absolute', top: 0, right: 14, backgroundColor: '#FFE27A', borderBottomLeftRadius: 10, borderBottomRightRadius: 10, paddingHorizontal: 10, paddingVertical: 3 },
+  featTagText: { fontSize: 11, fontWeight: '900', color: '#3E3290' },
+  featArt: { width: 96, height: 96, borderRadius: 18, backgroundColor: 'rgba(255,255,255,0.16)', alignItems: 'center', justifyContent: 'center' },
+  featKicker: { fontSize: 11, fontWeight: '900', letterSpacing: 1, color: '#D8CEFF' },
+  featName: { fontSize: 20, fontWeight: '900', color: '#FFFFFF' },
+  featBody: { fontSize: 13, fontWeight: '700', color: '#E3DCFF' },
+  featPrice: { marginTop: 6, alignSelf: 'flex-start', backgroundColor: '#FFE27A', borderRadius: 12, paddingHorizontal: 12, paddingVertical: 6 },
+  featPriceText: { fontSize: 15, fontWeight: '900', color: '#3E3290' },
+  dyeCard: { borderRadius: 22, paddingHorizontal: 14, paddingTop: 30, paddingBottom: 16, backgroundColor: '#221A4D', borderWidth: 3, borderColor: '#FFD24D', alignItems: 'center', gap: 6 },
+  dyeTop: { position: 'absolute', top: -1, alignSelf: 'center', backgroundColor: '#FFD24D', borderBottomLeftRadius: 10, borderBottomRightRadius: 10, paddingHorizontal: 12, paddingVertical: 3 },
+  dyeTopText: { fontSize: 11, fontWeight: '900', color: '#2A1F5C' },
+  dyeRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  dyeBottle: { width: 92, height: 106, borderRadius: 18, backgroundColor: 'rgba(255,255,255,0.08)', alignItems: 'center', justifyContent: 'center' },
+  dyeArrow: { fontSize: 26, fontWeight: '900', color: '#B9A8FF' },
+  dyePet: { width: 110, height: 110, borderRadius: 18, backgroundColor: 'rgba(255,255,255,0.1)', alignItems: 'center', justifyContent: 'center', shadowOpacity: 0.8, shadowRadius: 14, shadowOffset: { width: 0, height: 0 } },
+  dyeName: { fontSize: 22, fontWeight: '900', color: '#FFFFFF' },
+  dyeBody: { fontSize: 13, fontWeight: '700', color: '#D8CEFF', textAlign: 'center' },
+  dyeBtn: { marginTop: 4, backgroundColor: '#FFD24D', borderRadius: 14, paddingHorizontal: 22, paddingVertical: 10 },
+  dyeBtnText: { fontSize: 17, fontWeight: '900', color: '#2A1F5C' },
+  yours: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: '#F3F6F5', borderRadius: 16, padding: 12, marginTop: 4 },
+  yoursBtn: { fontSize: 14, fontWeight: '900', color: colors.mintDark },
   back: { fontSize: 15, fontWeight: '900', color: colors.mintDark },
   store: { flexDirection: 'row', alignItems: 'center', gap: 12, borderRadius: 20, padding: 14 },
   storeIcon: { fontSize: 40 },

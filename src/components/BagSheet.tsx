@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useGame } from '../state/GameContext';
@@ -10,6 +10,9 @@ import { COLLECTIBLES } from '../game/loot';
 import { CRYSTAL } from '../game/powerups';
 import { FULL, POTION_INFO, SMALL } from '../game/hp';
 import PotionIcon from './PotionIcon';
+import { DyeIcon, UseDyeSheet } from './Dyes';
+import * as Dy from '../game/dyes';
+import type { Skin } from '../game/types';
 
 /** Everything you're carrying in one place: food, potions, crystals and treasures, each with what it does. */
 export default function BagSheet({ onClose, onFeed }: { onClose: () => void; onFeed?: () => void }) {
@@ -19,10 +22,13 @@ export default function BagSheet({ onClose, onFeed }: { onClose: () => void; onF
   const potions = ([['small', SMALL], ['full', FULL]] as const).filter(([, k]) => (state.items[k] ?? 0) > 0);
   const crystals = state.items[CRYSTAL] ?? 0;
   const treasures = COLLECTIBLES.filter((k) => (state.items[k] ?? 0) > 0);
-  const known = new Set<string>([SMALL, FULL, CRYSTAL, ...COLLECTIBLES]);
+  const dyes = Dy.ownedDyes(state);
+  const [dyeFor, setDyeFor] = useState<Skin | null>(null);
+  const known = new Set<string>([SMALL, FULL, CRYSTAL, ...COLLECTIBLES, ...Dy.DYES.map((d) => Dy.dyeName(d.skin))]);
   const other = Object.entries(state.items).filter(([k, n]) => n > 0 && !known.has(k));
-  const empty = !foods.length && !potions.length && !crystals && !treasures.length && !other.length;
+  const empty = !dyes.length && !foods.length && !potions.length && !crystals && !treasures.length && !other.length;
 
+  if (dyeFor) return <UseDyeSheet skin={dyeFor} onClose={() => setDyeFor(null)} />;
   return (
     <View style={styles.backdrop}>
       <Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessibilityLabel="Close" />
@@ -31,6 +37,15 @@ export default function BagSheet({ onClose, onFeed }: { onClose: () => void; onF
         <Text style={font.title}>Your bag</Text>
         <ScrollView style={{ flexShrink: 1 }} contentContainerStyle={{ gap: space.md }}>
           {empty ? <Text style={font.small}>Nothing here yet. Walks, chests and trips fill your bag with food, potions and treasures.</Text> : null}
+          {dyes.length ? (
+            <Section title="Dyes" hint="Gives one pet that skin for good.">
+              {dyes.map((d) => (
+                <Pressable key={d.skin} onPress={() => setDyeFor(d.skin)} accessibilityRole="button" accessibilityLabel={`Use ${Dy.dyeName(d.skin)}`}>
+                  <Item icon={<DyeIcon skin={d.skin} size={22} />} name={Dy.dyeName(d.skin)} count={Dy.dyesOwned(state, d.skin)} text={`${Dy.DYE_RARITY_LABEL[d.rarity]} · tap to use`} />
+                </Pressable>
+              ))}
+            </Section>
+          ) : null}
           {foods.length ? (
             <Section title="Food" hint="Feed your pet to fill its food bar. Each food also adds a little to one battle stat (up to 3 a day).">
               {foods.map((f) => (

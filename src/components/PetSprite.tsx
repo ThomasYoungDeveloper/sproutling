@@ -54,7 +54,7 @@ export default function PetSprite({ species, stage, size = 180, shiny = false, m
         tintColor={silhouette ? '#C9D3D0' : undefined}
         resizeMode="contain"
       />
-      {skin && skin !== 'mono' && !silhouette && size >= 56 ? <SkinSparkles skin={skin} size={size} /> : null}
+      {skin && SPARKLE_COLOR[skin] && skin !== 'mono' && !silhouette && size >= 56 ? <SkinSparkles skin={skin} size={size} /> : null}
       {aura && !silhouette ? <Aura id={aura} size={size} /> : null}
       {hat && !silhouette
         ? (() => {
@@ -79,7 +79,7 @@ const SPARKLE_SPOTS = [
   [0.62, 0.78],
   [0.3, 0.7],
 ];
-const SPARKLE_COLOR: Record<Skin, string[]> = {
+const SPARKLE_COLOR: Partial<Record<Skin, string[]>> = {
   mono: ['#FFFFFF'],
   silver: ['#FFFFFF', '#DCE8FF'],
   gold: ['#FFF3B0', '#FFFFFF'],
@@ -106,7 +106,7 @@ function SkinSparkles({ skin, size }: { skin: Skin; size: number }) {
               left: size * x - s / 2,
               top: size * y - s / 2,
               fontSize: s,
-              color: SPARKLE_COLOR[skin][i % SPARKLE_COLOR[skin].length],
+              color: (SPARKLE_COLOR[skin] ?? ['#FFFFFF'])[i % (SPARKLE_COLOR[skin]?.length ?? 1)],
               textShadowColor: 'rgba(0,0,0,0.25)',
               textShadowRadius: 2,
               opacity: v.interpolate({ inputRange: steps, outputRange: [0, 0, 1, 0, 0], extrapolate: 'clamp' }),

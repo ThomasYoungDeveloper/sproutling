@@ -1,14 +1,28 @@
 import type { GameState, OwnedPet, Skin } from './types';
 import { type Rng, defaultRng } from './random';
 
-export const SKINS: Skin[] = ['mono', 'silver', 'gold', 'rainbow'];
+export const SKINS: Skin[] = ['mono', 'silver', 'gold', 'rainbow', 'pastel', 'retro', 'sakura', 'ocean', 'ember', 'moonlit', 'crystal', 'shadow', 'galaxy', 'harvest'];
 
 export const SKIN_INFO: Record<Skin, { label: string; emoji: string; color: string; chance: number }> = {
   mono: { label: 'Ink', emoji: '🖌️', color: '#3B3B4F', chance: 0.05 },
   silver: { label: 'Silver', emoji: '🥈', color: '#8FA3B5', chance: 0.03 },
   gold: { label: 'Gold', emoji: '🥇', color: '#E5A800', chance: 0.015 },
   rainbow: { label: 'Rainbow', emoji: '🌈', color: '#B45FE0', chance: 0.005 },
+  // Dye skins: bought or won as dyes, and a small chance to hatch with one.
+  pastel: { label: 'Pastel', emoji: '', color: '#C9A3E8', chance: 0.008 },
+  retro: { label: 'Retro', emoji: '', color: '#5E8F1A', chance: 0.008 },
+  sakura: { label: 'Sakura', emoji: '', color: '#E0679A', chance: 0.004 },
+  ocean: { label: 'Ocean', emoji: '', color: '#1E8AB8', chance: 0.004 },
+  ember: { label: 'Ember', emoji: '', color: '#D9382A', chance: 0.004 },
+  moonlit: { label: 'Moonlit', emoji: '', color: '#4A54B8', chance: 0.004 },
+  crystal: { label: 'Crystal', emoji: '', color: '#5F7FE0', chance: 0.002 },
+  shadow: { label: 'Shadow', emoji: '', color: '#6A3CC2', chance: 0.002 },
+  galaxy: { label: 'Galaxy', emoji: '', color: '#8A3FB8', chance: 0.001 },
+  harvest: { label: 'Harvest', emoji: '', color: '#D2601C', chance: 0 },
 };
+
+/** Rarest first, so a lucky roll lands on the best skin. Silver, Gold and Rainbow can only hatch. */
+const HATCH_ORDER: Skin[] = ['rainbow', 'galaxy', 'gold', 'shadow', 'crystal', 'silver', 'sakura', 'ocean', 'ember', 'moonlit', 'pastel', 'retro', 'mono'];
 
 /** Bred eggs are three times as likely to hatch with a skin. */
 export const BRED_SKIN_BOOST = 3;
@@ -23,7 +37,7 @@ export function rollSkin(rng: Rng = defaultRng, boost = 1, parentSkins: (Skin | 
   for (const ps of parentSkins) if (ps && rng() < INHERIT_CHANCE) return ps;
   const r = rng();
   let acc = 0;
-  for (const s of ['rainbow', 'gold', 'silver', 'mono'] as Skin[]) {
+  for (const s of HATCH_ORDER) {
     acc += SKIN_INFO[s].chance * boost;
     if (r < acc) return s;
   }

@@ -85,19 +85,9 @@ export default function FeedSheet({ onFeed, onClose, onShop }: { onFeed: (foodId
           {owned.length ? (
             <View style={styles.grid}>{owned.map((f) => tile(f))}</View>
           ) : (
-            <Text style={styles.small}>No food yet. Visit the Food Market, or go for a walk: every 1,000 steps {pet.nickname} might sniff out berries, mushrooms or something rarer.</Text>
+            <Text style={styles.small}>No food yet. Go for a walk: every 1,000 steps {pet.nickname} might sniff out berries, mushrooms or something rarer.</Text>
           )}
 
-          {onShop ? (
-            <Pressable onPress={onShop} style={({ pressed }) => [styles.market, pressed && { transform: [{ scale: 0.98 }] }]} accessibilityRole="button" accessibilityLabel="Go to the Food Market">
-              <Text style={{ fontSize: 26 }}>🍙</Text>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.pelletsTitle}>Go to the Food Market</Text>
-                <Text style={styles.small}>New food every day</Text>
-              </View>
-              <Text style={styles.feedWord}>›</Text>
-            </Pressable>
-          ) : null}
 
           <Text style={styles.small}>
             Bonus size by rarity: Common +0.8%, Uncommon +1.2%, Rare +1.8%, Epic +2.5%, Legendary +4%. Each stat can gain up to +10% from food.

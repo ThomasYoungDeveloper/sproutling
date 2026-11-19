@@ -97,7 +97,8 @@ export interface Egg {
 }
 
 /** Rare color variants of a pet. */
-export type Skin = 'mono' | 'silver' | 'gold' | 'rainbow';
+/** Hatch-only skins (mono = Ink, silver, gold, rainbow) plus the dye skins, which also hatch by luck. Harvest only comes from its event. */
+export type Skin = 'mono' | 'silver' | 'gold' | 'rainbow' | 'pastel' | 'retro' | 'sakura' | 'ocean' | 'ember' | 'moonlit' | 'crystal' | 'shadow' | 'galaxy' | 'harvest';
 
 export type ChestKind = 'bronze' | 'silver' | 'gold';
 
@@ -134,6 +135,8 @@ export interface GameState {
   stats?: { hatched?: number; chests?: number; expeditions?: number; toys?: number; bred?: number };
   /** Every pet-and-skin combination you've ever owned, keyed "p15:gold". */
   skinDex?: Record<string, true>;
+  /** Day the shop's dye was bought (one per dye day). */
+  boughtDye?: string;
   /** Achievements whose rewards you've claimed. */
   achievements?: Record<string, true>;
   /** Seasonal event rewards claimed, by event run (e.g. "winter-2026") → milestone indexes. */

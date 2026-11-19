@@ -296,7 +296,7 @@ let n0 = 0; const counts: Record<string, number> = {}; let sd = 99; const srng =
 for (let i = 0; i < 100000; i++) { const k = Sk.rollSkin(srng) ?? 'none'; counts[k] = (counts[k] ?? 0) + 1; }
 ok(Math.abs(counts.mono / 1000 - 5) < 0.6 && Math.abs(counts.silver / 1000 - 3) < 0.5 && Math.abs(counts.gold / 1000 - 1.5) < 0.4 && Math.abs(counts.rainbow / 1000 - 0.5) < 0.25, `skin odds ~5/3/1.5/0.5% (${counts.mono / 1000}/${counts.silver / 1000}/${counts.gold / 1000}/${counts.rainbow / 1000})`);
 let bredSkins = 0; for (let i = 0; i < 20000; i++) if (Sk.rollSkin(srng, Sk.BRED_SKIN_BOOST)) bredSkins++;
-ok(Math.abs(bredSkins / 200 - 30) < 2, `nursery eggs ~30% skins (${bredSkins / 200}%)`);
+ok(Math.abs(bredSkins / 200 - 40) < 3, `nursery eggs ~40% skins, dye skins included (${bredSkins / 200}%)`);
 let inherited = 0; for (let i = 0; i < 20000; i++) if (Sk.rollSkin(srng, 1, ['gold', null]) === 'gold') inherited++;
 ok(inherited / 200 > 24 && inherited / 200 < 29, `a gold parent passes gold ~26% of the time (${inherited / 200}%)`);
 ok(Sk.noteSkin(t, { speciesId: 'p02', skin: 'gold' }).skinDex!['p02:gold'] === true, 'skins are recorded in the Skin-dex');
@@ -776,5 +776,23 @@ console.log('\nEgg basket');
   const big = { ...lowLv, pets: lowLv.pets.map((p) => ({ ...p, xp: 99999 })) };
   const a2 = A.updateToday(big, (d) => ({ ...d, steps: 4000 }));
   ok(!A.starterBoost(big) && a2.coins > 0 && a1.coins === a2.coins * 2, 'starter boost doubles habit coins, then ends');
+}
+// Dyes: dye days, buying and using
+{
+  const Dy = require('../src/game/dyes');
+  let days = 0, rare = 0;
+  for (let i = 0; i < 3000; i++) { const d = Dy.dyeOfDay(`2027-01-${i}`); if (d) { days++; if (d.rarity !== 'common') rare++; } }
+  ok(Math.abs(days / 3000 - 1 / 3) < 0.03, `about 1 day in 3 is a dye day (${(days / 30).toFixed(1)}%)`);
+  ok(Math.abs(rare / days - 0.45) < 0.05, 'about 45% of shop dyes are rare or better');
+  ok(!Dy.DYES.some((d: any) => ['silver', 'gold', 'rainbow'].includes(d.skin)), 'Silver, Gold and Rainbow stay hatch-only');
+  let day = ''; for (let i = 0; i < 50 && !day; i++) if (Dy.dyeOfDay(`2027-02-${i}`)) day = `2027-02-${i}`;
+  const d = Dy.dyeOfDay(day);
+  const base = { ...R, coins: 20000, items: {}, boughtDye: undefined };
+  const b = Dy.buyDye(base, day);
+  ok(b.ok && b.state.coins === 20000 - Dy.DYE_PRICE[d.rarity] && Dy.dyesOwned(b.state, d.skin) === 1, 'buying the day’s dye costs its rarity price');
+  ok(!Dy.buyDye(b.state, day).ok, 'one dye per dye day');
+  const pet = b.state.pets[0];
+  const u = Dy.useDye(b.state, pet.id, d.skin);
+  ok(u.ok && u.state.pets[0].skin === d.skin && Dy.dyesOwned(u.state, d.skin) === 0 && u.state.skinDex[`${pet.speciesId}:${d.skin}`], 'using a dye gives the pet that skin for good and logs it');
 }
 console.log(fails ? `${fails} FAILED` : 'ALL PASSED'); process.exit(fails ? 1 : 0);
