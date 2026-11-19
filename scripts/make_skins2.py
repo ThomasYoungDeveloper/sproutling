@@ -107,6 +107,9 @@ def make(path, skin, seed):
         heat = np.clip(heat * 0.75 + t * 0.35 + (l2 - 0.5) * 0.4, 0, 1)
         res = ramp(heat, [(0, '#120000'), (0.18, '#3a0000'), (0.32, '#9a0a0a'), (0.5, '#d81c10'), (0.68, '#f2420f'), (0.82, '#ff7a14'), (0.93, '#ffb21e'), (1, '#ffe25a')])
         res = res * (0.55 + 0.45 * l2)[..., None] + res * 0.25
+        # Keep the outlines and inner lines solid black so the character's design reads clearly.
+        dark = np.clip((0.26 - lum) / 0.12, 0, 1)[..., None]
+        res = res * (1 - dark) + hexc('#0a0000') * dark
     elif skin == 'frost':
         res = ramp(lum, [(0, '#1b3550'), (0.4, '#6fa6d6'), (0.75, '#cfe8ff'), (1, '#ffffff')])
         sp = stars(h, w, 40, seed, 1) * alpha
