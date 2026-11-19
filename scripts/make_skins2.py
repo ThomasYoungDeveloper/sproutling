@@ -46,6 +46,43 @@ def glow(alpha, radius, strength):
     return np.clip(blur * strength, 0, 1) * (1 - alpha)
 
 
+def eye_mask(lum, alpha):
+    """Rough iris finder for the Shadow dye. An iris is a small mid-tone blob in the upper part of the pet
+    that is ringed by the white of the eye, or ringed by a dark outline with a shine dot inside it."""
+    from scipy import ndimage
+    h, w = lum.shape
+    mid = (lum >= 0.22) & (lum < 0.72) & (alpha > 0.5)
+    lab, n = ndimage.label(mid)
+    m = np.zeros((h, w), dtype=bool)
+    if n == 0:
+        return m.astype(np.float32)
+    ys = np.nonzero(alpha > 0.5)[0]
+    top, bot = ys.min(), ys.max()
+    objs = ndimage.find_objects(lab)
+    for i, sl in enumerate(objs):
+        if sl is None:
+            continue
+        y0, y1 = max(sl[0].start - 4, 0), min(sl[0].stop + 4, h)
+        x0, x1 = max(sl[1].start - 4, 0), min(sl[1].stop + 4, w)
+        comp = lab[y0:y1, x0:x1] == (i + 1)
+        area = comp.sum()
+        if not (10 <= area <= h * w * 0.01):
+            continue
+        cy = (sl[0].start + sl[0].stop) / 2
+        if not (top <= cy <= top + (bot - top) * 0.62):
+            continue
+        filled = ndimage.binary_fill_holes(comp)
+        holes = filled & ~comp
+        ring = ndimage.binary_dilation(filled, iterations=2) & ~filled
+        L = lum[y0:y1, x0:x1]
+        white_ring = (L[ring] > 0.88).mean() if ring.any() else 0
+        dark_ring = (L[ring] < 0.22).mean() if ring.any() else 0
+        shine = (holes & (L > 0.85)).sum()
+        if white_ring >= 0.3 or (dark_ring >= 0.55 and shine >= 2):
+            m[y0:y1, x0:x1] |= comp
+    return m.astype(np.float32)
+
+
 def make(path, skin, seed):
     im = Image.open(path).convert('RGBA')
     arr = np.asarray(im, dtype=np.float32) / 255
@@ -264,6 +301,10 @@ def make(path, skin, seed):
         res = ramp(lum, [(0, '#000000'), (0.6, '#141018'), (0.85, '#2a2236'), (1, '#3a3050')])
         lines = np.clip((0.22 - lum) / 0.12, 0, 1) * alpha
         res = res * (1 - lines[..., None]) + hexc('#b86bff') * lines[..., None]
+        # Eyes always glow purple too. Colored eyes (red, blue, lavender...) would otherwise sink into the
+        # dark body, so find small enclosed shapes in the face that hold a white shine dot and fill them.
+        eyes = eye_mask(lum, alpha)
+        res = res * (1 - eyes[..., None]) + hexc('#b86bff') * eyes[..., None]
         halo, halo_color = glow(alpha, 6, 1.5), hexc('#7a3cff')
     elif skin == 'pastel':
         # Candy colors like macarons: each part of the pet keeps its own color family, made soft and light
