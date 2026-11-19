@@ -284,10 +284,10 @@ let H = { ...t, achievements: {}, stats: {}, battle: undefined, wardrobe: {} } a
 ok(!Ach.claimable(H).some((x) => x.a.id === 'win1') && Ach.claim(H, 'win1') === null, 'unfinished badges cannot be claimed');
 H = B.finishBattle(H, true, false).state;
 ok(Ach.claimable(H).some((x) => x.a.id === 'win1'), 'winning a battle unlocks First Victory');
-const Hc = Ach.claim(H, 'win1')!; ok(Hc.coins === H.coins + 75 && Ach.badgeCount(Hc) === 1, 'claiming pays the reward and adds a badge');
+const Hc = Ach.claim(H, 'win1')!; ok(Hc.coins === H.coins + 30 && Ach.badgeCount(Hc) === 1, 'claiming pays the reward and adds a badge');
 ok(Ach.claim(Hc, 'win1') === null, 'a badge is claimed only once');
 H = A.addSteps(Hc, 12000); ok(Ach.claimable(H).some((x) => x.a.id === 'steps10k'), 'walking unlocks step badges');
-const Hch = Ach.claim(H, 'steps10k')!; ok(Hch.coins === H.coins + 75, 'step badge reward');
+const Hch = Ach.claim(H, 'steps10k')!; ok(Hch.coins === H.coins + 30, 'step badge reward');
 const fullDex = { ...H, dex: Object.fromEntries(SPECIES.map((x) => [x.id, true])) } as GameState;
 const Hd = Ach.claim(fullDex, 'dexall')!; ok(!!Hd && Cos.owns(Hd, 'trophy') && Hd.chests.length === fullDex.chests.length + 1, 'completing the Pet-dex gives the Champion Laurel');
 ok(Ach.ACHIEVEMENTS.length >= 25 && new Set(Ach.ACHIEVEMENTS.map((a) => a.id)).size === Ach.ACHIEVEMENTS.length, 'badge ids are unique');
