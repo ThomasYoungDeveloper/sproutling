@@ -911,7 +911,7 @@ console.log('\nEgg basket');
 // Short numbers for tight spots
 {
   const { shortNumber } = require('../src/lib/shortNumber');
-  ok(shortNumber(999) === '999' && shortNumber(1500) === '1.5K' && shortNumber(10000) === '10K' && shortNumber(12500) === '12.5K' && shortNumber(1234567) === '1.2M' && shortNumber(3e9) === '3B' && shortNumber(999999) === '999K', 'big numbers shorten to K, M and B');
+  ok(shortNumber(999) === '999' && shortNumber(1500) === '1.5K' && shortNumber(10000) === '10K' && shortNumber(12500) === '12.5K' && shortNumber(1234567) === '1.23M' && shortNumber(1250) === '1.25K' && shortNumber(1100) === '1.1K' && shortNumber(12345) === '12.34K' && shortNumber(3e9) === '3B' && shortNumber(999999) === '999.9K', 'big numbers shorten to K, M and B');
 }
 
 console.log(fails ? `${fails} FAILED` : 'ALL PASSED'); process.exit(fails ? 1 : 0);
