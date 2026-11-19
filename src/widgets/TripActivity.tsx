@@ -108,7 +108,9 @@ const TripActivity = (props: TripActivityProps, env: LiveActivityEnvironment) =>
       </VStack>
     ),
     // The pet picture doesn't load at this tiny size on some phones (it shows a grey box), so use the paw.
-    compactLeading: <Image systemName="pawprint.fill" size={15} color="#7CF0B5" />,
+    // With an hour or more left the small side shows the clock time they get home, so lead with a little house
+    // ("home at 7:42") instead of the paw, which read like a countdown.
+    compactLeading: <Image systemName={!home && props.endAt - now >= 3_600_000 ? 'house.fill' : 'pawprint.fill'} size={15} color="#7CF0B5" />,
     compactTrailing: home ? <Text modifiers={[font({ weight: 'heavy', size: 13 }), foregroundStyle('#7CF0B5')]}>Home</Text> : smallTimer,
     minimal: <Image systemName="pawprint.fill" size={14} color="#7CF0B5" />,
     expandedLeading: petAt(44),

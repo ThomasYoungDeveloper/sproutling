@@ -87,18 +87,18 @@ export interface TripFight {
  * Works out the wild fights on the way when the pet leaves (one pet against one wild pet each).
  * HP carries from fight to fight. If the pet is knocked out, the trip ends there.
  */
-export function planFights(s: GameState, petId: string, place: Place, seed: string): TripFight[] {
+export function planFights(s: GameState, petId: string, place: Place, seed: string, from?: { hp: number; spots: number[]; first: number }): TripFight[] {
   const pet = s.pets.find((p) => p.id === petId);
   if (!pet) return [];
   const rng = seededRng(seed);
   const setup = B.myBattleSetup(s);
   const lv = levelFor(pet.xp);
-  let hp = H.hpPct(pet);
+  let hp = from ? from.hp : H.hpPct(pet);
   const out: TripFight[] = [];
   // A random number of fights at random spots along the way, so no two trips feel the same.
-  const count = randInt(place.fights[0], place.fights[1], rng);
-  const spots = Array.from({ length: count }, () => 0.12 + rng() * 0.76).sort((a, b) => a - b);
-  for (let i = 0; i < count; i++) {
+  const count = from ? from.spots.length : randInt(place.fights[0], place.fights[1], rng);
+  const spots = from ? from.spots : Array.from({ length: count }, () => 0.12 + rng() * 0.76).sort((a, b) => a - b);
+  for (let i = from?.first ?? 0; i < count; i++) {
     // Wild pets on the way are a little below your level, untrained, and not at full strength.
     // Foes match the place, not your pet: stronger pets breeze through easy places.
     const foeLevel = Math.max(1, Math.min(lv, place.minLevel + Math.floor(i / 2)) - 1);
@@ -143,6 +143,73 @@ export function start(s: GameState, petId: string, placeId: string, now = Date.n
     ...s,
     expedition: { petId, placeId, startedAt, startSteps: totalSteps(s), fights, planned, ...(lost >= 0 ? { koAt: fights[lost].at ?? 0.5 } : {}) },
   };
+}
+
+/** Where the pet is on its route (0–1 of the full route), the fights it has already had, and its HP right now. */
+export function tripNow(s: GameState, now = Date.now()): { route: number; reached: TripFight[]; hp: number } | null {
+  const e = s.expedition;
+  const prog = progress(s, now);
+  const pet = e && s.pets.find((p) => p.id === e.petId);
+  if (!e || !prog || !pet) return null;
+  const route = prog.pct * (e.koAt ?? 1);
+  const fights = e.fights ?? [];
+  const reached = fights.filter((f, i) => (f.at ?? (i + 1) / (fights.length + 1)) <= route + 1e-9);
+  return { route, reached, hp: Math.round(reached.length ? reached[reached.length - 1].hpAfter : H.hpPct(pet)) };
+}
+
+/**
+ * Gives the pet a potion while it's out. It heals now, and the fights still ahead are played again from
+ * the new HP (a pet that would have been knocked out may now make it all the way, treasure and all).
+ */
+export function tripPotion(s: GameState, kind: H.PotionKind, now = Date.now()): { ok: true; state: GameState; healed: number } | { ok: false; reason: string } {
+  const e = s.expedition;
+  const place = e && PLACE_BY_ID[e.placeId];
+  const t = tripNow(s, now);
+  if (!e || !place || !t) return { ok: false, reason: 'No pet is out right now.' };
+  if (t.reached.some((f) => !f.won)) return { ok: false, reason: 'Your pet is already on its way home.' };
+  if (t.hp >= 100) return { ok: false, reason: 'HP is already full.' };
+  const paid = H.takePotion(s, kind);
+  if (!paid) return { ok: false, reason: `You don't have a ${H.POTION_ITEM[kind]}.` };
+  const hp = Math.min(100, t.hp + H.POTION_HEAL[kind]);
+  const fights = e.fights ?? [];
+  const spots = fights.map((f, i) => f.at ?? (i + 1) / (fights.length + 1));
+  // Keep the whole route's fight spots (even past a knock-out) so the rest of the trip can play out.
+  const first = t.reached.length;
+  const seed = `${e.petId}:${e.placeId}:${e.startedAt}:potion${first}:${now}`;
+  let next: GameState = H.setHp(paid, e.petId, hp);
+  const allSpots = [...spots];
+  if (e.koAt) {
+    // After a planned knock-out there were no more fights; fill in the rest of the route like a normal trip.
+    const rng = seededRng(seed + ':spots');
+    const extra = Math.max(0, randInt(place.fights[0], place.fights[1], rng) - allSpots.length);
+    for (let k = 0; k < extra; k++) allSpots.push(Math.min(0.88, Math.max(allSpots[allSpots.length - 1] ?? 0.12, 0.12) + 0.05 + rng() * 0.2));
+  }
+  const ahead = planFights(next, e.petId, place, seed, { hp, spots: allSpots, first });
+  const newFights = [...t.reached, ...ahead];
+  const lost = newFights.findIndex((f) => !f.won);
+  let planned = e.planned;
+  if (lost < 0 && e.koAt) {
+    // Now it makes it home: roll the treasure at the end, and food for the new wins.
+    const rng = seededRng(`loot:${seed}`);
+    const foods = [...(planned?.foods ?? [])];
+    const wins = newFights.filter((f) => f.won).length;
+    while (foods.length < wins) {
+      const pool = WALK_FOODS.filter((f) => f.rarity === (rng() < 0.75 ? 'common' : 'uncommon'));
+      foods.push((pool[Math.floor(rng() * pool.length)] ?? WALK_FOODS[0]).id);
+    }
+    planned = {
+      foods,
+      chest: place.chest && rng() * 100 < place.chest.chance ? place.chest.kind : null,
+      egg: place.egg && rng() * 100 < place.egg.chance ? (pickWeighted(place.egg.rarity as Record<Rarity, number>, rng) as Rarity) : null,
+      item: rng() * 100 < place.itemChance ? pickOne(COLLECTIBLES, rng) : null,
+    };
+  }
+  // The pet's spot on the route comes from time and steps, so it stays put when the trip's length changes.
+  const newKo = lost >= 0 ? newFights[lost].at ?? 0.5 : undefined;
+  const { koAt: _old, ...rest } = e;
+  void _old;
+  next = { ...next, expedition: { ...rest, fights: newFights, planned, ...(newKo !== undefined ? { koAt: newKo } : {}) } };
+  return { ok: true, state: next, healed: hp - t.hp };
 }
 
 export interface PlannedLoot {

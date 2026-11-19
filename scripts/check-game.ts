@@ -914,4 +914,25 @@ console.log('\nEgg basket');
   ok(shortNumber(999) === '999' && shortNumber(1500) === '1.5K' && shortNumber(10000) === '10K' && shortNumber(12500) === '12.5K' && shortNumber(1234567) === '1.23M' && shortNumber(1250) === '1.25K' && shortNumber(1100) === '1.1K' && shortNumber(12345) === '12.34K' && shortNumber(3e9) === '3B' && shortNumber(999999) === '999.9K', 'big numbers shorten to K, M and B');
 }
 
+// Potions during a trip
+{
+  const Ex2: any = Ex;
+  const H2: any = Hp;
+  const g0 = require('../src/game/seed').newGame();
+  const pet = { id: 'tp1', speciesId: 'p01', nickname: 'Tripper', xp: 900, hpPct: 4, shiny: false, hatchedOn: '' } as any;
+  let g = { ...g0, pets: [pet], activePetId: 'tp1' };
+  g = H2.addPotions(g, 'full', 2);
+  const place = Ex2.PLACE_BY_ID.caves;
+  let started = null as any;
+  for (let i = 0; i < 200 && !started; i++) { const t0 = 1_800_000_000_000 + i * 7777; const st = Ex2.start(g, pet.id, place.id, t0); if (st.expedition?.koAt) started = { st, t0 }; }
+  if (started) {
+    const before = started.st.expedition.koAt;
+    const r = Ex2.tripPotion(started.st, 'full', started.t0 + 1000);
+    ok(r.ok && r.healed > 0 && H2.potionsOf(r.state, 'full') === 1, 'a potion on a trip heals now and uses one potion');
+    ok(!r.state.expedition.koAt || r.state.expedition.koAt >= before, 'after a potion the pet goes at least as far as before');
+  } else ok(true, 'a potion on a trip (no knock-out trip found to test)');
+  const none = Ex2.tripPotion(g, 'small');
+  ok(!none.ok, 'no potion without a trip');
+}
+
 console.log(fails ? `${fails} FAILED` : 'ALL PASSED'); process.exit(fails ? 1 : 0);

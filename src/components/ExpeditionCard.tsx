@@ -22,6 +22,9 @@ import { COSMETIC_BY_ID } from '../game/cosmetics';
 import { RARITY_INFO } from '../game/rarity';
 import * as Ex from '../game/expedition';
 import ChestIcon from './ChestIcon';
+import { statsFor } from '../game/stats';
+import { ELEMENT_COLOR, ELEMENT_LABEL } from '../game/battle';
+import PotionIcon from './PotionIcon';
 
 /** Each place has its own look on the Home card. */
 const THEME: Record<string, { sky: [string, string]; ground: string; ink: string; sub: string; deco: (w: number) => React.ReactNode }> = {
@@ -270,6 +273,7 @@ function PlaceSheet({ onPick, onClose }: { onPick: (place: Ex.Place) => void; on
 function TripSheet({ onClose }: { onClose: () => void }) {
   const { state, apply } = useGame();
   const [confirmRecall, setConfirmRecall] = useState(false);
+  const [msg, setMsg] = useState<string | null>(null);
   const prog = Ex.progress(state);
   const pet = state.expedition ? state.pets.find((p) => p.id === state.expedition!.petId) : undefined;
   if (!prog || !pet) return null;
@@ -280,8 +284,65 @@ function TripSheet({ onClose }: { onClose: () => void }) {
         <View style={styles.grab} />
         <Text style={font.title}>{prog.place.emoji} {pet.nickname} at {prog.place.name}</Text>
         <Walker speciesId={pet.speciesId} xp={pet.xp} hat={pet.look?.hat} pct={prog.pct} />
+        {(() => {
+          // What has happened so far (fights ahead stay a surprise), and the pet's HP right now.
+          const now = Ex.tripNow(state);
+          const reached = now?.reached ?? [];
+          const hp = now?.hp ?? H.hpPct(pet);
+          const out = reached.some((f) => !f.won);
+          const st = statsFor(pet);
+          const sp = SPECIES_BY_ID[pet.speciesId];
+          const won = reached.filter((f) => f.won).length;
+          const hpColor = hp > 50 ? '#2EB88A' : hp > 20 ? '#F2A23C' : '#E5533D';
+          return (
+            <View style={styles.tripStats}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <Text style={styles.tripLv}>Lv {levelFor(pet.xp)}</Text>
+                <View style={[styles.tripEl, { backgroundColor: ELEMENT_COLOR[sp.element] }]}><Text style={styles.tripElText}>{ELEMENT_LABEL[sp.element]}</Text></View>
+                <View style={{ flex: 1 }} />
+                <Text style={[styles.tripHpText, { color: hpColor }]}>HP {hp}%</Text>
+              </View>
+              <View style={styles.tripHpBar}><View style={{ width: `${hp}%`, height: '100%', borderRadius: 6, backgroundColor: hpColor }} /></View>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                {([['MAX HP', st.hp], ['ATK', st.atk], ['DEF', st.def], ['SPD', st.spd]] as const).map(([k, v]) => (
+                  <View key={k} style={styles.tripStat}><Text style={styles.tripStatK}>{k}</Text><Text style={styles.tripStatV}>{v}</Text></View>
+                ))}
+              </View>
+              <Text style={font.small}>
+                {reached.length ? `So far: ${won} fight${won === 1 ? '' : 's'} won${reached.length > won ? `, ${reached.length - won} lost` : ''}.` : 'No fights yet. Wild pets may be waiting along the way.'}
+              </Text>
+              {!out && hp < 100 ? (
+                <View style={{ flexDirection: 'row', gap: 8 }}>
+                  {(['small', 'full'] as const).map((k) => {
+                    const n = H.potionsOf(state, k);
+                    return (
+                      <Pressable
+                        key={k}
+                        disabled={!n}
+                        onPress={() => {
+                          const r = Ex.tripPotion(state, k);
+                          if (!r.ok) { setMsg(r.reason); return; }
+                          apply(() => r.state);
+                          buzz('success', 'bubbles');
+                          setMsg(`${pet.nickname} drank it: +${r.healed}% HP for the fights ahead.`);
+                        }}
+                        style={[styles.tripPotion, !n && { opacity: 0.4 }]}
+                        accessibilityRole="button"
+                        accessibilityLabel={`Give ${pet.nickname} a ${H.POTION_ITEM[k]}. ${n} left`}
+                      >
+                        <PotionIcon kind={k} size={30} />
+                        <View><Text style={styles.tripPotionName}>{k === 'small' ? 'Small Potion' : 'Full Potion'}</Text><Text style={styles.tripPotionSub}>{k === 'small' ? '+50% HP' : 'Full HP'} · {n} left</Text></View>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              ) : null}
+              {msg ? <Text style={[font.small, { color: colors.mintDark, fontWeight: '900' }]}>{msg}</Text> : null}
+            </View>
+          );
+        })()}
         <Text style={font.body}>
-          Home in {Ex.formatLeft(prog.msLeft)}, or walk {prog.stepsLeft.toLocaleString()} more steps to bring {pet.nickname} back sooner. 👟
+          Home in {Ex.formatLeft(prog.msLeft)}, or walk {prog.stepsLeft.toLocaleString()} more steps to bring {pet.nickname} back sooner.
         </Text>
         <Pressable
           onPress={() => {
@@ -408,6 +469,18 @@ export default function ExpeditionCard() {
 }
 
 const styles = StyleSheet.create({
+  tripPotion: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#FFFFFF', borderRadius: 12, padding: 8, borderWidth: 1.5, borderColor: colors.line },
+  tripPotionName: { fontSize: 13, fontWeight: '900', color: colors.ink },
+  tripPotionSub: { fontSize: 11, fontWeight: '800', color: colors.muted },
+  tripStats: { backgroundColor: '#F4F8F6', borderRadius: 16, padding: 12, gap: 8 },
+  tripLv: { fontSize: 15, fontWeight: '900', color: colors.ink },
+  tripEl: { borderRadius: 8, paddingHorizontal: 8, paddingVertical: 2 },
+  tripElText: { color: '#FFFFFF', fontSize: 11, fontWeight: '900' },
+  tripHpText: { fontSize: 15, fontWeight: '900' },
+  tripHpBar: { height: 10, borderRadius: 6, backgroundColor: '#E3ECE7', overflow: 'hidden' },
+  tripStat: { alignItems: 'center', minWidth: 56 },
+  tripStatK: { fontSize: 11, fontWeight: '900', color: colors.muted },
+  tripStatV: { fontSize: 16, fontWeight: '900', color: colors.ink },
   scene: { height: 150, borderRadius: 22, overflow: 'hidden', shadowColor: '#000', shadowOpacity: 0.15, shadowRadius: 0, shadowOffset: { width: 0, height: 4 }, elevation: 3 },
   sceneHead: { position: 'absolute', left: 14, right: 14, top: 12, flexDirection: 'row', alignItems: 'flex-start', gap: 8 },
   sceneKicker: { fontSize: 11, fontWeight: '900', letterSpacing: 1.2 },
