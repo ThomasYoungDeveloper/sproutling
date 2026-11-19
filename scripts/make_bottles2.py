@@ -34,7 +34,7 @@ RARITY_SHAPE = {'common': 'round', 'uncommon': 'round', 'rare': 'flask', 'epic':
 
 # Four cel tones per dye, dark to light, plus what floats in it.
 TONES = {
-    'pastel': ['#c9a0e0', '#f3b6d6', '#ffd9a8', '#fff3c4'], 'mono': ['#3a3a42', '#7c7c88', '#c4c4cc', '#f4f4f4'],
+    'pastel': ['#c9a0e0', '#f3b6d6', '#ffd9a8', '#fff3c4'], 'mono': ['#0a0a0e', '#1c1c24', '#34343e', '#5a5a66'],
     'retro': ['#0f380f', '#306230', '#8bac0f', '#c4d93a'], 'slime': ['#1d6a14', '#3fb422', '#7fe03a', '#d2ff86'],
     'sakura': ['#a8346a', '#e0679a', '#f7a8c6', '#ffe0ee'], 'ocean': ['#0c1c5a', '#1e48a6', '#3b86d6', '#9fdcff'],
     'ember': ['#7a0a0a', '#d81c10', '#ff7a14', '#ffd23a'], 'moonlit': ['#1a1e5a', '#3a44a8', '#6e74d6', '#c8ccff'],
@@ -94,6 +94,12 @@ def dye(skin, shape):
         add = [(wisp, '#a46bff')]
     for m, c in add:
         col = col * (1 - m[..., None]) + hexc(c) * m[..., None]
+    # The pack's shine on the liquid keeps a hint of its original color: make those highlights neutral.
+    ys2, xs2 = np.nonzero(liq)
+    box = np.zeros_like(liq); box[ys2.min():ys2.max() + 1, xs2.min():xs2.max() + 1] = 1
+    shine = ((h >= h0 - 15) & (h <= h1 + 15) & (s > 0.08) & (v > 0.6) & (liq == 0) & (box > 0) & (a[..., 3] > 200)).astype(np.float32)
+    grey = a[..., :3].mean(-1, keepdims=True)
+    a[..., :3] = a[..., :3] * (1 - shine[..., None]) + np.clip(grey * 1.08, 0, 255) * shine[..., None]
     rgb = a[..., :3] * (1 - liq[..., None]) + col * liq[..., None]
     return Image.fromarray(np.dstack([rgb, a[..., 3]]).astype(np.uint8), 'RGBA')
 
