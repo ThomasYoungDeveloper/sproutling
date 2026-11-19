@@ -1,7 +1,7 @@
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Coin from './src/components/Coin';
 import React, { useEffect, useRef, useState } from 'react';
-import { Linking, Platform, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Image, Linking, Platform, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import ErrorBoundary from './src/components/ErrorBoundary';
@@ -51,6 +51,8 @@ import { stageFor } from './src/game/scoring';
 import { Button } from './src/components/ui';
 import { colors, font, space } from './src/theme';
 import * as A from './src/game/actions';
+
+const COIN_PILE = require('./assets/items/coin_pile.png');
 
 type Tab = 'home' | 'eggs' | 'chests' | 'dex' | 'friends';
 /** Page title and a short line under it, for every tab but Home. */
@@ -284,7 +286,7 @@ function Shell() {
           </View>
           <View style={styles.pills}>
             <View style={styles.pill}><Text style={styles.pillText}>🔥 {A.streak(state)}{state.shields ? ` 🛡️${state.shields}` : ''}</Text></View>
-            <View style={[styles.pill, { flexDirection: 'row', alignItems: 'center', gap: 5 }]}><Coin size={20} /><RollingNumber value={state.coins} prefix="" style={styles.pillText} /></View>
+            <View style={[styles.pill, { flexDirection: 'row', alignItems: 'center', gap: 5 }]}><Image source={COIN_PILE} style={{ width: 26, height: 26 }} resizeMode="contain" /><RollingNumber value={state.coins} prefix="" style={styles.pillText} /></View>
             <Pressable onPress={() => setShowAccount(true)} style={[styles.avatar, (!user || sync === 'error') && { backgroundColor: '#E8590C' }]} accessibilityRole="button" accessibilityLabel={user ? `Account: ${username ?? 'you'}${sync === 'error' ? ', offline' : ''}` : 'Sign in to save your pets'}>
               <Text style={styles.avatarText}>{!user || sync === 'error' ? '!' : (username ?? 'T')[0].toUpperCase()}</Text>
             </Pressable>

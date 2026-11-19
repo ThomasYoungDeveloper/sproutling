@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Animated, Easing, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Animated, Easing, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
 import { useGame } from '../state/GameContext';
 import { Button, Card, ProgressBar } from './ui';
@@ -12,12 +12,14 @@ import EggSprite from './EggSprite';
 import { DyeIcon } from './Dyes';
 import type { Milestone } from '../game/events';
 
+const EVENT_CHEST = require('../../assets/chests/event.png');
+
 /** The picture for a reward: the item itself, a dye bottle, an event egg, or a chest. */
 function RewardIcon({ m, size }: { m: Milestone; size: number }) {
   if (m.item) return <ItemIcon id={m.item} size={size} />;
   if (m.egg) return <EggSprite rarity="rare" size={size} color="#F6C27A" spots={['#E0802E', '#B5462E']} />;
   if (m.dye && !m.chest) return <DyeIcon skin={m.dye} size={size * 0.75} />;
-  return <Text style={{ fontSize: size * 0.6 }}>🎁</Text>;
+  return <Image source={EVENT_CHEST} style={{ width: size, height: size }} resizeMode="contain" />;
 }
 
 /** A few emoji drifting down the banner (leaves for Harvest, snow for Winter). */

@@ -1,7 +1,7 @@
 import Coin from './Coin';
 import BagSheet from './BagSheet';
 import React, { useEffect, useRef, useState } from 'react';
-import { Animated, Easing, PanResponder, Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Animated, Easing, Image, PanResponder, Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import Svg, { Circle, Defs, Ellipse, LinearGradient, Path, Rect, Stop } from 'react-native-svg';
 import { useGame } from '../state/GameContext';
 import PetSprite from './PetSprite';
@@ -24,6 +24,8 @@ import { useOverlay } from './Overlay';
 import * as F from '../game/food';
 import { habitBuffs } from '../game/battle';
 import { COSMETIC_BY_ID, ownedToys, type Cosmetic } from '../game/cosmetics';
+
+const COIN_PILE = require('../../assets/items/coin_pile.png');
 
 const STAGE_LABEL = { baby: 'Baby', teen: 'Teen', adult: 'Adult' } as const;
 
@@ -816,7 +818,7 @@ export default function PetScene({ onTrinketsEmpty, onDressUp, onShop, onAccount
             <Text style={styles.statText}>🔥 {streak}{state.shields ? ` 🛡️${state.shields}` : ''}</Text>
           </View>
           <Pressable style={styles.stat} hitSlop={8} onPress={() => onShop?.()} accessibilityRole="button" accessibilityLabel={`${state.coins} coins, open shop`}>
-            <Coin size={18} />
+            <Image source={COIN_PILE} style={{ width: 24, height: 24 }} resizeMode="contain" />
             <RollingNumber value={state.coins} prefix="" style={styles.statText} />
             <View style={styles.plus}><Text style={styles.plusText}>+</Text></View>
           </Pressable>
