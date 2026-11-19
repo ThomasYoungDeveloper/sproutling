@@ -42,7 +42,20 @@ export const CHESTS: Record<ChestKind, ChestTable> = {
     eggRarity: { common: 15, uncommon: 35, rare: 33, epic: 14, legendary: 3 },
     itemChance: 100,
   },
+  rainbow: {
+    label: 'Rainbow Chest',
+    howToEarn: 'A 30-day streak, the top of the Sky Tower, Diamond in ranked, or a lucky Gold chest',
+    coins: [500, 1000],
+    eggChance: 100,
+    eggRarity: { common: 0, uncommon: 0, rare: 0, epic: 75, legendary: 25 },
+    itemChance: 100,
+  },
 };
+
+/** Any Gold chest has this chance to turn into a Rainbow Chest as it opens. */
+export const RAINBOW_UPGRADE_CHANCE = 1 / 40;
+/** Days of streak for each Rainbow Chest. */
+export const RAINBOW_STREAK = 30;
 
 export const COLLECTIBLES = ['Ember Sticker', 'Moon Seed', 'Tide Shell', 'Star Stamp', 'Acorn Charm', 'Starlight Seed'];
 
@@ -58,6 +71,10 @@ export interface ChestResult {
   crystals?: number;
   /** Potions in the chest (Gold always, Silver sometimes). */
   potions?: { small: number; full: number };
+  /** A Gold chest that turned into a Rainbow Chest as it opened. */
+  upgraded?: boolean;
+  /** A dye from a Rainbow Chest. */
+  dye?: import('./types').Skin;
 }
 
 export function openChest(kind: ChestKind, rng: Rng = defaultRng): ChestResult {

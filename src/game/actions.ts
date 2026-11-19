@@ -7,7 +7,8 @@ import { boostedTotal } from './care';
 import { grantCosmetic, rollChestCosmetic } from './cosmetics';
 import { BRED_SKIN_BOOST, rollSkin, skinKey } from './skins';
 import { randomPersonality, rollIvs, inheritIvs } from './stats';
-import { openChest, type ChestResult } from './loot';
+import { openChest, RAINBOW_STREAK, RAINBOW_UPGRADE_CHANCE, type ChestResult } from './loot';
+import { addDye, rollDye } from './dyes';
 import { speciesOfRarity, SPECIES, SPECIES_BY_ID } from './species';
 import { SHINY_CHANCE, stepsToHatch } from './rarity';
 import { makeId, pickOne, type Rng, defaultRng } from './random';
@@ -73,6 +74,12 @@ export function updateToday(s: GameState, change: (d: DayLog) => DayLog): GameSt
     next.questChestDays = { ...next.questChestDays, [silverKey]: true };
     // Every 7 days of streak also earns a streak shield (you can hold 2).
     if (next.shieldEarnedOn !== key) next = { ...next, shields: Math.min(MAX_SHIELDS, (next.shields ?? 0) + 1), shieldEarnedOn: key };
+  }
+  // A Rainbow Chest for every 30 days of streak.
+  const rainbowKey = `rainbow-${key}`;
+  if (st > 0 && st % RAINBOW_STREAK === 0 && !next.questChestDays[rainbowKey] && scoreDay(after).total >= 50) {
+    next = grantChest(next, 'rainbow', `${st}-day streak`);
+    next.questChestDays = { ...next.questChestDays, [rainbowKey]: true };
   }
   return next;
 }
@@ -193,15 +200,19 @@ export interface OpenedChest {
 
 /** Silver chests sometimes hold a Small Potion; Gold ones always do, and sometimes a Full one. */
 export function chestPotions(kind: ChestKind, rng: Rng = defaultRng): { small: number; full: number } {
+  if (kind === 'rainbow') return { small: 0, full: 1 };
   if (kind === 'gold') return { small: 1, full: rng() < 0.4 ? 1 : 0 };
   if (kind === 'silver') return { small: rng() < 0.35 ? 1 : 0, full: 0 };
   return { small: 0, full: 0 };
 }
 
 export function openChestById(s: GameState, chestId: string, rng: Rng = defaultRng): OpenedChest | null {
-  const chest = s.chests.find((c) => c.id === chestId);
-  if (!chest) return null;
-  const result = openChest(chest.kind, rng);
+  const found = s.chests.find((c) => c.id === chestId);
+  if (!found) return null;
+  // A lucky Gold chest turns into a Rainbow Chest as it opens.
+  const upgraded = found.kind === 'gold' && rng() < RAINBOW_UPGRADE_CHANCE;
+  const chest = upgraded ? { ...found, kind: 'rainbow' as ChestKind } : found;
+  const result: ChestResult = { ...openChest(chest.kind, rng), ...(upgraded ? { upgraded: true } : {}) };
   let next: GameState = { ...s, chests: s.chests.filter((c) => c.id !== chestId), coins: s.coins + result.coins };
   let eggCoins = 0;
   if (result.eggRarity) {
@@ -217,6 +228,10 @@ export function openChestById(s: GameState, chestId: string, rng: Rng = defaultR
   const potions = chestPotions(chest.kind, rng);
   if (potions.small) next = addPotions(next, 'small', potions.small);
   if (potions.full) next = addPotions(next, 'full', potions.full);
+  if (chest.kind === 'rainbow') {
+    const dye = rng() < 0.5 ? rollDye(rng, { common: 0, uncommon: 0, rare: 0, epic: 80, legendary: 20 }) : null;
+    if (dye) { next = addDye(next, dye.skin); result.dye = dye.skin; }
+  }
   next = bump(next, 'chests');
   // An egg that didn't fit in a full basket shows up as extra coins instead.
   const shown = eggCoins ? { ...result, eggRarity: null, coins: result.coins + eggCoins, basketFull: true } : result;

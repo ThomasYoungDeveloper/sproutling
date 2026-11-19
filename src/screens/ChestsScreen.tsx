@@ -9,7 +9,7 @@ import { Button, ProgressBar } from '../components/ui';
 import { useReveal } from '../components/RevealOverlay';
 import { useOverlay } from '../components/Overlay';
 import { colors, font, space } from '../theme';
-import { CHESTS, oddsFor } from '../game/loot';
+import { CHESTS, oddsFor, RAINBOW_STREAK } from '../game/loot';
 import { RARITIES, RARITY_INFO } from '../game/rarity';
 import { dailyQuests } from '../game/scoring';
 import { FIND_EVERY, MAX_FINDS_PER_DAY, walkFindsToday } from '../game/walkFinds';
@@ -21,10 +21,11 @@ const CHEST_COLORS: Record<ChestKind, [string, string]> = {
   bronze: ['#C98A54', '#A86B3A'],
   silver: ['#C9D3DA', '#9AA8B2'],
   gold: ['#FFD25E', '#E3A81E'],
+  rainbow: ['#FF9AD8', '#8A6BFF'],
 };
-const CHEST_SOFT: Record<ChestKind, string> = { bronze: '#FFE9D6', silver: '#E9EEF3', gold: '#FFF4CC' };
-const BAR: Record<ChestKind | 'walk', string> = { bronze: '#E0924F', silver: '#8FA3B5', gold: '#E5A800', walk: colors.mint };
-const RANK: Record<ChestKind, number> = { bronze: 0, silver: 1, gold: 2 };
+const CHEST_SOFT: Record<ChestKind, string> = { bronze: '#FFE9D6', silver: '#E9EEF3', gold: '#FFF4CC', rainbow: '#F3E8FF' };
+const BAR: Record<ChestKind | 'walk', string> = { bronze: '#E0924F', silver: '#8FA3B5', gold: '#E5A800', rainbow: '#B45FE0', walk: colors.mint };
+const RANK: Record<ChestKind, number> = { bronze: 0, silver: 1, gold: 2, rainbow: 3 };
 
 function ChestArt({ kind, size = 64 }: { kind: ChestKind; size?: number }) {
   return <ChestIcon kind={kind} size={size} />;
@@ -33,7 +34,8 @@ function ChestArt({ kind, size = 64 }: { kind: ChestKind; size?: number }) {
 const WAYS: Record<ChestKind, string[]> = {
   bronze: ['Finish all 3 daily habits', 'Daily login, days 3 and 6', 'Walking finds and expeditions'],
   silver: ['Every 7-day streak', 'Daily login, day 7', 'Moon Mountain expeditions and lucky walking finds'],
-  gold: ['Beat the weekly guild raid boss', 'Very lucky walking finds'],
+  gold: ['Beat the weekly guild raid boss', 'Very lucky walking finds', 'Platinum in a ranked season'],
+  rainbow: ['Every 30-day streak', 'Reach the top of the weekly Sky Tower', 'Diamond or Legend in a ranked season', 'A 1 in 40 chance when you open any Gold chest'],
 };
 
 function HowToEarnSheet({ onClose }: { onClose: () => void }) {
@@ -141,6 +143,12 @@ export default function ChestsScreen() {
           hint: team.claimed.includes('raid') ? 'New boss on Monday' : `Ends Sunday · ${team.raid.hits_left} hit${team.raid.hits_left === 1 ? '' : 's'} left today`,
         }
       : { key: 'gold', kind: 'gold', title: 'Gold: guild raid boss', count: 'No guild', pct: 0, hint: 'Join a guild in the Social tab to fight the weekly boss' },
+    {
+      key: 'rainbow', kind: 'rainbow', title: 'Rainbow: 30-day streak',
+      count: streak > 0 && streak % RAINBOW_STREAK === 0 ? 'Earned ✓' : `Day ${streak % RAINBOW_STREAK} of ${RAINBOW_STREAK}`,
+      pct: streak > 0 && streak % RAINBOW_STREAK === 0 ? 1 : (streak % RAINBOW_STREAK) / RAINBOW_STREAK,
+      hint: 'Super rare: always an Epic or Legendary egg. Also at the top of the Sky Tower.',
+    },
     {
       key: 'walk', kind: 'walk', title: 'Walking finds',
       count: `${finds.found} of ${MAX_FINDS_PER_DAY} today`, pct: finds.found >= MAX_FINDS_PER_DAY ? 1 : 1 - toNext / FIND_EVERY,

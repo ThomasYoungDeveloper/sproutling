@@ -8,10 +8,10 @@ import { FOOD_BY_ID } from '../game/food';
 import { SPECIES_BY_ID } from '../game/species';
 import { play } from './sound';
 
-const CHEST_LABEL = { bronze: 'Bronze chest', silver: 'Silver chest', gold: 'Gold chest' } as const;
+const CHEST_LABEL = { bronze: 'Bronze chest', silver: 'Silver chest', gold: 'Gold chest', rainbow: 'Rainbow Chest' } as const;
 // Bright versions of the rarity colors, readable on the dark notice.
 const ON_DARK = { common: '#C9D3D6', uncommon: '#62D99C', rare: '#62B6F5', epic: '#C9A2F7', legendary: '#FFCF4D' } as const;
-const CHEST_COLOR = { bronze: '#E8A066', silver: '#D6DEE3', gold: '#FFD24D' } as const;
+const CHEST_COLOR = { bronze: '#E8A066', silver: '#D6DEE3', gold: '#FFD24D', rainbow: '#E0B8FF' } as const;
 
 /** One line in the "Found on your walk" list. */
 export type FindRow = { key: string; icon: string; label: string; count: number; color: string };

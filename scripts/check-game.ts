@@ -685,7 +685,7 @@ ok(A.applyShields(shielded.state).used === 0, 'shields are not used twice');
   const nd = A.nextDay(lost.state);
   ok(Tw.towerOf(nd).restDay !== A.todayKey(nd), 'the rest is over the next day');
   const top = Tw.finishFloor({ ...healed, tower: { ...healed.tower!, floor: 9 } }, true);
-  ok(top.chest === 'gold' && top.crystals === 2 && !top.state.tower!.choose && !Tw.canClimb(top.state).ok, 'the boss gives a Gold chest and crystals, and the tower is done');
+  ok(top.chest === 'rainbow' && top.crystals === 2 && !top.state.tower!.choose && !Tw.canClimb(top.state).ok, 'the boss gives a Rainbow Chest and crystals, and the tower is done');
 }
 
 console.log('\nEgg basket');
@@ -857,4 +857,27 @@ console.log('\nEgg basket');
   for (let i = 0; i < 400 && !(gotDye && gotEgg); i++) { const x = Wh.spin(g, rq); if (x.prize.kind === 'dye') gotDye = Object.keys(x.state.items).some((k) => k.endsWith(' Dye')); if (x.prize.kind === 'egg') gotEgg = x.state.eggs.length > g.eggs.length || x.state.coins > g.coins; }
   ok(gotDye && gotEgg, 'dye and egg prizes land in the Bag and the Eggs tab');
 }
+
+// Rainbow Chest: super rare, always Epic or Legendary
+{
+  const L = require('../src/game/loot');
+  const A2 = require('../src/game/actions');
+  let ok2 = true;
+  for (let i = 0; i < 300; i++) { const r = L.openChest('rainbow'); if (!r.eggRarity || !['epic', 'legendary'].includes(r.eggRarity) || r.coins < 500) ok2 = false; }
+  ok(ok2, 'Rainbow Chests always hold an Epic or Legendary egg and 500+ coins');
+  const base = require('../src/game/seed').newGame();
+  if (base) {
+    let ups = 0, n = 4000;
+    for (let i = 0; i < n; i++) {
+      const s0 = { ...base, chests: [{ id: 'g', kind: 'gold', from: 'test' }], eggs: [] };
+      const r = A2.openChestById(s0, 'g');
+      if (r.result.upgraded) ups++;
+    }
+    ok(Math.abs(ups / n - 1 / 40) < 0.012, `about 1 in 40 Gold chests turn into a Rainbow Chest (${(ups / n * 100).toFixed(1)}%)`);
+    const s1 = { ...base, chests: [{ id: 'r', kind: 'rainbow', from: 'test' }], eggs: [] };
+    const o = A2.openChestById(s1, 'r');
+    ok(o.result.crystals >= 2 && o.result.potions.full === 1, 'Rainbow Chests give 2-3 crystals and a Full Potion');
+  }
+}
+
 console.log(fails ? `${fails} FAILED` : 'ALL PASSED'); process.exit(fails ? 1 : 0);

@@ -8,8 +8,8 @@ export const TIERS = [
   { id: 'silver', name: 'Silver', emoji: '🥈', min: 100, color: '#9AA5B1', coins: 100, chest: 'bronze' as ChestKind },
   { id: 'gold', name: 'Gold', emoji: '🥇', min: 250, color: '#E3A81E', coins: 150, chest: 'silver' as ChestKind },
   { id: 'platinum', name: 'Platinum', emoji: '💠', min: 500, color: '#3FB8C9', coins: 200, chest: 'gold' as ChestKind },
-  { id: 'diamond', name: 'Diamond', emoji: '💎', min: 900, color: '#5B8DEF', coins: 300, chest: 'gold' as ChestKind },
-  { id: 'legend', name: 'Legend', emoji: '👑', min: 1500, color: '#A05BE0', coins: 500, chest: 'gold' as ChestKind },
+  { id: 'diamond', name: 'Diamond', emoji: '💎', min: 900, color: '#5B8DEF', coins: 300, chest: 'rainbow' as ChestKind },
+  { id: 'legend', name: 'Legend', emoji: '👑', min: 1500, color: '#A05BE0', coins: 500, chest: 'rainbow' as ChestKind },
 ] as const;
 export type Tier = (typeof TIERS)[number];
 

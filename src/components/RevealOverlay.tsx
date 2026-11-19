@@ -22,6 +22,8 @@ import { Button } from './ui';
 import { Confetti, Flash, PopIn, Rays, buzz, useCountUp, useIdleWobble, useShake } from './fx';
 import CrystalIcon from './CrystalIcon';
 import ChestIcon from './ChestIcon';
+import { DyeIcon } from './Dyes';
+import { dyeName } from '../game/dyes';
 
 export type Reveal =
   | { kind: 'egg'; rarity: Rarity; pet: OwnedPet; isNew: boolean; title?: string; eggColor?: string; eggSpots?: string[]; onMakeActive?: () => void; lucky?: number }
@@ -224,7 +226,7 @@ function TradeReveal({ r, onClose }: { r: Extract<Reveal, { kind: 'trade' }>; on
 }
 
 /* ---------------- Chest: tap twice to burst it open ---------------- */
-const CHEST_COLORS: Record<ChestKind, [string, string]> = { bronze: ['#C98A54', '#A86B3A'], silver: ['#C9D3DA', '#9AA8B2'], gold: ['#FFD25E', '#E3A81E'] };
+const CHEST_COLORS: Record<ChestKind, [string, string]> = { bronze: ['#C98A54', '#A86B3A'], silver: ['#C9D3DA', '#9AA8B2'], gold: ['#FFD25E', '#E3A81E'], rainbow: ['#FF9AD8', '#8A6BFF'] };
 
 function BigChest({ kind, open }: { kind: ChestKind; open: boolean }) {
   return <View style={open ? { transform: [{ scale: 1.08 }] } : undefined}><ChestIcon kind={kind} size={190} /></View>;
@@ -268,8 +270,9 @@ function ChestReveal({ r, onClose }: { r: Extract<Reveal, { kind: 'chest' }>; on
         <View style={styles.center}>
           <Rays color={big ? '#FFD84D' : eggInfo?.color ?? '#FFD25E'} size={360} />
           <Confetti amount={big ? 100 : 45} width={width} height={height} />
+          {r.result.upgraded ? <PopIn><Text style={styles.rainbowFlash}>It turned into a Rainbow Chest!</Text></PopIn> : null}
           <PopIn from={0.6}>
-            <BigChest kind={r.chest} open />
+            <BigChest kind={r.result.upgraded ? 'rainbow' : r.chest} open />
           </PopIn>
           <View style={styles.lootRow}>
             <PopIn delay={150}>
@@ -294,6 +297,15 @@ function ChestReveal({ r, onClose }: { r: Extract<Reveal, { kind: 'chest' }>; on
                   <Text style={{ fontSize: 30 }}>✦</Text>
                   <Text style={[styles.lootBig, { fontSize: 14, textAlign: 'center' }]}>{r.result.item}</Text>
                   <Text style={styles.lootSmall}>collectible</Text>
+                </View>
+              </PopIn>
+            ) : null}
+            {r.result.dye ? (
+              <PopIn delay={900}>
+                <View style={[styles.lootCard, { borderColor: '#B45FE0', backgroundColor: '#F3E8FF' }]}>
+                  <DyeIcon skin={r.result.dye} size={40} />
+                  <Text style={[styles.lootBig, { fontSize: 14, textAlign: 'center' }]}>{dyeName(r.result.dye)}</Text>
+                  <Text style={styles.lootSmall}>in your Bag</Text>
                 </View>
               </PopIn>
             ) : null}
@@ -367,6 +379,7 @@ function GrowReveal({ r, onClose }: { r: Extract<Reveal, { kind: 'grow' }>; onCl
 }
 
 const styles = StyleSheet.create({
+  rainbowFlash: { fontSize: 20, fontWeight: '900', color: '#B45FE0', backgroundColor: '#FFFFFFEE', borderRadius: 14, paddingHorizontal: 14, paddingVertical: 6, overflow: 'hidden', marginBottom: 6, textAlign: 'center' },
   lucky: { backgroundColor: '#FFD84D', borderRadius: 999, paddingVertical: 6, paddingHorizontal: 14, marginTop: 6 },
   luckyText: { color: '#5A3A00', fontWeight: '900', fontSize: 14 },
   backdrop: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(22,28,46,0.97)', zIndex: 100, alignItems: 'center', justifyContent: 'center' },

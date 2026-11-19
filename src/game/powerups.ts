@@ -20,7 +20,8 @@ export function addCrystals(s: GameState, n: number): GameState {
 }
 
 /** Crystals that come with a chest: Gold always has 1–2, Silver sometimes has 1. */
-export function chestCrystals(kind: 'bronze' | 'silver' | 'gold', rng: Rng = defaultRng): number {
+export function chestCrystals(kind: 'bronze' | 'silver' | 'gold' | 'rainbow', rng: Rng = defaultRng): number {
+  if (kind === 'rainbow') return rng() < 0.5 ? 2 : 3;
   if (kind === 'gold') return rng() < 0.5 ? 1 : 2;
   if (kind === 'silver') return rng() < 0.4 ? 1 : 0;
   return 0;

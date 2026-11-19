@@ -7,6 +7,7 @@ const CHEST_IMAGES: Record<ChestKind, number> = {
   bronze: require('../../assets/chests/bronze.png'),
   silver: require('../../assets/chests/silver.png'),
   gold: require('../../assets/chests/gold.png'),
+  rainbow: require('../../assets/chests/rainbow.png'),
 };
 
 export default function ChestIcon({ kind, size = 64 }: { kind: ChestKind; size?: number }) {

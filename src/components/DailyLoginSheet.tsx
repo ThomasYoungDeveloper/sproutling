@@ -14,8 +14,8 @@ import type { ChestKind } from '../game/types';
 import CoinBundle from './CoinBundle';
 import ChestIcon from './ChestIcon';
 
-const CHEST_LABEL: Record<ChestKind, string> = { bronze: 'Bronze chest', silver: 'Silver chest', gold: 'Gold chest' };
-const CHEST_COLOR: Record<ChestKind, string> = { bronze: '#C98A4B', silver: '#8FA3B5', gold: '#E5A800' };
+const CHEST_LABEL: Record<ChestKind, string> = { bronze: 'Bronze chest', silver: 'Silver chest', gold: 'Gold chest', rainbow: 'Rainbow Chest' };
+const CHEST_COLOR: Record<ChestKind, string> = { bronze: '#C98A4B', silver: '#8FA3B5', gold: '#E5A800', rainbow: '#B45FE0' };
 
 function RewardLabel({ r, big }: { r: A.LoginReward; big?: boolean }) {
   return (

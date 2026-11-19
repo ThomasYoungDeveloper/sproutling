@@ -153,13 +153,13 @@ export function equip(s: GameState, slot: Slot, id: string | null, petId?: strin
 }
 
 /** Chance (percent) that a chest also holds a cosmetic you don't own yet. */
-export const CHEST_COSMETIC_CHANCE = { bronze: 10, silver: 30, gold: 60 } as const;
+export const CHEST_COSMETIC_CHANCE = { bronze: 10, silver: 30, gold: 60, rainbow: 25 } as const;
 
 export function rollChestCosmetic(s: GameState, kind: keyof typeof CHEST_COSMETIC_CHANCE, rng: Rng = defaultRng): string | null {
   if (rng() * 100 >= CHEST_COSMETIC_CHANCE[kind]) return null;
   const pool = SELLABLE.filter((c) => !owns(s, c.id));
   if (!pool.length) return null;
-  const rarity = pickWeighted({ common: kind === 'gold' ? 30 : 60, rare: 30, epic: kind === 'bronze' ? 5 : 15 }, rng) as ItemRarity;
+  const rarity = (kind === 'rainbow' ? 'epic' : pickWeighted({ common: kind === 'gold' ? 30 : 60, rare: 30, epic: kind === 'bronze' ? 5 : 15 }, rng)) as ItemRarity;
   const inRarity = pool.filter((c) => c.rarity === rarity);
   const from = inRarity.length ? inRarity : pool;
   return from[Math.floor(rng() * from.length)].id;

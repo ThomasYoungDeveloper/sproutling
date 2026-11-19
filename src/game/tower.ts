@@ -82,7 +82,7 @@ export const canClimb = (s: GameState) => {
   return { ok: true as const };
 };
 
-export const chestFor = (floor: number): ChestKind | null => (floor === 10 ? 'gold' : floor === 6 ? 'silver' : floor === 3 ? 'bronze' : null);
+export const chestFor = (floor: number): ChestKind | null => (floor === 10 ? 'rainbow' : floor === 6 ? 'silver' : floor === 3 ? 'bronze' : null);
 export const coinsFor = (floor: number) => 20 + floor * 6;
 
 /** The team guarding a floor: themed pets that get stronger as you climb; a rare-or-better boss on top. */

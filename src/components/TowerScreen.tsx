@@ -14,6 +14,7 @@ import { supabase } from '../lib/supabase';
 import * as T from '../game/tower';
 import * as H from '../game/hp';
 import * as A from '../game/actions';
+import ChestIcon from './ChestIcon';
 
 type Mate = { name: string; floor: number };
 
@@ -124,7 +125,7 @@ export default function TowerScreen({ onClose }: { onClose: () => void }) {
 
   return (
     <View style={[styles.full, { backgroundColor: theme.sky[0] }]}>
-      <ScrollView contentContainerStyle={{ alignItems: 'center', paddingTop: insets.top + 110, paddingBottom: 190 }} contentOffset={{ x: 0, y: Math.max(0, yOf(nextFloor) - 260) }}>
+      <ScrollView contentContainerStyle={{ alignItems: 'center', paddingTop: insets.top + 160, paddingBottom: 190 }} contentOffset={{ x: 0, y: Math.max(0, yOf(nextFloor) - 260) }}>
         <View style={{ width: W, height: towerH + 120 }}>
           <Svg width={W} height={towerH + 120} style={StyleSheet.absoluteFill}>
             <Defs>
@@ -160,6 +161,11 @@ export default function TowerScreen({ onClose }: { onClose: () => void }) {
             })}
             <Circle cx={cx} cy={yOf(T.FLOORS) + 22} r="22" fill="url(#boss)" />
           </Svg>
+          {/* The prize waiting at the top: a Rainbow Chest */}
+          <View style={{ position: 'absolute', left: cx - 42, top: -64, alignItems: 'center', opacity: t.floor >= T.FLOORS ? 0.5 : 1 }} accessibilityLabel="Rainbow Chest waiting at the top">
+            <ChestIcon kind="rainbow" size={84} />
+            <View style={styles.prizeTag}><Text style={styles.prizeText}>{t.floor >= T.FLOORS ? 'Claimed' : 'Top prize'}</Text></View>
+          </View>
           {/* Floor labels on the right */}
           {Array.from({ length: T.FLOORS }, (_, i) => {
             const floor = i + 1;
@@ -167,7 +173,7 @@ export default function TowerScreen({ onClose }: { onClose: () => void }) {
             const mine = mates.filter((m) => m.floor === floor);
             return (
               <View key={floor} style={[styles.floorTag, { top: yOf(floor) + 12, left: cx + towerW / 2 + 8 }]}>
-                <Text style={[styles.floorText, floor <= t.floor && { color: '#FFD98A' }]}>{floor === T.FLOORS ? 'Boss' : `Floor ${floor}`}{chest ? ` · ${chest[0].toUpperCase() + chest.slice(1)}` : ''}</Text>
+                <Text style={[styles.floorText, floor <= t.floor && { color: '#FFD98A' }]}>{floor === T.FLOORS ? 'Boss' : `Floor ${floor}`}{chest ? ` · ${chest === 'rainbow' ? 'Rainbow Chest' : chest[0].toUpperCase() + chest.slice(1)}` : ''}</Text>
                 {mine.map((m) => (
                   <View key={m.name} style={styles.mate}><Text style={styles.mateText}>{m.name[0]?.toUpperCase()}</Text></View>
                 ))}
@@ -252,6 +258,8 @@ export function BlessingPick({ onDone }: { onDone: () => void }) {
 }
 
 const styles = StyleSheet.create({
+  prizeTag: { marginTop: -6, backgroundColor: '#B45FE0', borderRadius: 9, paddingHorizontal: 8, paddingVertical: 2 },
+  prizeText: { color: '#FFFFFF', fontSize: 11, fontWeight: '900' },
   full: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 80 },
   header: { position: 'absolute', top: 0, left: 0, right: 0, flexDirection: 'row', alignItems: 'flex-start', gap: 10, paddingHorizontal: 16, paddingBottom: 12, backgroundColor: 'rgba(15,8,28,0.55)' },
   back: { backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: 12, paddingHorizontal: 10, paddingVertical: 6, marginTop: 4 },
