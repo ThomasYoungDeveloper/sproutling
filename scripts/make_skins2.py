@@ -196,23 +196,23 @@ def make(path, skin, seed):
         sat = np.where(mx > 0, (mx - mn) / np.maximum(mx, 1e-3), 0)
         d = np.maximum(mx - mn, 1e-3)
         hue = np.where(mx == r, ((g - b) / d) % 6, np.where(mx == g, (b - r) / d + 2, (r - g) / d + 4)) * 60
-        pal = [(0, '#ff9ec4'), (25, '#ffb8d2'), (45, '#ffd9a8'), (62, '#fff09a'), (110, '#a8f0c8'), (175, '#a8dcff'), (225, '#b8bcff'), (275, '#d6b8ff'), (320, '#ffa8e0'), (360, '#ff9ec4')]
+        pal = [(0, '#ff7fb6'), (25, '#ff9cc6'), (45, '#ffc27a'), (62, '#ffe466'), (110, '#7de8b0'), (175, '#7cccff'), (225, '#9aa0ff'), (275, '#c296ff'), (320, '#ff8fd6'), (360, '#ff7fb6')]
         hs = np.array([x for x, _ in pal], dtype=np.float32)
         cs = np.stack([hexc(c) for _, c in pal])
         col = np.zeros(hue.shape + (3,), dtype=np.float32)
         for k in range(3):
             col[..., k] = np.interp(hue, hs, cs[:, k])
         t = (yy / max(h - 1, 1))[..., None]
-        wash = np.where(t < 0.5, hexc('#ffd6ea') * (1 - t * 2) + hexc('#e6d8ff') * (t * 2), hexc('#e6d8ff') * (2 - t * 2) + hexc('#d2f5e4') * (t * 2 - 1))
-        wash = wash * 0.8 + 255 * 0.2
+        wash = np.where(t < 0.5, hexc('#ffb0d6') * (1 - t * 2) + hexc('#c9aaff') * (t * 2), hexc('#c9aaff') * (2 - t * 2) + hexc('#9ee0ff') * (t * 2 - 1))
+        wash = wash * 0.92 + 255 * 0.08
         grey = np.clip((0.22 - sat) / 0.12, 0, 1)[..., None]
         col = col * (1 - grey) + wash * grey
         # Dark clothes and hair turn soft lavender instead of grey.
         mid = (np.clip((0.5 - lum) / 0.2, 0, 1) * np.clip((lum - 0.2) / 0.06, 0, 1))[..., None]
-        col = col * (1 - mid) + hexc('#c9b2f2') * mid
+        col = col * (1 - mid) + hexc('#b08ef0') * mid
         hi = np.percentile(lum[alpha > 0.8], 90) if (alpha > 0.8).any() else 1.0
         ln = np.clip(lum / max(hi, 1e-3), 0, 1)[..., None]
-        res = col * (0.86 + 0.14 * ln)
+        res = col * (0.82 + 0.2 * ln)
         dark = np.clip((0.2 - lum) / 0.1, 0, 1)[..., None]
         res = res * (1 - dark) + hexc('#7a6a96') * dark
     elif skin == 'retro':
