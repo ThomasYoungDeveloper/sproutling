@@ -61,20 +61,33 @@ def make(path, skin, seed):
         petals = stars(h, w, 26, seed, 3) * alpha
         res = res * (1 - petals[..., None] * 0.7) + hexc('#ffffff') * petals[..., None] * 0.7
     elif skin == 'moonlit':
-        res = ramp(lum, [(0, '#070b24'), (0.4, '#24306e'), (0.75, '#6f7fd6'), (1, '#e4e8ff')])
-        sp = stars(h, w, 60, seed, 1) * alpha
-        res = res * (1 - sp[..., None]) + hexc('#fff6c8') * sp[..., None]
-        halo, halo_color = glow(alpha, 6, 1.4), hexc('#8fa0ff')
+        # Royal purple with a warm gold shine along the inside of the outlines, like moonlight on the edges.
+        hi = np.percentile(lum[alpha > 0.8], 90) if (alpha > 0.8).any() else 1.0
+        l2 = np.clip(lum / max(hi, 1e-3) * 0.85, 0, 1)
+        res = ramp(l2, [(0, '#0c0420'), (0.3, '#2a0d5e'), (0.6, '#5a2aa8'), (0.85, '#8c5ad8'), (1, '#c4a0ff')])
+        line = (lum < 0.2).astype(np.float32) * alpha
+        near = np.asarray(Image.fromarray((line * 255).astype(np.uint8)).filter(ImageFilter.MaxFilter(7)), dtype=np.float32) / 255
+        rim = np.clip(near - line, 0, 1) * alpha * np.clip((l2 - 0.2) * 3, 0, 1)
+        res = res * (1 - rim[..., None] * 0.75) + hexc('#ffcf5a') * rim[..., None] * 0.75
+        sp = stars(h, w, 30, seed, 1) * alpha * (1 - line)
+        res = res * (1 - sp[..., None]) + hexc('#fff0b8') * sp[..., None]
     elif skin == 'ocean':
         res = ramp(lum, [(0, '#03314a'), (0.4, '#0f7fa8'), (0.75, '#5fd6e8'), (1, '#e6fbff')])
         wave = (np.sin(xx / 9 + yy / 14) * 0.5 + 0.5) * 0.15
         res = np.clip(res + wave[..., None] * 255, 0, 255)
         alpha = alpha * 0.85
     elif skin == 'ember':
+        # Living fire: bright reds with orange and yellow hot spots, and a few charred black patches,
+        # like glowing lava. Shading still follows the pet so it reads clearly.
         hi = np.percentile(lum[alpha > 0.8], 90) if (alpha > 0.8).any() else 1.0
-        l2 = np.clip(lum / max(hi, 1e-3) * 0.8, 0, 1)
-        res = ramp(l2, [(0, '#1a0000'), (0.35, '#8c0c12'), (0.62, '#e2302a'), (0.85, '#ff7b3a'), (1, '#ffd36b')])
-        halo, halo_color = glow(alpha, 5, 1.8), hexc('#ff8a2a')
+        l2 = np.clip(lum / max(hi, 1e-3) * 0.85, 0, 1)
+        r2 = np.random.default_rng(seed + 5)
+        grid = r2.random((max(2, h // 14), max(2, w // 14))).astype(np.float32)
+        heat = np.asarray(Image.fromarray((grid * 255).astype(np.uint8)).resize((w, h), Image.BICUBIC), dtype=np.float32) / 255
+        t = 1 - yy / max(h - 1, 1)
+        heat = np.clip(heat * 0.75 + t * 0.35 + (l2 - 0.5) * 0.4, 0, 1)
+        res = ramp(heat, [(0, '#120000'), (0.18, '#3a0000'), (0.32, '#9a0a0a'), (0.5, '#d81c10'), (0.68, '#f2420f'), (0.82, '#ff7a14'), (0.93, '#ffb21e'), (1, '#ffe25a')])
+        res = res * (0.55 + 0.45 * l2)[..., None] + res * 0.25
     elif skin == 'frost':
         res = ramp(lum, [(0, '#1b3550'), (0.4, '#6fa6d6'), (0.75, '#cfe8ff'), (1, '#ffffff')])
         sp = stars(h, w, 40, seed, 1) * alpha
@@ -104,15 +117,15 @@ def make(path, skin, seed):
         cyan = clouds(4, 0.08, 0.22, seed + 23) ** 1.8
         hi = np.percentile(lum[alpha > 0.8], 90) if (alpha > 0.8).any() else 1.0
         gl = np.clip(lum / max(hi, 1e-3) * 0.78, 0, 1)
-        base = ramp(gl, [(0, '#030208'), (0.3, '#0e0628'), (0.55, '#2a0f63'), (0.8, '#4b1fa0'), (1, '#7a4fe0')])
+        base = ramp(gl, [(0, '#000000'), (0.35, '#05030f'), (0.6, '#130a30'), (0.85, '#2c1666'), (1, '#4e2fa0')])
         shade = (0.35 + 0.9 * gl)[..., None]
-        res = base * (1 - pink[..., None] * 0.85) + hexc('#e03fc8') * pink[..., None] * 0.85 * shade
-        res = res * (1 - cyan[..., None] * 0.75) + hexc('#3fd8ff') * cyan[..., None] * 0.75 * shade
+        res = base * (1 - pink[..., None] * 0.5) + hexc('#c23ab8') * pink[..., None] * 0.5 * shade
+        res = res * (1 - cyan[..., None] * 0.35) + hexc('#3fb8ff') * cyan[..., None] * 0.35 * shade
         # Keep the outlines dark so the pet still reads clearly.
         dark = np.clip((0.2 - lum) / 0.12, 0, 1)[..., None]
         res = res * (1 - dark) + hexc('#030208') * dark
         body = alpha * (lum > 0.14)
-        w1 = stars(h, w, 220, seed + 1, 1) * body
+        w1 = stars(h, w, 300, seed + 1, 1) * body
         w2 = stars(h, w, 30, seed + 2, 2) * body
         b1 = stars(h, w, 110, seed + 3, 1) * body
         res = res * (1 - w1[..., None]) + 255 * w1[..., None]
@@ -135,8 +148,19 @@ def make(path, skin, seed):
         facet = (np.floor(xx / 18) + np.floor(yy / 18) + np.floor((xx + yy) / 26)) % 3 / 2
         l2 = np.clip(lum * 0.75 + facet * 0.25, 0, 1)
         res = ramp(l2, [(0, '#1a2a6b'), (0.4, '#5f7fe0'), (0.7, '#b9c8ff'), (1, '#ffffff')])
-        shine = ((xx - yy) % 40 < 4).astype(np.float32) * 0.35
+        shine = ((xx - yy) % 90 < 3).astype(np.float32) * 0.18
         res = np.clip(res + shine[..., None] * 255, 0, 255)
+        # A few four-point sparkles.
+        rng = np.random.default_rng(seed)
+        body = alpha * (lum > 0.2)
+        ys, xs = np.nonzero(body > 0.5)
+        for _ in range(6 if len(ys) else 0):
+            k = rng.integers(0, len(ys)); cy, cx = ys[k], xs[k]
+            for d in range(-6, 7):
+                a = max(0.0, 1 - abs(d) / 7)
+                for (y2, x2) in ((cy + d, cx), (cy, cx + d)):
+                    if 0 <= y2 < h and 0 <= x2 < w and body[y2, x2] > 0:
+                        res[y2, x2] = res[y2, x2] * (1 - a) + 255 * a
         halo, halo_color = glow(alpha, 3, 1.3), hexc('#cfe0ff')
     elif skin == 'shadow':
         # A dark body with the outlines glowing violet.
@@ -173,13 +197,21 @@ def make(path, skin, seed):
         dark = np.clip((0.2 - lum) / 0.1, 0, 1)[..., None]
         res = res * (1 - dark) + hexc('#7a6a96') * dark
     elif skin == 'retro':
-        small = Image.fromarray((arr * 255).astype(np.uint8)).resize((w // 5, h // 5), Image.NEAREST).resize((w, h), Image.NEAREST)
-        sarr = np.asarray(small, dtype=np.float32) / 255
-        slum = 0.299 * sarr[..., 0] + 0.587 * sarr[..., 1] + 0.114 * sarr[..., 2]
-        lv = np.clip(np.floor(slum * 4), 0, 3)
-        pal = np.stack([hexc('#0f380f'), hexc('#306230'), hexc('#8bac0f'), hexc('#9bbc0f')])
-        res = pal[lv.astype(int)]
-        alpha = (sarr[..., 3] > 0.5).astype(np.float32)
+        # Game Boy greens on a clean 4px grid. Each block averages its colors, and any block that
+        # touches an outline stays darkest, so faces and edges stay readable.
+        B = 4
+        gw, gh = w // B, h // B
+        img = Image.fromarray((arr * 255).astype(np.uint8))
+        small = np.asarray(img.resize((gw, gh), Image.BOX), dtype=np.float32) / 255
+        slum = 0.299 * small[..., 0] + 0.587 * small[..., 1] + 0.114 * small[..., 2]
+        lumimg = Image.fromarray((np.where(alpha > 0.5, lum, 1) * 255).astype(np.uint8))
+        lowest = np.asarray(lumimg.filter(ImageFilter.MinFilter(3)).resize((gw, gh), Image.NEAREST), dtype=np.float32) / 255
+        lv = np.clip(np.floor(np.clip(slum / max(slum[small[..., 3] > 0.5].max() if (small[..., 3] > 0.5).any() else 1, 1e-3), 0, 0.999) * 3) + 1, 1, 3)
+        lv = np.where(lowest < 0.2, 0, lv)
+        pal = np.stack([hexc('#0f380f'), hexc('#306230'), hexc('#8bac0f'), hexc('#c4d93a')])
+        resg = pal[lv.astype(int)]
+        res = np.asarray(Image.fromarray(resg.astype(np.uint8)).resize((w, h), Image.NEAREST), dtype=np.float32)
+        alpha = np.asarray(Image.fromarray(((small[..., 3] > 0.45) * 255).astype(np.uint8)).resize((w, h), Image.NEAREST), dtype=np.float32) / 255
     elif skin == 'ink':
         l2 = np.clip((lum - 0.15) * 1.5, 0, 1)
         l2 = np.round(l2 * 3) / 3

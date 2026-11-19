@@ -43,8 +43,8 @@ export function DyeIcon({ skin, size = 40 }: { skin: Skin; size?: number }) {
       <Rect x="17" y="2" width="14" height="9" rx="3" fill="#8A5A3A" />
       <Rect x="15" y="10" width="18" height="5" rx="2" fill="#E9DCCB" />
       <Path d="M15 15h18v5c8 4 11 11 11 19a20 20 0 0 1-40 0c0-8 3-15 11-19z" fill="#FFFFFF" stroke="#24323A" strokeWidth={2.5} />
-      <Path d="M6.5 34h35a18 18 0 0 1-35 0z" fill={`url(#${id})`} />
-      <Path d="M10 40c6-4 10 3 16-1s8 2 12-1" fill="none" stroke="#FFFFFF" strokeOpacity={0.55} strokeWidth={2.5} strokeLinecap="round" />
+      <Path d="M6.18 33H41.82A18.8 18.8 0 1 1 6.18 33Z" fill={`url(#${id})`} />
+      <Path d="M9 38c6-4 10 3 16-1s8 2 14-1" fill="none" stroke="#FFFFFF" strokeOpacity={0.55} strokeWidth={2.5} strokeLinecap="round" />
       <Path d="M40 6l1.5 3 3 1.5-3 1.5-1.5 3-1.5-3-3-1.5 3-1.5z" fill="#FFD24D" />
     </Svg>
   );
