@@ -1,12 +1,16 @@
 import type { GameState } from './types';
 import { dailyQuests } from './scoring';
-import { grantChest, todayKey } from './actions';
+import { addSkinEgg, grantChest, todayKey } from './actions';
 import { grantCosmetic, COSMETIC_BY_ID } from './cosmetics';
+import { SKIN_INFO } from './skins';
+import { addDye } from './dyes';
+
 
 /**
  * Seasonal events. Each runs on the same dates every year.
- * During an event, every daily quest you finish (walk, water, sleep) earns 1 event token (up to 3 a day).
- * Tokens unlock limited items that can't be bought or found anywhere else.
+ * Tokens come from a daily checklist (see dayTokens): each habit quest, finishing pet care,
+ * every 5,000 steps (up to 2) and one Caves-or-longer trip a day. Up to 7 a day.
+ * Tokens unlock limited looks, a dye and an event egg that can't be found anywhere else.
  */
 
 export interface Milestone {
@@ -14,6 +18,10 @@ export interface Milestone {
   item?: string;
   chest?: 'silver' | 'gold';
   coins?: number;
+  /** A dye for this skin (e.g. the Festival Dye). */
+  dye?: import('./types').Skin;
+  /** An egg that always hatches with this skin. */
+  egg?: import('./types').Skin;
 }
 
 export interface SeasonEvent {
@@ -27,6 +35,8 @@ export interface SeasonEvent {
   from: string;
   to: string;
   milestones: Milestone[];
+  /** Bumped when the reward ladder changes, so claims start fresh. */
+  rev?: number;
 }
 
 export const EVENTS: SeasonEvent[] = [
@@ -35,16 +45,18 @@ export const EVENTS: SeasonEvent[] = [
     name: 'Harvest Festival',
     emoji: '🍂',
     token: '🌰',
-    blurb: 'The leaves are turning! Finish your daily quests to gather acorns for cozy autumn gear.',
+    blurb: 'The leaves are turning! Gather acorns from your habits, pet care, walks and trips.',
     colors: ['#D9792B', '#7A3F1D'],
     from: '11-01',
     to: '11-30',
+    rev: 2,
     milestones: [
-      { tokens: 3, item: 'pie' },
-      { tokens: 8, item: 'acorn' },
-      { tokens: 15, item: 'leaves' },
-      { tokens: 24, item: 'autumn' },
-      { tokens: 32, chest: 'gold', coins: 200 },
+      { tokens: 5, item: 'leaves' },
+      { tokens: 12, item: 'autumn' },
+      { tokens: 20, item: 'scarecrow' },
+      { tokens: 30, egg: 'harvest' },
+      { tokens: 40, dye: 'harvest' },
+      { tokens: 50, chest: 'gold', dye: 'harvest' },
     ],
   },
   {
@@ -66,7 +78,28 @@ export const EVENTS: SeasonEvent[] = [
   },
 ];
 
-export const TOKENS_PER_DAY = 3;
+export const TOKENS_PER_DAY = 7;
+export const STEPS_PER_TOKEN = 5000;
+export const STEP_TOKENS_MAX = 2;
+
+/** The day's acorn checklist: what each row is worth and whether it's done. */
+export function dayChecklist(log: import('./types').DayLog | undefined) {
+  const quests = log ? dailyQuests(log) : [];
+  const q = (id: string) => quests.find((x) => x.id === id)?.done ?? false;
+  const c = log?.care;
+  const care = !!(c?.fed && (c.played ?? 0) >= 3 && c.treat);
+  const stepTokens = Math.min(STEP_TOKENS_MAX, Math.floor((log?.steps ?? 0) / STEPS_PER_TOKEN));
+  return [
+    { id: 'goal', label: 'Walk your step goal', got: q('walk') ? 1 : 0, max: 1 },
+    { id: 'water', label: 'Drink your water', got: q('water') ? 1 : 0, max: 1 },
+    { id: 'sleep', label: 'Sleep your goal', got: q('sleep') ? 1 : 0, max: 1 },
+    { id: 'care', label: 'Finish pet care (feed, play 3 times, treat)', got: care ? 1 : 0, max: 1 },
+    { id: 'walk', label: `Every ${STEPS_PER_TOKEN.toLocaleString()} steps (up to ${STEP_TOKENS_MAX})`, got: stepTokens, max: STEP_TOKENS_MAX },
+    { id: 'trip', label: 'A Caves trip or longer comes home', got: log?.bigTrip ? 1 : 0, max: 1 },
+  ];
+}
+
+export const dayTokens = (log: import('./types').DayLog | undefined) => dayChecklist(log).reduce((n, r) => n + r.got, 0);
 
 const md = (day: string) => day.slice(5);
 const inRange = (m: string, from: string, to: string) => (from <= to ? m >= from && m <= to : m >= from || m <= to);
@@ -79,7 +112,7 @@ export function eventOn(day: string): { event: SeasonEvent; key: string; start: 
   const y = Number(day.slice(0, 4));
   const startYear = ev.from <= ev.to || m >= ev.from ? y : y - 1;
   const endYear = ev.from <= ev.to ? startYear : startYear + 1;
-  return { event: ev, key: `${ev.id}-${startYear}`, start: `${startYear}-${ev.from}`, end: `${endYear}-${ev.to}` };
+  return { event: ev, key: `${ev.id}${ev.rev ? `v${ev.rev}` : ''}-${startYear}`, start: `${startYear}-${ev.from}`, end: `${endYear}-${ev.to}` };
 }
 
 export function currentEvent(s: GameState) {
@@ -103,7 +136,7 @@ export function eventTokens(s: GameState, run: { start: string; end: string }): 
   let n = 0;
   for (const [day, log] of Object.entries(s.days)) {
     if (day < run.start || day > run.end) continue;
-    n += Math.min(TOKENS_PER_DAY, dailyQuests(log).filter((q) => q.done).length);
+    n += Math.min(TOKENS_PER_DAY, dayTokens(log));
   }
   return n;
 }
@@ -122,7 +155,10 @@ export function claimableCount(s: GameState): number {
 
 export function milestoneLabel(m: Milestone): string {
   if (m.item) return COSMETIC_BY_ID[m.item]?.name ?? m.item;
-  return `${m.chest === 'gold' ? 'Gold' : 'Silver'} chest${m.coins ? ` + ${m.coins} coins` : ''}`;
+  if (m.egg) return `${SKIN_INFO[m.egg].label} Egg`;
+  if (m.chest) return `${m.chest === 'gold' ? 'Gold' : 'Silver'} chest${m.dye ? ' + Festival Dye' : ''}${m.coins ? ` + ${m.coins} coins` : ''}`;
+  if (m.dye) return m.dye === 'harvest' ? 'Festival Dye' : `${SKIN_INFO[m.dye].label} Dye`;
+  return 'Reward';
 }
 
 export function claimMilestone(s: GameState, index: number): { state: GameState; ok: boolean; reason?: string } {
@@ -137,5 +173,7 @@ export function claimMilestone(s: GameState, index: number): { state: GameState;
   if (m.item) next = grantCosmetic(next, m.item);
   if (m.chest) next = grantChest(next, m.chest, run.event.name);
   if (m.coins) next = { ...next, coins: next.coins + m.coins };
+  if (m.dye) next = addDye(next, m.dye);
+  if (m.egg) next = addSkinEgg(next, m.egg);
   return { state: next, ok: true };
 }

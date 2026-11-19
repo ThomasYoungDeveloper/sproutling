@@ -8,7 +8,17 @@ import { buzz, Confetti, PopIn } from './fx';
 import { colors, space } from '../theme';
 import * as Ev from '../game/events';
 import * as A from '../game/actions';
-import { dailyQuests } from '../game/scoring';
+import EggSprite from './EggSprite';
+import { DyeIcon } from './Dyes';
+import type { Milestone } from '../game/events';
+
+/** The picture for a reward: the item itself, a dye bottle, an event egg, or a chest. */
+function RewardIcon({ m, size }: { m: Milestone; size: number }) {
+  if (m.item) return <ItemIcon id={m.item} size={size} />;
+  if (m.egg) return <EggSprite rarity="rare" size={size} color="#F6C27A" spots={['#E0802E', '#B5462E']} />;
+  if (m.dye && !m.chest) return <DyeIcon skin={m.dye} size={size * 0.75} />;
+  return <Text style={{ fontSize: size * 0.6 }}>🎁</Text>;
+}
 
 /** A few emoji drifting down the banner (leaves for Harvest, snow for Winter). */
 function Falling({ emojis, width, height }: { emojis: string[]; width: number; height: number }) {
@@ -87,7 +97,8 @@ export default function EventCard() {
   const tokens = Ev.eventTokens(state, run);
   const got = Ev.claimedMilestones(state, run.key);
   const daysLeft = Ev.daysBetween(today, run.end) + 1;
-  const todayTokens = Math.min(Ev.TOKENS_PER_DAY, state.days[today] ? dailyQuests(state.days[today]).filter((q) => q.done).length : 0);
+  const checklist = Ev.dayChecklist(state.days[today]);
+  const todayTokens = Ev.dayTokens(state.days[today]);
   const max = ev.milestones[ev.milestones.length - 1].tokens;
   const ready = ev.milestones.filter((m, i) => tokens >= m.tokens && !got.includes(i)).length;
   const tokenName = ev.id === 'harvest' ? 'acorns' : 'stars';
@@ -132,7 +143,7 @@ export default function EventCard() {
             return (
               <View key={i} style={[styles.stop, { left: `${(m.tokens / max) * 100}%` }]}>
                 <View style={[styles.stopDot, have && styles.stopHave, can && styles.stopCan]}>
-                  {m.item ? <ItemIcon id={m.item} size={22} /> : <Text style={{ fontSize: 13 }}>🎁</Text>}
+                  <RewardIcon m={m} size={22} />
                   {have ? <View style={styles.stopCheck}><Text style={styles.stopCheckText}>✓</Text></View> : null}
                 </View>
                 <Text style={styles.stopNum}>{m.tokens}</Text>
@@ -142,7 +153,7 @@ export default function EventCard() {
         </View>
         <View style={styles.nextRow}>
           <Text style={styles.nextText} numberOfLines={2}>
-            {next ? <>Next: <Text style={{ fontWeight: '900' }}>{Ev.milestoneLabel(next)}</Text> in {next.tokens - tokens} {tokenName}. Finish today’s habits to earn them.</> : 'You’ve unlocked everything. Amazing!'}
+            {next ? <>Next: <Text style={{ fontWeight: '900' }}>{Ev.milestoneLabel(next)}</Text> in {next.tokens - tokens} {tokenName}. Today: {todayTokens} of {Ev.TOKENS_PER_DAY}.</> : 'You’ve unlocked everything. Amazing!'}
           </Text>
           {ready ? (
             <Pulse><View style={styles.claim}><Text style={styles.claimText}>Claim {ready}</Text></View></Pulse>
@@ -183,19 +194,30 @@ export default function EventCard() {
         </View>
       </View>
       <Text style={styles.blurb}>{ev.blurb}</Text>
-      <View style={{ gap: 4 }}>
-        <ProgressBar value={tokens / max} height={12} color="#FFE27A" />
-        <Text style={styles.small}>
-          Today: {todayTokens} of {Ev.TOKENS_PER_DAY} {ev.token} (1 per daily quest)
-        </Text>
+      <View style={styles.list}>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+          <Text style={styles.listHead}>TODAY’S {tokenName.toUpperCase()}</Text>
+          <Text style={styles.listHead}>{todayTokens} of {Ev.TOKENS_PER_DAY}</Text>
+        </View>
+        {checklist.map((r) => {
+          const done = r.got >= r.max;
+          return (
+            <View key={r.id} style={styles.listRow} accessibilityLabel={`${r.label}: ${r.got} of ${r.max}`}>
+              <View style={[styles.tick, done && styles.tickOn]}>{done ? <Text style={styles.tickText}>✓</Text> : null}</View>
+              <Text style={[styles.listText, done && { opacity: 0.7 }]}>{r.label}</Text>
+              <Text style={styles.listMeta}>{r.max > 1 ? `${r.got}/${r.max}` : '+1'}</Text>
+            </View>
+          );
+        })}
       </View>
+      <ProgressBar value={tokens / max} height={10} color="#FFE27A" />
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingVertical: 2 }}>
         {ev.milestones.map((m, i) => {
           const claimed = got.includes(i);
           const ready = tokens >= m.tokens && !claimed;
           return (
             <View key={i} style={[styles.tile, claimed && { opacity: 0.55 }, ready && styles.tileReady]}>
-              <View style={styles.icon}>{m.item ? <ItemIcon id={m.item} size={48} /> : <Text style={{ fontSize: 30 }}>🎁</Text>}</View>
+              <View style={styles.icon}><RewardIcon m={m} size={48} /></View>
               <Text style={styles.tileName} numberOfLines={2}>{Ev.milestoneLabel(m)}</Text>
               {claimed ? (
                 <Text style={styles.tileState}>✓ Got it</Text>
@@ -210,7 +232,7 @@ export default function EventCard() {
                       apply(() => r.state);
                       buzz('success', 'win');
                       setParty((p) => p + 1);
-                      setMsg(m.item ? `${Ev.milestoneLabel(m)} added to your wardrobe!` : 'Chest added! Open it on the Chests tab.');
+                      setMsg(m.item ? `${Ev.milestoneLabel(m)} added to your wardrobe!` : m.egg ? 'A Harvest Egg is in your Eggs tab. It always hatches with the Harvest look!' : m.chest ? 'Chest and dye added! Open the chest on the Chests tab; the dye is in your Bag.' : 'Festival Dye added to your Bag. Use it to give a pet the Harvest look for good.');
                     }}
                   />
                 </PopIn>
@@ -269,4 +291,12 @@ const styles = StyleSheet.create({
   tileName: { fontSize: 12, fontWeight: '900', color: colors.ink, textAlign: 'center', minHeight: 30 },
   tileState: { fontSize: 13, fontWeight: '900', color: colors.muted },
   msg: { fontSize: 13, fontWeight: '800', color: '#FFFFFF' },
+  list: { backgroundColor: 'rgba(0,0,0,0.18)', borderRadius: 16, padding: 10, gap: 7 },
+  listHead: { fontSize: 12, fontWeight: '900', color: '#FFE3B8', letterSpacing: 1 },
+  listRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  tick: { width: 18, height: 18, borderRadius: 9, borderWidth: 2, borderColor: '#FFE3B8', alignItems: 'center', justifyContent: 'center' },
+  tickOn: { backgroundColor: '#FFE3B8' },
+  tickText: { fontSize: 11, fontWeight: '900', color: '#7A3F1D' },
+  listText: { flex: 1, fontSize: 13, fontWeight: '800', color: '#FFF3E0' },
+  listMeta: { fontSize: 13, fontWeight: '900', color: '#FFFFFF' },
 });

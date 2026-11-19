@@ -1,4 +1,4 @@
-import type { ChestKind, DayLog, Egg, Element, GameState, Meal, OwnedPet, Rarity } from './types';
+import type { ChestKind, DayLog, Egg, Element, GameState, Meal, OwnedPet, Rarity, Skin } from './types';
 import { addPotions } from './hp';
 import { addCrystals, chestCrystals } from './powerups';
 import { dateKey } from './dates';
@@ -163,6 +163,13 @@ export function newEgg(s: GameState, rarity: Rarity, rng: Rng = defaultRng): Egg
   return { id: makeId(rng), rarity, stepsWalked: 0, incubating: false, foundOn: todayKey(s) };
 }
 
+/** Event egg: a mystery rarity that always hatches with the event's skin. Skips the basket limit so it's never lost. */
+export function addSkinEgg(s: GameState, skin: Skin, rng: Rng = defaultRng): GameState {
+  const r = rng();
+  const rarity: Rarity = r < 0.45 ? 'common' : r < 0.75 ? 'uncommon' : r < 0.92 ? 'rare' : r < 0.99 ? 'epic' : 'legendary';
+  return { ...s, eggs: [...s.eggs, { ...newEgg(s, rarity, rng), skin }] };
+}
+
 /** Eggs waiting to hatch (not counting ones in an incubator) are kept in a basket that holds this many. */
 export const EGG_BASKET = 9;
 /** A new egg that doesn't fit in a full basket is turned into this many coins instead. */
@@ -236,7 +243,7 @@ export function hatch(s: GameState, eggId: string, rng: Rng = defaultRng): Hatch
   if (!egg || !isReady(egg)) return null;
   // Nursery eggs already know which pet is inside; wild eggs pick one of their rarity.
   const species = (egg.bred && SPECIES_BY_ID[egg.bred.speciesId]) || pickOne(speciesOfRarity(egg.rarity), rng);
-  const skin = rollSkin(rng, egg.bred ? BRED_SKIN_BOOST : 1, egg.bred?.parentSkins ?? []);
+  const skin = egg.skin ?? rollSkin(rng, egg.bred ? BRED_SKIN_BOOST : 1, egg.bred?.parentSkins ?? []);
   const pet: OwnedPet = {
     id: makeId(rng),
     speciesId: species.id,

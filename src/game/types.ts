@@ -38,6 +38,8 @@ export interface DayLog {
   /** This day's step and water goals (water in 8 oz glasses), saved so past days keep the goal they had. */
   stepGoal?: number;
   waterGoal?: number;
+  /** A Caves trip or longer came home this day (counts toward event acorns). */
+  bigTrip?: boolean;
 }
 
 export interface DayCare {
@@ -94,6 +96,8 @@ export interface Egg {
   foundOn: string;
   /** Eggs from the Pet Nursery: who the parents were and which pet will hatch. */
   bred?: { speciesId: string; parents: [string, string]; parentSkins: (Skin | null)[]; parentIvs?: [import('./stats').Ivs, import('./stats').Ivs]; lucky?: number };
+  /** Event eggs (e.g. Harvest Eggs) always hatch with this skin. */
+  skin?: Skin;
 }
 
 /** Rare color variants of a pet. */

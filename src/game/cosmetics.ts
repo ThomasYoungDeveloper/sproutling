@@ -47,6 +47,7 @@ export const COSMETICS: Cosmetic[] = [
   { id: 'goldcrown', name: 'Golden Crown', slot: 'hat', rarity: 'epic', price: 0, premium: true },
   { id: 'trophy', name: 'Champion Laurel', slot: 'hat', rarity: 'epic', price: 0, special: true },
   { id: 'acorn', name: 'Acorn Cap', slot: 'hat', rarity: 'rare', price: 0, special: true, event: 'harvest' },
+  { id: 'scarecrow', name: 'Scarecrow Hat', slot: 'hat', rarity: 'epic', price: 0, special: true, event: 'harvest' },
   { id: 'santa', name: 'Holiday Hat', slot: 'hat', rarity: 'rare', price: 0, special: true, event: 'winter' },
 
   { id: 'hearts', name: 'Floating Hearts', slot: 'aura', rarity: 'common', price: 150 },

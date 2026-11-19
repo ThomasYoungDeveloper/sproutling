@@ -27,6 +27,16 @@ const HATS: Record<string, React.ReactNode> = {
       <Path d="M60 6 Q74 0 78 12 Q66 14 60 6 Z" fill="#E08A2B" stroke="#2B2B3A" strokeWidth={2} strokeLinejoin="round" />
     </G>
   ),
+  scarecrow: (
+    <G>
+      <Path d="M6 58 Q50 46 94 58 Q86 66 50 66 Q14 66 6 58 Z" fill="#D9A55A" stroke="#2B2B3A" strokeWidth={2.5} strokeLinejoin="round" />
+      <Path d="M26 54 Q28 22 50 18 Q72 22 74 54 Z" fill="#E8BE6E" stroke="#2B2B3A" strokeWidth={2.5} strokeLinejoin="round" />
+      <Path d="M27 46 Q50 40 73 46 L73 53 Q50 47 27 53 Z" fill="#C0462E" stroke="#2B2B3A" strokeWidth={2} strokeLinejoin="round" />
+      <Path d="M12 60 L6 70 M20 63 L16 72 M80 63 L84 72 M88 60 L94 70" stroke="#B5832F" strokeWidth={2.5} strokeLinecap="round" />
+      <Path d="M58 28 L66 24 M60 34 L68 32" stroke="#B5832F" strokeWidth={2} strokeLinecap="round" />
+      <Path d="M64 30 Q76 22 80 32 Q70 36 64 30 Z" fill="#E08A2B" stroke="#2B2B3A" strokeWidth={2} strokeLinejoin="round" />
+    </G>
+  ),
   santa: (
     <G>
       <Path d="M20 56 Q26 18 52 14 Q74 12 84 30 Q88 40 86 46 Q80 34 72 30 Q78 44 80 56 Z" fill="#E5394D" stroke="#2B2B3A" strokeWidth={2.5} strokeLinejoin="round" />

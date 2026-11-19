@@ -363,7 +363,7 @@ ok(A.applyShields(shielded.state).used === 0, 'shields are not used twice');
 {
   const Ev = require('../src/game/events');
   const K2 = require('../src/game/cosmetics');
-  ok(Ev.eventOn('2026-11-16').key === 'harvest-2026', 'harvest runs in November');
+  ok(Ev.eventOn('2026-11-16').key === 'harvestv2-2026', 'harvest runs in November (new reward ladder)');
   ok(Ev.eventOn('2026-12-25').key === 'winter-2026' && Ev.eventOn('2027-01-03').key === 'winter-2026', 'winter festival wraps past New Year');
   ok(Ev.eventOn('2027-01-03').start === '2026-12-01' && Ev.eventOn('2027-01-03').end === '2027-01-06', 'winter run dates');
   ok(Ev.eventOn('2026-02-10') === null, 'no event in February');
@@ -374,7 +374,23 @@ ok(A.applyShields(shielded.state).used === 0, 'shields are not used twice');
   const run = { start: '2026-11-01', end: '2026-11-30' };
   const full = { ...A.today(newGame()), steps: 9000, water: 8, sleepHours: 8 };
   const ES = { ...newGame(), days: { '2026-10-31': full, '2026-11-02': full, '2026-11-03': { ...full, water: 0 } } } as GameState;
-  ok(Ev.eventTokens(ES, run) === 5, 'tokens: 3 + 2, days outside the event ignored');
+  ok(Ev.eventTokens(ES, run) === 7, 'tokens: (3 quests + 1 for 5k steps) + (2 + 1), days outside the event ignored');
+  const big = { ...full, steps: 26000, care: { fed: true, played: 3, treat: true }, bigTrip: true };
+  ok(Ev.dayTokens(big) === 7, 'a perfect day: 3 habits + care + 2 from steps (capped) + trip = 7');
+  ok(Ev.dayTokens({ ...full, care: { fed: true, played: 2, treat: true } }) === 4, 'pet care only counts when all of it is done');
+  const hv = Ev.EVENTS.find((e: any) => e.id === 'harvest');
+  ok(hv.milestones.map((m: any) => m.tokens).join() === '5,12,20,30,40,50' && !hv.milestones.some((m: any) => m.item === 'pie'), 'harvest ladder: no food, 5 to 50');
+  const egg = hv.milestones.findIndex((m: any) => m.egg);
+  const dye = hv.milestones.findIndex((m: any) => m.dye && !m.chest);
+  const rich = { ...newGame(), dayOffset: 0, days: Object.fromEntries(Array.from({ length: 8 }, (_, i) => [`2026-11-${String(i + 1).padStart(2, '0')}`, big])) } as GameState;
+  const Dy2 = require('../src/game/dyes');
+  const inNov = { ...rich, dayOffset: Math.round((Date.parse('2026-11-20T12:00:00') - Date.now()) / 86400000) };
+  if (Ev.currentEvent(inNov)) {
+    const e1 = Ev.claimMilestone(inNov, egg);
+    ok(e1.ok && e1.state.eggs.some((x: any) => x.skin === 'harvest'), 'the Harvest Egg reward adds an egg that hatches Harvest');
+    const d1 = Ev.claimMilestone(inNov, dye);
+    ok(d1.ok && Dy2.dyesOwned(d1.state, 'harvest') === 1, 'the Festival Dye reward adds a Harvest dye');
+  }
 }
 // Pet grades
 {

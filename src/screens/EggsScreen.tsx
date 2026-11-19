@@ -16,6 +16,9 @@ import { MAX_INCUBATORS, incubatorPrice } from '../game/incubators';
 import * as A from '../game/actions';
 import type { Egg } from '../game/types';
 
+/** Harvest Eggs: warm orange with autumn spots, so they stand out in the basket. */
+const HARVEST_EGG = '#F6A13A';
+const HARVEST_SPOTS = ['#B5462E', '#7A3F1D'];
 const NURSERY_SPOTS = ['#FF8FB1', '#FFD6E5', '#FF8FB1', '#B18CFF'];
 
 export default function EggsScreen() {
@@ -52,10 +55,10 @@ export default function EggsScreen() {
             {shown ? (
               A.isReady(shown) ? (
                 <Wobble>
-                  <EggSprite rarity={shown.rarity} size={78} cracked spots={shown.bred ? NURSERY_SPOTS : undefined} />
+                  <EggSprite rarity={shown.rarity} size={78} cracked spots={shown.skin === 'harvest' ? HARVEST_SPOTS : shown.bred ? NURSERY_SPOTS : undefined} color={shown.skin === 'harvest' ? HARVEST_EGG : undefined} />
                 </Wobble>
               ) : (
-                <EggSprite rarity={shown.rarity} size={78} spots={shown.bred ? NURSERY_SPOTS : undefined} />
+                <EggSprite rarity={shown.rarity} size={78} spots={shown.skin === 'harvest' ? HARVEST_SPOTS : shown.bred ? NURSERY_SPOTS : undefined} color={shown.skin === 'harvest' ? HARVEST_EGG : undefined} />
               )
             ) : null}
           </IncubatorArt>
@@ -116,7 +119,7 @@ export default function EggsScreen() {
               const on = shown?.id === egg.id;
               return (
                 <Pressable key={egg.id} onPress={() => setPickedId(egg.id)} style={[styles.slot, on && styles.slotOn, ready && styles.slotReady]} accessibilityRole="button" accessibilityLabel={`${RARITY_INFO[egg.rarity].label} egg${ready ? ', ready' : ''}`} accessibilityState={{ selected: on }}>
-                  <EggSprite rarity={egg.rarity} size={34} cracked={ready} spots={egg.bred ? NURSERY_SPOTS : undefined} />
+                  <EggSprite rarity={egg.rarity} size={34} cracked={ready} spots={egg.skin === 'harvest' ? HARVEST_SPOTS : egg.bred ? NURSERY_SPOTS : undefined} color={egg.skin === 'harvest' ? HARVEST_EGG : undefined} />
                   <Text style={[styles.slotText, ready && { color: '#9A5B12' }]}>{ready ? 'Ready!' : `${Math.floor(progressOf(egg) * 100)}%`}</Text>
                 </Pressable>
               );
@@ -134,7 +137,7 @@ export default function EggsScreen() {
         ) : null}
         {waiting.map((e) => (
           <View key={e.id} style={styles.eggRow}>
-            <EggSprite rarity={e.rarity} size={46} spots={e.bred ? NURSERY_SPOTS : undefined} />
+            <EggSprite rarity={e.rarity} size={46} spots={e.skin === 'harvest' ? HARVEST_SPOTS : e.bred ? NURSERY_SPOTS : undefined} color={e.skin === 'harvest' ? HARVEST_EGG : undefined} />
             <View style={{ flex: 1, gap: 2 }}>
               <Text style={[font.body, { fontWeight: '900' }]}>{RARITY_INFO[e.rarity].label} egg{e.bred ? (e.bred.lucky ? ' ✨ Lucky' : ' 💞') : ''}</Text>
               <Text style={font.tiny}>{RARITY_INFO[e.rarity].eggKm} km to hatch</Text>

@@ -238,6 +238,7 @@ export function finish(s: GameState, rng: Rng = defaultRng, now = Date.now()): {
   const egg = knockedOut ? null : planned ? planned.egg : place.egg && rng() * 100 < place.egg.chance ? (pickWeighted(place.egg.rarity as Record<Rarity, number>, rng) as Rarity) : null;
   const item = knockedOut ? null : planned ? planned.item : rng() * 100 < place.itemChance ? pickOne(COLLECTIBLES, rng) : null;
   let next: GameState = A.bump({ ...s, expedition: undefined, coins: s.coins + coins }, 'expeditions');
+  if (place.id !== 'meadow') next = A.updateToday(next, (d) => ({ ...d, bigTrip: true }));
   const cosmetic = !knockedOut && place.cosmeticChance && rng() * 100 < place.cosmeticChance ? rollChestCosmetic(next, 'gold', () => 0) : null;
   // Each wild pet beaten on the way drops a piece of food.
   const foods: string[] = planned ? planned.foods.slice(0, wins) : [];
