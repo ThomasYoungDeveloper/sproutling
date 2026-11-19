@@ -16,6 +16,7 @@ import { stepsToHatch } from '../game/rarity';
 import { glassesText, stepGoalOf, waterGoalOf } from '../game/scoring';
 import { NextUnlockLine } from './Unlocks';
 import * as W from '../game/wishes';
+import { WheelBanner } from './LuckyWheel';
 
 type Habit = 'steps' | 'water' | 'sleep';
 
@@ -120,6 +121,7 @@ export default function TodayCard() {
         </Text>
         {tipOpen ? <Text style={styles.tipSource}>Source: {tip.source} · Not medical advice</Text> : null}
       </Pressable>
+      <WheelBanner />
       <WishRow />
       {A.starterBoost(state) ? <Text style={styles.starter}>New player bonus: double coins from habits until level {A.STARTER_BOOST_UNTIL}</Text> : null}
       <NextUnlockLine />

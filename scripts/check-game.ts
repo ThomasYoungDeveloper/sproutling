@@ -838,4 +838,23 @@ console.log('\nEgg basket');
   ok(gr.pets.find((p: any) => p.id === g.activePetId).xp === xp0 + 25 && gr.coins === c0, 'granting gives +25 XP and no coins');
   ok(Wi.activeWish(gr)?.index !== w.index, 'a granted wish goes away');
 }
+// Lucky Wheel
+{
+  const Wh = require('../src/game/wheel');
+  ok(Wh.SLOTS.reduce((a: number, b: any) => a + b.odds, 0) === 100, 'wheel odds add up to 100');
+  let g = { ...R, wheel: undefined } as any;
+  g = A.updateToday(g, (d: any) => ({ ...d, steps: 0, water: 0, sleepHours: 0 }));
+  ok(Wh.spinsLeft(g) === 0 && !Wh.spin(g), 'no spin until the 3 habits are done');
+  g = A.updateToday(g, (d: any) => ({ ...d, steps: 20000, water: 20, sleepHours: 8 }));
+  ok(Wh.spinsLeft(g) === 1, 'finishing the habits earns one spin');
+  let seed = 3; const rq = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+  const r = Wh.spin(g, rq);
+  ok(!!r && Wh.spinsLeft(r.state) === 0 && r.state.wheel.used === 1, 'one spin a day');
+  const counts: Record<string, number> = {};
+  for (let i = 0; i < 4000; i++) { const x = Wh.spin(g, rq); counts[x.prize.kind] = (counts[x.prize.kind] ?? 0) + 1; }
+  ok(Math.abs((counts.dye ?? 0) / 4000 - 0.06) < 0.015 && Math.abs((counts.egg ?? 0) / 4000 - 0.03) < 0.012, 'dyes about 6%, eggs about 3%');
+  let gotDye = false, gotEgg = false;
+  for (let i = 0; i < 400 && !(gotDye && gotEgg); i++) { const x = Wh.spin(g, rq); if (x.prize.kind === 'dye') gotDye = Object.keys(x.state.items).some((k) => k.endsWith(' Dye')); if (x.prize.kind === 'egg') gotEgg = x.state.eggs.length > g.eggs.length || x.state.coins > g.coins; }
+  ok(gotDye && gotEgg, 'dye and egg prizes land in the Bag and the Eggs tab');
+}
 console.log(fails ? `${fails} FAILED` : 'ALL PASSED'); process.exit(fails ? 1 : 0);
