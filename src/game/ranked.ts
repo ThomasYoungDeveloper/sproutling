@@ -1,5 +1,5 @@
 import type { ChestKind, GameState } from './types';
-import { grantChest } from './actions';
+import { grantChest, grantRainbow, todayKey } from './actions';
 import { grantCosmetic } from './cosmetics';
 
 /** Ranked battle tiers. A season is one calendar month. */
@@ -45,7 +45,8 @@ export function seasonName(season: string): string {
 export function seasonReward(s: GameState, points: number): { state: GameState; tier: Tier } {
   const tier = tierFor(points);
   let next: GameState = { ...s, coins: s.coins + tier.coins };
-  if (tier.chest) next = grantChest(next, tier.chest, `${tier.name} season reward`);
+  if (tier.chest === 'rainbow') next = grantRainbow(next, 'ranked', todayKey(s).slice(0, 7), `${tier.name} season reward`).state;
+  else if (tier.chest) next = grantChest(next, tier.chest, `${tier.name} season reward`);
   if (tier.id === 'legend') next = grantCosmetic(next, 'trophy');
   return { state: next, tier };
 }

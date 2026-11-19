@@ -162,7 +162,12 @@ export function finishFloor(s: GameState, won: boolean): FloorResult {
   const chest = chestFor(floor);
   const crystals = floor === FLOORS ? 2 : 0;
   let next: GameState = { ...s, coins: s.coins + coins, tower: { ...t, floor, choose: floor < FLOORS, lucky: lucky ? (t.lucky ?? 1) - 1 : t.lucky } };
-  if (chest) next = A.grantChest(next, chest, `Sky Tower floor ${floor}`);
+  let given: ChestKind | null = chest;
+  if (chest === 'rainbow') {
+    const r = A.grantRainbow(next, 'tower', t.week, `Sky Tower top, week of ${t.week}`);
+    next = r.state;
+    given = r.kind;
+  } else if (chest) next = A.grantChest(next, chest, `Sky Tower floor ${floor}`);
   if (crystals) next = addCrystals(next, crystals);
-  return { state: next, coins, chest, crystals, cleared: floor };
+  return { state: next, coins, chest: given, crystals, cleared: floor };
 }

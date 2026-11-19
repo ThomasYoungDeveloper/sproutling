@@ -880,4 +880,19 @@ console.log('\nEgg basket');
   }
 }
 
+// Rainbow Chests can't be farmed: one per source per period
+{
+  const A3 = require('../src/game/actions');
+  const g0 = require('../src/game/seed').newGame();
+  const a1 = A3.grantRainbow(g0, 'tower', '2027-01-04', 'top');
+  const a2 = A3.grantRainbow(a1.state, 'tower', '2027-01-04', 'top again');
+  ok(a1.kind === 'rainbow' && a2.kind === 'gold' && a2.state.chests.filter((c: any) => c.kind === 'rainbow').length === 1, 'the tower gives one Rainbow Chest a week (a repeat gives Gold)');
+  const a3 = A3.grantRainbow(a2.state, 'tower', '2027-01-11', 'next week');
+  ok(a3.kind === 'rainbow', 'a new tower week can give another');
+  let ups = 0;
+  let st = { ...g0, eggs: [] };
+  for (let i = 0; i < 400; i++) { st = { ...st, chests: [{ id: 'g' + i, kind: 'gold', reason: 't' }] }; const r = A3.openChestById(st, 'g' + i); if (r.result.upgraded) ups++; st = r.state; }
+  ok(ups <= 1, `lucky Gold chests turn Rainbow at most once a week (${ups})`);
+}
+
 console.log(fails ? `${fails} FAILED` : 'ALL PASSED'); process.exit(fails ? 1 : 0);

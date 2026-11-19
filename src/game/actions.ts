@@ -76,10 +76,8 @@ export function updateToday(s: GameState, change: (d: DayLog) => DayLog): GameSt
     if (next.shieldEarnedOn !== key) next = { ...next, shields: Math.min(MAX_SHIELDS, (next.shields ?? 0) + 1), shieldEarnedOn: key };
   }
   // A Rainbow Chest for every 30 days of streak.
-  const rainbowKey = `rainbow-${key}`;
-  if (st > 0 && st % RAINBOW_STREAK === 0 && !next.questChestDays[rainbowKey] && scoreDay(after).total >= 50) {
-    next = grantChest(next, 'rainbow', `${st}-day streak`);
-    next.questChestDays = { ...next.questChestDays, [rainbowKey]: true };
+  if (st > 0 && st % RAINBOW_STREAK === 0 && scoreDay(after).total >= 50 && !rainbowClaimed(next, 'streak', key)) {
+    next = grantRainbow(next, 'streak', key, `${st}-day streak`, null).state;
   }
   return next;
 }
@@ -193,6 +191,26 @@ export function addEgg(s: GameState, rarity: Rarity, rng: Rng = defaultRng): { s
   return { state: { ...s, eggs: [...s.eggs, newEgg(s, rarity, rng)] }, coins: 0 };
 }
 
+/**
+ * Rainbow Chests: one per source per period, so nothing can be farmed.
+ * tower = once per tower week, ranked = once per season, streak = once per 30-day milestone,
+ * gold = a lucky Gold chest can turn Rainbow at most once a week.
+ */
+export type RainbowSource = 'tower' | 'ranked' | 'streak' | 'gold';
+const rainbowKey = (source: RainbowSource, period: string) => `rainbow:${source}:${period}`;
+export const rainbowClaimed = (s: GameState, source: RainbowSource, period: string) => !!s.questChestDays[rainbowKey(source, period)];
+export function rainbowWeek(day: string): string {
+  const d = new Date(day + 'T12:00:00Z');
+  d.setUTCDate(d.getUTCDate() - ((d.getUTCDay() + 6) % 7));
+  return d.toISOString().slice(0, 10);
+}
+/** Gives a Rainbow Chest if this source hasn't given one this period; otherwise the fallback chest (if any). */
+export function grantRainbow(s: GameState, source: RainbowSource, period: string, reason: string, fallback: ChestKind | null = 'gold'): { state: GameState; kind: ChestKind | null } {
+  if (rainbowClaimed(s, source, period)) return { state: fallback ? grantChest(s, fallback, reason) : s, kind: fallback };
+  const next = grantChest(s, 'rainbow', reason);
+  return { state: { ...next, questChestDays: { ...next.questChestDays, [rainbowKey(source, period)]: true } }, kind: 'rainbow' };
+}
+
 export interface OpenedChest {
   state: GameState;
   result: ChestResult;
@@ -210,10 +228,12 @@ export function openChestById(s: GameState, chestId: string, rng: Rng = defaultR
   const found = s.chests.find((c) => c.id === chestId);
   if (!found) return null;
   // A lucky Gold chest turns into a Rainbow Chest as it opens.
-  const upgraded = found.kind === 'gold' && rng() < RAINBOW_UPGRADE_CHANCE;
+  const goldWeek = rainbowWeek(todayKey(s));
+  const upgraded = found.kind === 'gold' && !rainbowClaimed(s, 'gold', goldWeek) && rng() < RAINBOW_UPGRADE_CHANCE;
   const chest = upgraded ? { ...found, kind: 'rainbow' as ChestKind } : found;
   const result: ChestResult = { ...openChest(chest.kind, rng), ...(upgraded ? { upgraded: true } : {}) };
   let next: GameState = { ...s, chests: s.chests.filter((c) => c.id !== chestId), coins: s.coins + result.coins };
+  if (upgraded) next = { ...next, questChestDays: { ...next.questChestDays, [rainbowKey('gold', goldWeek)]: true } };
   let eggCoins = 0;
   if (result.eggRarity) {
     const r = addEgg(next, result.eggRarity, rng);

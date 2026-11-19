@@ -35,7 +35,7 @@ const WAYS: Record<ChestKind, string[]> = {
   bronze: ['Finish all 3 daily habits', 'Daily login, days 3 and 6', 'Walking finds and expeditions'],
   silver: ['Every 7-day streak', 'Daily login, day 7', 'Moon Mountain expeditions and lucky walking finds'],
   gold: ['Beat the weekly guild raid boss', 'Very lucky walking finds', 'Platinum in a ranked season'],
-  rainbow: ['Every 30-day streak', 'Reach the top of the weekly Sky Tower', 'Diamond or Legend in a ranked season', 'A 1 in 40 chance when you open any Gold chest'],
+  rainbow: ['Every 30-day streak', 'Reach the top of the Sky Tower (once a week)', 'Diamond or Legend in a ranked season (once a season)', 'A 1 in 40 chance when you open a Gold chest (once a week)'],
 };
 
 function HowToEarnSheet({ onClose }: { onClose: () => void }) {
