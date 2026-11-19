@@ -223,12 +223,25 @@ def make(path, skin, seed):
         m = res.mean(-1, keepdims=True)
         res = np.clip(m + (res - m) * 1.3, 0, 255)
         res = res * (1 - gl[..., None] * 0.8) + hexc('#f4ffe6') * gl[..., None] * 0.8
-        # A few small bubbles.
-        for _ in range(7 if len(ys) else 0):
-            k = r2.integers(0, len(ys)); cy, cx = ys[k], xs[k]; rr = r2.uniform(1.6, 3.2)
-            dd = np.sqrt((xx - cx) ** 2 + (yy - cy) ** 2)
-            ring = np.clip(1 - np.abs(dd - rr) / 0.9, 0, 1) * body * 0.6
-            res = res * (1 - ring[..., None]) + hexc('#e9ffc8') * ring[..., None]
+        # White bubbles, mostly in the upper part where light hits: a mix of soft rings and little
+        # filled dots, each with a tiny shine.
+        if len(ys):
+            top = ys.min(); span = max(ys.max() - top, 1)
+            up = np.nonzero((ys < top + span * 0.6) & (l2[ys, xs] > 0.3) & (l2[ys, xs] < 0.75))[0]
+            pool = up if len(up) else np.arange(len(ys))
+            for j in range(22):
+                k = pool[r2.integers(0, len(pool))]; cy, cx = ys[k], xs[k]
+                rr = r2.uniform(2.5, 6.0) if j % 3 else r2.uniform(1.5, 2.5)
+                dd = np.sqrt((xx - cx) ** 2 + (yy - cy) ** 2)
+                if j % 2:
+                    b = np.clip(1 - np.abs(dd - rr) / 1.3, 0, 1) * 0.9
+                    # a little shine inside the ring, upper left
+                    sd = np.sqrt((xx - cx + rr * 0.4) ** 2 + (yy - cy + rr * 0.4) ** 2)
+                    b = np.maximum(b, np.clip((rr * 0.35 - sd) / 0.8, 0, 1))
+                else:
+                    b = np.clip((rr - dd) / 1.0, 0, 1) * 0.85
+                b = b * body
+                res = res * (1 - b[..., None]) + 255 * b[..., None]
         res = res * (1 - line[..., None]) + hexc('#0e3410') * line[..., None]
         alpha = alpha * np.clip(0.94 + rim * 0.2 + line, 0, 1)
     elif skin == 'ember':
