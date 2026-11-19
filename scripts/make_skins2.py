@@ -148,9 +148,9 @@ def make(path, skin, seed):
         # Outlines: the inner feature lines (eyes, mouth, clothes) are a dark bronze so they read clearly
         # against the purple, and the outer silhouette keeps a gold trim.
         res = res * (1 - line[..., None]) + hexc('#2a1606') * line[..., None]
-        outer = np.asarray(Image.fromarray(((alpha > 0.5) * 255).astype(np.uint8)).filter(ImageFilter.MinFilter(5)), dtype=np.float32) / 255
-        trim = line * (1 - outer)
-        res = res * (1 - trim[..., None]) + hexc('#d9a83a') * trim[..., None]
+        outer = np.asarray(Image.fromarray(((alpha > 0.5) * 255).astype(np.uint8)).filter(ImageFilter.MinFilter(9)), dtype=np.float32) / 255
+        trim = np.clip(line * 1.3, 0, 1) * (1 - outer)
+        res = res * (1 - trim[..., None]) + hexc('#e6b444') * trim[..., None]
     elif skin == 'ocean':
         # Jellyfish: a see-through deep-sea body with a glowing cyan-to-pink rim on the inside of the
         # outline, soft bioluminescent spots, and faint trailing ribs on the lower half.
