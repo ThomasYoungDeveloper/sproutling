@@ -5,7 +5,7 @@ import Svg, { Path, Rect } from 'react-native-svg';
 import { useGame } from '../state/GameContext';
 import { Card, SectionHead, Button, ProgressBar, RarityBadge } from '../components/ui';
 import EggSprite from '../components/EggSprite';
-import { IncubatorArt, IncubatorSheet } from '../components/Incubator';
+import { IncubatorArt, IncubatorMini, IncubatorSheet } from '../components/Incubator';
 import PremiumSheet from '../components/PremiumSheet';
 import { useReveal } from '../components/RevealOverlay';
 import { useOverlay } from '../components/Overlay';
@@ -110,7 +110,7 @@ export default function EggsScreen() {
               if (!egg) {
                 return (
                   <View key={i} style={[styles.slot, styles.slotEmpty]} accessibilityLabel="Empty incubator">
-                    <Text style={{ fontSize: 22, color: colors.mint, fontWeight: '900' }}>+</Text>
+                    <IncubatorMini size={40} inUse={false} />
                     <Text style={styles.slotText}>Empty</Text>
                   </View>
                 );
@@ -119,7 +119,7 @@ export default function EggsScreen() {
               const on = shown?.id === egg.id;
               return (
                 <Pressable key={egg.id} onPress={() => setPickedId(egg.id)} style={[styles.slot, on && styles.slotOn, ready && styles.slotReady]} accessibilityRole="button" accessibilityLabel={`${RARITY_INFO[egg.rarity].label} egg${ready ? ', ready' : ''}`} accessibilityState={{ selected: on }}>
-                  <EggSprite rarity={egg.rarity} size={34} cracked={ready} spots={egg.skin === 'harvest' ? HARVEST_SPOTS : egg.bred ? NURSERY_SPOTS : undefined} color={egg.skin === 'harvest' ? HARVEST_EGG : undefined} />
+                  <IncubatorMini size={40} inUse />
                   <Text style={[styles.slotText, ready && { color: '#9A5B12' }]}>{ready ? 'Ready!' : `${Math.floor(progressOf(egg) * 100)}%`}</Text>
                 </Pressable>
               );

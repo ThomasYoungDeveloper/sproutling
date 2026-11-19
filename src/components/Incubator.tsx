@@ -46,6 +46,22 @@ export function IncubatorArt({ size = 190, warm = true, children }: { size?: num
   );
 }
 
+/** A small incubator for the slot row: an egg's shadow inside the glass when it's in use, empty glass when it isn't. */
+export function IncubatorMini({ size = 44, inUse }: { size?: number; inUse: boolean }) {
+  const w = size * (371 / 463);
+  return (
+    <View style={{ width: w, height: size }}>
+      <Image source={INC_BACK} style={{ position: 'absolute', left: 0, top: 0, width: w, height: size }} resizeMode="stretch" />
+      {inUse ? (
+        <Svg width={w} height={size} viewBox="0 0 371 463" style={StyleSheet.absoluteFill}>
+          <Path d="M185 205c-38 0-66 62-66 104 0 38 30 62 66 62s66-24 66-62c0-42-28-104-66-104z" fill="#0E3A55" fillOpacity={0.55} />
+        </Svg>
+      ) : null}
+      <Image source={INC_FRONT} style={{ position: 'absolute', left: 0, top: 0, width: w, height: size }} resizeMode="stretch" />
+    </View>
+  );
+}
+
 /** Buying extra incubators (used in the shop and from a locked slot on the Eggs tab). */
 export function IncubatorOffer() {
   const { state, apply } = useGame();
