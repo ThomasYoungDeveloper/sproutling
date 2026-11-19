@@ -10,7 +10,7 @@ import { type Rng, defaultRng } from './random';
  */
 
 export const CRYSTAL = 'Training Crystal';
-export const CRYSTAL_PRICE = 250;
+export const CRYSTAL_PRICE = 750;
 
 export const crystalsOf = (s: GameState) => s.items[CRYSTAL] ?? 0;
 

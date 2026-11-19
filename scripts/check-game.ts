@@ -518,10 +518,10 @@ ok(A.applyShields(shielded.state).used === 0, 'shields are not used twice');
 // Power-ups: Training Crystals and combining duplicates
 {
   const pet = (id: string, ivs: any) => ({ id, speciesId: 'p01', nickname: id, xp: 900, shiny: false, hatchedOn: '', ivs }) as any;
-  let g = { ...newGame(), coins: 1000, pets: [pet('a', { hp: 9, atk: 12, def: 8, spd: 12 }), pet('b', { hp: 11, atk: 6, def: 10, spd: 6 }), pet('c', { hp: 15, atk: 15, def: 15, spd: 15 })], activePetId: 'a' } as GameState;
+  let g = { ...newGame(), coins: 2000, pets: [pet('a', { hp: 9, atk: 12, def: 8, spd: 12 }), pet('b', { hp: 11, atk: 6, def: 10, spd: 6 }), pet('c', { hp: 15, atk: 15, def: 15, spd: 15 })], activePetId: 'a' } as GameState;
   ok(!Pw.canUseCrystal(g, 'a', 'def').ok, 'no crystal, no power-up');
   g = Pw.buyCrystal(g, '2026-11-17');
-  ok(Pw.crystalsOf(g) === 1 && g.coins === 1000 - Pw.CRYSTAL_PRICE, 'the shop sells a crystal');
+  ok(Pw.crystalsOf(g) === 1 && g.coins === 2000 - Pw.CRYSTAL_PRICE, 'the shop sells a crystal');
   ok(Pw.buyCrystal(g, '2026-11-17') === g, 'only one crystal a day from the shop');
   g = Pw.useCrystal(g, 'a', 'def');
   ok(St.ivsOf(g.pets[0]).def === 9 && Pw.crystalsOf(g) === 0, 'a crystal adds +1 to the chosen stat');
