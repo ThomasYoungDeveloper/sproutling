@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import Svg, { Defs, LinearGradient, Path, Rect, Stop } from 'react-native-svg';
+import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useGame } from '../state/GameContext';
 import PetSprite from './PetSprite';
 import { Button } from './ui';
@@ -29,27 +28,29 @@ export const DYE_COLORS: Partial<Record<Skin, [string, string, string]>> = {
   harvest: ['#FFC86E', '#D25C1C', '#78300E'],
 };
 
-/** A small potion bottle filled with the dye's colors, with a gold sparkle. */
+/** Bottle art for each dye (from the 2D Potion Icon Pack; see scripts/make_bottles.py). The liquid matches the skin. */
+const DYE_IMAGES: Partial<Record<Skin, number>> = {
+  pastel: require('../../assets/dyes/pastel.png'),
+  mono: require('../../assets/dyes/mono.png'),
+  retro: require('../../assets/dyes/retro.png'),
+  slime: require('../../assets/dyes/slime.png'),
+  sakura: require('../../assets/dyes/sakura.png'),
+  ocean: require('../../assets/dyes/ocean.png'),
+  ember: require('../../assets/dyes/ember.png'),
+  moonlit: require('../../assets/dyes/moonlit.png'),
+  crystal: require('../../assets/dyes/crystal.png'),
+  shadow: require('../../assets/dyes/shadow.png'),
+  galaxy: require('../../assets/dyes/galaxy.png'),
+  ancient: require('../../assets/dyes/ancient.png'),
+  harvest: require('../../assets/dyes/harvest.png'),
+};
+
+/** A dye bottle: its liquid shows the skin (Shadow holds shadow, Galaxy holds stars), its shape shows the rarity. */
 export function DyeIcon({ skin, size = 40 }: { skin: Skin; size?: number }) {
-  const [a, b, c] = DYE_COLORS[skin] ?? ['#FFFFFF', '#CCCCCC', '#888888'];
-  const id = `dye-${skin}`;
-  return (
-    <Svg width={size} height={size * 1.25} viewBox="0 0 48 60">
-      <Defs>
-        <LinearGradient id={id} x1="0" y1="0" x2="1" y2="1">
-          <Stop offset="0" stopColor={a} />
-          <Stop offset="0.55" stopColor={b} />
-          <Stop offset="1" stopColor={c} />
-        </LinearGradient>
-      </Defs>
-      <Rect x="17" y="2" width="14" height="9" rx="3" fill="#8A5A3A" />
-      <Rect x="15" y="10" width="18" height="5" rx="2" fill="#E9DCCB" />
-      <Path d="M15 15h18v5c8 4 11 11 11 19a20 20 0 0 1-40 0c0-8 3-15 11-19z" fill="#FFFFFF" stroke="#24323A" strokeWidth={2.5} />
-      <Path d="M6.18 33H41.82A18.8 18.8 0 1 1 6.18 33Z" fill={`url(#${id})`} />
-      <Path d="M9 38c6-4 10 3 16-1s8 2 14-1" fill="none" stroke="#FFFFFF" strokeOpacity={0.55} strokeWidth={2.5} strokeLinecap="round" />
-      <Path d="M40 6l1.5 3 3 1.5-3 1.5-1.5 3-1.5-3-3-1.5 3-1.5z" fill="#FFD24D" />
-    </Svg>
-  );
+  const src = DYE_IMAGES[skin];
+  const h = size * 1.25;
+  if (!src) return <View style={{ width: h, height: h }} />;
+  return <Image source={src} style={{ width: h, height: h }} resizeMode="contain" accessibilityIgnoresInvertColors />;
 }
 
 export function RarityTag({ rarity }: { rarity: Dy.DyeRarity }) {
