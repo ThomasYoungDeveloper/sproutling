@@ -221,22 +221,43 @@ def make(path, skin, seed):
                         res[yy2, xx2] = res[yy2, xx2] * (1 - a) + 255 * a
         halo, halo_color = glow(alpha, 5, 1.0), hexc('#9b6bff')
     elif skin == 'crystal':
-        facet = (np.floor(xx / 18) + np.floor(yy / 18) + np.floor((xx + yy) / 26)) % 3 / 2
-        l2 = np.clip(lum * 0.75 + facet * 0.25, 0, 1)
-        res = ramp(l2, [(0, '#1a2a6b'), (0.4, '#5f7fe0'), (0.7, '#b9c8ff'), (1, '#ffffff')])
-        shine = ((xx - yy) % 90 < 3).astype(np.float32) * 0.18
-        res = np.clip(res + shine[..., None] * 255, 0, 255)
-        # A few four-point sparkles.
+        # Cut gemstone: the body is split into flat, angular facets (Voronoi cells). Each facet tilts toward
+        # or away from the light so it gets one flat tone, the facet edges catch a thin light or dark bevel,
+        # and a diagonal band of facets flashes bright like a reflection.
         rng = np.random.default_rng(seed)
-        body = alpha * (lum > 0.2)
-        ys, xs = np.nonzero(body > 0.5)
-        for _ in range(6 if len(ys) else 0):
+        n = max(40, int(h * w / 520))
+        py, px = rng.uniform(0, h, n), rng.uniform(0, w, n)
+        d1 = np.full((h, w), 1e9, dtype=np.float32); d2 = d1.copy(); idx = np.zeros((h, w), dtype=np.int32)
+        for i in range(n):
+            d = (yy - py[i]) ** 2 + (xx - px[i]) ** 2
+            closer = d < d1
+            d2 = np.where(closer, d1, np.minimum(d2, d)); d1 = np.where(closer, d, d1); idx = np.where(closer, i, idx)
+        gap = np.sqrt(d2) - np.sqrt(d1)
+        tilt = rng.uniform(-1, 1, n).astype(np.float32)
+        # Reflection band: facets whose centers sit on a diagonal strip get a strong flash.
+        band = np.abs(((px + py) / (w + h)) - 0.42) < 0.07
+        flash = np.where(band, rng.uniform(0.3, 0.5, n), 0).astype(np.float32)
+        ft = tilt[idx]; ff = flash[idx]
+        hi = np.percentile(lum[alpha > 0.8], 90) if (alpha > 0.8).any() else 1.0
+        l2 = np.clip(lum / max(hi, 1e-3) * 0.62 + ft * 0.2 + ff, 0, 1)
+        res = ramp(l2, [(0, '#0d1652'), (0.25, '#1f3aa8'), (0.48, '#3f6ae0'), (0.68, '#7fa6ff'), (0.86, '#cddcff'), (1, '#ffffff')])
+        # Bevels: a thin edge between facets, light on the lit side and dark on the shaded side.
+        bev = np.clip(1 - gap / 1.6, 0, 1)
+        lit = (ft > 0).astype(np.float32)
+        res = res * (1 - bev[..., None] * 0.55) + (hexc('#eef3ff') * lit[..., None] + hexc('#1a2670') * (1 - lit[..., None])) * bev[..., None] * 0.55
+        # A few four-point sparkles on the brightest facets.
+        line = np.clip((0.2 - lum) / 0.1, 0, 1)
+        body = alpha * (1 - line)
+        ys, xs = np.nonzero((body > 0.5) & (l2 > 0.75))
+        for _ in range(5 if len(ys) else 0):
             k = rng.integers(0, len(ys)); cy, cx = ys[k], xs[k]
             for d in range(-6, 7):
                 a = max(0.0, 1 - abs(d) / 7)
                 for (y2, x2) in ((cy + d, cx), (cy, cx + d)):
                     if 0 <= y2 < h and 0 <= x2 < w and body[y2, x2] > 0:
                         res[y2, x2] = res[y2, x2] * (1 - a) + 255 * a
+        # Keep the outlines dark navy so the pet's design reads.
+        res = res * (1 - line[..., None]) + hexc('#0c1446') * line[..., None]
         halo, halo_color = glow(alpha, 3, 1.3), hexc('#cfe0ff')
     elif skin == 'shadow':
         # A dark body with the outlines glowing violet.
