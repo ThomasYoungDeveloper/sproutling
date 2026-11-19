@@ -90,17 +90,46 @@ def make(path, skin, seed):
         alpha = alpha * (0.62 + 0.25 * (yy < h * 0.7))
         halo, halo_color = glow(alpha, 7, 1.2), hexc('#a77bff')
     elif skin == 'galaxy':
+        # Deep space: near-black navy and violet, with magenta and cyan nebula clouds,
+        # lit by the pet's own shading, and lots of white and light-blue star specks.
         rng = np.random.default_rng(seed)
-        neb = np.zeros((h, w), dtype=np.float32)
+        def clouds(n, lo, hi, sd):
+            m = np.zeros((h, w), dtype=np.float32)
+            r2 = np.random.default_rng(sd)
+            for _ in range(n):
+                cx, cy, r = r2.uniform(0, w), r2.uniform(0, h), r2.uniform(w * lo, w * hi)
+                m += np.exp(-(((xx - cx) ** 2 + (yy - cy) ** 2) / (2 * r * r)))
+            return np.clip(m / max(m.max(), 1e-3), 0, 1)
+        pink = clouds(5, 0.10, 0.28, seed + 11) ** 1.4
+        cyan = clouds(4, 0.08, 0.22, seed + 23) ** 1.8
+        hi = np.percentile(lum[alpha > 0.8], 90) if (alpha > 0.8).any() else 1.0
+        gl = np.clip(lum / max(hi, 1e-3) * 0.78, 0, 1)
+        base = ramp(gl, [(0, '#030208'), (0.3, '#0e0628'), (0.55, '#2a0f63'), (0.8, '#4b1fa0'), (1, '#7a4fe0')])
+        shade = (0.35 + 0.9 * gl)[..., None]
+        res = base * (1 - pink[..., None] * 0.85) + hexc('#e03fc8') * pink[..., None] * 0.85 * shade
+        res = res * (1 - cyan[..., None] * 0.75) + hexc('#3fd8ff') * cyan[..., None] * 0.75 * shade
+        # Keep the outlines dark so the pet still reads clearly.
+        dark = np.clip((0.2 - lum) / 0.12, 0, 1)[..., None]
+        res = res * (1 - dark) + hexc('#030208') * dark
+        body = alpha * (lum > 0.14)
+        w1 = stars(h, w, 220, seed + 1, 1) * body
+        w2 = stars(h, w, 30, seed + 2, 2) * body
+        b1 = stars(h, w, 110, seed + 3, 1) * body
+        res = res * (1 - w1[..., None]) + 255 * w1[..., None]
+        res = res * (1 - b1[..., None]) + hexc('#9fe6ff') * b1[..., None]
+        res = res * (1 - w2[..., None] * 0.9) + 255 * w2[..., None] * 0.9
+        # A few four-point sparkles.
         for _ in range(6):
-            cx, cy, r = rng.uniform(0, w), rng.uniform(0, h), rng.uniform(w * 0.15, w * 0.4)
-            neb += np.exp(-(((xx - cx) ** 2 + (yy - cy) ** 2) / (2 * r * r)))
-        neb = np.clip(neb / neb.max(), 0, 1)
-        base = ramp(neb, [(0, '#0a0624'), (0.5, '#3b1f7a'), (0.8, '#c04fb8'), (1, '#5fc8ff')])
-        shade = 0.35 + 0.65 * lum
-        res = base * shade[..., None]
-        sp = stars(h, w, 120, seed + 1, 1) * alpha
-        res = res * (1 - sp[..., None]) + 255 * sp[..., None]
+            ys, xs = np.nonzero(body > 0.5)
+            if not len(ys):
+                break
+            k = rng.integers(0, len(ys))
+            cy, cx = ys[k], xs[k]
+            for d in range(-5, 6):
+                a = max(0.0, 1 - abs(d) / 6)
+                for (yy2, xx2) in ((cy + d, cx), (cy, cx + d)):
+                    if 0 <= yy2 < h and 0 <= xx2 < w and body[yy2, xx2] > 0:
+                        res[yy2, xx2] = res[yy2, xx2] * (1 - a) + 255 * a
         halo, halo_color = glow(alpha, 5, 1.0), hexc('#9b6bff')
     elif skin == 'crystal':
         facet = (np.floor(xx / 18) + np.floor(yy / 18) + np.floor((xx + yy) / 26)) % 3 / 2

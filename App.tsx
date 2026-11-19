@@ -27,6 +27,7 @@ import { ChatProvider, useChat } from './src/state/ChatContext';
 import * as H from './src/game/hp';
 import { OverlayProvider, useOverlay } from './src/components/Overlay';
 import { LevelUpPopup } from './src/components/Unlocks';
+import { spotlight } from './src/components/Spotlight';
 import { ShopSheet, WardrobeSheet } from './src/components/ShopSheets';
 import * as U from './src/game/unlocks';
 import * as W from './src/game/wishes';
@@ -243,14 +244,18 @@ function Shell() {
     const t = setInterval(tick, 60_000);
     return () => clearInterval(t);
   }, [settled, starter, state]);
-  const goUnlock = (where: U.FeatureInfo['go']) => {
-    if (where === 'shop') {
+  const goUnlock = (f: U.FeatureInfo) => {
+    if (f.go === 'shop') {
       setTab('home');
       const openWardrobe = () => layers.open(<WardrobeSheet onClose={layers.close} onShop={openShop} />);
       const openShop = () => layers.open(<ShopSheet onClose={layers.close} onWardrobe={openWardrobe} />);
       openShop();
-    } else setTab(where);
+      return;
+    }
+    setTab(f.go);
+    if (f.hint) setTimeout(() => spotlight(f.id, f.hint!), 350);
   };
+
 
   // Once the intro is showing, keep it up while the save syncs (otherwise it would restart mid-way).
   if (intro && (settled || introShown.current)) {

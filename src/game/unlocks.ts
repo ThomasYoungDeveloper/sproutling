@@ -21,17 +21,19 @@ export interface FeatureInfo {
   tease: (pet: string) => string;
   /** One line for the "Coming up" teaser. */
   soon: string;
+  /** The one-line pointer shown on the feature after Try it now. */
+  hint?: string;
   /** Where to find it, for the card's button. */
   go: 'home' | 'friends' | 'dex' | 'shop';
 }
 
 export const FEATURES: FeatureInfo[] = [
   { id: 'shop', level: 2, name: 'Shops', title: 'The shops are open!', text: 'Two shops just opened their doors. Go see what’s on the shelves.', tease: () => 'Two shops just opened their doors. Go see what’s on the shelves.', soon: 'Spend your coins on new looks', go: 'shop' },
-  { id: 'trips', level: 3, name: 'Trips', title: 'Trips are open!', text: 'Send a pet into the wild. Who knows what it’ll bring home?', tease: (p) => `Send ${p} into the wild. Who knows what it’ll bring home?`, soon: 'Send your pet off exploring', go: 'home' },
-  { id: 'battles', level: 4, name: 'Battles', title: 'Battles are open!', text: 'Something’s rustling out there. Is your pet ready?', tease: (p) => `Something’s rustling out there. Is ${p} ready?`, soon: 'Something’s rustling out there', go: 'friends' },
-  { id: 'guild', level: 5, name: 'Guilds', title: 'Guilds are open!', text: 'Team up and take on something too big to face alone.', tease: () => 'Team up and take on something too big to face alone.', soon: 'Team up with other players', go: 'friends' },
-  { id: 'tower', level: 6, name: 'Sky Tower', title: 'The Sky Tower is open!', text: 'A tower has appeared in the clouds. How high can you climb?', tease: () => 'A tower has appeared in the clouds. How high can you climb?', soon: 'Something is up in the clouds', go: 'friends' },
-  { id: 'breeding', level: 8, name: 'The Nursery', title: 'The Nursery is open!', text: 'Two pets, one egg… what will hatch?', tease: () => 'Two pets, one egg… what will hatch?', soon: 'Breed stronger pets', go: 'dex' },
+  { id: 'trips', hint: 'Tap here and pick a pet to start your first trip', level: 3, name: 'Trips', title: 'Trips are open!', text: 'Send a pet into the wild. Who knows what it’ll bring home?', tease: (p) => `Send ${p} into the wild. Who knows what it’ll bring home?`, soon: 'Send your pet off exploring', go: 'home' },
+  { id: 'battles', hint: 'Wild pets and friend battles live here', level: 4, name: 'Battles', title: 'Battles are open!', text: 'Something’s rustling out there. Is your pet ready?', tease: (p) => `Something’s rustling out there. Is ${p} ready?`, soon: 'Something’s rustling out there', go: 'friends' },
+  { id: 'guild', hint: 'Join a guild or start your own here', level: 5, name: 'Guilds', title: 'Guilds are open!', text: 'Team up and take on something too big to face alone.', tease: () => 'Team up and take on something too big to face alone.', soon: 'Team up with other players', go: 'friends' },
+  { id: 'tower', hint: 'Climb the Sky Tower here', level: 6, name: 'Sky Tower', title: 'The Sky Tower is open!', text: 'A tower has appeared in the clouds. How high can you climb?', tease: () => 'A tower has appeared in the clouds. How high can you climb?', soon: 'Something is up in the clouds', go: 'friends' },
+  { id: 'breeding', hint: 'Pick two pets to make an egg', level: 8, name: 'The Nursery', title: 'The Nursery is open!', text: 'Two pets, one egg… what will hatch?', tease: () => 'Two pets, one egg… what will hatch?', soon: 'Breed stronger pets', go: 'dex' },
 ];
 export const FEATURE_BY_ID = Object.fromEntries(FEATURES.map((f) => [f.id, f])) as Record<Feature, FeatureInfo>;
 

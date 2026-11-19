@@ -1,4 +1,5 @@
 import { useResetIn } from '../lib/useResetIn';
+import { Glow, useSpotlight } from '../components/Spotlight';
 import React, { useEffect, useState } from 'react';
 import { ChatList, GuildChatRow, useFriendUnread } from '../components/Chat';
 import { useChat } from '../state/ChatContext';
@@ -51,6 +52,12 @@ export default function FriendsScreen({ initialAdd, onUsedInitialAdd, initialGui
   const openFriend = (f: Friend) => overlay.open(<FriendSheet friend={f} onClose={overlay.close} />);
   const [inviteTop, setInviteTop] = useState(false);
   const [section, setSection] = useState<'friends' | 'chat' | 'team' | 'battle' | 'show'>(initialGuild ? 'team' : 'friends');
+  // After an unlock's Try it now, jump to the section that holds it.
+  const spot = useSpotlight();
+  useEffect(() => {
+    if (spot?.id === 'guild') setSection('team');
+    else if (spot?.id === 'battles' || spot?.id === 'tower') setSection('battle');
+  }, [spot?.id]);
 
   useEffect(() => {
     refresh();
@@ -154,11 +161,11 @@ export default function FriendsScreen({ initialAdd, onUsedInitialAdd, initialGui
       </View>
       {section === 'chat' && <ChatList />}
       {section === 'team' && <GuildChatRow />}
-      {section === 'team' && (guildOpen ? <TeamCard initialJoin={initialGuild} onUsedInitialJoin={onUsedInitialGuild} /> : <LockedCard feature="guild" />)}
+      {section === 'team' && (guildOpen ? <Glow id="guild"><TeamCard initialJoin={initialGuild} onUsedInitialJoin={onUsedInitialGuild} /></Glow> : <LockedCard feature="guild" />)}
       {section === 'battle' && !battlesOpen && <LockedCard feature="battles" />}
-      {section === 'battle' && battlesOpen && <WildCard />}
+      {section === 'battle' && battlesOpen && <Glow id="battles"><WildCard /></Glow>}
       {section === 'battle' && battlesOpen && <LiveBattlesCard />}
-      {section === 'battle' && battlesOpen && (U.unlocked(state, 'tower') ? <TowerCard /> : <LockedCard feature="tower" compact />)}
+      {section === 'battle' && battlesOpen && (U.unlocked(state, 'tower') ? <Glow id="tower"><TowerCard /></Glow> : <LockedCard feature="tower" compact />)}
       {section === 'battle' && battlesOpen && <ArenaCard />}
       {section === 'battle' && battlesOpen && <RankedCard />}
       {section === 'show' && <FashionShow />}

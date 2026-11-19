@@ -1,4 +1,5 @@
 import { CoinText } from './Coin';
+import { Glow } from './Spotlight';
 import React, { useEffect, useRef, useState } from 'react';
 import * as H from '../game/hp';
 import { FOOD_BY_ID } from '../game/food';
@@ -387,6 +388,7 @@ export default function ExpeditionCard() {
   }
 
   return (
+    <Glow id="trips">
     <Pressable onPress={() => open(<PlaceSheet onPick={pickPet} onClose={close} />)} style={({ pressed }) => [styles.row, pressed && { transform: [{ scale: 0.98 }] }]} accessibilityRole="button" accessibilityLabel="Send a pet on an expedition">
       <Text style={{ fontSize: 26 }}>🧭</Text>
       <View style={{ flex: 1 }}>
@@ -395,6 +397,7 @@ export default function ExpeditionCard() {
       </View>
       <Text style={styles.chev}>›</Text>
     </Pressable>
+    </Glow>
   );
 }
 

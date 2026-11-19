@@ -116,7 +116,7 @@ function FeatureIcon({ id, color = '#E8590C', size = 32 }: { id: U.Feature; colo
  * If something opened, each unlock gets a big orange banner (swipe through several), with Try it now.
  * Otherwise a purple "Coming up" teaser shows the next unlock and how close it is.
  */
-export function LevelUpPopup({ onGo }: { onGo: (where: U.FeatureInfo['go']) => void }) {
+export function LevelUpPopup({ onGo }: { onGo: (f: U.FeatureInfo) => void }) {
   const { state, apply } = useGame();
   const m = U.levelMoment(state);
   const { width } = useWindowDimensions();
@@ -137,7 +137,7 @@ export function LevelUpPopup({ onGo }: { onGo: (where: U.FeatureInfo['go']) => v
     if (!current) return close();
     buzz('success');
     apply((s) => U.markLevelShown(U.markSeen(s, current.id), m.level));
-    onGo(current.go);
+    onGo(current);
   };
   const next = m.next;
   const prevNeed = xpForLevel(m.level);
