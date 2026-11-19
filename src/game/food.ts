@@ -1,5 +1,6 @@
 import type { DayLog, GameState, OwnedPet, Rarity } from './types';
 import { STAT_INFO, type Stat } from './stats';
+import { seededRng } from './random';
 
 /**
  * Food and needs.
@@ -106,11 +107,33 @@ export function canFeed(s: GameState, d: DayLog, petId: string, foodId: string):
   return { ok: true };
 }
 
+/** Every pet secretly loves one food (double boost) and dislikes one (half boost), fixed from the day it hatched. */
+export function tasteOf(pet: Pick<OwnedPet, 'id'>): { fav: string; dislike: string } {
+  const pool = FOODS.filter((f) => f.id !== PELLETS.id).map((f) => f.id);
+  const rng = seededRng('taste:' + pet.id);
+  const fav = pool[Math.floor(rng() * pool.length) % pool.length];
+  const rest = pool.filter((x) => x !== fav);
+  return { fav, dislike: rest[Math.floor(rng() * rest.length) % rest.length] };
+}
+
+export const TASTE_MULT = { fav: 2, dislike: 0.5 };
+export function tasteMult(pet: Pick<OwnedPet, 'id'>, foodId: string) {
+  const t = tasteOf(pet);
+  return foodId === t.fav ? TASTE_MULT.fav : foodId === t.dislike ? TASTE_MULT.dislike : 1;
+}
+/** What the player has found out: 'fav', 'dislike', 'tried' or 'new'. */
+export function tasteKnown(pet: Pick<OwnedPet, 'id' | 'tasted'>, foodId: string): 'fav' | 'dislike' | 'tried' | 'new' {
+  if (!pet.tasted?.includes(foodId)) return 'new';
+  const t = tasteOf(pet);
+  return foodId === t.fav ? 'fav' : foodId === t.dislike ? 'dislike' : 'tried';
+}
+
 /** How much this food would actually raise the pet's stat (0 once the stat's food cap is reached). */
 export function boostFor(pet: OwnedPet, f: FoodDef, day?: DayLog): number {
   if (day && boostsUsedToday(day) >= BOOSTS_PER_DAY) return 0; // Still tasty, just no stat bonus today.
   const have = pet.foodBoost?.[f.stat] ?? 0;
-  return Math.round(Math.max(0, Math.min(boostOf(f), foodCapFor(f.stat) - have)) * 10) / 10;
+  const base = boostOf(f) * tasteMult(pet, f.id);
+  return Math.round(Math.max(0, Math.min(base, foodCapFor(f.stat) - have)) * 10) / 10;
 }
 
 /**
@@ -139,7 +162,11 @@ export function feedPet(
     next = {
       ...s,
       foods,
-      pets: s.pets.map((p) => (p.id === petId && gain > 0 ? { ...p, foodBoost: { ...p.foodBoost, [f.stat]: Math.round(((p.foodBoost?.[f.stat] ?? 0) + gain) * 10) / 10 } } : p)),
+      pets: s.pets.map((p) => {
+        if (p.id !== petId) return p;
+        const tasted = p.tasted?.includes(foodId) ? p.tasted : [...(p.tasted ?? []), foodId];
+        return gain > 0 ? { ...p, tasted, foodBoost: { ...p.foodBoost, [f.stat]: Math.round(((p.foodBoost?.[f.stat] ?? 0) + gain) * 10) / 10 } } : { ...p, tasted };
+      }),
     };
   }
   const fill = isPellet ? PELLETS.fill : f.fill;

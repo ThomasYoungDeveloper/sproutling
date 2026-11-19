@@ -29,6 +29,7 @@ import { OverlayProvider, useOverlay } from './src/components/Overlay';
 import { LevelUpPopup } from './src/components/Unlocks';
 import { ShopSheet, WardrobeSheet } from './src/components/ShopSheets';
 import * as U from './src/game/unlocks';
+import * as W from './src/game/wishes';
 import { TeamProvider } from './src/state/TeamContext';
 import { RankedProvider } from './src/state/RankedContext';
 import { useHealthSync } from './src/lib/useHealthSync';
@@ -234,6 +235,14 @@ function Shell() {
   useEffect(() => {
     if (settled && !starter && state.pets.length && state.onboard?.levelShown === undefined) apply((s) => U.markLevelShown(s));
   }, [settled, starter, state.pets.length, state.onboard?.levelShown]);
+  // Pet wishes: notice a newly appeared wish (checked every minute) so it starts counting from now.
+  useEffect(() => {
+    if (!settled || starter) return;
+    const tick = () => { if (W.noticeWishes(state) !== state) apply((s) => W.noticeWishes(s)); };
+    tick();
+    const t = setInterval(tick, 60_000);
+    return () => clearInterval(t);
+  }, [settled, starter, state]);
   const goUnlock = (where: U.FeatureInfo['go']) => {
     if (where === 'shop') {
       setTab('home');

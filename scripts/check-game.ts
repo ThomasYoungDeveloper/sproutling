@@ -543,8 +543,8 @@ ok(A.applyShields(shielded.state).used === 0, 'shields are not used twice');
   const F = require('../src/game/food');
   const C = require('../src/game/care');
   const W = require('../src/game/walkFinds');
-  const pet = { id: 'fp', speciesId: 'p01', nickname: 'Fp', xp: 900, shiny: false, hatchedOn: '' } as any;
-  let g = { ...newGame(), pets: [pet], activePetId: 'fp', coins: 1000 } as GameState;
+  const pet = { id: 'fp4', speciesId: 'p01', nickname: 'Fp', xp: 900, shiny: false, hatchedOn: '' } as any;
+  let g = { ...newGame(), pets: [pet], activePetId: 'fp4', coins: 1000 } as GameState;
   const t0 = Date.parse('2026-11-17T09:00:00Z');
   g = C.feed(g, 'pellets', t0);
   ok(!!A.today(g).care?.fed && F.needsFor(A.today(g), t0).food >= 60 && !g.pets[0].foodBoost, 'Pellets fill the food bar with no stat bonus');
@@ -560,6 +560,12 @@ ok(A.applyShields(shielded.state).used === 0, 'shields are not used twice');
   ok(St.statsFor(strong).atk > St.statsFor({ ...pet, xp: 50000 }).atk && St.statsFor(strong).atk <= Math.ceil(St.statsFor({ ...pet, xp: 50000 }).atk * 1.1) + 1, 'a full +10% food boost is +10% on that stat');
   const fourth = C.feed(g, 'berries', t0);
   ok(fourth.pets[0].foodBoost?.hp === 1.6 && F.foodCount(fourth, 'berries') === F.foodCount(g, 'berries') - 1, 'after three stat bonuses a day, food still feeds but adds no bonus');
+  {
+    const fav = { ...pet, id: 'fp' }; // loves berries, dislikes mushrooms
+    ok(F.tasteOf(fav).fav === 'berries' && F.boostFor(fav, F.FOOD_BY_ID.berries) === 1.6 && F.boostFor(fav, F.FOOD_BY_ID.mushroom) === Math.round(F.boostOf(F.FOOD_BY_ID.mushroom) * 5) / 10, 'favorite food doubles the boost, disliked halves it');
+    ok(F.tasteKnown(fav, 'berries') === 'new' && F.tasteKnown({ ...fav, tasted: ['berries'] }, 'berries') === 'fav', 'a favorite is only shown once tried');
+    ok(!!(g.pets[0].tasted?.includes('berries') && g.pets[0].tasted?.includes('sushi')), 'feeding remembers what a pet has tried');
+  }
   ok(F.boostFor({ ...pet, foodBoost: { atk: 9.6 } }, F.FOOD_BY_ID.sushi) === 0.4 && F.boostFor({ ...pet, foodBoost: { atk: 10 } }, F.FOOD_BY_ID.sushi) === 0, 'food boosts stop at +10%');
   let foodFinds = 0;
   for (let d = 0; d < 300; d++) { const w = A.addSteps({ ...g, pets: [{ ...pet, id: 'f' + d }], walkFinds: undefined }, 10000); foodFinds += W.rollWalkFinds(w, false).finds.filter((f: any) => f.kind === 'food').length; }
@@ -810,5 +816,26 @@ console.log('\nEgg basket');
   const pet = b.state.pets[0];
   const u = Dy.useDye(b.state, pet.id, d.skin);
   ok(u.ok && u.state.pets[0].skin === d.skin && Dy.dyesOwned(u.state, d.skin) === 0 && u.state.skinDex[`${pet.speciesId}:${d.skin}`], 'using a dye gives the pet that skin for good and logs it');
+}
+// Pet wishes
+{
+  const Wi = require('../src/game/wishes');
+  let two = 0, ok9 = true;
+  for (let i = 0; i < 900; i++) { const p = Wi.wishPlan(`2027-03-${i}`, 'pet'); if (p.length === 2) two++; if (p[0].at < 540 || p[0].at > 1020 || (p[1] && p[1].at <= p[0].at)) ok9 = false; }
+  ok(ok9, 'the first wish shows between 9am and 5pm; a second comes later');
+  ok(Math.abs(two / 900 - 1 / 3) < 0.05, `about 1 day in 3 has a second wish (${Math.round(two / 9)}%)`);
+  // dayOffset makes every wish of the day visible, for testing
+  let g = { ...R, dayOffset: 1, wishes: undefined } as any;
+  ok(!Wi.activeWish(g), 'no wish before it is noticed');
+  g = Wi.noticeWishes(g);
+  const w = Wi.activeWish(g);
+  ok(!!w && !w.done && w.have === 0, 'a new wish starts at zero');
+  const need = Wi.WISHES[w.kind];
+  g = A.updateToday(g, (d: any) => w.kind === 'walk' ? { ...d, steps: d.steps + 2500 } : w.kind === 'water' ? { ...d, water: d.water + 2 } : { ...d, care: { ...d.care, played: (d.care?.played ?? 0) + 3 } });
+  ok(Wi.activeWish(g)?.done, 'doing the habit finishes the wish');
+  const xp0 = g.pets.find((p: any) => p.id === g.activePetId).xp, c0 = g.coins;
+  const gr = Wi.grantWish(g);
+  ok(gr.pets.find((p: any) => p.id === g.activePetId).xp === xp0 + 25 && gr.coins === c0, 'granting gives +25 XP and no coins');
+  ok(Wi.activeWish(gr)?.index !== w.index, 'a granted wish goes away');
 }
 console.log(fails ? `${fails} FAILED` : 'ALL PASSED'); process.exit(fails ? 1 : 0);

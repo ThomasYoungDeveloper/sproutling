@@ -73,6 +73,8 @@ export interface OwnedPet {
   train?: import('./stats').Training;
   /** Percent added to each battle stat by food (capped at +10% per stat). */
   foodBoost?: import('./stats').Training;
+  /** Foods this pet has tried, so its favorite and least favorite show once found. */
+  tasted?: string[];
   /** Hidden quality values (0–15 each) that make up the pet's grade. */
   ivs?: import('./stats').Ivs;
   /** The moves this pet brings to battle (up to 4). */
@@ -139,6 +141,8 @@ export interface GameState {
   stats?: { hatched?: number; chests?: number; expeditions?: number; toys?: number; bred?: number };
   /** Every pet-and-skin combination you've ever owned, keyed "p15:gold". */
   skinDex?: Record<string, true>;
+  /** Today's pet wishes: where each one started counting, and which were granted. */
+  wishes?: { day: string; base?: Record<number, number>; granted?: number[] };
   /** Day the shop's dye was bought (one per dye day). */
   boughtDye?: string;
   /** Achievements whose rewards you've claimed. */

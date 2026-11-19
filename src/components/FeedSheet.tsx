@@ -26,6 +26,7 @@ export default function FeedSheet({ onFeed, onClose, onShop }: { onFeed: (foodId
     const gain = F.boostFor(pet, f, day);
     const check = F.canFeed(state, day, pet.id, f.id);
     const rare = RARITY_INFO[f.rarity];
+    const known = F.tasteKnown(pet, f.id);
     return (
       <Pressable
         key={f.id}
@@ -33,10 +34,13 @@ export default function FeedSheet({ onFeed, onClose, onShop }: { onFeed: (foodId
           if (!check.ok) return setMsg(check.reason);
           onFeed(f.id);
         }}
-        style={({ pressed }) => [styles.tile, { backgroundColor: '#F1F8F4' }, pressed && { transform: [{ scale: 0.96 }] }]}
+        style={({ pressed }) => [styles.tile, { backgroundColor: '#F1F8F4' }, known === 'fav' && styles.tileFav, known === 'dislike' && { opacity: 0.75 }, pressed && { transform: [{ scale: 0.96 }] }]}
         accessibilityRole="button"
-        accessibilityLabel={`${f.name}, ${rare.label}, ${F.pct(gain)} ${F.statLabel(f.stat)}, you have ${have}`}
+        accessibilityLabel={`${f.name}, ${rare.label}, ${F.pct(gain)} ${F.statLabel(f.stat)}, you have ${have}${known === 'fav' ? ', favorite' : known === 'dislike' ? ', not a fan' : known === 'new' ? ', not tried yet' : ''}`}
       >
+        <View style={[styles.taste, known === 'fav' && { backgroundColor: '#FFE3EA' }]}>
+          <Text style={[styles.tasteText, known === 'fav' && { color: '#C2334E' }]}>{known === 'fav' ? 'Favorite' : known === 'dislike' ? 'Not a fan' : known === 'tried' ? 'Tried' : '?'}</Text>
+        </View>
         <Text style={{ fontSize: 26 }}>{f.emoji}</Text>
         <Text style={styles.tileName} numberOfLines={1}>{f.name} ×{have}</Text>
         <Text style={[styles.tileRarity, { color: rare.color }]}>{rare.label.toUpperCase()}</Text>
@@ -82,6 +86,7 @@ export default function FeedSheet({ onFeed, onClose, onShop }: { onFeed: (foodId
           </Pressable>
 
           <Text style={styles.section}>YOUR FOOD</Text>
+          <Text style={styles.small}>{pet.nickname} secretly loves one food (double boost) and isn’t a fan of one (half boost). Try foods to find out.</Text>
           {owned.length ? (
             <View style={styles.grid}>{owned.map((f) => tile(f))}</View>
           ) : (
@@ -161,6 +166,9 @@ export function NeedsSheet({ name, needs, onClose, onFeed, onPlay }: { name: str
 }
 
 const styles = StyleSheet.create({
+  tileFav: { borderWidth: 2, borderColor: '#F2617A' },
+  taste: { position: 'absolute', top: 4, right: 4, backgroundColor: '#EEF3F1', borderRadius: 8, paddingHorizontal: 5, paddingVertical: 1 },
+  tasteText: { fontSize: 9, fontWeight: '900', color: '#5C6F69' },
   backdrop: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(20,30,35,0.45)', justifyContent: 'flex-end', alignItems: 'center' },
   sheet: { backgroundColor: '#FFFCF5', borderTopLeftRadius: 26, borderTopRightRadius: 26, padding: 18, paddingBottom: 30, gap: 10, width: '100%', maxWidth: 520 },
   handle: { width: 44, height: 5, borderRadius: 999, backgroundColor: '#DCE7E2', alignSelf: 'center' },

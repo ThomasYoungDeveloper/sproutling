@@ -15,6 +15,7 @@ import { tipFor, WHY } from '../game/tips';
 import { stepsToHatch } from '../game/rarity';
 import { glassesText, stepGoalOf, waterGoalOf } from '../game/scoring';
 import { NextUnlockLine } from './Unlocks';
+import * as W from '../game/wishes';
 
 type Habit = 'steps' | 'water' | 'sleep';
 
@@ -119,6 +120,7 @@ export default function TodayCard() {
         </Text>
         {tipOpen ? <Text style={styles.tipSource}>Source: {tip.source} · Not medical advice</Text> : null}
       </Pressable>
+      <WishRow />
       {A.starterBoost(state) ? <Text style={styles.starter}>New player bonus: double coins from habits until level {A.STARTER_BOOST_UNTIL}</Text> : null}
       <NextUnlockLine />
     </Card>
@@ -297,7 +299,38 @@ function Glass({ on, index, part }: { on: boolean; index: number; part: number }
   );
 }
 
+/** The pet's wish, when one is showing: progress, then a Grant button for +25 XP. */
+function WishRow() {
+  const { state, apply } = useGame();
+  const [granted, setGranted] = useState(false);
+  const w = W.activeWish(state);
+  const pet = A.activePet(state);
+  if (granted) return <PopIn><Text style={styles.wishDone}>Wish granted! {pet?.nickname ?? 'Your pet'} got +{W.WISH_XP} XP.</Text></PopIn>;
+  if (!w || !pet) return null;
+  const info = W.WISHES[w.kind];
+  const pct = Math.round((w.have / w.need) * 100);
+  return (
+    <View style={styles.wish} accessibilityLabel={`${pet.nickname} made a wish: ${info.label}. ${w.have} of ${w.need} ${info.unit}.`}>
+      <View style={styles.wishMark}><Text style={styles.wishMarkText}>!</Text></View>
+      <View style={{ flex: 1, gap: 4 }}>
+        <Text style={styles.wishText}>{pet.nickname} made a wish: {info.label}</Text>
+        <View style={styles.wishTrack}><View style={[styles.wishFill, { width: `${pct}%` }]} /></View>
+        <Text style={styles.wishMeta}>{w.have.toLocaleString()} of {w.need.toLocaleString()} {info.unit} · +{W.WISH_XP} XP</Text>
+      </View>
+      {w.done ? <Button small primary label="Grant" onPress={() => { buzz('success', 'levelup'); apply((s) => W.grantWish(s)); setGranted(true); }} /> : null}
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
+  wish: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: '#FFF4D6', borderRadius: 14, padding: 10 },
+  wishMark: { width: 30, height: 30, borderRadius: 15, backgroundColor: '#FFE3A0', alignItems: 'center', justifyContent: 'center' },
+  wishMarkText: { fontSize: 16, fontWeight: '900', color: '#B06A00' },
+  wishText: { fontSize: 14, fontWeight: '900', color: colors.ink },
+  wishTrack: { height: 6, borderRadius: 9, backgroundColor: '#F2E2B8', overflow: 'hidden' },
+  wishFill: { height: '100%', borderRadius: 9, backgroundColor: '#2FB58A' },
+  wishMeta: { fontSize: 12, fontWeight: '800', color: '#7A5900' },
+  wishDone: { fontSize: 14, fontWeight: '900', color: colors.mintDark, textAlign: 'center' },
   extras: { gap: 6 },
   row: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: '#F6FAF8', borderRadius: 12, paddingVertical: 8, paddingHorizontal: 10 },
   rowDot: { width: 20, height: 20, borderRadius: 10, borderWidth: 2, borderColor: '#B9C9C2', alignItems: 'center', justifyContent: 'center' },

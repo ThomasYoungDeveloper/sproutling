@@ -10,6 +10,7 @@ import { colors, font, space } from '../theme';
 import { SPECIES_BY_ID } from '../game/species';
 import { levelFor, stageFor, ELEMENT_HABIT } from '../game/scoring';
 import { SKIN_INFO } from '../game/skins';
+import * as FD from '../game/food';
 import { ELEMENT_COLOR, ELEMENT_LABEL, NORMAL_COLOR } from '../game/battle';
 import * as St from '../game/stats';
 import * as A from '../game/actions';
@@ -72,6 +73,7 @@ export default function PetSheet({ petId, onClose }: { petId: string; onClose: (
             <View style={{ flex: 1, gap: 4 }}>
               <Text style={font.title} numberOfLines={1}>{pet.nickname}</Text>
               <Text style={font.small}>Lv {lv} {sp.name}{pet.skin ? ` · ${SKIN_INFO[pet.skin].label}` : ''}{pet.shiny ? ' · ✦ Shiny' : ''}</Text>
+              <Text style={font.tiny}>{(() => { const t = FD.tasteOf(pet); const fav = pet.tasted?.includes(t.fav) ? FD.FOOD_BY_ID[t.fav]?.name : null; const no = pet.tasted?.includes(t.dislike) ? FD.FOOD_BY_ID[t.dislike]?.name : null; return `Loves: ${fav ?? '?'} · Not a fan: ${no ?? '?'}`; })()}</Text>
               <View style={{ flexDirection: 'row', gap: 6, flexWrap: 'wrap' }}>
                 <RarityBadge rarity={sp.rarity} />
                 <View style={[styles.chip, { backgroundColor: ELEMENT_COLOR[sp.element] }]}><Text style={styles.chipText}>{ELEMENT_LABEL[sp.element]}</Text></View>

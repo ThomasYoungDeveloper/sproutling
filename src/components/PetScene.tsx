@@ -9,6 +9,7 @@ import { ProgressBar, RarityBadge } from './ui';
 import { buzz, PopIn, RollingNumber } from './fx';
 import { RARITY_INFO } from '../game/rarity';
 import { SKIN_INFO } from '../game/skins';
+import * as W from '../game/wishes';
 import { gradeOf } from '../game/stats';
 import { colors, space } from '../theme';
 import { SPECIES_BY_ID } from '../game/species';
@@ -445,6 +446,7 @@ export default function PetScene({ onTrinketsEmpty, onDressUp, onShop, onAccount
   const stage = stageFor(pet.xp);
   const lp = levelProgress(pet.xp);
   const mood = C.moodFor(d);
+  const wish = W.activeWish(state);
   const mi = C.MOOD_INFO[mood];
   const tasks = C.careTasks(d);
   const needs = F.needsFor(d);
@@ -632,10 +634,13 @@ export default function PetScene({ onTrinketsEmpty, onDressUp, onShop, onAccount
       const f = F.FOOD_BY_ID[foodId];
       buzz('success', 'munch');
       munch();
-      setBurstSet(f ? [f.emoji, '✨', '💪'] : ['😋', '✨', '💛']);
+      const mult = f ? F.tasteMult(pet, f.id) : 1;
+      const first = f && !pet.tasted?.includes(f.id);
+      setBurstSet(mult > 1 ? ['💖', '💖', '✨'] : f ? [f.emoji, '✨', '💪'] : ['😋', '✨', '💛']);
       setBurst((b) => b + 1);
       const gain = f ? F.boostFor(pet, f, A.today(state)) : 0;
-      say(f ? (gain > 0 ? `Yum! ${F.pct(gain)} ${F.statLabel(f.stat)}!` : `Yum, ${f.name}!`) : 'Crunchy pellets, thanks!');
+      const boost = gain > 0 ? ` ${F.pct(gain)} ${F.statLabel(f!.stat)}!` : '';
+      say(!f ? 'Crunchy pellets, thanks!' : mult > 1 ? `${first ? 'My favorite!' : 'My favorite, again!'}${boost}` : mult < 1 ? `Hmm, not my favorite.${boost}` : gain > 0 ? `Yum!${boost}` : `Yum, ${f.name}!`);
       apply((s) => C.feed(s, foodId));
     });
   };
@@ -824,7 +829,7 @@ export default function PetScene({ onTrinketsEmpty, onDressUp, onShop, onAccount
       <View style={styles.bubbleWrap} pointerEvents="none">
         <PopIn key={toyLine ? toyLine.id : toyHint ? 'hint' : mood}>
           <View style={styles.bubble}>
-            <Text style={styles.bubbleText}>{toyLine ? toyLine.text : toyHint ? 'Drag a toy onto the grass!' : C.moodLine(mood, pet.nickname)}</Text>
+            <Text style={styles.bubbleText}>{toyLine ? toyLine.text : toyHint ? 'Drag a toy onto the grass!' : wish && !wish.done ? W.WISHES[wish.kind].ask : wish?.done ? 'You did it! Grant my wish?' : C.moodLine(mood, pet.nickname)}</Text>
           </View>
         </PopIn>
       </View>
