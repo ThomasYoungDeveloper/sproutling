@@ -113,29 +113,42 @@ def make(path, skin, seed):
         edge = np.clip((0.1 - lum) / 0.08, 0, 1) * alpha
         res = res * (1 - edge[..., None] * 0.5) + hexc('#7a5214') * edge[..., None] * 0.5
     elif skin == 'ocean':
-        # Living water: clear blues with light ripple patterns, glossy white highlights and a few bubbles.
+        # Jellyfish: a see-through deep-sea body with a glowing cyan-to-pink rim on the inside of the
+        # outline, soft bioluminescent spots, and faint trailing ribs on the lower half.
         hi = np.percentile(lum[alpha > 0.8], 90) if (alpha > 0.8).any() else 1.0
         l2 = np.clip(lum / max(hi, 1e-3) * 0.85, 0, 1)
-        res = ramp(l2, [(0, '#05233f'), (0.3, '#0b4f8f'), (0.55, '#1688d0'), (0.78, '#4cc2f2'), (1, '#c8f2ff')])
-        # Caustics: soft light ripples like sunlight through water.
-        c1 = np.abs(np.sin(xx / 9.0 + np.sin(yy / 13.0) * 1.8))
-        c2 = np.abs(np.sin(yy / 8.0 + np.sin(xx / 15.0) * 1.6))
-        caust = np.clip(1 - np.minimum(c1, c2) * 4, 0, 1) * 0.45 * np.clip(l2 * 1.5, 0, 1)
-        res = res * (1 - caust[..., None]) + hexc('#bff0ff') * caust[..., None]
-        line = (lum < 0.2).astype(np.float32)
+        res = ramp(l2, [(0, '#050a30'), (0.3, '#0e2266'), (0.55, '#1d4aa6'), (0.78, '#3b86d6'), (1, '#9fdcff')])
+        line = np.clip((0.22 - lum) / 0.1, 0, 1)
         body = alpha * (1 - line)
-        # Glossy highlights on the brightest, upper-left parts.
-        gloss = np.clip((l2 - 0.72) * 5, 0, 1) * np.clip(1.2 - (xx + yy) / (w + h) * 1.6, 0, 1) * body
-        g2 = np.asarray(Image.fromarray((gloss * 255).astype(np.uint8)).filter(ImageFilter.GaussianBlur(1.2)), dtype=np.float32) / 255
-        res = res * (1 - g2[..., None] * 0.8) + 255 * g2[..., None] * 0.8
-        # Bubbles: little rings.
+        def blur(m, r):
+            return np.asarray(Image.fromarray((np.clip(m, 0, 1) * 255).astype(np.uint8)).filter(ImageFilter.GaussianBlur(r)), dtype=np.float32) / 255
+        # Inner rim: bright just inside the outer edge and along the inner lines.
+        edge = np.clip(1 - blur(body, 6) * 1.05, 0, 1) * body
+        edge = np.maximum(edge, blur(line, 3.0) * 1.8 * body)
+        edge = np.clip(edge * 2.4, 0, 1) ** 0.8
+        t = np.clip(yy / max(h - 1, 1), 0, 1)
+        rimc = ramp(t, [(0, '#8ff8ff'), (0.45, '#7fdcff'), (0.75, '#c09aff'), (1, '#ff9ade')])
+        res = res * (1 - edge[..., None] * 0.95) + rimc * edge[..., None] * 0.95
+        # Trailing ribs on the lower half, like tentacles seen through the bell.
+        ribs = (0.5 + 0.5 * np.sin(xx / 3.2 + np.sin(yy / 11.0) * 1.4)) ** 6
+        ribs = ribs * np.clip((t - 0.45) * 2.5, 0, 1) * body * 0.35
+        res = res * (1 - ribs[..., None]) + hexc('#a9e8ff') * ribs[..., None]
+        # Bioluminescent spots.
         r2 = np.random.default_rng(seed + 9)
-        ys, xs = np.nonzero(body > 0.5)
-        for _ in range(10 if len(ys) else 0):
-            k = r2.integers(0, len(ys)); cy, cx = ys[k], xs[k]; rr = r2.uniform(2.5, 5)
-            ring = np.clip(1 - np.abs(np.sqrt((xx - cx) ** 2 + (yy - cy) ** 2) - rr) / 1.0, 0, 1) * body
-            res = res * (1 - ring[..., None] * 0.7) + hexc('#e8fbff') * ring[..., None] * 0.7
-        alpha = alpha * np.where(line > 0, 1.0, 0.93)
+        ys, xs = np.nonzero(body > 0.6)
+        spots = np.zeros((h, w), dtype=np.float32)
+        for _ in range(22 if len(ys) else 0):
+            k = r2.integers(0, len(ys)); cy, cx = ys[k], xs[k]; rr = r2.uniform(1.5, 3.2)
+            spots = np.maximum(spots, np.clip(1 - np.sqrt((xx - cx) ** 2 + (yy - cy) ** 2) / rr, 0, 1))
+        spots = blur(spots, 0.8) * body
+        spc = ramp(t, [(0, '#e6fdff'), (1, '#ffd4f2')])
+        res = res * (1 - spots[..., None] * 0.9) + spc * spots[..., None] * 0.9
+        # Soft gloss near the top.
+        gloss = np.clip((l2 - 0.7) * 4, 0, 1) * np.clip(1 - t * 2.2, 0, 1) * body
+        res = res * (1 - blur(gloss, 1.5)[..., None] * 0.6) + 255 * blur(gloss, 1.5)[..., None] * 0.6
+        res = res * (1 - line[..., None]) + hexc('#050a2a') * line[..., None]
+        # See-through bell: the middle is a little translucent, the glowing rim and lines stay solid.
+        alpha = alpha * np.clip(0.86 + edge * 0.14 + line, 0, 1)
     elif skin == 'ember':
         # Living fire: bright reds with orange and yellow hot spots, and a few charred black patches,
         # like glowing lava. Shading still follows the pet so it reads clearly.
