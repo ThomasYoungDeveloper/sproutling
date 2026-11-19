@@ -12,6 +12,7 @@ import { colors, font, space } from '../theme';
 import * as A from '../game/actions';
 import type { ChestKind } from '../game/types';
 import CoinBundle from './CoinBundle';
+import ChestIcon from './ChestIcon';
 
 const CHEST_LABEL: Record<ChestKind, string> = { bronze: 'Bronze chest', silver: 'Silver chest', gold: 'Gold chest' };
 const CHEST_COLOR: Record<ChestKind, string> = { bronze: '#C98A4B', silver: '#8FA3B5', gold: '#E5A800' };
@@ -19,7 +20,7 @@ const CHEST_COLOR: Record<ChestKind, string> = { bronze: '#C98A4B', silver: '#8F
 function RewardLabel({ r, big }: { r: A.LoginReward; big?: boolean }) {
   return (
     <View style={{ alignItems: 'center', gap: 2 }}>
-      {r.chest ? <Text style={{ fontSize: big ? 44 : 22 }}>🎁</Text> : big ? <CoinBundle size={52} /> : <Coin size={24} />}
+      {r.chest ? <ChestIcon kind={r.chest} size={big ? 56 : 28} /> : big ? <CoinBundle size={52} /> : <Coin size={24} />}
       {r.chest ? <Text style={[big ? styles.bigText : styles.tileText, { color: CHEST_COLOR[r.chest] }]}>{big ? CHEST_LABEL[r.chest] : r.chest[0].toUpperCase() + r.chest.slice(1)}</Text> : null}
       {r.coins ? <Text style={big ? styles.bigText : styles.tileText}>{r.chest ? '+ ' : ''}{r.coins}{big ? ' coins' : ''}</Text> : null}
     </View>

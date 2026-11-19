@@ -15,6 +15,7 @@ import { dailyQuests } from '../game/scoring';
 import { FIND_EVERY, MAX_FINDS_PER_DAY, walkFindsToday } from '../game/walkFinds';
 import * as A from '../game/actions';
 import type { ChestKind } from '../game/types';
+import ChestIcon from '../components/ChestIcon';
 
 const CHEST_COLORS: Record<ChestKind, [string, string]> = {
   bronze: ['#C98A54', '#A86B3A'],
@@ -26,14 +27,7 @@ const BAR: Record<ChestKind | 'walk', string> = { bronze: '#E0924F', silver: '#8
 const RANK: Record<ChestKind, number> = { bronze: 0, silver: 1, gold: 2 };
 
 function ChestArt({ kind, size = 64 }: { kind: ChestKind; size?: number }) {
-  const [a, b] = CHEST_COLORS[kind];
-  return (
-    <Svg width={size} height={size} viewBox="0 0 64 64">
-      <Rect x={8} y={26} width={48} height={30} rx={5} fill={a} stroke="#24323A" strokeWidth={2.5} />
-      <Path d="M8 28 Q8 12 32 12 Q56 12 56 28 Z" fill={b} stroke="#24323A" strokeWidth={2.5} strokeLinejoin="round" />
-      <Rect x={27} y={24} width={10} height={12} rx={2} fill="#FFE27A" stroke="#24323A" strokeWidth={2} />
-    </Svg>
-  );
+  return <ChestIcon kind={kind} size={size} />;
 }
 
 const WAYS: Record<ChestKind, string[]> = {

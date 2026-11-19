@@ -21,6 +21,7 @@ import PetSprite from './PetSprite';
 import { Button } from './ui';
 import { Confetti, Flash, PopIn, Rays, buzz, useCountUp, useIdleWobble, useShake } from './fx';
 import CrystalIcon from './CrystalIcon';
+import ChestIcon from './ChestIcon';
 
 export type Reveal =
   | { kind: 'egg'; rarity: Rarity; pet: OwnedPet; isNew: boolean; title?: string; eggColor?: string; eggSpots?: string[]; onMakeActive?: () => void; lucky?: number }
@@ -226,18 +227,7 @@ function TradeReveal({ r, onClose }: { r: Extract<Reveal, { kind: 'trade' }>; on
 const CHEST_COLORS: Record<ChestKind, [string, string]> = { bronze: ['#C98A54', '#A86B3A'], silver: ['#C9D3DA', '#9AA8B2'], gold: ['#FFD25E', '#E3A81E'] };
 
 function BigChest({ kind, open }: { kind: ChestKind; open: boolean }) {
-  const [a, b] = CHEST_COLORS[kind];
-  return (
-    <Svg width={190} height={190} viewBox="0 0 64 64">
-      <Rect x={8} y={26} width={48} height={30} rx={5} fill={a} stroke="#24323A" strokeWidth={2.5} />
-      {open ? (
-        <Path d="M10 22 Q14 4 36 6 Q56 8 56 20 Z" fill={b} stroke="#24323A" strokeWidth={2.5} strokeLinejoin="round" />
-      ) : (
-        <Path d="M8 28 Q8 12 32 12 Q56 12 56 28 Z" fill={b} stroke="#24323A" strokeWidth={2.5} strokeLinejoin="round" />
-      )}
-      <Rect x={27} y={24} width={10} height={12} rx={2} fill="#FFE27A" stroke="#24323A" strokeWidth={2} />
-    </Svg>
-  );
+  return <View style={open ? { transform: [{ scale: 1.08 }] } : undefined}><ChestIcon kind={kind} size={190} /></View>;
 }
 
 function ChestReveal({ r, onClose }: { r: Extract<Reveal, { kind: 'chest' }>; onClose: () => void }) {

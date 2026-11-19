@@ -21,6 +21,7 @@ import { levelFor, stageFor } from '../game/scoring';
 import { COSMETIC_BY_ID } from '../game/cosmetics';
 import { RARITY_INFO } from '../game/rarity';
 import * as Ex from '../game/expedition';
+import ChestIcon from './ChestIcon';
 
 /** Each place has its own look on the Home card. */
 const THEME: Record<string, { sky: [string, string]; ground: string; ink: string; sub: string; deco: (w: number) => React.ReactNode }> = {
@@ -192,7 +193,7 @@ function ReturnSheet({ loot, onClose }: { loot: Ex.ExpeditionLoot; onClose: () =
         <View style={styles.lootRow}>
           {loot.coins > 0 ? <PopIn delay={400}><View style={styles.loot}><CoinText size={22} style={styles.lootBig}>+{loot.coins}</CoinText></View></PopIn> : null}
           {loot.xp > 0 ? <PopIn delay={500}><View style={styles.loot}><Text style={styles.lootBig}>⭐ +{loot.xp} XP</Text></View></PopIn> : null}
-          {loot.chest ? <PopIn delay={600}><View style={styles.loot}><Text style={styles.lootBig}>🎁 {loot.chest[0].toUpperCase() + loot.chest.slice(1)} chest</Text></View></PopIn> : null}
+          {loot.chest ? <PopIn delay={600}><View style={styles.loot}><View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}><ChestIcon kind={loot.chest} size={28} /><Text style={styles.lootBig}>{loot.chest[0].toUpperCase() + loot.chest.slice(1)} chest</Text></View></View></PopIn> : null}
           {loot.egg ? (
             <PopIn delay={700}>
               <View style={[styles.loot, { flexDirection: 'row', gap: 4, alignItems: 'center' }]}>

@@ -23,6 +23,7 @@ import { stageFor } from '../game/scoring';
 import * as B from '../game/battle';
 import type { MoveDef } from '../game/stats';
 import type { GameState } from '../game/types';
+import ChestIcon from './ChestIcon';
 
 export interface Opponent {
   name: string;
@@ -564,7 +565,7 @@ function Result({ won, lines, special, reward, raid, rp, points, name, onRematch
         <PopIn delay={200}>
           <View style={styles.rewardRow}>
             <View style={styles.reward}><CoinText style={styles.rewardText}>+{reward.coins}</CoinText></View>
-            {reward.chest ? <View style={styles.reward}><Text style={styles.rewardText}>🎁 Bronze chest</Text></View> : null}
+            {reward.chest ? <View style={styles.reward}><View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}><ChestIcon kind="bronze" size={24} /><Text style={styles.rewardText}>Bronze chest</Text></View></View> : null}
           </View>
         </PopIn>
       ) : (
