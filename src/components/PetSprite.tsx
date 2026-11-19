@@ -50,6 +50,7 @@ export default function PetSprite({ species, stage, size = 180, shiny = false, m
       {!noShadow && <View style={[styles.shadow, { width: img * 0.6, bottom: 0 }]} />}
       <Image
         source={(skin && !silhouette && SKIN_IMAGES[skin]?.[species.id]) || PET_IMAGES[species.id]}
+        defaultSource={skin && !silhouette ? PET_IMAGES[species.id] : undefined}
         style={{ width: img, height: img, opacity: silhouette ? 0.9 : 1 }}
         tintColor={silhouette ? '#C9D3D0' : undefined}
         resizeMode="contain"

@@ -3,7 +3,7 @@
 Habit skins: sakura, moonlit, ocean, ember. Seasonal: frost, harvest, spooky.
 Rare loot: galaxy, crystal, shadow. Style: pastel, retro, ink.
 
-Usage: python3 scripts/make_skins2.py assets/pets assets/skins [p01,p02] [skin1,skin2]
+Usage: python3 scripts/make_skins2.py assets/pets public/skins [p01,p02] [skin1,skin2]
 """
 import sys, os, math
 import numpy as np
