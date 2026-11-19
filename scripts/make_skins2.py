@@ -72,10 +72,29 @@ def make(path, skin, seed):
         sp = stars(h, w, 30, seed, 1) * alpha * (1 - line)
         res = res * (1 - sp[..., None]) + hexc('#fff0b8') * sp[..., None]
     elif skin == 'ocean':
-        res = ramp(lum, [(0, '#03314a'), (0.4, '#0f7fa8'), (0.75, '#5fd6e8'), (1, '#e6fbff')])
-        wave = (np.sin(xx / 9 + yy / 14) * 0.5 + 0.5) * 0.15
-        res = np.clip(res + wave[..., None] * 255, 0, 255)
-        alpha = alpha * 0.85
+        # Living water: clear blues with light ripple patterns, glossy white highlights and a few bubbles.
+        hi = np.percentile(lum[alpha > 0.8], 90) if (alpha > 0.8).any() else 1.0
+        l2 = np.clip(lum / max(hi, 1e-3) * 0.85, 0, 1)
+        res = ramp(l2, [(0, '#05233f'), (0.3, '#0b4f8f'), (0.55, '#1688d0'), (0.78, '#4cc2f2'), (1, '#c8f2ff')])
+        # Caustics: soft light ripples like sunlight through water.
+        c1 = np.abs(np.sin(xx / 9.0 + np.sin(yy / 13.0) * 1.8))
+        c2 = np.abs(np.sin(yy / 8.0 + np.sin(xx / 15.0) * 1.6))
+        caust = np.clip(1 - np.minimum(c1, c2) * 4, 0, 1) * 0.45 * np.clip(l2 * 1.5, 0, 1)
+        res = res * (1 - caust[..., None]) + hexc('#bff0ff') * caust[..., None]
+        line = (lum < 0.2).astype(np.float32)
+        body = alpha * (1 - line)
+        # Glossy highlights on the brightest, upper-left parts.
+        gloss = np.clip((l2 - 0.72) * 5, 0, 1) * np.clip(1.2 - (xx + yy) / (w + h) * 1.6, 0, 1) * body
+        g2 = np.asarray(Image.fromarray((gloss * 255).astype(np.uint8)).filter(ImageFilter.GaussianBlur(1.2)), dtype=np.float32) / 255
+        res = res * (1 - g2[..., None] * 0.8) + 255 * g2[..., None] * 0.8
+        # Bubbles: little rings.
+        r2 = np.random.default_rng(seed + 9)
+        ys, xs = np.nonzero(body > 0.5)
+        for _ in range(10 if len(ys) else 0):
+            k = r2.integers(0, len(ys)); cy, cx = ys[k], xs[k]; rr = r2.uniform(2.5, 5)
+            ring = np.clip(1 - np.abs(np.sqrt((xx - cx) ** 2 + (yy - cy) ** 2) - rr) / 1.0, 0, 1) * body
+            res = res * (1 - ring[..., None] * 0.7) + hexc('#e8fbff') * ring[..., None] * 0.7
+        alpha = alpha * np.where(line > 0, 1.0, 0.93)
     elif skin == 'ember':
         # Living fire: bright reds with orange and yellow hot spots, and a few charred black patches,
         # like glowing lava. Shading still follows the pet so it reads clearly.
