@@ -908,4 +908,10 @@ console.log('\nEgg basket');
   ok(fr2[0].event.kind === 'switch' && fr2[0].battle.mi === 2 && !fr2[fr2.length - 1].battle.choose?.includes('me'), 'the pet you pick goes in for free before the turn');
 }
 
+// Short numbers for tight spots
+{
+  const { shortNumber } = require('../src/lib/shortNumber');
+  ok(shortNumber(999) === '999' && shortNumber(1500) === '1.5K' && shortNumber(10000) === '10K' && shortNumber(12500) === '12.5K' && shortNumber(1234567) === '1.2M' && shortNumber(3e9) === '3B' && shortNumber(999999) === '999K', 'big numbers shorten to K, M and B');
+}
+
 console.log(fails ? `${fails} FAILED` : 'ALL PASSED'); process.exit(fails ? 1 : 0);

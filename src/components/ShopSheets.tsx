@@ -27,6 +27,7 @@ import { DyeIcon, UseDyeSheet } from './Dyes';
 import type { Skin } from '../game/types';
 import type { Cosmetic, Slot } from '../game/cosmetics';
 import CrystalIcon from './CrystalIcon';
+import { shortNumber } from '../lib/shortNumber';
 
 const SLOT_TITLE: Record<Slot, string> = { toy: 'Toys', hat: 'Hats', aura: 'Auras', scene: 'Scenes' };
 const SLOT_HINT: Record<Slot, string> = {
@@ -186,7 +187,7 @@ function TryOn({ c, onBack }: { c: Cosmetic; onBack: () => void }) {
         {owned ? (
           <Button primary label={c.slot === 'scene' ? 'Use it' : 'Wear it'} onPress={() => { apply((s) => K.equip(s, c.slot, c.id)); buzz('success'); setMsg('Done!'); }} style={{ flex: 1.6 }} />
         ) : (
-          <Button primary label={`Buy for ${c.price.toLocaleString()}`} onPress={buy} disabled={state.coins < c.price} style={{ flex: 1.6 }} />
+          <Button primary label={`Buy for ${shortNumber(c.price)}`} onPress={buy} disabled={state.coins < c.price} style={{ flex: 1.6 }} />
         )}
       </View>
     </View>

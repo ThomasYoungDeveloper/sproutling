@@ -15,6 +15,7 @@ import { RARITY_INFO, STEPS_PER_KM, stepsToHatch } from '../game/rarity';
 import { MAX_INCUBATORS, incubatorPrice } from '../game/incubators';
 import * as A from '../game/actions';
 import type { Egg } from '../game/types';
+import { shortNumber } from '../lib/shortNumber';
 
 /** Harvest Eggs: warm orange with autumn spots, so they stand out in the basket. */
 const HARVEST_EGG = '#F6A13A';
@@ -103,7 +104,7 @@ export default function EggsScreen() {
                 return (
                   <Pressable key={i} onPress={openShop} style={[styles.slot, styles.slotLocked]} accessibilityRole="button" accessibilityLabel={`Locked incubator. Buy for ${incubatorPrice(i + 1)} coins`}>
                     <Svg width={20} height={20} viewBox="0 0 24 24"><Rect x={5} y={11} width={14} height={10} rx={2} fill="none" stroke={colors.muted} strokeWidth={2.6} /><Path d="M8 11V8a4 4 0 0 1 8 0v3" fill="none" stroke={colors.muted} strokeWidth={2.6} strokeLinecap="round" /></Svg>
-                    <CoinText style={styles.slotText}>{incubatorPrice(i + 1)?.toLocaleString()}</CoinText>
+                    <CoinText style={styles.slotText} size={13}>{shortNumber(incubatorPrice(i + 1) ?? 0)}</CoinText>
                   </Pressable>
                 );
               }

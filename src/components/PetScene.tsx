@@ -819,7 +819,7 @@ export default function PetScene({ onTrinketsEmpty, onDressUp, onShop, onAccount
           </View>
           <Pressable style={styles.stat} hitSlop={8} onPress={() => onShop?.()} accessibilityRole="button" accessibilityLabel={`${state.coins} coins, open shop`}>
             <Image source={COIN_PILE} style={{ width: 24, height: 24 }} resizeMode="contain" />
-            <RollingNumber value={state.coins} prefix="" style={styles.statText} />
+            <RollingNumber value={state.coins} prefix="" short style={styles.statText} />
             <View style={styles.plus}><Text style={styles.plusText}>+</Text></View>
           </Pressable>
           <Pressable style={[styles.avatar, account?.warn && { backgroundColor: '#E8590C' }]} hitSlop={8} onPress={onAccount} accessibilityRole="button" accessibilityLabel={account?.label ?? 'Account'}>

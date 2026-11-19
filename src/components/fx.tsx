@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef } from 'react';
 import { Animated, Easing, StyleSheet, View } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { play, type SoundName } from '../lib/sound';
+import { shortNumber } from '../lib/shortNumber';
 
 /** A short buzz. Works on phones, and on the web wherever the browser supports vibration. */
 const DEFAULT_SOUND = { light: 'tap', medium: 'pop', heavy: 'thud', success: 'chime' } as const;
@@ -196,7 +197,7 @@ export function Wobble({ children }: { children: React.ReactNode }) {
 }
 
 /** A pill number that rolls from its old value to its new one and bumps when it goes up. */
-export function RollingNumber({ value, style, prefix = '' }: { value: number; style?: any; prefix?: string }) {
+export function RollingNumber({ value, style, prefix = '', short = false }: { value: number; style?: any; prefix?: string; /** 10K / 1.2M / 3B instead of the full number. */ short?: boolean }) {
   const [shown, setShown] = React.useState(value);
   const from = useRef(value);
   const bump = useRef(new Animated.Value(0)).current;
@@ -228,7 +229,7 @@ export function RollingNumber({ value, style, prefix = '' }: { value: number; st
   return (
     <Animated.Text style={[style, { transform: [{ scale: bump.interpolate({ inputRange: [0, 1], outputRange: [1, 1.25] }) }] }]}>
       {prefix}
-      {shown.toLocaleString()}
+      {short ? shortNumber(shown) : shown.toLocaleString()}
     </Animated.Text>
   );
 }

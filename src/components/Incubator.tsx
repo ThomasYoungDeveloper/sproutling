@@ -7,6 +7,7 @@ import { buzz, PopIn } from './fx';
 import { play } from '../lib/sound';
 import { colors, font, space } from '../theme';
 import { MAX_INCUBATORS, buyIncubator, incubatorPrice, nextIncubatorPrice } from '../game/incubators';
+import { shortNumber } from '../lib/shortNumber';
 
 const INC_BACK = require('../../assets/incubator/back.png');
 const INC_FRONT = require('../../assets/incubator/front.png');
@@ -90,7 +91,7 @@ export function IncubatorOffer() {
               <Button
                 primary
                 small
-                label={`Buy for ${p.toLocaleString()} coins`}
+                label={`Buy for ${shortNumber(p)} coins`}
                 disabled={state.coins < p}
                 onPress={() => {
                   const r = buyIncubator(state);
@@ -106,7 +107,7 @@ export function IncubatorOffer() {
                 }}
               />
             ) : (
-              <Text style={styles.slotNote}>{p.toLocaleString()} coins after the {['', '', '2nd', '3rd'][slot - 1]}</Text>
+              <Text style={styles.slotNote}>{shortNumber(p)} coins after the {['', '', '2nd', '3rd'][slot - 1]}</Text>
             )}
           </View>
         );

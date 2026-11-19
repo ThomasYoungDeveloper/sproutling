@@ -1,6 +1,7 @@
 import React from 'react';
 import { StyleSheet, Text, View, type StyleProp, type TextStyle } from 'react-native';
 import Svg, { Circle, Defs, LinearGradient, Path, Stop } from 'react-native-svg';
+import { shortNumber } from '../lib/shortNumber';
 
 /** A shiny gold coin (the coin emoji looks silver on iPhone). */
 export default function Coin({ size = 18 }: { size?: number }) {
@@ -23,12 +24,15 @@ export default function Coin({ size = 18 }: { size?: number }) {
   );
 }
 
+/** Prices show short from 1,000 up: 1.5K, 4K, 1.2M. */
+const short = (c: React.ReactNode) => (typeof c === 'number' ? shortNumber(c) : typeof c === 'string' && /^\d{1,3}(,\d{3})+$|^\d+$/.test(c) ? shortNumber(Number(c.replace(/,/g, ''))) : c);
+
 /** A coin and an amount side by side, e.g. a price tag. */
 export function CoinText({ children, style, size = 15 }: { children: React.ReactNode; style?: StyleProp<TextStyle>; size?: number }) {
   return (
     <View style={styles.row}>
       <Coin size={size} />
-      <Text style={style}>{children}</Text>
+      <Text style={style}>{short(children)}</Text>
     </View>
   );
 }
