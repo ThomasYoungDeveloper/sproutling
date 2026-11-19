@@ -45,8 +45,8 @@ export default function TabBar<T extends string>({ tabs, active, badges, onPick 
   const insets = useSafeAreaInsets();
   const bottom = insets.bottom;
   return (
-    // Square, edge to edge (under the side camera column too), so there's no stray gap at the corners.
-    <View style={[styles.wrap, { marginBottom: -bottom, paddingBottom: Math.max(bottom - 24, 4), marginLeft: -insets.left, marginRight: -insets.right, paddingLeft: insets.left + 8, paddingRight: insets.right + 8 }]}>
+    // Square, and it stops where the app's own area stops (it never runs under a side camera column).
+    <View style={[styles.wrap, { marginBottom: -bottom, paddingBottom: Math.max(bottom - 24, 4), paddingHorizontal: 8 }]}>
       <View style={styles.bar}>
         {tabs.map((t) => {
           const on = t.id === active;
