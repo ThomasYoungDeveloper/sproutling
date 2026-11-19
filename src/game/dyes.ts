@@ -7,7 +7,7 @@ import * as A from './actions';
  * Dyes give one pet a skin for good. They show up in the shop's featured spot about 1 day in 3,
  * come from the Lucky Wheel and events, and sit in the Bag until used. Silver, Gold and Rainbow are hatch-only.
  */
-export type DyeRarity = 'common' | 'rare' | 'epic' | 'legendary';
+export type DyeRarity = 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary';
 
 export interface Dye {
   skin: Skin;
@@ -20,6 +20,7 @@ export const DYES: Dye[] = [
   { skin: 'pastel', rarity: 'common' },
   { skin: 'mono', rarity: 'common' },
   { skin: 'retro', rarity: 'common' },
+  { skin: 'slime', rarity: 'uncommon' },
   { skin: 'sakura', rarity: 'rare' },
   { skin: 'ocean', rarity: 'rare' },
   { skin: 'ember', rarity: 'rare' },
@@ -31,14 +32,14 @@ export const DYES: Dye[] = [
   { skin: 'harvest', rarity: 'rare', event: true },
 ];
 
-export const DYE_PRICE: Record<DyeRarity, number> = { common: 1800, rare: 4000, epic: 8000, legendary: 15000 };
-export const DYE_RARITY_LABEL: Record<DyeRarity, string> = { common: 'Common', rare: 'Rare', epic: 'Epic', legendary: 'Legendary' };
-export const DYE_RARITY_COLOR: Record<DyeRarity, string> = { common: '#5C6F69', rare: '#2F6FD6', epic: '#7A4FD6', legendary: '#B07A00' };
+export const DYE_PRICE: Record<DyeRarity, number> = { common: 1800, uncommon: 2800, rare: 4000, epic: 8000, legendary: 15000 };
+export const DYE_RARITY_LABEL: Record<DyeRarity, string> = { common: 'Common', uncommon: 'Uncommon', rare: 'Rare', epic: 'Epic', legendary: 'Legendary' };
+export const DYE_RARITY_COLOR: Record<DyeRarity, string> = { common: '#5C6F69', uncommon: '#2FA36B', rare: '#2F6FD6', epic: '#7A4FD6', legendary: '#B07A00' };
 /** How often the shop's featured spot is a dye, and which rarity it rolls. */
 export const DYE_DAY_CHANCE = 1 / 3;
-export const SHOP_DYE_ODDS: Record<DyeRarity, number> = { common: 55, rare: 30, epic: 12, legendary: 3 };
+export const SHOP_DYE_ODDS: Record<DyeRarity, number> = { common: 42, uncommon: 24, rare: 22, epic: 9, legendary: 3 };
 /** Odds for a dye won on the Lucky Wheel. */
-export const WHEEL_DYE_ODDS: Record<DyeRarity, number> = { common: 70, rare: 24, epic: 5, legendary: 1 };
+export const WHEEL_DYE_ODDS: Record<DyeRarity, number> = { common: 55, uncommon: 24, rare: 16, epic: 4, legendary: 1 };
 
 export const dyeName = (skin: Skin) => `${SKIN_INFO[skin].label} Dye`;
 export const dyeOf = (skin: Skin) => DYES.find((d) => d.skin === skin);
@@ -48,7 +49,7 @@ export const ownedDyes = (s: GameState) => DYES.filter((d) => dyesOwned(s, d.ski
 function pickRarity(odds: Record<DyeRarity, number>, r: number): DyeRarity {
   const total = Object.values(odds).reduce((a, b) => a + b, 0);
   let acc = 0;
-  for (const k of ['common', 'rare', 'epic', 'legendary'] as DyeRarity[]) {
+  for (const k of ['common', 'uncommon', 'rare', 'epic', 'legendary'] as DyeRarity[]) {
     acc += odds[k] / total;
     if (r < acc) return k;
   }

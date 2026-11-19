@@ -803,9 +803,9 @@ console.log('\nEgg basket');
 {
   const Dy = require('../src/game/dyes');
   let days = 0, rare = 0;
-  for (let i = 0; i < 3000; i++) { const d = Dy.dyeOfDay(`2027-01-${i}`); if (d) { days++; if (d.rarity !== 'common') rare++; } }
+  for (let i = 0; i < 3000; i++) { const d = Dy.dyeOfDay(`2027-01-${i}`); if (d) { days++; if (d.rarity !== 'common' && d.rarity !== 'uncommon') rare++; } }
   ok(Math.abs(days / 3000 - 1 / 3) < 0.03, `about 1 day in 3 is a dye day (${(days / 30).toFixed(1)}%)`);
-  ok(Math.abs(rare / days - 0.45) < 0.05, 'about 45% of shop dyes are rare or better');
+  ok(Math.abs(rare / days - 0.34) < 0.05, 'about a third of shop dyes are rare or better');
   ok(!Dy.DYES.some((d: any) => ['silver', 'gold', 'rainbow'].includes(d.skin)), 'Silver, Gold and Rainbow stay hatch-only');
   let day = ''; for (let i = 0; i < 50 && !day; i++) if (Dy.dyeOfDay(`2027-02-${i}`)) day = `2027-02-${i}`;
   const d = Dy.dyeOfDay(day);

@@ -104,7 +104,7 @@ export interface Egg {
 
 /** Rare color variants of a pet. */
 /** Hatch-only skins (mono = Ink, silver, gold, rainbow) plus the dye skins, which also hatch by luck. Harvest only comes from its event. */
-export type Skin = 'mono' | 'silver' | 'gold' | 'rainbow' | 'pastel' | 'retro' | 'sakura' | 'ocean' | 'ember' | 'moonlit' | 'crystal' | 'shadow' | 'galaxy' | 'ancient' | 'harvest';
+export type Skin = 'mono' | 'silver' | 'gold' | 'rainbow' | 'pastel' | 'retro' | 'sakura' | 'ocean' | 'ember' | 'moonlit' | 'crystal' | 'shadow' | 'galaxy' | 'ancient' | 'slime' | 'harvest';
 
 export type ChestKind = 'bronze' | 'silver' | 'gold';
 

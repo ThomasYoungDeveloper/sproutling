@@ -25,6 +25,7 @@ export const DYE_COLORS: Partial<Record<Skin, [string, string, string]>> = {
   shadow: ['#B98CFF', '#4A2E80', '#120A20'],
   galaxy: ['#FF8AD8', '#7E4FD6', '#1E2A80'],
   ancient: ['#F0C75A', '#6A3AA8', '#2A1046'],
+  slime: ['#D2FF86', '#5CC42A', '#1D6A14'],
   harvest: ['#FFC86E', '#D25C1C', '#78300E'],
 };
 

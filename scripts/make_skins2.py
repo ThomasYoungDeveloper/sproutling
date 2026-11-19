@@ -13,7 +13,7 @@ src, out = sys.argv[1], sys.argv[2]
 only = sys.argv[3].split(',') if len(sys.argv) > 3 and sys.argv[3] else None
 which = sys.argv[4].split(',') if len(sys.argv) > 4 else None
 
-SKINS = ['ancient', 'sakura', 'moonlit', 'ocean', 'ember', 'frost', 'harvest', 'spooky', 'galaxy', 'crystal', 'shadow', 'pastel', 'retro', 'ink']
+SKINS = ['slime', 'ancient', 'sakura', 'moonlit', 'ocean', 'ember', 'frost', 'harvest', 'spooky', 'galaxy', 'crystal', 'shadow', 'pastel', 'retro', 'ink']
 
 
 def hexc(h):
@@ -186,6 +186,49 @@ def make(path, skin, seed):
         res = res * (1 - line[..., None]) + hexc('#050a2a') * line[..., None]
         # See-through bell: the middle is a little translucent, the glowing rim and lines stay solid.
         alpha = alpha * np.clip(0.86 + edge * 0.14 + line, 0, 1)
+    elif skin == 'slime':
+        # Jelly slime: bright lime greens with a deeper green underside, a slightly see-through body,
+        # big soft glossy highlights on top, a lighter yellow-green rim just inside the edge, a few
+        # little bubbles, and deep green outlines.
+        inner = (alpha > 0.8) & (lum > 0.18)
+        lo = np.percentile(lum[inner], 6) if inner.any() else 0.0
+        hi = np.percentile(lum[inner], 94) if inner.any() else 1.0
+        l2 = np.clip((lum - lo) / max(hi - lo, 0.2), 0, 1) * 0.85 + 0.1
+        t = np.clip(yy / max(h - 1, 1), 0, 1)
+        l2 = np.clip(l2 - (t - 0.45) * 0.3, 0, 1)
+        res = ramp(l2, [(0, '#0a3d10'), (0.22, '#1d7a1a'), (0.45, '#3fb422'), (0.65, '#6bd630'), (0.85, '#9cec4c'), (1, '#d2ff86')])
+        line = np.clip((0.2 - lum) / 0.1, 0, 1)
+        body = alpha * (1 - line)
+        def blur(m, rad):
+            return np.asarray(Image.fromarray((np.clip(m, 0, 1) * 255).astype(np.uint8)).filter(ImageFilter.GaussianBlur(rad)), dtype=np.float32) / 255
+        rim = np.clip(1 - blur(body, 5) * 1.08, 0, 1) * body
+        rim = np.clip(rim * 2.2, 0, 1) * 0.35
+        res = res * (1 - rim[..., None]) + hexc('#d8ff7a') * rim[..., None]
+        # Glossy highlights: soft white blobs on the upper, lit parts, like a wet jelly.
+        ys, xs = np.nonzero(body > 0.6)
+        gl = np.zeros((h, w), dtype=np.float32)
+        r2 = np.random.default_rng(seed + 13)
+        if len(ys):
+            top = ys.min(); span = max(ys.max() - top, 1)
+            for _ in range(10):
+                k = r2.integers(0, len(ys)); cy, cx = ys[k], xs[k]
+                if cy > top + span * 0.6 or l2[cy, cx] < 0.4:
+                    continue
+                ry, rx = r2.uniform(3, 6), r2.uniform(5, 11)
+                gl = np.maximum(gl, np.clip(1 - ((yy - cy) / ry) ** 2 - ((xx - cx) / rx) ** 2, 0, 1))
+        gl = np.maximum(gl, np.clip((l2 - 0.88) * 6, 0, 1) * np.clip(1 - t * 1.8, 0, 1))
+        gl = blur(gl, 1.0) * body
+        m = res.mean(-1, keepdims=True)
+        res = np.clip(m + (res - m) * 1.3, 0, 255)
+        res = res * (1 - gl[..., None] * 0.8) + hexc('#f4ffe6') * gl[..., None] * 0.8
+        # A few small bubbles.
+        for _ in range(7 if len(ys) else 0):
+            k = r2.integers(0, len(ys)); cy, cx = ys[k], xs[k]; rr = r2.uniform(1.6, 3.2)
+            dd = np.sqrt((xx - cx) ** 2 + (yy - cy) ** 2)
+            ring = np.clip(1 - np.abs(dd - rr) / 0.9, 0, 1) * body * 0.6
+            res = res * (1 - ring[..., None]) + hexc('#e9ffc8') * ring[..., None]
+        res = res * (1 - line[..., None]) + hexc('#0e3410') * line[..., None]
+        alpha = alpha * np.clip(0.94 + rim * 0.2 + line, 0, 1)
     elif skin == 'ember':
         # Living fire: bright reds with orange and yellow hot spots, and a few charred black patches,
         # like glowing lava. Shading still follows the pet so it reads clearly.
