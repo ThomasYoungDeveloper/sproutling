@@ -145,10 +145,12 @@ def make(path, skin, seed):
                             gly[y2, x2 + dx] = 1
         gly = gly * body * np.clip((l2 - 0.15) * 3, 0, 1)
         res = res * (1 - gly[..., None] * 0.75) + hexc('#f0c75a') * gly[..., None] * 0.75
-        # Gold outlines, shaded a little darker at the very edge.
-        res = res * (1 - line[..., None]) + hexc('#d9a83a') * line[..., None]
-        edge = np.clip((0.1 - lum) / 0.08, 0, 1) * alpha
-        res = res * (1 - edge[..., None] * 0.5) + hexc('#7a5214') * edge[..., None] * 0.5
+        # Outlines: the inner feature lines (eyes, mouth, clothes) are a dark bronze so they read clearly
+        # against the purple, and the outer silhouette keeps a gold trim.
+        res = res * (1 - line[..., None]) + hexc('#2a1606') * line[..., None]
+        outer = np.asarray(Image.fromarray(((alpha > 0.5) * 255).astype(np.uint8)).filter(ImageFilter.MinFilter(5)), dtype=np.float32) / 255
+        trim = line * (1 - outer)
+        res = res * (1 - trim[..., None]) + hexc('#d9a83a') * trim[..., None]
     elif skin == 'ocean':
         # Jellyfish: a see-through deep-sea body with a glowing cyan-to-pink rim on the inside of the
         # outline, soft bioluminescent spots, and faint trailing ribs on the lower half.
@@ -283,12 +285,9 @@ def make(path, skin, seed):
         res = base * (1 - pink[..., None] * 0.5) + hexc('#c23ab8') * pink[..., None] * 0.5 * shade
         res = res * (1 - cyan[..., None] * 0.35) + hexc('#3fb8ff') * cyan[..., None] * 0.35 * shade
         # Keep the outlines dark so the pet still reads clearly.
-        # Lines: everything darker than the body's own range goes black, and lines are thickened by a
-        # pixel so faces and features stay easy to read against the purple.
-        dark = np.clip((0.15 - lum) / 0.07, 0, 1)
-        dark = np.maximum(dark, np.asarray(Image.fromarray((dark * 255).astype(np.uint8)).filter(ImageFilter.MaxFilter(3)), dtype=np.float32) / 255 * 0.85)[..., None]
-        res = res * (1 - dark) + hexc('#020106') * dark
-        body = alpha * (dark[..., 0] < 0.5)
+        dark = np.clip((0.14 - lum) / 0.08, 0, 1)[..., None]
+        res = res * (1 - dark) + hexc('#030208') * dark
+        body = alpha * (lum > 0.14)
         w1 = stars(h, w, 300, seed + 1, 1) * body
         w2 = stars(h, w, 30, seed + 2, 2) * body
         b1 = stars(h, w, 110, seed + 3, 1) * body
