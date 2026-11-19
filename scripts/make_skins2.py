@@ -228,14 +228,19 @@ def make(path, skin, seed):
             return np.clip(m / max(m.max(), 1e-3), 0, 1)
         pink = clouds(5, 0.10, 0.28, seed + 11) ** 1.4
         cyan = clouds(4, 0.08, 0.22, seed + 23) ** 1.8
-        hi = np.percentile(lum[alpha > 0.8], 90) if (alpha > 0.8).any() else 1.0
-        gl = np.clip(lum / max(hi, 1e-3) * 0.78, 0, 1)
-        base = ramp(gl, [(0, '#000000'), (0.35, '#05030f'), (0.6, '#130a30'), (0.85, '#2c1666'), (1, '#4e2fa0')])
+        # Stretch each pet's own light range so dark-colored pets get the same depth as light ones
+        # (otherwise a dark pet turns into a flat black shape). The body never drops below deep violet;
+        # only the real outlines go black.
+        inner = (alpha > 0.8) & (lum > 0.14)
+        lo = np.percentile(lum[inner], 8) if inner.any() else 0.0
+        hi = np.percentile(lum[inner], 92) if inner.any() else 1.0
+        gl = np.clip((lum - lo) / max(hi - lo, 0.15), 0, 1) * 0.8 + 0.08
+        base = ramp(gl, [(0, '#000000'), (0.2, '#07041a'), (0.45, '#140b38'), (0.7, '#241258'), (0.88, '#3a2290'), (1, '#5a3cc0')])
         shade = (0.35 + 0.9 * gl)[..., None]
         res = base * (1 - pink[..., None] * 0.5) + hexc('#c23ab8') * pink[..., None] * 0.5 * shade
         res = res * (1 - cyan[..., None] * 0.35) + hexc('#3fb8ff') * cyan[..., None] * 0.35 * shade
         # Keep the outlines dark so the pet still reads clearly.
-        dark = np.clip((0.2 - lum) / 0.12, 0, 1)[..., None]
+        dark = np.clip((0.14 - lum) / 0.08, 0, 1)[..., None]
         res = res * (1 - dark) + hexc('#030208') * dark
         body = alpha * (lum > 0.14)
         w1 = stars(h, w, 300, seed + 1, 1) * body
