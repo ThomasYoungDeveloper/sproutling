@@ -758,6 +758,13 @@ console.log('\nEgg basket');
   const lv3 = { ...fresh, pets: fresh.pets.map((p) => ({ ...p, xp: 200 })) };
   ok(Un.unlocked(lv3, 'shop') && Un.unlocked(lv3, 'trips') && !Un.unlocked(lv3, 'battles') && Un.newUnlock(lv3)?.id === 'shop', 'level 3 opens shops and trips, one card at a time');
   ok(Un.newUnlock(Un.markSeen(lv3, 'shop'))?.id === 'trips', 'after the shop card comes the trips card');
+  ok(!Un.levelMoment(fresh) && !Un.levelMoment(Un.markLevelShown(fresh)), 'no level-up pop-up until something new is reached');
+  const lm = Un.levelMoment(Un.markLevelShown(fresh, 1) && { ...Un.markLevelShown(fresh, 1), pets: lv3.pets });
+  ok(lm?.level === 3 && lm.unlocks.map((f) => f.id).join() === 'shop,trips', 'jumping to level 3 shows one pop-up with both missed unlocks');
+  const lv7 = { ...Un.markLevelShown(fresh, 6), onboard: { ...Un.markLevelShown(fresh, 6).onboard, seen: ['shop', 'trips', 'battles', 'guild', 'tower'] }, pets: fresh.pets.map((p) => ({ ...p, xp: 1100 })) };
+  const m7 = Un.levelMoment(lv7);
+  ok(m7?.level === 7 && !m7.unlocks.length && m7.next?.id === 'breeding', 'a plain level-up shows what is coming next');
+  ok(!Un.levelMoment(Un.markLevelShown(lv7, 7)), 'each level only pops up once');
   const old = A.cleanSave({ ...newGame(), pets: [{ id: 'x', speciesId: 'p01', nickname: 'Old', xp: 0, shiny: false, hatchedOn: '' } as any], activePetId: 'x' });
   ok(!!old.onboard?.legacy && Un.unlocked(old, 'breeding') && !Un.newUnlock(old) && In.needsIntro(old), 'older saves keep everything open and only get the quick setup');
 }

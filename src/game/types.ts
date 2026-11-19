@@ -178,6 +178,8 @@ export interface GameState {
     health?: 'connected' | 'skipped';
     /** Features whose "now open" card was already shown or dismissed. */
     seen?: string[];
+    /** Highest best-pet level whose level-up pop-up was shown. */
+    levelShown?: number;
   };
   /** Daily goals. Water is in 8 oz glasses. */
   goals?: {

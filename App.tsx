@@ -26,6 +26,9 @@ import { syncWidgets } from './src/lib/widgetSync';
 import { ChatProvider, useChat } from './src/state/ChatContext';
 import * as H from './src/game/hp';
 import { OverlayProvider, useOverlay } from './src/components/Overlay';
+import { LevelUpPopup } from './src/components/Unlocks';
+import { ShopSheet, WardrobeSheet } from './src/components/ShopSheets';
+import * as U from './src/game/unlocks';
 import { TeamProvider } from './src/state/TeamContext';
 import { RankedProvider } from './src/state/RankedContext';
 import { useHealthSync } from './src/lib/useHealthSync';
@@ -227,6 +230,19 @@ function Shell() {
     last.current = { id: pet?.id ?? null, stage };
   }, [pet?.id, stage]);
 
+  // Level-up pop-up: the first time, just record the current level so existing players don't get a pop-up for old levels.
+  useEffect(() => {
+    if (settled && !starter && state.pets.length && state.onboard?.levelShown === undefined) apply((s) => U.markLevelShown(s));
+  }, [settled, starter, state.pets.length, state.onboard?.levelShown]);
+  const goUnlock = (where: U.FeatureInfo['go']) => {
+    if (where === 'shop') {
+      setTab('home');
+      const openWardrobe = () => layers.open(<WardrobeSheet onClose={layers.close} onShop={openShop} />);
+      const openShop = () => layers.open(<ShopSheet onClose={layers.close} onWardrobe={openWardrobe} />);
+      openShop();
+    } else setTab(where);
+  };
+
   // Once the intro is showing, keep it up while the save syncs (otherwise it would restart mid-way).
   if (intro && (settled || introShown.current)) {
     introShown.current = true;
@@ -308,6 +324,7 @@ function Shell() {
       {/* Pop-ups and toasts stay inside the app's own area (never under a side camera column). */}
       <View pointerEvents="box-none" style={{ position: 'absolute', top: 0, bottom: 0, left: layerInsets.left, right: layerInsets.right, zIndex: 70 }}>
       {settled && !starter && !state.tutorialDone ? <Tutorial /> : null}
+      {settled && !starter && state.tutorialDone && !showLogin ? <LevelUpPopup onGo={goUnlock} /> : null}
       {showAccount && <AccountSheet onClose={() => setShowAccount(false)} />}
       {showLogin && !starter && <DailyLoginSheet onClose={() => setShowLogin(false)} />}
       {walkNote && !notice ? (

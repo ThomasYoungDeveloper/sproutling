@@ -15,18 +15,23 @@ export interface FeatureInfo {
   name: string;
   /** Shown on the "now open" card. */
   title: string;
+  /** A short, teasing line (not a list of rules). */
   text: string;
+  /** The same tease using the pet's name, for the pop-up and notification. */
+  tease: (pet: string) => string;
+  /** One line for the "Coming up" teaser. */
+  soon: string;
   /** Where to find it, for the card's button. */
   go: 'home' | 'friends' | 'dex' | 'shop';
 }
 
 export const FEATURES: FeatureInfo[] = [
-  { id: 'shop', level: 2, name: 'Shops', title: 'The shops are open!', text: 'Spend coins at the Food Market and General Store. Food boosts your pet’s stats; outfits are just for fun.', go: 'shop' },
-  { id: 'trips', level: 3, name: 'Trips', title: 'Trips are open!', text: 'Send a pet exploring. It brings back coins and items, and walking brings it home sooner.', go: 'home' },
-  { id: 'battles', level: 4, name: 'Battles', title: 'Battles are open!', text: 'Practice battles, wild pets on your walks, and potions to heal. Find them under Social › Battle.', go: 'friends' },
-  { id: 'guild', level: 5, name: 'Guilds', title: 'Guilds are open!', text: 'Join or start a guild. Walk together to beat the weekly guild boss and earn chests.', go: 'friends' },
-  { id: 'tower', level: 6, name: 'Sky Tower', title: 'The Sky Tower is open!', text: 'A new 10-floor climb every week, with a blessing to pick after each floor.', go: 'friends' },
-  { id: 'breeding', level: 8, name: 'Nursery and power-ups', title: 'The Nursery is open!', text: 'Breed two pets for a stronger egg, and power pets up with Training Crystals or a spare copy.', go: 'dex' },
+  { id: 'shop', level: 2, name: 'Shops', title: 'The shops are open!', text: 'Two shops just opened their doors. Go see what’s on the shelves.', tease: () => 'Two shops just opened their doors. Go see what’s on the shelves.', soon: 'Spend your coins on new looks', go: 'shop' },
+  { id: 'trips', level: 3, name: 'Trips', title: 'Trips are open!', text: 'Send a pet into the wild. Who knows what it’ll bring home?', tease: (p) => `Send ${p} into the wild. Who knows what it’ll bring home?`, soon: 'Send your pet off exploring', go: 'home' },
+  { id: 'battles', level: 4, name: 'Battles', title: 'Battles are open!', text: 'Something’s rustling out there. Is your pet ready?', tease: (p) => `Something’s rustling out there. Is ${p} ready?`, soon: 'Something’s rustling out there', go: 'friends' },
+  { id: 'guild', level: 5, name: 'Guilds', title: 'Guilds are open!', text: 'Team up and take on something too big to face alone.', tease: () => 'Team up and take on something too big to face alone.', soon: 'Team up with other players', go: 'friends' },
+  { id: 'tower', level: 6, name: 'Sky Tower', title: 'The Sky Tower is open!', text: 'A tower has appeared in the clouds. How high can you climb?', tease: () => 'A tower has appeared in the clouds. How high can you climb?', soon: 'Something is up in the clouds', go: 'friends' },
+  { id: 'breeding', level: 8, name: 'The Nursery', title: 'The Nursery is open!', text: 'Two pets, one egg… what will hatch?', tease: () => 'Two pets, one egg… what will hatch?', soon: 'Breed stronger pets', go: 'dex' },
 ];
 export const FEATURE_BY_ID = Object.fromEntries(FEATURES.map((f) => [f.id, f])) as Record<Feature, FeatureInfo>;
 
@@ -61,3 +66,27 @@ export const markSeen = (s: GameState, f: Feature): GameState => ({
 
 /** "Opens at level 3" for locked spots. */
 export const lockedText = (f: Feature) => `Opens when a pet reaches level ${FEATURE_BY_ID[f].level}`;
+
+/** What the level-up pop-up should show: a level your best pet reached that hasn't had its pop-up yet. */
+export interface LevelMoment {
+  level: number;
+  /** Everything that opened since the last pop-up (missed ones included). */
+  unlocks: FeatureInfo[];
+  /** The next thing to open, for plain level-ups. */
+  next?: FeatureInfo;
+}
+
+export function levelMoment(s: GameState): LevelMoment | null {
+  const shown = s.onboard?.levelShown;
+  const top = topLevel(s);
+  if (shown === undefined || top <= shown || !s.pets.length) return null;
+  const seen = new Set(s.onboard?.seen ?? []);
+  const unlocks = allOpen(s) ? [] : FEATURES.filter((f) => f.level <= top && !seen.has(f.id));
+  return { level: top, unlocks, next: nextUnlock(s) };
+}
+
+/** Records that the pop-up for this level was shown (first run just records the current level, with no pop-up). */
+export const markLevelShown = (s: GameState, level = topLevel(s)): GameState => ({
+  ...s,
+  onboard: { ...s.onboard, levelShown: Math.max(level, s.onboard?.levelShown ?? 0) },
+});

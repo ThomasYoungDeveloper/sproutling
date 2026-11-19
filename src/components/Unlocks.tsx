@@ -1,9 +1,12 @@
-import React from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import Svg, { Path, Rect } from 'react-native-svg';
 import { useGame } from '../state/GameContext';
 import { Button, Card } from './ui';
-import { buzz, PopIn } from './fx';
+import { buzz, Confetti, PopIn } from './fx';
+import PetSprite from './PetSprite';
+import { SPECIES_BY_ID } from '../game/species';
+import { stageFor, xpForLevel } from '../game/scoring';
 import { colors, font, space } from '../theme';
 import * as U from '../game/unlocks';
 
@@ -93,7 +96,152 @@ export function NextUnlockLine() {
   );
 }
 
+/** Icons for the unlock banner (no emoji). */
+function FeatureIcon({ id, color = '#E8590C', size = 32 }: { id: U.Feature; color?: string; size?: number }) {
+  const p = { fill: 'none', stroke: color, strokeWidth: 2.2, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24">
+      {id === 'trips' ? (<><Path d="M3 7l6-3 6 3 6-3v13l-6 3-6-3-6 3z" {...p} /><Path d="M9 4v13M15 7v13" {...p} /></>) : null}
+      {id === 'shop' ? (<><Path d="M4 9l1.5-5h13L20 9" {...p} /><Path d="M4 9h16v2a3 3 0 0 1-6 0 3 3 0 0 1-4 0 3 3 0 0 1-6 0z" {...p} /><Path d="M5 13v7h14v-7" {...p} /></>) : null}
+      {id === 'battles' ? (<><Path d="M4 4l10 10M4 4h4M4 4v4M13 13l3 3M20 4L10 14M20 4h-4M20 4v4M11 13l-3 3" {...p} /><Path d="M6 18l2 2M18 18l-2 2" {...p} /></>) : null}
+      {id === 'guild' ? (<><Path d="M5 4h14v8c0 4-3.5 7-7 8-3.5-1-7-4-7-8z" {...p} /><Path d="M9 11l2 2 4-4" {...p} /></>) : null}
+      {id === 'tower' ? (<><Path d="M8 21V8l4-5 4 5v13z" {...p} /><Path d="M10 12h4M10 16h4M4 14c1.5-1 3-1 4 0M16 10c1.5-1 3-1 4 0" {...p} /></>) : null}
+      {id === 'breeding' ? (<><Path d="M12 3c4 0 7 5.5 7 10a7 7 0 0 1-14 0c0-4.5 3-10 7-10z" {...p} /><Path d="M12 10.5c-1-1.6-3.5-.8-3 1.2.4 1.6 3 3.3 3 3.3s2.6-1.7 3-3.3c.5-2-2-2.8-3-1.2z" fill={color} stroke="none" /></>) : null}
+    </Svg>
+  );
+}
+
+/**
+ * The level-up pop-up: shows once per new best-pet level (also after leveling up while the app was closed).
+ * If something opened, each unlock gets a big orange banner (swipe through several), with Try it now.
+ * Otherwise a purple "Coming up" teaser shows the next unlock and how close it is.
+ */
+export function LevelUpPopup({ onGo }: { onGo: (where: U.FeatureInfo['go']) => void }) {
+  const { state, apply } = useGame();
+  const m = U.levelMoment(state);
+  const { width } = useWindowDimensions();
+  const [page, setPage] = useState(0);
+  const level = m?.level;
+  useEffect(() => {
+    if (level) buzz('success', 'levelup');
+    setPage(0);
+  }, [level]);
+  if (!m) return null;
+  const pet = state.pets.reduce((b, p) => (p.xp > b.xp ? p : b), state.pets[0]);
+  const sp = SPECIES_BY_ID[pet.speciesId];
+  const name = pet.nickname || sp?.name || 'Your pet';
+  const bannerW = Math.min(width, 440) - 48;
+  const current = m.unlocks[page];
+  const close = () => apply((s) => U.markLevelShown(s, m.level));
+  const tryIt = () => {
+    if (!current) return close();
+    buzz('success');
+    apply((s) => U.markLevelShown(U.markSeen(s, current.id), m.level));
+    onGo(current.go);
+  };
+  const next = m.next;
+  const prevNeed = xpForLevel(m.level);
+  const needAt = next ? xpForLevel(next.level) : 0;
+  const best = pet.xp;
+  const pct = next ? Math.max(0, Math.min(1, (best - prevNeed) / Math.max(1, needAt - prevNeed))) : 0;
+  return (
+    <View style={styles.backdrop}>
+      <View pointerEvents="none" style={StyleSheet.absoluteFill}><Confetti amount={60} width={width} height={700} /></View>
+      <PopIn>
+        <View style={styles.lvCard} accessibilityViewIsModal>
+          <Text style={styles.lvTag}>LEVEL UP</Text>
+          <Text style={styles.lvBig} accessibilityRole="header">Level {m.level}!</Text>
+          <View style={styles.lvPet}>{sp ? <PetSprite species={sp} stage={stageFor(pet.xp)} size={104} shiny={pet.shiny} skin={pet.skin} hat={pet.look?.hat} aura={pet.look?.aura} noShadow /> : null}</View>
+          <Text style={styles.lvLine}>
+            {name} grew stronger. <Text style={styles.lvPoint}>+1 training point</Text> to spend.
+          </Text>
+          {m.unlocks.length ? (
+            <>
+              {m.unlocks.length > 1 ? <Text style={styles.lvCount}>{m.unlocks.length} new unlocks · swipe</Text> : null}
+              <ScrollView
+                horizontal
+                pagingEnabled
+                showsHorizontalScrollIndicator={false}
+                style={{ width: bannerW + 8, marginTop: m.unlocks.length > 1 ? 4 : 14 }}
+                onMomentumScrollEnd={(e) => setPage(Math.round(e.nativeEvent.contentOffset.x / (bannerW + 8)))}
+                onScroll={(e) => setPage(Math.round(e.nativeEvent.contentOffset.x / (bannerW + 8)))}
+                scrollEventThrottle={64}
+              >
+                {m.unlocks.map((f) => (
+                  <View key={f.id} style={{ width: bannerW + 8, paddingHorizontal: 4, paddingTop: 16 }}>
+                    <View style={styles.unlockBanner}>
+                      <View style={styles.unlockPill}><Text style={styles.unlockPillText}>NEW UNLOCK</Text></View>
+                      <View style={styles.unlockRow}>
+                        <View style={styles.unlockIcon}><FeatureIcon id={f.id} /></View>
+                        <Text style={styles.unlockTitle} numberOfLines={2}>{f.title}</Text>
+                      </View>
+                      <Text style={styles.unlockText}>{f.tease(name)}</Text>
+                    </View>
+                  </View>
+                ))}
+              </ScrollView>
+              {m.unlocks.length > 1 ? (
+                <View style={styles.dots}>{m.unlocks.map((f, i) => <View key={f.id} style={[styles.dot, i === page && styles.dotOn]} />)}</View>
+              ) : null}
+              <View style={styles.lvButtons}>
+                <Button label="Later" onPress={close} style={{ flex: 1 }} />
+                <Button label="Try it now" primary onPress={tryIt} style={{ flex: 1.6 }} />
+              </View>
+            </>
+          ) : (
+            <>
+              {next ? (
+                <View style={styles.soonBanner}>
+                  <View style={styles.soonPill}><Text style={styles.soonPillText}>COMING UP</Text></View>
+                  <View style={styles.unlockRow}>
+                    <View style={styles.soonIcon}><LockIcon color="#FFFFFF" size={26} /></View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.soonTitle}>{next.name}</Text>
+                      <Text style={styles.soonSub}>Opens at level {next.level}: {next.soon.toLowerCase()}</Text>
+                    </View>
+                  </View>
+                  <View style={styles.soonTrack}><View style={[styles.soonFill, { width: `${Math.round(pct * 100)}%` }]} /></View>
+                  <Text style={styles.soonMeta}>{U.xpToLevel(state, next.level).toLocaleString()} XP to go</Text>
+                </View>
+              ) : null}
+              <Button label="Nice!" primary onPress={close} style={{ alignSelf: 'stretch', marginTop: 6 }} />
+            </>
+          )}
+        </View>
+      </PopIn>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
+  lvCard: { backgroundColor: '#FFFCF5', borderRadius: 28, paddingTop: 20, paddingBottom: 14, paddingHorizontal: 12, alignItems: 'center', gap: 6, width: '100%', maxWidth: 440, alignSelf: 'center' },
+  lvTag: { fontSize: 13, fontWeight: '900', color: '#B06A00', letterSpacing: 1.5 },
+  lvBig: { fontSize: 44, fontWeight: '900', color: colors.ink, lineHeight: 48 },
+  lvPet: { width: 116, height: 116, borderRadius: 58, backgroundColor: '#E8E1FA', alignItems: 'center', justifyContent: 'center' },
+  lvLine: { fontSize: 15, fontWeight: '800', color: '#4E615B', textAlign: 'center' },
+  lvPoint: { color: '#1E8A68', fontWeight: '900' },
+  lvCount: { fontSize: 12, fontWeight: '900', color: '#B06A00', marginTop: 8 },
+  unlockBanner: { borderRadius: 22, paddingTop: 24, paddingBottom: 14, paddingHorizontal: 12, backgroundColor: '#FF8A4C', borderWidth: 4, borderColor: '#FFE7B0', gap: 8 },
+  unlockPill: { position: 'absolute', top: -14, alignSelf: 'center', backgroundColor: colors.ink, borderRadius: 999, paddingHorizontal: 14, paddingVertical: 5 },
+  unlockPillText: { color: '#FFE27A', fontSize: 12, fontWeight: '900', letterSpacing: 2 },
+  unlockRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  unlockIcon: { width: 58, height: 58, borderRadius: 29, backgroundColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center' },
+  unlockTitle: { flex: 1, fontSize: 27, lineHeight: 30, fontWeight: '900', color: '#FFFFFF' },
+  unlockText: { fontSize: 15, fontWeight: '800', color: '#FFFFFF', lineHeight: 20 },
+  dots: { flexDirection: 'row', gap: 6, marginTop: 6 },
+  dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#E0D6C6' },
+  dotOn: { backgroundColor: '#FF8A4C', width: 18 },
+  lvButtons: { flexDirection: 'row', gap: 8, alignSelf: 'stretch', marginTop: 8 },
+  soonBanner: { alignSelf: 'stretch', marginTop: 14, borderRadius: 20, paddingTop: 22, paddingBottom: 14, paddingHorizontal: 14, backgroundColor: '#5B4BB5', borderWidth: 4, borderColor: '#E3DCFF', gap: 10 },
+  soonPill: { position: 'absolute', top: -13, alignSelf: 'center', backgroundColor: colors.ink, borderRadius: 999, paddingHorizontal: 14, paddingVertical: 4 },
+  soonPillText: { color: '#C9BEFF', fontSize: 12, fontWeight: '900', letterSpacing: 2 },
+  soonIcon: { width: 54, height: 54, borderRadius: 27, backgroundColor: 'rgba(255,255,255,0.18)', borderWidth: 2, borderStyle: 'dashed', borderColor: 'rgba(255,255,255,0.7)', alignItems: 'center', justifyContent: 'center' },
+  soonTitle: { fontSize: 24, fontWeight: '900', color: '#FFFFFF' },
+  soonSub: { fontSize: 14, fontWeight: '800', color: '#E3DCFF' },
+  soonTrack: { height: 14, borderRadius: 999, backgroundColor: 'rgba(255,255,255,0.22)', overflow: 'hidden' },
+  soonFill: { height: '100%', borderRadius: 999, backgroundColor: '#FFC94D' },
+  soonMeta: { fontSize: 13, fontWeight: '900', color: '#FFFFFF', textAlign: 'right' },
+
   locked: { backgroundColor: '#F3F6F4', borderWidth: 2, borderColor: '#DCE6E1', borderStyle: 'dashed' },
   row: { flexDirection: 'row', gap: space.md, alignItems: 'flex-start' },
   lockBubble: { width: 42, height: 42, borderRadius: 21, backgroundColor: '#E4ECE8', alignItems: 'center', justifyContent: 'center' },
