@@ -320,14 +320,14 @@ def make(path, skin, seed):
         sat = np.where(mx > 0, (mx - mn) / np.maximum(mx, 1e-3), 0)
         d = np.maximum(mx - mn, 1e-3)
         hue = np.where(mx == r, ((g - b) / d) % 6, np.where(mx == g, (b - r) / d + 2, (r - g) / d + 4)) * 60
-        pal = [(0, '#ff5ea8'), (25, '#ff7fb8'), (45, '#ffab55'), (62, '#ffd83a'), (110, '#4fdf98'), (175, '#4cb8ff'), (225, '#7d84ff'), (275, '#b072ff'), (320, '#ff6cd0'), (360, '#ff5ea8')]
+        pal = [(0, '#ff4f9e'), (25, '#ff6fae'), (45, '#ff9f45'), (62, '#ffd52a'), (110, '#3edc8c'), (175, '#3aaeff'), (225, '#6e74ff'), (275, '#a85cff'), (320, '#ff5cc8'), (360, '#ff4f9e')]
         hs = np.array([x for x, _ in pal], dtype=np.float32)
         cs = np.stack([hexc(c) for _, c in pal])
         col = np.zeros(hue.shape + (3,), dtype=np.float32)
         for k in range(3):
             col[..., k] = np.interp(hue, hs, cs[:, k])
         t = (yy / max(h - 1, 1))[..., None]
-        wash = np.where(t < 0.5, hexc('#ff9fd0') * (1 - t * 2) + hexc('#bd96ff') * (t * 2), hexc('#bd96ff') * (2 - t * 2) + hexc('#86d4ff') * (t * 2 - 1))
+        wash = np.where(t < 0.5, hexc('#ff8cc6') * (1 - t * 2) + hexc('#b086ff') * (t * 2), hexc('#b086ff') * (2 - t * 2) + hexc('#6fcaff') * (t * 2 - 1))
         grey = np.clip((0.22 - sat) / 0.12, 0, 1)[..., None]
         col = col * (1 - grey) + wash * grey
         # Dark clothes and hair turn soft lavender instead of grey.
@@ -335,12 +335,12 @@ def make(path, skin, seed):
         col = col * (1 - mid) + hexc('#9a72f0') * mid
         hi = np.percentile(lum[alpha > 0.8], 90) if (alpha > 0.8).any() else 1.0
         ln = np.clip(lum / max(hi, 1e-3), 0, 1)[..., None]
-        res = col * (0.68 + 0.36 * ln)
+        res = col * (0.58 + 0.5 * ln)
         # Push the colors a bit more saturated so they read bright and candy-like, not faded.
         m = res.mean(-1, keepdims=True)
-        res = np.clip(m + (res - m) * 1.35, 0, 255)
+        res = np.clip(m + (res - m) * 1.7, 0, 255)
         dark = np.clip((0.2 - lum) / 0.1, 0, 1)[..., None]
-        res = res * (1 - dark) + hexc('#5e3f86') * dark
+        res = res * (1 - dark) + hexc('#4a2a70') * dark
     elif skin == 'retro':
         # Game Boy greens on a clean 4px grid. Each block averages its colors, and any block that
         # touches an outline stays darkest, so faces and edges stay readable.
