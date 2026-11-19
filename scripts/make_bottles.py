@@ -121,9 +121,9 @@ def fill(skin, shade, mask, h, w):
     if skin == 'harvest':
         return ramp(s * 0.7 + (1 - t) * 0.3, [(0, '#5a200a'), (0.4, '#c24e14'), (0.75, '#f69832'), (1, '#ffd88a')])
     if skin == 'potion_small':
-        return ramp(s ** 1.6, [(0, '#145a0c'), (0.5, '#3fb422'), (0.85, '#8fe84a'), (1, '#d8ffa0')])
+        return ramp(s ** 1.6, [(0, '#2a8a18'), (0.5, '#4fc22a'), (1, '#9cec5a')])
     if skin == 'potion_full':
-        return ramp(s ** 1.6, [(0, '#4a0610'), (0.5, '#c81e32'), (0.85, '#ff5a5a'), (1, '#ffb0b0')])
+        return ramp(s ** 1.6, [(0, '#8a0e1c'), (0.5, '#e0283a'), (1, '#ff6a6a')])
     raise ValueError(skin)
 
 # Bottle shape for each rarity (pack numbering).
@@ -133,20 +133,79 @@ DYES = {'pastel': 'common', 'mono': 'common', 'retro': 'common', 'slime': 'uncom
         'harvest': 'event'}
 POTIONS = {'potion_small': 5, 'potion_full': 4}
 
+def _blur(m, r):
+    return np.asarray(Image.fromarray(np.clip(m * 255, 0, 255).astype(np.uint8)).filter(ImageFilter.GaussianBlur(r)), dtype=np.float32) / 255
+def _grow(m, px):
+    return np.asarray(Image.fromarray((m > 0.5).astype(np.uint8) * 255).filter(ImageFilter.MaxFilter(px * 2 + 1)), dtype=np.float32) / 255
+
+def chibi(a, liquid, col, kind=''):
+    """Restyles a pack bottle to match the pets: flat cel-shaded colors, simple shine and a thick dark outline."""
+    h, w = liquid.shape
+    al = a[..., 3] / 255
+    sil = (al > 0.45).astype(np.float32)
+    rgb = a[..., :3]
+    lum = (0.299 * rgb[..., 0] + 0.587 * rgb[..., 1] + 0.114 * rgb[..., 2]) / 255
+    r, g, b = rgb[..., 0], rgb[..., 1], rgb[..., 2]
+    cork = ((r > g + 12) & (g > b + 6) & (liquid < 0.3) & (sil > 0)).astype(np.float32)
+    cork = (_blur(cork, 1.2) > 0.5).astype(np.float32)
+    from scipy import ndimage
+    lm = _blur(liquid, 1.0) > 0.5
+    lm = ndimage.binary_closing(lm, iterations=6)
+    lm = ndimage.binary_fill_holes(lm)
+    liq = lm.astype(np.float32) * sil * (1 - cork)
+    glass = sil * (1 - liq) * (1 - cork)
+    # Liquid: smooth away the fine detail, then 3 flat tones that keep each pixel's own hue.
+    speckled = kind in ('galaxy', 'ancient', 'moonlit', 'sakura', 'slime', 'ocean')
+    c = np.clip(col, 0, 255).astype(np.float32) if speckled else np.asarray(Image.fromarray(np.clip(col, 0, 255).astype(np.uint8)).filter(ImageFilter.MedianFilter(5)), dtype=np.float32)
+    cl = np.maximum(c.mean(-1, keepdims=True), 1)
+    sm = _blur(lum, 2.0)
+    lv = np.where(sm < 0.33, 0.72, np.where(sm < 0.62, 0.9, 1.08))[..., None]
+    liq_rgb = np.clip(c * lv, 0, 255)
+    # Glass: a pale blue with a slightly darker inner edge.
+    glass_rgb = np.broadcast_to(hexc('#dcf1fb'), (h, w, 3))
+    cork_rgb = np.where((_blur(lum, 2) < 0.42)[..., None], hexc('#9a5f30'), hexc('#cf9256'))
+    out = glass_rgb * glass[..., None] + liq_rgb * liq[..., None] + cork_rgb * cork[..., None]
+    # Shine: one clean rounded highlight on the upper left of the bottle's body, plus a small dot,
+    # like the soft shine on the pets.
+    yy, xx = np.mgrid[0:h, 0:w].astype(np.float32)
+    ys, xs = np.nonzero(liq > 0.5) if liq.sum() > 50 else np.nonzero(sil > 0.5)
+    y0, y1, x0, x1 = ys.min(), ys.max(), xs.min(), xs.max()
+    cy, cx = y0 + (y1 - y0) * 0.3, x0 + (x1 - x0) * 0.27
+    ry, rx = (y1 - y0) * 0.16, (x1 - x0) * 0.075
+    th = -0.5
+    u = ((xx - cx) * np.cos(th) + (yy - cy) * np.sin(th)) / max(rx, 1)
+    v = (-(xx - cx) * np.sin(th) + (yy - cy) * np.cos(th)) / max(ry, 1)
+    interior = (_blur(sil, 4) > 0.97).astype(np.float32)
+    shine = ((u * u + v * v) < 1).astype(np.float32)
+    dot = (((xx - (cx + rx * 1.6)) ** 2 + (yy - (cy - ry * 0.9)) ** 2) < (rx * 0.75) ** 2).astype(np.float32)
+    shine = np.maximum(shine, dot) * interior * (1 - cork)
+    out = out * (1 - shine[..., None] * 0.92) + 255 * shine[..., None] * 0.92
+    # Outline color: the liquid's own color, darkened (like the pets' tinted lines).
+    if liq.sum() > 0:
+        mean = (liq_rgb * liq[..., None]).sum((0, 1)) / liq.sum()
+    else:
+        mean = hexc('#5a6a7a')
+    ink = mean * 0.22 + hexc('#141826') * 0.78
+    inner = np.zeros((h, w), dtype=np.float32)
+    for m in (liq, cork):
+        inner = np.maximum(inner, _grow(m, 2) * (1 - m) * sil)
+    out = out * (1 - inner[..., None]) + ink * inner[..., None]
+    outer = _grow(sil, 6)
+    ring = outer * (1 - sil)
+    final = out * sil[..., None] + ink * ring[..., None]
+    alpha = np.clip(_blur(outer, 0.7) * 1.15, 0, 1)
+    return Image.fromarray(np.dstack([final, alpha * 255]).astype(np.uint8), 'RGBA')
+
 def make(kind, shape):
     a, mask, shade = liquid_of(shape)
     h, w = mask.shape
     col = fill(kind, shade, mask, h, w)
-    m = Image.fromarray((mask * 255).astype(np.uint8)).filter(ImageFilter.GaussianBlur(0.6))
-    m = np.asarray(m, dtype=np.float32)[..., None] / 255
-    rgb = a[..., :3] * (1 - m) + np.clip(col, 0, 255) * m
-    return Image.fromarray(np.dstack([rgb, a[..., 3]]).astype(np.uint8), 'RGBA')
+    return chibi(a, mask, col, kind)
 
 os.makedirs(f'{out}/dyes', exist_ok=True); os.makedirs(f'{out}/potions', exist_ok=True)
 for d, r in DYES.items():
     make(d, SHAPE[r]).save(f'{out}/dyes/{d}.png', optimize=True)
 # Potions use the pack's own green and red bottles as they are.
-for name, file in (('small', 'pot5green'), ('full', 'pot4red')):
-    im = Image.open(f'{src}/{file}.png').convert('RGBA')
-    im.resize((im.width * SCALE, im.height * SCALE), Image.LANCZOS).save(f'{out}/potions/{name}.png', optimize=True)
+for name, shape, kind in (('small', 5, 'potion_small'), ('full', 4, 'potion_full')):
+    make(kind, shape).save(f'{out}/potions/{name}.png', optimize=True)
 print('made', len(DYES), 'dyes and', len(POTIONS), 'potions')
