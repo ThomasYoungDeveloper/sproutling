@@ -124,6 +124,36 @@ def dye(skin, shape):
     if skin == 'shadow':
         wisp = ((np.sin(xx / 14 + np.sin(yy / 20) * 2) > 0.85) & (level >= 2)).astype(np.float32) * liq
         add = [(wisp, '#a46bff')]
+    if skin == 'harvest':
+        # Autumn leaves floating in the liquid: little maple and oval leaves in red, orange and gold.
+        from PIL import ImageDraw
+        from scipy import ndimage
+        inside = ndimage.binary_fill_holes(ndimage.binary_closing(liq > 0, iterations=4)).astype(np.float32)
+        ys, xs = np.nonzero(liq); x0, x1, y0, y1 = xs.min(), xs.max(), ys.min(), ys.max()
+        spots = [(0.3, 0.33, 22, 25, '#b8241a'), (0.7, 0.36, 15, -30, '#ffd23a'), (0.5, 0.68, 22, 60, '#d43a14'), (0.8, 0.72, 13, 10, '#ffd23a'), (0.2, 0.7, 16, -40, '#9a1a14')]
+        for k, (fx, fy, r, ang, c) in enumerate(spots):
+            cx, cy = x0 + (x1 - x0) * fx, y0 + (y1 - y0) * fy
+            g = Image.new('L', (SIZE, SIZE), 0); d = ImageDraw.Draw(g)
+            if k % 2 == 0:
+                # maple: 5 points
+                # maple: three big lobes up and two side lobes, each with small teeth, plus a stem
+                prof = [1.0, 0.55, 0.8, 0.5, 0.95, 0.35, 0.9, 0.5, 0.75, 0.55, 0.62, 0.3, 0.2, 0.3, 0.62, 0.55, 0.75, 0.5, 0.9, 0.35, 0.95, 0.5, 0.8, 0.55]
+                prof = prof[12:] + prof[:12]
+                pts = [(cx + r * 1.3 * q * np.cos(np.radians(ang - 90 + i * 15)), cy + r * 1.3 * q * np.sin(np.radians(ang - 90 + i * 15))) for i, q in enumerate(prof)]
+                d.polygon(pts, fill=255)
+                tb = np.radians(ang + 90)
+                d.line([cx, cy, cx + r * 1.1 * np.cos(tb), cy + r * 1.1 * np.sin(tb)], fill=255, width=3)
+            else:
+                t = np.radians(ang)
+                w2 = lambda u: 0.42 * abs(np.sin(u)) ** 0.8 * np.sign(np.sin(u))
+                pts = [(cx + r * np.cos(t) * np.cos(u) - r * w2(u) * np.sin(t), cy + r * np.sin(t) * np.cos(u) + r * w2(u) * np.cos(t)) for u in np.linspace(0, 2 * np.pi, 32)]
+                d.polygon(pts, fill=255)
+            m = np.asarray(g, dtype=np.float32) / 255 * inside
+            edge = np.clip(np.asarray(Image.fromarray((m * 255).astype(np.uint8)).filter(ImageFilter.MaxFilter(5)), dtype=np.float32) / 255 - m, 0, 1) * inside
+            vein = np.zeros((SIZE, SIZE), dtype=np.float32)
+            vg = Image.new('L', (SIZE, SIZE), 0); ImageDraw.Draw(vg).line([cx - r * 0.6 * np.cos(np.radians(ang)), cy - r * 0.6 * np.sin(np.radians(ang)), cx + r * 0.8 * np.cos(np.radians(ang)), cy + r * 0.8 * np.sin(np.radians(ang))], fill=255, width=2)
+            vein = np.asarray(vg, dtype=np.float32) / 255 * m
+            post += [(edge, '#5a200a'), (m, c), (vein * 0.6, '#5a200a')]
     for m, c in add:
         col = col * (1 - m[..., None]) + hexc(c) * m[..., None]
     # The pack's shine on the liquid keeps a hint of its original color: make those highlights neutral.
