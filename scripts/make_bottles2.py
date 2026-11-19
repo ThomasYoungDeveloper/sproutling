@@ -39,7 +39,7 @@ TONES = {
     'sakura': ['#a8346a', '#e0679a', '#f7a8c6', '#ffe0ee'], 'ocean': ['#0c1c5a', '#1e48a6', '#3b86d6', '#9fdcff'],
     'ember': ['#7a0a0a', '#d81c10', '#ff7a14', '#ffd23a'], 'moonlit': ['#1a1e5a', '#3a44a8', '#6e74d6', '#c8ccff'],
     'crystal': ['#1f3aa8', '#4f7ae8', '#9ec2ff', '#eef4ff'], 'shadow': ['#050308', '#16101f', '#2c2240', '#6a4aa0'],
-    'galaxy': ['#05030f', '#1a0f40', '#3a1f7a', '#7e4fd6'], 'ancient': ['#2a1046', '#4e2486', '#7a4ac0', '#b48ae8'],
+    'galaxy': ['#000000', '#05030f', '#130a30', '#2c1666'], 'ancient': ['#2a1046', '#4e2486', '#7a4ac0', '#b48ae8'],
     'harvest': ['#7a2e0e', '#d25c1c', '#f69832', '#ffd88a'],
 }
 DYES = {'pastel': 'common', 'mono': 'common', 'retro': 'common', 'slime': 'uncommon', 'sakura': 'rare', 'ocean': 'rare',
@@ -85,7 +85,26 @@ def dye(skin, shape):
         col = tones[np.clip(level + tilt[idx], 0, 3)]
     add = []
     post = []
-    if skin in ('galaxy',): add = [(specks(liq, 34, 3, 1.2, 2.4), '#ffffff'), (specks(liq, 10, 4, 1, 1.8), '#9fe6ff')]
+    if skin == 'galaxy':
+        # Like the Galaxy skin: near-black space, soft magenta and blue nebula, lots of white stars and a few sparkles.
+        from scipy import ndimage
+        inside = ndimage.binary_fill_holes(ndimage.binary_closing(liq > 0, iterations=4)).astype(np.float32)
+        r2 = np.random.default_rng(31)
+        neb = np.zeros((SIZE, SIZE), dtype=np.float32); neb2 = neb.copy()
+        for k in range(4):
+            cx, cy, rr = r2.uniform(0, SIZE), r2.uniform(top, bot), r2.uniform(25, 55)
+            (neb if k % 2 == 0 else neb2)[...] += np.exp(-(((xx - cx) ** 2 + (yy - cy) ** 2) / (2 * rr * rr)))
+        col = col * (1 - (neb * 0.55)[..., None]) + hexc('#c23ab8') * (neb * 0.55)[..., None] * (0.5 + level[..., None] / 6)
+        col = col * (1 - (neb2 * 0.45)[..., None]) + hexc('#3f7fff') * (neb2 * 0.45)[..., None] * (0.5 + level[..., None] / 6)
+        stars = (r2.random((SIZE, SIZE)) > 0.975).astype(np.float32) * inside
+        big = specks(inside, 26, 3, 1.4, 2.6)
+        sp = np.zeros((SIZE, SIZE), dtype=np.float32)
+        ys2, xs2 = np.nonzero(inside > 0.5)
+        for _ in range(5):
+            k = r2.integers(0, len(ys2)); cy, cx = ys2[k], xs2[k]
+            sp = np.maximum(sp, np.clip(1 - (np.abs(xx - cx) / 9 + np.abs(yy - cy) / 1.4), 0, 1))
+            sp = np.maximum(sp, np.clip(1 - (np.abs(yy - cy) / 9 + np.abs(xx - cx) / 1.4), 0, 1))
+        post = [(stars, '#ffffff'), (big, '#ffffff'), (specks(inside, 10, 4, 1, 1.8), '#9fe6ff'), (sp * inside, '#ffffff')]
     if skin == 'moonlit': add = [(specks(liq, 10, 5, 1.4, 2.6), '#fff3b0')]
     if skin == 'ancient':
         # Gold hieroglyphs carved into the liquid: an eye, an ankh, a feather and a zigzag (water).
