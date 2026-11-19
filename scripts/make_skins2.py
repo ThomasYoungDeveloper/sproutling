@@ -13,7 +13,7 @@ src, out = sys.argv[1], sys.argv[2]
 only = sys.argv[3].split(',') if len(sys.argv) > 3 and sys.argv[3] else None
 which = sys.argv[4].split(',') if len(sys.argv) > 4 else None
 
-SKINS = ['sakura', 'moonlit', 'ocean', 'ember', 'frost', 'harvest', 'spooky', 'galaxy', 'crystal', 'shadow', 'pastel', 'retro', 'ink']
+SKINS = ['ancient', 'sakura', 'moonlit', 'ocean', 'ember', 'frost', 'harvest', 'spooky', 'galaxy', 'crystal', 'shadow', 'pastel', 'retro', 'ink']
 
 
 def hexc(h):
@@ -61,16 +61,57 @@ def make(path, skin, seed):
         petals = stars(h, w, 26, seed, 3) * alpha
         res = res * (1 - petals[..., None] * 0.7) + hexc('#ffffff') * petals[..., None] * 0.7
     elif skin == 'moonlit':
-        # Royal purple with a warm gold shine along the inside of the outlines, like moonlight on the edges.
+        res = ramp(lum, [(0, '#070b24'), (0.4, '#24306e'), (0.75, '#6f7fd6'), (1, '#e4e8ff')])
+        sp = stars(h, w, 60, seed, 1) * alpha
+        res = res * (1 - sp[..., None]) + hexc('#fff6c8') * sp[..., None]
+        halo, halo_color = glow(alpha, 6, 1.4), hexc('#8fa0ff')
+    elif skin == 'ancient':
+        # Ancient relic card: speckled royal purple with rainbow holo patches, gold glitter,
+        # carved gold glyphs, and gold outlines in place of black.
         hi = np.percentile(lum[alpha > 0.8], 90) if (alpha > 0.8).any() else 1.0
         l2 = np.clip(lum / max(hi, 1e-3) * 0.85, 0, 1)
-        res = ramp(l2, [(0, '#0c0420'), (0.3, '#2a0d5e'), (0.6, '#5a2aa8'), (0.85, '#8c5ad8'), (1, '#c4a0ff')])
-        line = (lum < 0.2).astype(np.float32) * alpha
-        near = np.asarray(Image.fromarray((line * 255).astype(np.uint8)).filter(ImageFilter.MaxFilter(7)), dtype=np.float32) / 255
-        rim = np.clip(near - line, 0, 1) * alpha * np.clip((l2 - 0.2) * 3, 0, 1)
-        res = res * (1 - rim[..., None] * 0.75) + hexc('#ffcf5a') * rim[..., None] * 0.75
-        sp = stars(h, w, 30, seed, 1) * alpha * (1 - line)
-        res = res * (1 - sp[..., None]) + hexc('#fff0b8') * sp[..., None]
+        res = ramp(l2, [(0, '#1a0a33'), (0.35, '#3c1a6e'), (0.65, '#6a3aa8'), (0.9, '#9a6ad0'), (1, '#c8a0f0')])
+        def blobs(n, sd):
+            m = np.zeros((h, w), dtype=np.float32); r2 = np.random.default_rng(sd)
+            for _ in range(n):
+                cx, cy, r = r2.uniform(0, w), r2.uniform(0, h), r2.uniform(w * 0.08, w * 0.2)
+                m += np.exp(-(((xx - cx) ** 2 + (yy - cy) ** 2) / (2 * r * r)))
+            return np.clip(m / max(m.max(), 1e-3), 0, 1) ** 1.5
+        line = np.clip((0.2 - lum) / 0.1, 0, 1) * alpha
+        body = alpha * (1 - line)
+        for col, sd in (('#e0403a', 41), ('#2fbfa8', 43), ('#3a7ae0', 47)):
+            b = blobs(3, seed + sd) * 0.32 * body
+            res = res * (1 - b[..., None]) + hexc(col) * b[..., None] * (0.5 + l2[..., None] * 0.6)
+        # Glitter speckle: gold and dark flecks like the foil card.
+        r3 = np.random.default_rng(seed + 53)
+        n = r3.random((h, w)).astype(np.float32)
+        gold = (n > 0.93).astype(np.float32) * body
+        dark = (n < 0.05).astype(np.float32) * body
+        res = res * (1 - gold[..., None] * 0.7) + hexc('#f0c75a') * gold[..., None] * 0.7
+        res = res * (1 - dark[..., None] * 0.5) + hexc('#140826') * dark[..., None] * 0.5
+        # Carved glyphs in gold.
+        gly = np.zeros((h, w), dtype=np.float32)
+        G = 22
+        for gy in range(G // 2, h, G):
+            for gx in range(G // 2, w, G):
+                if r3.random() < 0.5:
+                    continue
+                kind = r3.integers(0, 4)
+                ox, oy = gx + r3.integers(-3, 4), gy + r3.integers(-3, 4)
+                if kind == 0: pts = [(ox - 4 + k, oy) for k in range(9)] + [(ox, oy - 4 + k) for k in range(9)]
+                elif kind == 1: pts = [(ox - 4 + k // 2, oy + 4 - k) for k in range(9)] + [(ox + k // 2, oy - 4 + k) for k in range(9)] + [(ox - 2 + k, oy + 4) for k in range(5)]
+                elif kind == 2: pts = [(ox + int(4 * np.cos(a)), oy + int(3 * np.sin(a))) for a in np.linspace(np.pi, 2 * np.pi, 16)] + [(ox, oy)]
+                else: pts = [(ox - 3, oy - 4 + k) for k in range(9)] + [(ox + 3, oy - 4 + k) for k in range(9)] + [(ox - 3 + k, oy - 4) for k in range(7)]
+                for (x2, y2) in pts:
+                    for dx in (0, 1):
+                        if 0 <= x2 + dx < w and 0 <= y2 < h:
+                            gly[y2, x2 + dx] = 1
+        gly = gly * body * np.clip((l2 - 0.15) * 3, 0, 1)
+        res = res * (1 - gly[..., None] * 0.75) + hexc('#f0c75a') * gly[..., None] * 0.75
+        # Gold outlines, shaded a little darker at the very edge.
+        res = res * (1 - line[..., None]) + hexc('#d9a83a') * line[..., None]
+        edge = np.clip((0.1 - lum) / 0.08, 0, 1) * alpha
+        res = res * (1 - edge[..., None] * 0.5) + hexc('#7a5214') * edge[..., None] * 0.5
     elif skin == 'ocean':
         # Living water: clear blues with light ripple patterns, glossy white highlights and a few bubbles.
         hi = np.percentile(lum[alpha > 0.8], 90) if (alpha > 0.8).any() else 1.0

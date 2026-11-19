@@ -1,7 +1,7 @@
 import type { GameState, OwnedPet, Skin } from './types';
 import { type Rng, defaultRng } from './random';
 
-export const SKINS: Skin[] = ['mono', 'silver', 'gold', 'rainbow', 'pastel', 'retro', 'sakura', 'ocean', 'ember', 'moonlit', 'crystal', 'shadow', 'galaxy', 'harvest'];
+export const SKINS: Skin[] = ['mono', 'silver', 'gold', 'rainbow', 'pastel', 'retro', 'sakura', 'ocean', 'ember', 'moonlit', 'crystal', 'shadow', 'galaxy', 'ancient', 'harvest'];
 
 export const SKIN_INFO: Record<Skin, { label: string; emoji: string; color: string; chance: number }> = {
   mono: { label: 'Ink', emoji: '🖌️', color: '#3B3B4F', chance: 0.05 },
@@ -18,11 +18,12 @@ export const SKIN_INFO: Record<Skin, { label: string; emoji: string; color: stri
   crystal: { label: 'Crystal', emoji: '', color: '#5F7FE0', chance: 0.002 },
   shadow: { label: 'Shadow', emoji: '', color: '#6A3CC2', chance: 0.002 },
   galaxy: { label: 'Galaxy', emoji: '', color: '#8A3FB8', chance: 0.001 },
+  ancient: { label: 'Ancient', emoji: '', color: '#B8892A', chance: 0.001 },
   harvest: { label: 'Harvest', emoji: '', color: '#D2601C', chance: 0 },
 };
 
 /** Rarest first, so a lucky roll lands on the best skin. Silver, Gold and Rainbow can only hatch. */
-const HATCH_ORDER: Skin[] = ['rainbow', 'galaxy', 'gold', 'shadow', 'crystal', 'silver', 'sakura', 'ocean', 'ember', 'moonlit', 'pastel', 'retro', 'mono'];
+const HATCH_ORDER: Skin[] = ['rainbow', 'ancient', 'galaxy', 'gold', 'shadow', 'crystal', 'silver', 'sakura', 'ocean', 'ember', 'moonlit', 'pastel', 'retro', 'mono'];
 
 /** Bred eggs are three times as likely to hatch with a skin. */
 export const BRED_SKIN_BOOST = 3;

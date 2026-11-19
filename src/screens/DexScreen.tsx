@@ -55,7 +55,7 @@ const badgeStyles = StyleSheet.create({
 });
 
 type DexFilter = 'all' | Skin | 'shiny';
-const DYE_SKINS: Skin[] = ['pastel', 'retro', 'sakura', 'ocean', 'ember', 'moonlit', 'crystal', 'shadow', 'galaxy', 'harvest'];
+const DYE_SKINS: Skin[] = ['pastel', 'retro', 'sakura', 'ocean', 'ember', 'moonlit', 'crystal', 'shadow', 'galaxy', 'ancient', 'harvest'];
 const FILTERS: DexFilter[] = ['all', 'mono', 'silver', 'gold', 'rainbow', ...DYE_SKINS, 'shiny'];
 const FILTER_LABEL = { all: 'All', mono: 'Ink', silver: 'Silver', gold: 'Gold', rainbow: 'Rainbow', shiny: 'Shiny', ...Object.fromEntries(DYE_SKINS.map((k) => [k, SKIN_INFO[k].label])) } as Record<DexFilter, string>;
 const FILTER_DOT = { all: '#FFFFFF', mono: SKIN_INFO.mono.color, silver: SKIN_INFO.silver.color, gold: SKIN_INFO.gold.color, rainbow: SKIN_INFO.rainbow.color, shiny: '#F2C230', ...Object.fromEntries(DYE_SKINS.map((k) => [k, SKIN_INFO[k].color])) } as Record<DexFilter, string>;

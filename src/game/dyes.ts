@@ -27,6 +27,7 @@ export const DYES: Dye[] = [
   { skin: 'crystal', rarity: 'epic' },
   { skin: 'shadow', rarity: 'epic' },
   { skin: 'galaxy', rarity: 'legendary' },
+  { skin: 'ancient', rarity: 'legendary' },
   { skin: 'harvest', rarity: 'rare', event: true },
 ];
 
