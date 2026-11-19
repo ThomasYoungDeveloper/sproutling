@@ -7,7 +7,7 @@ Usage: python3 scripts/make_bottles2.py <lab pack png folder> assets
 """
 import sys, os
 import numpy as np
-from PIL import Image
+from PIL import Image, ImageFilter
 
 src, out = sys.argv[1], sys.argv[2]
 SIZE = 300
@@ -84,9 +84,41 @@ def dye(skin, shape):
         idx = np.stack([(yy - py[i]) ** 2 + (xx - px[i]) ** 2 for i in range(k)]).argmin(0)
         col = tones[np.clip(level + tilt[idx], 0, 3)]
     add = []
+    post = []
     if skin in ('galaxy',): add = [(specks(liq, 34, 3, 1.2, 2.4), '#ffffff'), (specks(liq, 10, 4, 1, 1.8), '#9fe6ff')]
     if skin == 'moonlit': add = [(specks(liq, 10, 5, 1.4, 2.6), '#fff3b0')]
-    if skin == 'ancient': add = [(specks(liq, 40, 6, 1, 2), '#f0c75a')]
+    if skin == 'ancient':
+        # Gold hieroglyphs carved into the liquid: an eye, an ankh, a feather and a zigzag (water).
+        from PIL import ImageDraw
+        g = Image.new('L', (SIZE, SIZE), 0); d = ImageDraw.Draw(g)
+        main = liq * (xx < SIZE * 0.68)
+        ys, xs = np.nonzero(main)
+        x0, x1, y0, y1 = xs.min(), xs.max(), ys.min(), ys.max()
+        cxs = [x0 + (x1 - x0) * f for f in (0.32, 0.72)]
+        cys = [y0 + (y1 - y0) * f for f in (0.33, 0.72)]
+        L = 6
+        def eye(cx, cy):
+            d.ellipse([cx - 20, cy - 10, cx + 20, cy + 10], outline=255, width=L)
+            d.ellipse([cx - 6, cy - 6, cx + 6, cy + 6], fill=255)
+            d.line([cx - 2, cy + 10, cx - 8, cy + 22], fill=255, width=L)
+            d.line([cx + 8, cy + 9, cx + 14, cy + 20, cx + 20, cy + 16], fill=255, width=L - 1)
+        def ankh(cx, cy):
+            d.ellipse([cx - 10, cy - 28, cx + 10, cy - 6], outline=255, width=L)
+            d.line([cx, cy - 6, cx, cy + 25], fill=255, width=L)
+            d.line([cx - 15, cy + 3, cx + 15, cy + 3], fill=255, width=L)
+        def feather(cx, cy):
+            d.line([cx, cy - 25, cx, cy + 25], fill=255, width=L - 1)
+            d.ellipse([cx - 10, cy - 28, cx + 10, cy + 8], outline=255, width=L - 1)
+        def zig(cx, cy):
+            pts = [(cx - 25 + i * 8, cy + (4 if i % 2 else -4)) for i in range(7)]
+            d.line(pts, fill=255, width=L, joint='curve')
+        eye(cxs[0], cys[0]); ankh(cxs[1], cys[0] + 10); zig((cxs[0] + cxs[1]) / 2 - 10, cys[1] + 4)
+        from scipy import ndimage
+        inside = ndimage.binary_fill_holes(ndimage.binary_closing(liq > 0, iterations=4)).astype(np.float32)
+        glyph = np.asarray(g, dtype=np.float32) / 255 * inside
+        edge = np.clip(np.asarray(Image.fromarray((glyph * 255).astype(np.uint8)).filter(ImageFilter.MaxFilter(5)), dtype=np.float32) / 255 - glyph, 0, 1) * inside
+        add = [(specks(liq, 24, 6, 1, 1.8), '#f0c75a')]
+        post = [(edge, '#6a3a0a'), (glyph, '#f6cf55')]
     if skin in ('slime', 'ocean'): add = [(specks(liq * (t < 0.8), 9, 8, 3, 6.5), '#ffffff')]
     if skin == 'sakura': add = [(specks(liq, 8, 9, 3, 5), '#fff0f6')]
     if skin == 'shadow':
@@ -101,6 +133,8 @@ def dye(skin, shape):
     grey = a[..., :3].mean(-1, keepdims=True)
     a[..., :3] = a[..., :3] * (1 - shine[..., None]) + np.clip(grey * 1.08, 0, 255) * shine[..., None]
     rgb = a[..., :3] * (1 - liq[..., None]) + col * liq[..., None]
+    for m, c in post:
+        rgb = rgb * (1 - m[..., None]) + hexc(c) * m[..., None]
     return Image.fromarray(np.dstack([rgb, a[..., 3]]).astype(np.uint8), 'RGBA')
 
 os.makedirs(f'{out}/dyes', exist_ok=True); os.makedirs(f'{out}/potions', exist_ok=True)

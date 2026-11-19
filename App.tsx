@@ -454,7 +454,7 @@ const styles = StyleSheet.create({
   scrollHome: { paddingHorizontal: 0, paddingTop: 0, maxWidth: undefined },
   brand: { fontSize: 24, fontWeight: '900', color: colors.ink },
   pills: { flexDirection: 'row', gap: 6 },
-  pill: { backgroundColor: colors.card, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 6 },
+  pill: { backgroundColor: colors.card, borderRadius: 999, paddingHorizontal: 12, height: 40, flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
   pillText: { fontWeight: '800', fontSize: 13, color: colors.ink },
   signIn: { backgroundColor: colors.mint, borderColor: colors.mint },
   scroll: { padding: space.lg, paddingTop: space.sm, paddingBottom: 40, gap: space.md, maxWidth: 520, width: '100%', alignSelf: 'center' },
