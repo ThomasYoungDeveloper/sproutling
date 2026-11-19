@@ -544,7 +544,7 @@ export function finishBattle(s: GameState, won: boolean, vsFriend: boolean, rng:
   const day = A.todayKey(s);
   const rec = s.battle && s.battle.day === day ? s.battle : { day, rewarded: 0, wonToday: false, wins: s.battle?.wins ?? 0, losses: s.battle?.losses ?? 0 };
   const rewarded = rec.rewarded < REWARDED_PER_DAY;
-  const coins = rewarded ? (won ? (vsFriend ? 30 : 20) : 5) : 0;
+  const coins = rewarded ? (won ? (vsFriend ? 20 : 15) : 5) : 0;
   const chest = rewarded && won && !rec.wonToday;
   let next: GameState = {
     ...s,

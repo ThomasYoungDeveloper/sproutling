@@ -14,7 +14,7 @@ export const FULL = 'Full Potion';
 export type PotionKind = 'small' | 'full';
 export const POTION_ITEM: Record<PotionKind, string> = { small: SMALL, full: FULL };
 export const POTION_HEAL: Record<PotionKind, number> = { small: 50, full: 100 };
-export const POTION_PRICE: Record<PotionKind, number> = { small: 60, full: 150 };
+export const POTION_PRICE: Record<PotionKind, number> = { small: 80, full: 200 };
 export const POTION_INFO: Record<PotionKind, string> = { small: 'Heals 50% of your pet’s max HP (e.g. 25% → 75%)', full: 'Heals your pet to full HP' };
 /** Every pet heals by itself: 10% an hour, all the way to full. Potions are for when you don't want to wait. */
 export const REST_PER_HOUR = 10;

@@ -12,7 +12,7 @@ import * as A from './actions';
  */
 
 export const ADULT_LEVEL = 7;
-export const BREED_COST = 100;
+export const BREED_COST = 300;
 export const REST_HOURS = 24;
 /** Chance the baby is a surprise species that shares a parent's element. */
 export const SURPRISE_CHANCE = 0.1;

@@ -78,10 +78,9 @@ export function moodLine(mood: Mood, name: string): string {
 /** Feeds the active pet (Pellets unless a food is picked). */
 export const feed = (s: GameState, foodId: string = PELLETS.id, now = Date.now()) =>
   s.activePetId ? feedPet(s, s.activePetId, foodId, A.updateToday, A.today(s), now) : s;
-/** Playing with a toy counts as play and toward the toy-lover badge. */
-export const playToy = (s: GameState) => A.bump(play(s), 'toys');
-
-export const play = (s: GameState, now = Date.now()) => A.updateToday(s, (d) => ({ ...d, care: { ...d.care, played: (d.care?.played ?? 0) + 1, ...funAfterPlay(d, now) } }));
+/** Every play (button or toy) counts toward the Playtime Pal badge (stats.toys keeps its old name). */
+export const play = (s: GameState, now = Date.now()) => A.bump(A.updateToday(s, (d) => ({ ...d, care: { ...d.care, played: (d.care?.played ?? 0) + 1, ...funAfterPlay(d, now) } })), 'toys');
+export const playToy = (s: GameState) => play(s);
 
 /** Trinkets are the trip collectibles (Moon Seed, Tide Shell…). Training Crystals share the item bag but aren't treats. */
 const isTrinket = (name: string) => COLLECTIBLES.includes(name);

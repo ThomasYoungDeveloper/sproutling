@@ -14,7 +14,7 @@ import { buzz } from '../components/fx';
 import { colors, font, space } from '../theme';
 import { SPECIES_BY_ID } from '../game/species';
 import { levelFor, stageFor } from '../game/scoring';
-import { GIFTS_PER_DAY } from '../game/actions';
+import { GIFTS_PER_DAY, GIFT_COINS } from '../game/actions';
 import { activeToday, copyText, lastSeen, shareInvite } from './friendsShared';
 import { ArenaCard, LiveBattlesCard, TradesCard } from '../components/SocialPanels';
 import { useLive } from '../state/LiveBattleContext';
@@ -232,7 +232,7 @@ export default function FriendsScreen({ initialAdd, onUsedInitialAdd, initialGui
             />
           </Pressable>
         ))}
-        {friends.length > 0 ? <Text style={font.tiny}>Send up to 3 gifts a day, one per friend. Each gift holds 20 coins, and sometimes a surprise chest.</Text> : null}
+        {friends.length > 0 ? <Text style={font.tiny}>Send up to 3 gifts a day, one per friend. Each gift holds {GIFT_COINS} coins, and sometimes a surprise chest.</Text> : null}
       </Card>
 
       {friends.length > 0 && !inviteTop && invite}

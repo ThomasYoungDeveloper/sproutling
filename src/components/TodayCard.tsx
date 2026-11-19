@@ -119,6 +119,7 @@ export default function TodayCard() {
         </Text>
         {tipOpen ? <Text style={styles.tipSource}>Source: {tip.source} · Not medical advice</Text> : null}
       </Pressable>
+      {A.starterBoost(state) ? <Text style={styles.starter}>New player bonus: double coins from habits until level {A.STARTER_BOOST_UNTIL}</Text> : null}
       <NextUnlockLine />
     </Card>
   );
@@ -308,6 +309,7 @@ const styles = StyleSheet.create({
   changedText: { flex: 1, fontSize: 13, fontWeight: '800', color: '#6A4A00' },
   changedX: { fontSize: 13, fontWeight: '900', color: '#B06A00' },
   tipLine: { gap: 2, paddingVertical: 2 },
+  starter: { fontSize: 12, fontWeight: '800', color: '#B06A00' },
   tipTag: { fontSize: 12, fontWeight: '900', color: '#3D6E9C' },
   tipText: { fontSize: 12, fontWeight: '700', color: colors.muted },
   tipSource: { fontSize: 11, fontWeight: '700', color: colors.muted },

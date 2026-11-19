@@ -78,7 +78,7 @@ ok(!('meals' in card) && !JSON.stringify(card).includes('sleep'), 'trainer card 
 ok(JSON.stringify(card).length < 8000, 'trainer card fits the database size limit');
 ok(readCard({}) === null && readCard(card) !== null, 'old or empty cards are ignored safely');
 const g0 = A.openGifts(t, 3, () => 0.5);
-ok(g0.coins === 60 && g0.chests === 0 && g0.state.coins === t.coins + 60, 'each gift pays 20 coins');
+ok(g0.coins === 30 && g0.chests === 0 && g0.state.coins === t.coins + 30, 'each gift pays 10 coins');
 const g1 = A.openGifts(t, 2, () => 0.05);
 ok(g1.chests === 2 && g1.state.chests.length === t.chests.length + 2, 'gifts can hide a surprise Bronze chest');
 ok(A.openGifts(t, 0).state.coins === t.coins, 'no gifts, no coins');
@@ -169,8 +169,8 @@ ok(St.personalityOf(pet0) === St.personalityOf({ ...pet0 }), 'older pets get a s
 ok(St.equippedMoves({ speciesId: 'p02', xp: 0 }).length === 2 && St.equippedMoves({ speciesId: 'p02', xp: 25 * 15 * 14 }).length === 4, 'pets learn more moves as they level');
 const tog = St.toggleMove({ ...pet0, xp: 25 * 15 * 14 }, 'tackle'); ok(St.equippedMoves(tog).length >= 1, 'moves can be swapped');
 let R = { ...t, battle: undefined } as GameState; const coins0b = R.coins;
-const f1 = B.finishBattle(R, true, true); ok(f1.reward.coins === 30 && f1.reward.chest && f1.state.chests.length === R.chests.length + 1, 'first win: 30 coins and a Bronze chest');
-R = f1.state; const f2 = B.finishBattle(R, true, false); ok(f2.reward.coins === 20 && !f2.reward.chest, 'later wins: coins only');
+const f1 = B.finishBattle(R, true, true); ok(f1.reward.coins === 20 && f1.reward.chest && f1.state.chests.length === R.chests.length + 1, 'first win: 20 coins and a Bronze chest');
+R = f1.state; const f2 = B.finishBattle(R, true, false); ok(f2.reward.coins === 15 && !f2.reward.chest, 'later wins: coins only');
 R = f2.state; for (let i = 0; i < 3; i++) R = B.finishBattle(R, false, true).state;
 const f6 = B.finishBattle(R, true, true); ok(f6.reward.coins === 0 && !f6.reward.rewarded && B.battlesLeftToday(R) === 0, 'only 5 rewarded battles a day');
 ok(B.finishBattle(A.nextDay(R), true, true).reward.chest, 'rewards reset the next day');
@@ -180,7 +180,7 @@ let W = { ...t, coins: 1000, wardrobe: {} } as GameState;
 const shop1 = Cos.shopToday(W), shop1b = Cos.shopToday(W), shop2 = Cos.shopToday(A.nextDay(W));
 ok(shop1.length === Cos.SHOP_SIZE && shop1.map((c) => c.id).join() === shop1b.map((c) => c.id).join(), 'shop is the same all day');
 ok(shop1.map((c) => c.id).join() !== shop2.map((c) => c.id).join(), 'shop changes the next day');
-ok(['toy', 'hat', 'aura', 'scene'].every((sl) => shop1.some((c) => c.slot === sl)) && shop1.filter((c) => c.slot === 'toy').length >= 2, 'shop always has toys, hats, an aura and a scene');
+ok(['hat', 'aura', 'scene'].every((sl) => shop1.some((c) => c.slot === sl)) && !shop1.some((c) => c.slot === 'toy'), 'shop has hats, an aura and a scene, and no toys');
 ok(!shop1.some((c) => c.premium || c.special || c.price <= 0), 'shop never sells premium or special items');
 ok(Cos.owns(W, 'ball') && Cos.owns(W, 'meadow') && Cos.ownedToys(W).length === 1, 'everyone starts with a ball and the meadow');
 const item = shop1.find((c) => c.slot === 'hat')!;
@@ -284,10 +284,10 @@ let H = { ...t, achievements: {}, stats: {}, battle: undefined, wardrobe: {} } a
 ok(!Ach.claimable(H).some((x) => x.a.id === 'win1') && Ach.claim(H, 'win1') === null, 'unfinished badges cannot be claimed');
 H = B.finishBattle(H, true, false).state;
 ok(Ach.claimable(H).some((x) => x.a.id === 'win1'), 'winning a battle unlocks First Victory');
-const Hc = Ach.claim(H, 'win1')!; ok(Hc.coins === H.coins + 30 && Ach.badgeCount(Hc) === 1, 'claiming pays the reward and adds a badge');
+const Hc = Ach.claim(H, 'win1')!; ok(Hc.coins === H.coins + 75 && Ach.badgeCount(Hc) === 1, 'claiming pays the reward and adds a badge');
 ok(Ach.claim(Hc, 'win1') === null, 'a badge is claimed only once');
 H = A.addSteps(Hc, 12000); ok(Ach.claimable(H).some((x) => x.a.id === 'steps10k'), 'walking unlocks step badges');
-const Hch = Ach.claim(H, 'steps10k')!; ok(Hch.coins === H.coins + 30, 'step badge reward');
+const Hch = Ach.claim(H, 'steps10k')!; ok(Hch.coins === H.coins + 75, 'step badge reward');
 const fullDex = { ...H, dex: Object.fromEntries(SPECIES.map((x) => [x.id, true])) } as GameState;
 const Hd = Ach.claim(fullDex, 'dexall')!; ok(!!Hd && Cos.owns(Hd, 'trophy') && Hd.chests.length === fullDex.chests.length + 1, 'completing the Pet-dex gives the Champion Laurel');
 ok(Ach.ACHIEVEMENTS.length >= 25 && new Set(Ach.ACHIEVEMENTS.map((a) => a.id)).size === Ach.ACHIEVEMENTS.length, 'badge ids are unique');
@@ -308,9 +308,9 @@ let Bd = { ...t, coins: 500, expedition: undefined, eggs: [], pets: [
   { id: 'kid', speciesId: 'p82', nickname: 'Omu', xp: 100, shiny: false, hatchedOn: '' } ], activePetId: 'mom' } as GameState;
 ok(!Br.canBreed(Bd, 'mom', 'kid', NOW).ok, 'only adults (level 7+) can breed');
 ok(!Br.canBreed(Bd, 'mom', 'mom', NOW).ok, 'a pet cannot breed with itself');
-ok(!Br.canBreed({ ...Bd, coins: 50 }, 'mom', 'dad', NOW).ok, 'breeding costs 100 coins');
+ok(!Br.canBreed({ ...Bd, coins: 50 }, 'mom', 'dad', NOW).ok, 'breeding costs 300 coins');
 const br = Br.breed(Bd, 'mom', 'dad', () => 0.7, NOW)!;
-ok(br.state.coins === 400 && br.state.eggs.length === 1 && br.egg.bred!.parentSkins[0] === 'gold', 'breeding makes an egg that remembers the parents');
+ok(br.state.coins === 200 && br.state.eggs.length === 1 && br.egg.bred!.parentSkins[0] === 'gold', 'breeding makes an egg that remembers the parents');
 ok(['p15', 'p02'].includes(br.egg.bred!.speciesId) && br.egg.rarity === SPECIES.find((x) => x.id === br.egg.bred!.speciesId)!.rarity, 'baby is a parent species with matching egg rarity');
 ok(!Br.canBreed(br.state, 'mom', 'dad', NOW + 3_600_000).ok && Br.canBreed({ ...br.state, coins: 500 }, 'mom', 'dad', NOW + 25 * 3_600_000).ok, 'parents rest for 24 hours');
 const sur = Br.breed(Bd, 'mom', 'dad', () => 0.01, NOW)!; ok(sur.surprise && !['p15', 'p02'].includes(sur.egg.bred!.speciesId), 'surprise babies can happen');
@@ -460,11 +460,11 @@ ok(A.applyShields(shielded.state).used === 0, 'shields are not used twice');
 // Incubators
 {
   const I = require('../src/game/incubators');
-  let g = { ...newGame(), coins: 5000 };
-  ok(I.nextIncubatorPrice(g) === 500, 'second incubator costs 500');
-  const r1 = I.buyIncubator(g); ok(r1.ok && r1.state.incubatorSlots === 2 && r1.state.coins === 4500, 'buying adds a slot and takes the coins');
+  let g = { ...newGame(), coins: 20000 };
+  ok(I.nextIncubatorPrice(g) === 1500, 'second incubator costs 1,500');
+  const r1 = I.buyIncubator(g); ok(r1.ok && r1.state.incubatorSlots === 2 && r1.state.coins === 18500, 'buying adds a slot and takes the coins');
   const r2 = I.buyIncubator(r1.state); const r3 = I.buyIncubator(r2.state);
-  ok(r3.ok && r3.state.incubatorSlots === 4 && r3.state.coins === 1000, 'prices climb 500, 1,000, 2,500');
+  ok(r3.ok && r3.state.incubatorSlots === 4 && r3.state.coins === 4500, 'prices climb 1,500, 4,000, 10,000');
   ok(!I.buyIncubator(r3.state).ok && I.nextIncubatorPrice(r3.state) === null, 'no more than 4 incubators');
   ok(!I.buyIncubator({ ...newGame(), coins: 100 }).ok, 'cannot buy without enough coins');
 }
@@ -760,5 +760,14 @@ console.log('\nEgg basket');
   ok(Un.newUnlock(Un.markSeen(lv3, 'shop'))?.id === 'trips', 'after the shop card comes the trips card');
   const old = A.cleanSave({ ...newGame(), pets: [{ id: 'x', speciesId: 'p01', nickname: 'Old', xp: 0, shiny: false, hatchedOn: '' } as any], activePetId: 'x' });
   ok(!!old.onboard?.legacy && Un.unlocked(old, 'breeding') && !Un.newUnlock(old) && In.needsIntro(old), 'older saves keep everything open and only get the quick setup');
+}
+// Starter boost: double habit coins until level 6
+{
+  const lowLv = { ...R, coins: 0, days: {}, pets: R.pets.map((p) => ({ ...p, xp: 0 })) };
+  const a1 = A.updateToday(lowLv, (d) => ({ ...d, steps: 4000 }));
+  ok(lowLv.pets.length > 0 && A.starterBoost(lowLv), 'new players get the starter boost');
+  const big = { ...lowLv, pets: lowLv.pets.map((p) => ({ ...p, xp: 99999 })) };
+  const a2 = A.updateToday(big, (d) => ({ ...d, steps: 4000 }));
+  ok(!A.starterBoost(big) && a2.coins > 0 && a1.coins === a2.coins * 2, 'starter boost doubles habit coins, then ends');
 }
 console.log(fails ? `${fails} FAILED` : 'ALL PASSED'); process.exit(fails ? 1 : 0);

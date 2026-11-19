@@ -2,7 +2,7 @@ import type { ChestKind, DayLog, Egg, Element, GameState, Meal, OwnedPet, Rarity
 import { addPotions } from './hp';
 import { addCrystals, chestCrystals } from './powerups';
 import { dateKey } from './dates';
-import { emptyDay, scoreDay, dailyQuests, streakFrom, COINS_PER_XP } from './scoring';
+import { emptyDay, scoreDay, dailyQuests, streakFrom, COINS_PER_XP, levelFor } from './scoring';
 import { boostedTotal } from './care';
 import { grantCosmetic, rollChestCosmetic } from './cosmetics';
 import { BRED_SKIN_BOOST, rollSkin, skinKey } from './skins';
@@ -28,6 +28,11 @@ export const streak = (s: GameState) => streakFrom((o) => getDay(s, o));
 export const activePet = (s: GameState): OwnedPet | undefined => s.pets.find((p) => p.id === s.activePetId);
 export const activeElement = (s: GameState) => { const p = activePet(s); return p ? SPECIES_BY_ID[p.speciesId]?.element : undefined; };
 
+/** New players earn double habit coins until their best pet reaches this level, so the first buys come quickly. */
+export const STARTER_BOOST_UNTIL = 6;
+export const starterBoost = (s: GameState) => s.pets.reduce((m, p) => Math.max(m, levelFor(p.xp)), 1) < STARTER_BOOST_UNTIL;
+const starterMult = (s: GameState) => (starterBoost(s) ? 2 : 1);
+
 /** Apply a change to today's log and pay out any XP/coins gained by the change. */
 export function updateToday(s: GameState, change: (d: DayLog) => DayLog): GameState {
   const key = todayKey(s);
@@ -48,7 +53,7 @@ export function updateToday(s: GameState, change: (d: DayLog) => DayLog): GameSt
   if (gained !== 0) {
     next.pets = next.pets.map((p) => (p.id === next.activePetId ? { ...p, xp: Math.max(0, p.xp + gained) } : p));
     // Coins follow the day's total XP, so undoing a habit takes its coins back (no farming by toggling).
-    const coinDelta = Math.floor(boostedTotal(after, el) * COINS_PER_XP) - Math.floor(boostedTotal(before, el) * COINS_PER_XP);
+    const coinDelta = (Math.floor(boostedTotal(after, el) * COINS_PER_XP) - Math.floor(boostedTotal(before, el) * COINS_PER_XP)) * starterMult(s);
     next.coins = Math.max(0, next.coins + coinDelta);
   }
 
@@ -317,7 +322,7 @@ export function claimLogin(s: GameState, rng: Rng = defaultRng): { state: GameSt
 /* ---------- Friend gifts ---------- */
 
 /** What one friend gift holds: coins, with a small chance of a surprise Bronze chest. */
-export const GIFT_COINS = 20;
+export const GIFT_COINS = 10;
 export const GIFT_CHEST_CHANCE = 0.1;
 /** How many gifts a player can send per day (one per friend). */
 export const GIFTS_PER_DAY = 3;

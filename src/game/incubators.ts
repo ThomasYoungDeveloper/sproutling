@@ -2,7 +2,7 @@ import type { GameState } from './types';
 
 /** Extra incubators bought with coins: each one costs more, up to 4 in total. */
 export const MAX_INCUBATORS = 4;
-const PRICE_FOR_SLOT: Record<number, number> = { 2: 500, 3: 1000, 4: 2500 };
+const PRICE_FOR_SLOT: Record<number, number> = { 2: 1500, 3: 4000, 4: 10000 };
 
 /** Price of the next incubator, or null when you already have the most. */
 export function nextIncubatorPrice(s: GameState): number | null {

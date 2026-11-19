@@ -32,40 +32,40 @@ export interface Cosmetic {
 }
 
 export const COSMETICS: Cosmetic[] = [
-  { id: 'party', name: 'Party Hat', slot: 'hat', rarity: 'common', price: 60 },
-  { id: 'flower', name: 'Flower Crown', slot: 'hat', rarity: 'common', price: 60 },
-  { id: 'beanie', name: 'Cozy Beanie', slot: 'hat', rarity: 'common', price: 60 },
-  { id: 'bow', name: 'Big Bow', slot: 'hat', rarity: 'common', price: 60 },
-  { id: 'bunny', name: 'Bunny Ears', slot: 'hat', rarity: 'rare', price: 150 },
-  { id: 'cat', name: 'Cat Ears', slot: 'hat', rarity: 'rare', price: 150 },
-  { id: 'chef', name: 'Chef Hat', slot: 'hat', rarity: 'rare', price: 150 },
-  { id: 'wizard', name: 'Wizard Hat', slot: 'hat', rarity: 'rare', price: 150 },
-  { id: 'tophat', name: 'Top Hat', slot: 'hat', rarity: 'rare', price: 150 },
-  { id: 'crown', name: 'Royal Crown', slot: 'hat', rarity: 'epic', price: 300 },
-  { id: 'halo', name: 'Halo', slot: 'hat', rarity: 'epic', price: 300 },
-  { id: 'kabuto', name: 'Samurai Helmet', slot: 'hat', rarity: 'epic', price: 300 },
+  { id: 'party', name: 'Party Hat', slot: 'hat', rarity: 'common', price: 150 },
+  { id: 'flower', name: 'Flower Crown', slot: 'hat', rarity: 'common', price: 150 },
+  { id: 'beanie', name: 'Cozy Beanie', slot: 'hat', rarity: 'common', price: 150 },
+  { id: 'bow', name: 'Big Bow', slot: 'hat', rarity: 'common', price: 150 },
+  { id: 'bunny', name: 'Bunny Ears', slot: 'hat', rarity: 'rare', price: 400 },
+  { id: 'cat', name: 'Cat Ears', slot: 'hat', rarity: 'rare', price: 400 },
+  { id: 'chef', name: 'Chef Hat', slot: 'hat', rarity: 'rare', price: 400 },
+  { id: 'wizard', name: 'Wizard Hat', slot: 'hat', rarity: 'rare', price: 400 },
+  { id: 'tophat', name: 'Top Hat', slot: 'hat', rarity: 'rare', price: 400 },
+  { id: 'crown', name: 'Royal Crown', slot: 'hat', rarity: 'epic', price: 900 },
+  { id: 'halo', name: 'Halo', slot: 'hat', rarity: 'epic', price: 900 },
+  { id: 'kabuto', name: 'Samurai Helmet', slot: 'hat', rarity: 'epic', price: 900 },
   { id: 'goldcrown', name: 'Golden Crown', slot: 'hat', rarity: 'epic', price: 0, premium: true },
   { id: 'trophy', name: 'Champion Laurel', slot: 'hat', rarity: 'epic', price: 0, special: true },
   { id: 'acorn', name: 'Acorn Cap', slot: 'hat', rarity: 'rare', price: 0, special: true, event: 'harvest' },
   { id: 'santa', name: 'Holiday Hat', slot: 'hat', rarity: 'rare', price: 0, special: true, event: 'winter' },
 
-  { id: 'hearts', name: 'Floating Hearts', slot: 'aura', rarity: 'common', price: 80 },
-  { id: 'bubbles', name: 'Bubbles', slot: 'aura', rarity: 'common', price: 80 },
-  { id: 'snowfall', name: 'Snowfall', slot: 'aura', rarity: 'common', price: 80 },
-  { id: 'sparkles', name: 'Sparkles', slot: 'aura', rarity: 'rare', price: 180 },
-  { id: 'petals', name: 'Sakura Petals', slot: 'aura', rarity: 'rare', price: 180 },
-  { id: 'fireflies', name: 'Fireflies', slot: 'aura', rarity: 'rare', price: 180 },
-  { id: 'stars', name: 'Shooting Stars', slot: 'aura', rarity: 'epic', price: 320 },
+  { id: 'hearts', name: 'Floating Hearts', slot: 'aura', rarity: 'common', price: 150 },
+  { id: 'bubbles', name: 'Bubbles', slot: 'aura', rarity: 'common', price: 150 },
+  { id: 'snowfall', name: 'Snowfall', slot: 'aura', rarity: 'common', price: 150 },
+  { id: 'sparkles', name: 'Sparkles', slot: 'aura', rarity: 'rare', price: 400 },
+  { id: 'petals', name: 'Sakura Petals', slot: 'aura', rarity: 'rare', price: 400 },
+  { id: 'fireflies', name: 'Fireflies', slot: 'aura', rarity: 'rare', price: 400 },
+  { id: 'stars', name: 'Shooting Stars', slot: 'aura', rarity: 'epic', price: 900 },
   { id: 'galaxy', name: 'Galaxy Swirl', slot: 'aura', rarity: 'epic', price: 0, premium: true },
   { id: 'leaves', name: 'Autumn Leaves', slot: 'aura', rarity: 'rare', price: 0, special: true, event: 'harvest' },
   { id: 'lights', name: 'Twinkle Lights', slot: 'aura', rarity: 'epic', price: 0, special: true, event: 'winter' },
 
   { id: 'meadow', name: 'Home Meadow', slot: 'scene', rarity: 'common', price: 0 },
-  { id: 'beach', name: 'Sunny Beach', slot: 'scene', rarity: 'common', price: 120 },
-  { id: 'snow', name: 'Snowy Hills', slot: 'scene', rarity: 'common', price: 120 },
-  { id: 'sakura', name: 'Sakura Garden', slot: 'scene', rarity: 'rare', price: 200 },
-  { id: 'candy', name: 'Candy Land', slot: 'scene', rarity: 'rare', price: 200 },
-  { id: 'space', name: 'Outer Space', slot: 'scene', rarity: 'epic', price: 400 },
+  { id: 'beach', name: 'Sunny Beach', slot: 'scene', rarity: 'common', price: 250 },
+  { id: 'snow', name: 'Snowy Hills', slot: 'scene', rarity: 'common', price: 250 },
+  { id: 'sakura', name: 'Sakura Garden', slot: 'scene', rarity: 'rare', price: 600 },
+  { id: 'candy', name: 'Candy Land', slot: 'scene', rarity: 'rare', price: 600 },
+  { id: 'space', name: 'Outer Space', slot: 'scene', rarity: 'epic', price: 1200 },
   { id: 'aurora', name: 'Northern Lights', slot: 'scene', rarity: 'epic', price: 0, premium: true },
   { id: 'autumn', name: 'Harvest Grove', slot: 'scene', rarity: 'epic', price: 0, special: true, event: 'harvest' },
   { id: 'winterfest', name: 'Winter Festival', slot: 'scene', rarity: 'epic', price: 0, special: true, event: 'winter' },
@@ -91,7 +91,7 @@ export const ITEM_RARITY_COLOR: Record<ItemRarity, string> = { common: '#6B9E86'
 export const owns = (s: GameState, id: string) => id === 'meadow' || id === 'ball' || !!s.wardrobe?.[id];
 
 /** Items that can come from the shop and chests. */
-const SELLABLE = COSMETICS.filter((c) => c.price > 0 && !c.premium && !c.special);
+const SELLABLE = COSMETICS.filter((c) => c.price > 0 && !c.premium && !c.special && c.slot !== 'toy');
 
 function hash(str: string): number {
   let h = 2166136261;
@@ -99,14 +99,14 @@ function hash(str: string): number {
   return h >>> 0;
 }
 
-export const SHOP_SIZE = 8;
+export const SHOP_SIZE = 6;
 
-/** Today's shop: the same eight items for everyone on a given day, always with toys, hats, an aura and a scene. */
+/** Today's shop: the same items for everyone on a given day, always with hats, an aura and a scene. Toys aren't sold (the free ball stays). */
 export function shopToday(s: GameState): Cosmetic[] {
   const day = A.todayKey(s);
   const ranked = [...SELLABLE].sort((a, b) => hash(day + a.id) - hash(day + b.id));
   const pick: Cosmetic[] = [];
-  (['toy', 'toy', 'hat', 'hat', 'aura', 'scene'] as Slot[]).forEach((slot) => {
+  (['hat', 'hat', 'aura', 'scene'] as Slot[]).forEach((slot) => {
     const c = ranked.find((x) => x.slot === slot && !pick.includes(x));
     if (c) pick.push(c);
   });
