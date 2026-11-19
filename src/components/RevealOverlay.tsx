@@ -1,3 +1,5 @@
+import { AdBonusButton } from './Ads';
+import { addCoins } from '../game/adBonus';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import PotionIcon, { POTION_COLOR } from './PotionIcon';
@@ -336,7 +338,10 @@ function ChestReveal({ r, onClose }: { r: Extract<Reveal, { kind: 'chest' }>; on
           </View>
           {r.result.basketFull ? <Text style={styles.blurb}>Your egg basket is full, so the egg became coins. Hatch some eggs to make room.</Text> : !r.result.eggRarity ? <Text style={styles.blurb}>No egg this time. Keep your streak going!</Text> : <Text style={styles.blurb}>Put it in an incubator and go for a walk.</Text>}
           <PopIn delay={1000}>
-            <Button primary label="Collect" onPress={onClose} />
+            <View style={{ alignSelf: 'stretch', gap: 10, width: 300, maxWidth: '100%' }}>
+              {r.result.coins > 0 ? <AdBonusButton title={`Double it: +${r.result.coins * 2}`} onReward={addCoins(r.result.coins)} /> : null}
+              <Button primary label={`Collect ${r.result.coins}`} onPress={onClose} />
+            </View>
           </PopIn>
         </View>
       )}

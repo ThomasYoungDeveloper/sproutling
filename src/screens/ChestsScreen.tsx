@@ -1,3 +1,4 @@
+import { AdCard } from '../components/Ads';
 import { useResetIn } from '../lib/useResetIn';
 import React, { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -210,6 +211,7 @@ export default function ChestsScreen() {
           </View>
         ))}
       </View>
+      <AdCard />
     </View>
   );
 }

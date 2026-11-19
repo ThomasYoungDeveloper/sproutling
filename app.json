@@ -78,6 +78,22 @@
             }
           ]
         }
+      ],
+      [
+        "react-native-google-mobile-ads",
+        {
+          "iosAppId": "ca-app-pub-9733079524846820~6792544482",
+          "androidAppId": "ca-app-pub-3940256099942544~3347511713",
+          "delayAppMeasurementInit": true,
+          "skAdNetworkItems": ["cstr6suwn9.skadnetwork"],
+          "userTrackingUsageDescription": "Sproutling shows a few optional ads. Allowing this lets ads be more relevant to you. Saying no still shows ads, just less tailored ones."
+        }
+      ],
+      [
+        "expo-tracking-transparency",
+        {
+          "userTrackingPermission": "Sproutling shows a few optional ads. Allowing this lets ads be more relevant to you. Saying no still shows ads, just less tailored ones."
+        }
       ]
     ],
     "extra": {

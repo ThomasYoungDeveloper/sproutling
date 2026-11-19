@@ -1,3 +1,5 @@
+import { AdBonusButton } from './Ads';
+import { addCoins } from '../game/adBonus';
 import { useResetIn } from '../lib/useResetIn';
 import Coin from './Coin';
 import React, { useState } from 'react';
@@ -77,6 +79,7 @@ export default function DailyLoginSheet({ onClose }: { onClose: () => void }) {
                 <Text style={[font.small, { fontWeight: '900' }]}>Plus your daily Small Potion</Text>
               </View>
               {got.reward.chest ? <Text style={font.small}>Open it on the Chests tab.</Text> : null}
+              {got.reward.coins ? <AdBonusButton title={`Double today’s coins: +${got.reward.coins}`} onReward={addCoins(got.reward.coins)} /> : null}
             </View>
           </PopIn>
         ) : null}

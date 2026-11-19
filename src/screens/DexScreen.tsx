@@ -1,3 +1,4 @@
+import { AdCard } from '../components/Ads';
 import * as U from '../game/unlocks';
 import { LockedCard } from '../components/Unlocks';
 import { Glow } from '../components/Spotlight';
@@ -175,6 +176,7 @@ export default function DexScreen() {
           </>
         )}
       </Card>
+      <AdCard />
     </View>
   );
 }

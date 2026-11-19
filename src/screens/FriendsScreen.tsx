@@ -1,3 +1,4 @@
+import { AdCard } from '../components/Ads';
 import { useResetIn } from '../lib/useResetIn';
 import { Glow, useSpotlight } from '../components/Spotlight';
 import React, { useEffect, useState } from 'react';
@@ -259,6 +260,7 @@ export default function FriendsScreen({ initialAdd, onUsedInitialAdd, initialGui
 
         </>
       )}
+      <AdCard />
     </View>
   );
 }

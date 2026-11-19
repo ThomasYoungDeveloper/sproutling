@@ -1,3 +1,5 @@
+import { AdBonusButton } from './Ads';
+import { speedUpTrip } from '../game/adBonus';
 import { CoinText } from './Coin';
 import { Glow } from './Spotlight';
 import React, { useEffect, useRef, useState } from 'react';
@@ -372,6 +374,7 @@ export default function ExpeditionCard() {
     }
     void sp;
     return (
+      <View style={{ gap: 8 }}>
       <TripScene
         placeId={prog.place.id}
         speciesId={pet.speciesId}
@@ -384,6 +387,8 @@ export default function ExpeditionCard() {
         onPress={() => open(<TripSheet onClose={close} />)}
         label={`${pet.nickname} is at ${prog.place.name}, home in ${Ex.formatLeft(prog.msLeft)}`}
       />
+      {prog.msLeft > 3600_000 ? <AdBonusButton title="Speed up: 1 hour off" onReward={speedUpTrip} /> : null}
+      </View>
     );
   }
 

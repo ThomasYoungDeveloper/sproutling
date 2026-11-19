@@ -143,6 +143,8 @@ export interface GameState {
   skinDex?: Record<string, true>;
   /** Today's pet wishes: where each one started counting, and which were granted. */
   wishes?: { day: string; base?: Record<number, number>; granted?: number[] };
+  /** Watch-an-ad bonuses used today (up to 3). */
+  adBonus?: { day: string; used: number };
   /** Lucky Wheel spins used today, and any extra spins earned (ads, later). */
   wheel?: { day: string; used: number; extra?: number };
   /** Day the shop's dye was bought (one per dye day). */
