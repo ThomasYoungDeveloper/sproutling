@@ -9,7 +9,7 @@ const POTION_IMAGES: Record<PotionKind, number> = {
   full: require('../../assets/potions/full.png'),
 };
 
-/** Potion bottle art from the 2D Potion Icon Pack: green for Small, red for Full. */
+/** Potion bottle art from the Mad Scientist Laboratory pack: green for Small, red for Full. */
 export default function PotionIcon({ kind, size = 40 }: { kind: PotionKind; size?: number }) {
   return <Image source={POTION_IMAGES[kind]} style={{ width: size, height: size }} resizeMode="contain" accessibilityIgnoresInvertColors />;
 }

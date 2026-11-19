@@ -1,4 +1,4 @@
-"""Builds potion and dye bottle icons from the 2D Potion Icon Pack (MiMU STUDIO, Unity Asset Store).
+"""(Replaced by make_bottles2.py.) Builds potion and dye bottle icons from the 2D Potion Icon Pack (MiMU STUDIO, Unity Asset Store).
 
 Each dye keeps the pack's glass, cork and shine, and swaps the liquid for one that matches its skin
 (Shadow dye holds shadow, Galaxy dye holds a starfield, and so on). The bottle shape shows the rarity.

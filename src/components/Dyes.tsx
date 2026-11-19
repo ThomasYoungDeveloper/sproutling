@@ -28,7 +28,7 @@ export const DYE_COLORS: Partial<Record<Skin, [string, string, string]>> = {
   harvest: ['#FFC86E', '#D25C1C', '#78300E'],
 };
 
-/** Bottle art for each dye (from the 2D Potion Icon Pack; see scripts/make_bottles.py). The liquid matches the skin. */
+/** Bottle art for each dye (from the Mad Scientist Laboratory pack; see scripts/make_bottles2.py). The liquid matches the skin. */
 const DYE_IMAGES: Partial<Record<Skin, number>> = {
   pastel: require('../../assets/dyes/pastel.png'),
   mono: require('../../assets/dyes/mono.png'),
