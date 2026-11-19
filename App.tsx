@@ -1,3 +1,4 @@
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Coin from './src/components/Coin';
 import React, { useEffect, useRef, useState } from 'react';
 import { Linking, Platform, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -101,6 +102,7 @@ function Shell() {
   // Brand-new players (and, once, players from before the intro) go through the intro first.
   const intro = I.needsIntro(state);
   const introShown = useRef(false);
+  const layerInsets = useSafeAreaInsets();
   const starter = A.needsStarter(state) || intro;
   const login = A.loginStatus(state);
   const today = A.todayKey(state);
@@ -303,6 +305,8 @@ function Shell() {
           badges={{ eggs: readyEggs, chests: state.chests.length, friends: incoming.length + tradesForMe + liveWaiting + chatUnread, dex: Ach.claimable(state).length }}
         />
       )}
+      {/* Pop-ups and toasts stay inside the app's own area (never under a side camera column). */}
+      <View pointerEvents="box-none" style={{ position: 'absolute', top: 0, bottom: 0, left: layerInsets.left, right: layerInsets.right, zIndex: 70 }}>
       {settled && !starter && !state.tutorialDone ? <Tutorial /> : null}
       {showAccount && <AccountSheet onClose={() => setShowAccount(false)} />}
       {showLogin && !starter && <DailyLoginSheet onClose={() => setShowLogin(false)} />}
@@ -340,6 +344,7 @@ function Shell() {
           </PopIn>
         </View>
       )}
+      </View>
     </SafeAreaView>
   );
 }

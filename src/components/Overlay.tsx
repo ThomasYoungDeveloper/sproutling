@@ -1,5 +1,6 @@
 import React, { createContext, useCallback, useContext, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface Ctx {
   open: (node: React.ReactNode) => void;
@@ -17,11 +18,14 @@ export function OverlayProvider({ children }: { children: React.ReactNode }) {
   const [top, setTop] = useState<React.ReactNode>(null);
   const open = useCallback((n: React.ReactNode) => setNode(n), []);
   const close = useCallback(() => setNode(null), []);
+  // Layers stop at the sides of the app's own area, so nothing runs under a side camera column.
+  const insets = useSafeAreaInsets();
+  const area = { position: 'absolute' as const, top: 0, bottom: 0, left: insets.left, right: insets.right };
   return (
     <OverlayCtx.Provider value={{ open, close, setTop }}>
       {children}
-      {node ? <View style={[StyleSheet.absoluteFill, { zIndex: 85 }]}>{node}</View> : null}
-      {top ? <View pointerEvents="box-none" style={[StyleSheet.absoluteFill, { zIndex: 120 }]}>{top}</View> : null}
+      {node ? <View style={[area, { zIndex: 85 }]}>{node}</View> : null}
+      {top ? <View pointerEvents="box-none" style={[area, { zIndex: 120 }]}>{top}</View> : null}
     </OverlayCtx.Provider>
   );
 }

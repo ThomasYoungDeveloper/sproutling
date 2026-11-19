@@ -75,7 +75,7 @@ export default function FriendPetSheet({ pet, owner, action, onClose }: { pet: V
   return (
     <View style={styles.backdrop}>
       <Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessibilityLabel="Close" />
-      <View style={[styles.sheet, { paddingBottom: Math.max(insets.bottom, space.md), paddingLeft: insets.left, paddingRight: insets.right }]}>
+      <View style={[styles.sheet, { paddingBottom: Math.max(insets.bottom, space.md) }]}>
         <View style={styles.top}>
           <Pressable onPress={all ? () => setAll(false) : onClose} hitSlop={10} accessibilityRole="button" accessibilityLabel={all ? `Back to ${pet.nickname}` : 'Close'}>
             <Text style={styles.back}>{all ? `‹ ${pet.nickname}` : 'Close'}</Text>

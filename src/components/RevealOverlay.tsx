@@ -1,3 +1,4 @@
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import PotionIcon, { POTION_COLOR } from './PotionIcon';
 import { Animated, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
@@ -43,8 +44,10 @@ const STAGE_LABEL: Record<Stage, string> = { baby: 'Baby', teen: 'Teen', adult: 
 const BIG: Rarity[] = ['epic', 'legendary'];
 
 function Overlay({ reveal, onClose }: { reveal: Reveal; onClose: () => void }) {
+  // Stays inside the app's own area (never under a side camera column).
+  const insets = useSafeAreaInsets();
   return (
-    <View style={styles.backdrop}>
+    <View style={[styles.backdrop, { left: insets.left, right: insets.right }]}>
       {reveal.kind === 'egg' && <EggReveal r={reveal} onClose={onClose} />}
       {reveal.kind === 'chest' && <ChestReveal r={reveal} onClose={onClose} />}
       {reveal.kind === 'grow' && <GrowReveal r={reveal} onClose={onClose} />}

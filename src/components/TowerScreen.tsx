@@ -123,7 +123,7 @@ export default function TowerScreen({ onClose }: { onClose: () => void }) {
   if (t.choose) return <BlessingPick onDone={() => {}} />;
 
   return (
-    <View style={[styles.full, { backgroundColor: theme.sky[0], paddingLeft: insets.left, paddingRight: insets.right }]}>
+    <View style={[styles.full, { backgroundColor: theme.sky[0] }]}>
       <ScrollView contentContainerStyle={{ alignItems: 'center', paddingTop: insets.top + 110, paddingBottom: 190 }} contentOffset={{ x: 0, y: Math.max(0, yOf(nextFloor) - 260) }}>
         <View style={{ width: W, height: towerH + 120 }}>
           <Svg width={W} height={towerH + 120} style={StyleSheet.absoluteFill}>
@@ -187,7 +187,7 @@ export default function TowerScreen({ onClose }: { onClose: () => void }) {
         </View>
       </ScrollView>
 
-      <View style={[styles.header, { paddingTop: insets.top + 8, paddingLeft: 16 + insets.left, paddingRight: 16 + insets.right }]}>
+      <View style={[styles.header, { paddingTop: insets.top + 8, paddingLeft: 16, paddingRight: 16 }]}>
         <Pressable onPress={onClose} style={styles.back} accessibilityRole="button" accessibilityLabel="Back"><Text style={styles.backText}>‹ Back</Text></Pressable>
         <View style={{ flex: 1 }}>
           <Text style={styles.kicker}>THIS WEEK</Text>
@@ -197,7 +197,7 @@ export default function TowerScreen({ onClose }: { onClose: () => void }) {
         <View style={styles.timer}><Text style={styles.timerBig}>{left}</Text><Text style={styles.timerSmall}>until it crumbles</Text></View>
       </View>
 
-      <View style={[styles.bottom, { paddingBottom: insets.bottom + 14, paddingLeft: 18 + insets.left, paddingRight: 18 + insets.right }]}>
+      <View style={[styles.bottom, { paddingBottom: insets.bottom + 14, paddingLeft: 18, paddingRight: 18 }]}>
         <View style={{ flexDirection: 'row', gap: 8, alignItems: 'stretch' }}>
           <View style={styles.stat}><Text style={styles.statLabel}>TEAM HP</Text><View style={styles.hpTrack}><View style={[styles.hpFill, { width: `${teamHp}%` }]} /></View></View>
           <View style={styles.statSmall}><Text style={styles.statText} numberOfLines={1}>{t.blessings.length} blessing{t.blessings.length === 1 ? '' : 's'}</Text></View>
@@ -223,7 +223,7 @@ export function BlessingPick({ onDone }: { onDone: () => void }) {
   const choices = T.blessingChoices(state);
   const tierColor = { COMMON: ['#2E9E78', '#1E6E58'], RARE: ['#3E7BD8', '#2A4F9E'], EPIC: ['#8A4FD8', '#5A2A9E'] } as const;
   return (
-    <View style={[styles.full, { backgroundColor: '#1B0F2E', padding: space.lg, paddingTop: insets.top + 30, paddingLeft: space.lg + insets.left, paddingRight: space.lg + insets.right, gap: 12 }]}>
+    <View style={[styles.full, { backgroundColor: '#1B0F2E', padding: space.lg, paddingTop: insets.top + 30, paddingLeft: space.lg, paddingRight: space.lg, gap: 12 }]}>
       <Text style={[styles.kicker, { textAlign: 'center' }]}>FLOOR {t.floor} CLEARED</Text>
       <Text style={[styles.title, { textAlign: 'center' }]}>Pick a blessing</Text>
       <Text style={[styles.sub, { textAlign: 'center' }]}>It lasts until the tower crumbles on Monday</Text>
