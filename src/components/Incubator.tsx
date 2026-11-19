@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Animated, Easing, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Animated, Easing, Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle, Defs, LinearGradient, Path, RadialGradient, Rect, Stop } from 'react-native-svg';
 import { useGame } from '../state/GameContext';
 import { Button } from './ui';
@@ -8,9 +8,12 @@ import { play } from '../lib/sound';
 import { colors, font, space } from '../theme';
 import { MAX_INCUBATORS, buyIncubator, incubatorPrice, nextIncubatorPrice } from '../game/incubators';
 
-/** The incubator machine: a glass dome on a warm orange base. Whatever is passed as children sits inside the dome. */
+const INC_BACK = require('../../assets/incubator/back.png');
+const INC_FRONT = require('../../assets/incubator/front.png');
+
+/** The incubator: a glass capsule from Neprosto's Mad Scientist pack. Whatever is passed as children sits inside the glass. */
 export function IncubatorArt({ size = 190, warm = true, children }: { size?: number; warm?: boolean; children?: React.ReactNode }) {
-  const k = size / 190;
+  const w = size * (371 / 463);
   const glow = useRef(new Animated.Value(0)).current;
   useEffect(() => {
     if (!warm) return;
@@ -36,22 +39,9 @@ export function IncubatorArt({ size = 190, warm = true, children }: { size?: num
           </Svg>
         </Animated.View>
       ) : null}
-      <View style={{ position: 'absolute', left: 50 * k, top: 52 * k, width: 90 * k, height: 82 * k, alignItems: 'center', justifyContent: 'flex-end' }}>{children}</View>
-      <Svg width={size} height={size} viewBox="0 0 190 190" style={StyleSheet.absoluteFill} pointerEvents="none">
-        <Defs>
-          <LinearGradient id="incDome" x1="0" y1="0" x2="1" y2="1">
-            <Stop offset="0" stopColor="#FFFFFF" stopOpacity={0.55} />
-            <Stop offset="1" stopColor="#CFEFFF" stopOpacity={0.25} />
-          </LinearGradient>
-        </Defs>
-        <Path d="M45 132V88a50 50 0 0 1 100 0v44" fill="url(#incDome)" stroke="#5A3A1A" strokeWidth={5} />
-        <Path d="M60 90a35 35 0 0 1 22-30" fill="none" stroke="#FFFFFF" strokeWidth={6} strokeLinecap="round" />
-        <Rect x={30} y={130} width={130} height={30} rx={12} fill="#F28C38" stroke="#5A3A1A" strokeWidth={5} />
-        <Rect x={40} y={160} width={110} height={14} rx={6} fill="#C8662A" stroke="#5A3A1A" strokeWidth={5} />
-        <Circle cx={70} cy={145} r={5} fill={warm ? '#FFE27A' : '#C9B79A'} stroke="#5A3A1A" strokeWidth={3} />
-        <Rect x={84} y={140} width={56} height={10} rx={5} fill="#5A3A1A" />
-        {warm ? <Rect x={86} y={142} width={44} height={6} rx={3} fill="#FFC94D" /> : null}
-      </Svg>
+      <Image source={INC_BACK} style={{ position: 'absolute', left: (size - w) / 2, top: 0, width: w, height: size }} resizeMode="stretch" />
+      <View style={{ position: 'absolute', left: (size - w) / 2 + w * 0.2, top: size * 0.3, width: w * 0.6, height: size * 0.5, alignItems: 'center', justifyContent: 'flex-end' }}>{children}</View>
+      <Image source={INC_FRONT} style={{ position: 'absolute', left: (size - w) / 2, top: 0, width: w, height: size }} resizeMode="stretch" pointerEvents="none" />
     </View>
   );
 }
