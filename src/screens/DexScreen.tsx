@@ -79,6 +79,7 @@ export default function DexScreen() {
   const found = Object.keys(state.dex).length;
   const overlay = useOverlay();
   const [filter, setFilter] = useState<DexFilter>('all');
+  const [allStyles, setAllStyles] = useState(false);
   const shinyIds = [...new Set(state.pets.filter((p) => p.shiny).map((p) => p.speciesId))];
   const filtered = filter === 'all' ? [] : filter === 'shiny' ? SPECIES.filter((sp) => shinyIds.includes(sp.id)) : SPECIES.filter((sp) => state.skinDex?.[skinKey(sp.id, filter)]);
 
@@ -113,20 +114,33 @@ export default function DexScreen() {
       <Card>
         <SectionHead title="Pet-dex" meta={filter === 'all' ? `${found} of ${SPECIES.length} found` : `${filtered.length} of ${SPECIES.length} ${FILTER_LABEL[filter]}`} />
         <View style={styles.chips} accessibilityRole="radiogroup" accessibilityLabel="Show style">
-          {FILTERS.map((f) => {
+          {(() => {
+            const countOf = (f: DexFilter) => (f === 'all' ? found : f === 'shiny' ? shinyIds.length : SPECIES.filter((sp) => state.skinDex?.[skinKey(sp.id, f)]).length);
+            // Only styles you've found show as chips; the rest stay a surprise behind "See all styles".
+            const shown = FILTERS.filter((f) => f === 'all' || f === filter || countOf(f) > 0 || allStyles);
+            const hidden = FILTERS.length - shown.length;
+            return [
+              ...shown.map((f) => {
             const on = filter === f;
-            const n = f === 'all' ? found : f === 'shiny' ? shinyIds.length : SPECIES.filter((sp) => state.skinDex?.[skinKey(sp.id, f)]).length;
+            const n = countOf(f);
             return (
               <Pressable key={f} onPress={() => setFilter(f)} style={[styles.chip, on && styles.chipOn]} accessibilityRole="radio" accessibilityState={{ checked: on }} accessibilityLabel={`${FILTER_LABEL[f]}, ${n}`}>
                 <View style={[styles.chipDot, { backgroundColor: FILTER_DOT[f] }, f === 'all' && { borderWidth: 1.5, borderColor: on ? '#fff' : colors.muted }]} />
                 <Text style={[styles.chipText, on && { color: '#fff' }]}>{FILTER_LABEL[f]} <Text style={{ opacity: 0.7 }}>{n}</Text></Text>
               </Pressable>
             );
-          })}
+              }),
+              hidden > 0 || allStyles ? (
+                <Pressable key="more" onPress={() => setAllStyles((v) => !v)} style={[styles.chip, { borderStyle: 'dashed' }]} accessibilityRole="button" accessibilityLabel={allStyles ? 'Hide styles you have not found' : `See all styles, ${hidden} not found yet`}>
+                  <Text style={[styles.chipText, { color: colors.muted }]}>{allStyles ? 'Show fewer' : `+${hidden} styles to find`}</Text>
+                </Pressable>
+              ) : null,
+            ];
+          })()}
         </View>
         {filter === 'all' ? (
           <>
-            <Text style={[font.tiny, { fontWeight: '900' }]}>Skins collected: {skinDexCount(state)} / {SPECIES.length * SKINS.length}</Text>
+            {skinDexCount(state) > 0 ? <Text style={[font.tiny, { fontWeight: '900' }]}>Skins collected: {skinDexCount(state)}</Text> : null}
             {RARITIES.map((r) => (
               <View key={r} style={{ gap: 6 }}>
                 <Text style={[styles.tier, { color: RARITY_INFO[r].color }]}>{RARITY_INFO[r].label}</Text>
@@ -137,13 +151,16 @@ export default function DexScreen() {
                       <Pressable key={s.id} disabled={!seen} onPress={() => overlay.open(<PetZoom dex pet={{ speciesId: s.id, nickname: s.name, xp: 99999, shiny: false }} onClose={overlay.close} />)} style={({ pressed }) => [styles.tile, { borderColor: 'transparent', backgroundColor: seen ? RARITY_TINT[s.rarity] : '#E6ECEA' }, pressed && { transform: [{ scale: 0.96 }] }]} accessibilityRole={seen ? 'button' : undefined} accessibilityLabel={seen ? `See ${s.name} up close` : 'Not found yet'}>
                         <PetSprite species={s} stage="adult" size={76} silhouette={!seen} />
                         <Text style={styles.name} numberOfLines={1}>{seen ? s.name : '???'}</Text>
-                        {seen ? (
-                          <View style={{ flexDirection: 'row', gap: 4 }} accessibilityLabel={`${SKINS.filter((k) => state.skinDex?.[skinKey(s.id, k)]).length} of 4 skins`}>
-                            {SKINS.map((k) => (
-                              <View key={k} style={[styles.skinDot, state.skinDex?.[skinKey(s.id, k)] ? { backgroundColor: SKIN_INFO[k].color } : styles.skinEmpty]} />
-                            ))}
-                          </View>
-                        ) : null}
+                        {(() => {
+                          // One colored dot per skin you've collected for this pet (none until you have one).
+                          const got = SKINS.filter((k) => state.skinDex?.[skinKey(s.id, k)]);
+                          if (!seen || !got.length) return null;
+                          return (
+                            <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 4, maxWidth: 90 }} accessibilityLabel={`${got.length} skin${got.length === 1 ? '' : 's'} collected`}>
+                              {got.map((k) => <View key={k} style={[styles.skinDot, { backgroundColor: SKIN_INFO[k].color }]} />)}
+                            </View>
+                          );
+                        })()}
                       </Pressable>
                     );
                   })}
