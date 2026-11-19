@@ -240,9 +240,12 @@ def make(path, skin, seed):
         res = base * (1 - pink[..., None] * 0.5) + hexc('#c23ab8') * pink[..., None] * 0.5 * shade
         res = res * (1 - cyan[..., None] * 0.35) + hexc('#3fb8ff') * cyan[..., None] * 0.35 * shade
         # Keep the outlines dark so the pet still reads clearly.
-        dark = np.clip((0.14 - lum) / 0.08, 0, 1)[..., None]
-        res = res * (1 - dark) + hexc('#030208') * dark
-        body = alpha * (lum > 0.14)
+        # Lines: everything darker than the body's own range goes black, and lines are thickened by a
+        # pixel so faces and features stay easy to read against the purple.
+        dark = np.clip((0.15 - lum) / 0.07, 0, 1)
+        dark = np.maximum(dark, np.asarray(Image.fromarray((dark * 255).astype(np.uint8)).filter(ImageFilter.MaxFilter(3)), dtype=np.float32) / 255 * 0.85)[..., None]
+        res = res * (1 - dark) + hexc('#020106') * dark
+        body = alpha * (dark[..., 0] < 0.5)
         w1 = stars(h, w, 300, seed + 1, 1) * body
         w2 = stars(h, w, 30, seed + 2, 2) * body
         b1 = stars(h, w, 110, seed + 3, 1) * body
