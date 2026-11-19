@@ -312,35 +312,54 @@ def make(path, skin, seed):
         res = res * (1 - eyes[..., None]) + hexc('#b86bff') * eyes[..., None]
         halo, halo_color = glow(alpha, 6, 1.5), hexc('#7a3cff')
     elif skin == 'pastel':
-        # Candy colors like macarons: each part of the pet keeps its own color family, made soft and light
-        # (pink, peach, butter, mint, baby blue, periwinkle, lavender). Whites get a pink-lavender-mint wash,
-        # and outlines turn soft plum instead of black.
+        # Soft candy pastel, like kawaii sticker art: every part keeps its own color family, made light
+        # but clean (never grey or chalky). Shadows use a richer tint of the same color, highlights go
+        # almost white, and the outlines take a deeper shade of the color next to them instead of black.
         r, g, b = rgb[..., 0], rgb[..., 1], rgb[..., 2]
         mx, mn = rgb.max(-1), rgb.min(-1)
         sat = np.where(mx > 0, (mx - mn) / np.maximum(mx, 1e-3), 0)
         d = np.maximum(mx - mn, 1e-3)
         hue = np.where(mx == r, ((g - b) / d) % 6, np.where(mx == g, (b - r) / d + 2, (r - g) / d + 4)) * 60
-        pal = [(0, '#ff4f9e'), (25, '#ff6fae'), (45, '#ff9f45'), (62, '#ffd52a'), (110, '#3edc8c'), (175, '#3aaeff'), (225, '#6e74ff'), (275, '#a85cff'), (320, '#ff5cc8'), (360, '#ff4f9e')]
-        hs = np.array([x for x, _ in pal], dtype=np.float32)
-        cs = np.stack([hexc(c) for _, c in pal])
-        col = np.zeros(hue.shape + (3,), dtype=np.float32)
-        for k in range(3):
-            col[..., k] = np.interp(hue, hs, cs[:, k])
-        t = (yy / max(h - 1, 1))[..., None]
-        wash = np.where(t < 0.5, hexc('#ff8cc6') * (1 - t * 2) + hexc('#b086ff') * (t * 2), hexc('#b086ff') * (2 - t * 2) + hexc('#6fcaff') * (t * 2 - 1))
-        grey = np.clip((0.22 - sat) / 0.12, 0, 1)[..., None]
-        col = col * (1 - grey) + wash * grey
-        # Dark clothes and hair turn soft lavender instead of grey.
-        mid = (np.clip((0.5 - lum) / 0.2, 0, 1) * np.clip((lum - 0.2) / 0.06, 0, 1))[..., None]
-        col = col * (1 - mid) + hexc('#9a72f0') * mid
-        hi = np.percentile(lum[alpha > 0.8], 90) if (alpha > 0.8).any() else 1.0
-        ln = np.clip(lum / max(hi, 1e-3), 0, 1)[..., None]
-        res = col * (0.58 + 0.5 * ln)
-        # Push the colors a bit more saturated so they read bright and candy-like, not faded.
-        m = res.mean(-1, keepdims=True)
-        res = np.clip(m + (res - m) * 1.7, 0, 255)
-        dark = np.clip((0.2 - lum) / 0.1, 0, 1)[..., None]
-        res = res * (1 - dark) + hexc('#4a2a70') * dark
+        # (hue, light tint, shade tint)
+        pal = [(0, '#ffd0e4', '#f48ab8'), (25, '#ffd6cc', '#f59a9a'), (42, '#ffe2c4', '#f6ad7c'),
+               (60, '#fff1b8', '#f3cf5c'), (110, '#d4f4e2', '#86d6ae'), (175, '#d2ecfb', '#82bfe8'),
+               (225, '#d6dcff', '#8f9cec'), (275, '#e6d8ff', '#b394ee'), (320, '#ffd2f0', '#e78ccc'),
+               (360, '#ffd0e4', '#f48ab8')]
+        hs = np.array([x for x, _, _ in pal], dtype=np.float32)
+        lc = np.stack([hexc(c) for _, c, _ in pal]); sc = np.stack([hexc(c) for _, _, c in pal])
+        def pick(cs, hh):
+            o = np.zeros(hh.shape + (3,), dtype=np.float32)
+            for k in range(3):
+                o[..., k] = np.interp(hh, hs, cs[:, k])
+            return o
+        # White, grey and black areas get a soft pink-to-lavender-to-blue hue from top to bottom.
+        t = yy / max(h - 1, 1)
+        wash_h = np.where(t < 0.5, 330 - t * 2 * 55, 275 - (t - 0.5) * 2 * 75)
+        grey = np.clip((0.2 - sat) / 0.1, 0, 1)
+        dark_part = np.clip((0.42 - lum) / 0.15, 0, 1) * (lum >= 0.2)
+        grey = np.maximum(grey, dark_part * (sat < 0.5))
+        hh = hue * (1 - grey) + wash_h * grey
+        hh = np.where(np.abs(hue - wash_h) > 180, np.where(grey > 0.5, wash_h, hue), hh)
+        light, shade = pick(lc, hh), pick(sc, hh)
+        light = light * 0.85 + shade * 0.15
+        inner = (alpha > 0.8) & (lum > 0.2)
+        lo = np.percentile(lum[inner], 6) if inner.any() else 0.0
+        hi = np.percentile(lum[inner], 94) if inner.any() else 1.0
+        ln = np.clip((lum - lo) / max(hi - lo, 0.2), 0, 1)
+        ln = ln * 0.8 + 0.2 * (1 - dark_part)  # dark clothes and hair still come out light
+        res = shade * (1 - ln[..., None]) + light * ln[..., None]
+        top = np.clip((ln - 0.9) * 8, 0, 1)[..., None]
+        res = res * (1 - top * 0.6) + 255 * top * 0.6
+        # Colored outlines: spread the nearby body color into the lines, then deepen it.
+        line = np.clip((0.2 - lum) / 0.1, 0, 1)
+        wmask = alpha * (1 - line)
+        def blur(m, rad):
+            return np.asarray(Image.fromarray(np.clip(m, 0, 255).astype(np.uint8)).filter(ImageFilter.GaussianBlur(rad)), dtype=np.float32)
+        num = np.dstack([blur(shade[..., k] * wmask, 3) for k in range(3)])
+        den = blur(wmask * 255, 3)[..., None] / 255
+        near = np.where(den > 0.02, num / np.maximum(den, 1e-3), hexc('#c48ad8'))
+        deep = near * 0.48 + hexc('#3a2050') * 0.22
+        res = res * (1 - line[..., None]) + deep * line[..., None]
     elif skin == 'retro':
         # Game Boy greens on a clean 4px grid. Each block averages its colors, and any block that
         # touches an outline stays darkest, so faces and edges stay readable.
