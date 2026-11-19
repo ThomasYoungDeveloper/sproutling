@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle, Path } from 'react-native-svg';
 import { useGame } from '../state/GameContext';
@@ -56,6 +56,7 @@ export default function TodayCard() {
           : null;
   const tip = tipFor(A.todayKey(state));
   const changed = state.goals?.changed;
+  const [tipOpen, setTipOpen] = useState(false);
   const done: Record<Habit, boolean> = { steps: quests[0].done, water: quests[1].done, sleep: quests[2].done };
 
   return (
@@ -110,11 +111,14 @@ export default function TodayCard() {
         </Pressable>
       ) : null}
       {next && !allDone ? <Text style={styles.next}>{next}</Text> : null}
-      <View style={styles.tip}>
-        <Text style={styles.tipTag}>DAILY TIP</Text>
-        <Text style={styles.tipText}>{tip.text}</Text>
-        <Text style={styles.tipSource}>Source: {tip.source} · Not medical advice</Text>
-      </View>
+      {/* One quiet line; tap to read the whole tip and where it's from. */}
+      <Pressable onPress={() => setTipOpen((o) => !o)} style={styles.tipLine} accessibilityRole="button" accessibilityLabel={`Daily tip: ${tip.text}`} accessibilityState={{ expanded: tipOpen }}>
+        <Text style={styles.tipText} numberOfLines={tipOpen ? undefined : 1}>
+          <Text style={styles.tipTag}>Tip </Text>
+          {tip.text}
+        </Text>
+        {tipOpen ? <Text style={styles.tipSource}>Source: {tip.source} · Not medical advice</Text> : null}
+      </Pressable>
       <NextUnlockLine />
     </Card>
   );
@@ -303,9 +307,9 @@ const styles = StyleSheet.create({
   changed: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#FFF4D6', borderRadius: 12, padding: 10 },
   changedText: { flex: 1, fontSize: 13, fontWeight: '800', color: '#6A4A00' },
   changedX: { fontSize: 13, fontWeight: '900', color: '#B06A00' },
-  tip: { backgroundColor: '#EEF5FB', borderRadius: 14, padding: 10, gap: 3 },
-  tipTag: { fontSize: 10, fontWeight: '900', color: '#3D6E9C', letterSpacing: 1 },
-  tipText: { fontSize: 13, fontWeight: '800', color: '#24323A' },
+  tipLine: { gap: 2, paddingVertical: 2 },
+  tipTag: { fontSize: 12, fontWeight: '900', color: '#3D6E9C' },
+  tipText: { fontSize: 12, fontWeight: '700', color: colors.muted },
   tipSource: { fontSize: 11, fontWeight: '700', color: colors.muted },
   why: { backgroundColor: '#F6FAF8', borderRadius: 12, padding: 10, gap: 3 },
   whyText: { fontSize: 13, fontWeight: '700', color: colors.ink },

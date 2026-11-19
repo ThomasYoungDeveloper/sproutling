@@ -35,19 +35,19 @@ export interface Place {
 
 export const PLACES: Place[] = [
   {
-    id: 'meadow', fights: [0, 2], name: 'Mossy Meadow', emoji: '🌼', minLevel: 1, hours: 1, steps: 1500, coins: [15, 30], itemChance: 50, cosmeticChance: 0,
+    id: 'meadow', fights: [0, 2], name: 'Mossy Meadow', emoji: '🌼', minLevel: 1, hours: 2, steps: 1500, coins: [15, 30], itemChance: 50, cosmeticChance: 0,
     events: ['chased a butterfly all the way across the meadow', 'made friends with a sleepy ladybug', 'rolled down the biggest hill (three times)', 'found a four-leaf clover'],
   },
   {
-    id: 'caves', fights: [1, 3], name: 'Crystal Caves', emoji: '💎', minLevel: 3, hours: 3, steps: 4000, coins: [30, 60], chest: { kind: 'bronze', chance: 50 }, itemChance: 60, cosmeticChance: 5,
+    id: 'caves', fights: [1, 3], name: 'Crystal Caves', emoji: '💎', minLevel: 3, hours: 5, steps: 4000, coins: [30, 60], chest: { kind: 'bronze', chance: 50 }, itemChance: 60, cosmeticChance: 5,
     events: ['followed glowing crystals deep underground', 'heard a mysterious echo singing back', 'slid down a sparkly crystal slide', 'woke up a very polite bat'],
   },
   {
-    id: 'shrine', fights: [2, 4], name: 'Sakura Shrine', emoji: '⛩️', minLevel: 5, hours: 6, steps: 7000, coins: [50, 90], chest: { kind: 'bronze', chance: 70 }, egg: { chance: 15, rarity: { common: 60, uncommon: 35, rare: 5 } }, itemChance: 60, cosmeticChance: 15,
+    id: 'shrine', fights: [2, 4], name: 'Sakura Shrine', emoji: '⛩️', minLevel: 5, hours: 10, steps: 7000, coins: [50, 90], chest: { kind: 'bronze', chance: 70 }, egg: { chance: 10, rarity: { common: 60, uncommon: 35, rare: 5 } }, itemChance: 60, cosmeticChance: 15,
     events: ['rang the shrine bell for good luck', 'caught falling cherry blossoms', 'shared mochi with a friendly fox spirit', 'climbed a thousand stone steps'],
   },
   {
-    id: 'mountain', fights: [2, 5], name: 'Moon Mountain', emoji: '🌙', minLevel: 8, hours: 12, steps: 12000, coins: [80, 150], chest: { kind: 'silver', chance: 45 }, egg: { chance: 15, rarity: { uncommon: 50, rare: 40, epic: 10 } }, itemChance: 70, cosmeticChance: 25,
+    id: 'mountain', fights: [2, 5], name: 'Moon Mountain', emoji: '🌙', minLevel: 8, hours: 18, steps: 12000, coins: [80, 150], chest: { kind: 'silver', chance: 45 }, egg: { chance: 10, rarity: { uncommon: 50, rare: 40, epic: 10 } }, itemChance: 70, cosmeticChance: 25,
     events: ['climbed above the clouds to touch the moon', 'counted shooting stars until sunrise', 'found a cave full of moonflowers', 'surfed down the mountain on a snow cloud'],
   },
 ];
@@ -192,7 +192,8 @@ export function progress(s: GameState, now = Date.now()): Progress | null {
   const walked = Math.max(0, totalSteps(s) - e.startSteps);
   // A knocked-out pet comes home early: its trip ends at the fight it lost.
   const end = e.koAt ?? 1;
-  const raw = Math.max(elapsed / ms, walked / place.steps);
+  // Time and steps add up: every step brings the pet home sooner, on top of the clock.
+  const raw = elapsed / ms + walked / place.steps;
   const pct = Math.min(1, raw / end);
   // Walking also shortens the timer: both kinds of progress count toward the same bar.
   const msLeft = pct >= 1 ? 0 : Math.round(ms * end * (1 - pct));

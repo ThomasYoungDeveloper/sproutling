@@ -22,7 +22,7 @@ export const CHESTS: Record<ChestKind, ChestTable> = {
     label: 'Bronze chest',
     howToEarn: 'Finish all 3 daily quests',
     coins: [20, 40],
-    eggChance: 15,
+    eggChance: 10,
     eggRarity: { common: 60, uncommon: 28, rare: 10, epic: 2, legendary: 0 },
     itemChance: 50,
   },

@@ -227,10 +227,10 @@ ok(Array.isArray(E.expedition?.fights), 'a trip plans its wild fights when the p
 E = { ...E, expedition: { ...E.expedition!, fights: [{ speciesId: 'p01', name: 'Wild', won: true, hpAfter: 70 }], koAt: undefined, planned: { foods: ['carrot'], chest: null, egg: null, item: null } } };
 ok(!!E.expedition && !Ex.canStart(E, epet.id, 'meadow').ok, 'one expedition at a time');
 ok(!Ex.progress(E, T0)!.done && Ex.finish(E, rr, T0) === null, 'not done right away');
-ok(Math.abs(Ex.progress(E, T0 + 30 * 60_000)!.pct - 0.5) < 0.01, 'half the time is half done');
+ok(Math.abs(Ex.progress(E, T0 + 60 * 60_000)!.pct - 0.5) < 0.01, 'half the time is half done');
 const Ewalk = A.addSteps(E, 1500); ok(Ex.progress(Ewalk, T0)!.done, 'walking the steps brings the pet home early');
-ok(Ex.progress(A.addSteps(E, 750), T0 + 15 * 60_000)!.stepsLeft === 750, 'walking and waiting both count');
-ok(Ex.progress(E, T0 + 3_600_000)!.done, 'the timer brings the pet home too');
+ok(Ex.progress(A.addSteps(E, 750), T0 + 30 * 60_000)!.stepsLeft === 375, 'walking and waiting add up (half the steps + a quarter of the time = 75%)');
+ok(Ex.progress(E, T0 + 2 * 3_600_000)!.done && !Ex.progress(E, T0 + 3_500_000)!.done, 'the timer brings the pet home too, but slower than walking');
 const fin = Ex.finish(Ewalk, () => 0.01, T0)!;
 ok(!fin.state.expedition && fin.loot.coins >= 15 && fin.loot.story.includes(epet.nickname), 'returning pet brings coins and a story');
 ok(fin.state.pets.find((p) => p.id === epet.id)!.xp === Ewalk.pets.find((p) => p.id === epet.id)!.xp + 30, 'expedition XP comes from the steps walked');
@@ -242,8 +242,8 @@ ok(fin.state.pets.find((p) => p.id === epet.id)!.hpPct === 70 && fin.loot.foods.
   const kp = K.pets[0];
   K = Ex.start(K, kp.id, 'caves', T0);
   K = { ...K, expedition: { ...K.expedition!, fights: [{ speciesId: 'p01', name: 'Wild A', won: true, hpAfter: 40 }, { speciesId: 'p02', name: 'Wild B', won: false, hpAfter: 0 }], koAt: 2 / 3, planned: { foods: ['carrot', 'berries'], chest: 'bronze', egg: null, item: null } } };
-  ok(Ex.progress(K, T0 + 2 * 3_600_000)!.done && !Ex.progress(K, T0 + 3_600_000)!.done, 'a knocked-out pet comes home early');
-  const kf = Ex.finish(K, () => 0.01, T0 + 2 * 3_600_000)!;
+  ok(Ex.progress(K, T0 + 4 * 3_600_000)!.done && !Ex.progress(K, T0 + 3 * 3_600_000)!.done, 'a knocked-out pet comes home early');
+  const kf = Ex.finish(K, () => 0.01, T0 + 4 * 3_600_000)!;
   ok(Ex.tripStops(K).map((x) => x.kind).join(',') === 'fight,food,fight', 'a knocked-out trip shows its fights and food, but no treasure');
   ok(kf.loot.knockedOut && !kf.loot.chest && !kf.loot.egg && kf.loot.foods.length === 1, 'knocked out keeps what it found so far, but no chest or egg');
   ok(kf.state.pets.find((p) => p.id === kp.id)!.hpPct === 0 && !Ex.canStart(kf.state, kp.id, 'meadow').ok, 'a knocked-out pet can’t go on a trip');
@@ -684,7 +684,7 @@ console.log('\nEgg basket');
   }
   ok(saw, 'a Silver chest opened with a full basket gives coins instead of an egg');
   ok(stepsToHatch('common') === 3 * 1300 && stepsToHatch('legendary') === 25 * 1300, 'eggs take longer to hatch (Common 3 km, Legendary 25 km)');
-  ok(CHESTS.bronze.eggChance === 15, 'Bronze chests have a 15% egg chance');
+  ok(CHESTS.bronze.eggChance === 10, 'Bronze chests have a 10% egg chance');
 }
 {
   const Pw2 = require('../src/game/powerups');

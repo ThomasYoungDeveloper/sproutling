@@ -16,7 +16,7 @@ import { levelFor } from './scoring';
 export const FIND_EVERY = 1000;
 export const MAX_FINDS_PER_DAY = 3;
 export const CHEST_CHANCE = 12; // % per 1,000 steps
-export const EGG_CHANCE = 3; // % per 1,000 verified steps
+export const EGG_CHANCE = 2; // % per 1,000 verified steps
 export const MAX_EGGS_PER_DAY = 1;
 /** Food found while walking: its own roll, so it never takes the place of a chest or egg. */
 export const FORAGE_CHANCE = 35; // % per 1,000 steps
