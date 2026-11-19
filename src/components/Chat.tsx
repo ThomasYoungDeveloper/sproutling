@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { KeyboardAvoidingView, Linking, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useChat, QUICK_PHRASES, type ChatMessage, type ChatRoom } from '../state/ChatContext';
@@ -16,6 +16,8 @@ import * as A from '../game/actions';
 import { stageFor } from '../game/scoring';
 import { supabase } from '../lib/supabase';
 import { appBuild } from '../lib/appBuild';
+import { SKIN_INFO } from '../game/skins';
+import type { Skin } from '../game/types';
 
 const ago = (iso: string | null) => {
   if (!iso) return '';
@@ -187,10 +189,38 @@ function ChatRoomScreen({ room, title, otherId, onClose }: { room: string; title
     const e = await chat.send(room, kind, body.trim(), sticker);
     if (e) setErr(e);
     else if (kind === 'text') setText('');
-    setStickers(false);
+    if (kind !== 'sticker') setStickers(false);
   };
   const pet = A.activePet(state);
-  const sendSticker = (line: string) => pet && send('sticker', line, { speciesId: pet.speciesId, skin: pet.skin, name: pet.nickname });
+  // Stickers: every pet you've collected, in every skin you've collected it in.
+  const collected = useMemo(() => {
+    const out: { speciesId: string; skin?: Skin; key: string }[] = [];
+    const seen = new Set<string>();
+    const add = (speciesId: string, skin?: Skin) => {
+      const key = `${speciesId}:${skin ?? ''}`;
+      if (seen.has(key) || !SPECIES_BY_ID[speciesId]) return;
+      seen.add(key);
+      out.push({ speciesId, skin, key });
+    };
+    if (pet) add(pet.speciesId, pet.skin);
+    Object.keys(state.skinDex ?? {}).forEach((k) => { const [sp, sk] = k.split(':'); add(sp, sk as Skin); });
+    Object.keys(state.dex ?? {}).forEach((sp) => add(sp));
+    return out;
+  }, [state.dex, state.skinDex, pet?.id]);
+  const [pick, setPick] = useState<string | null>(null);
+  const chosen = collected.find((c) => c.key === pick) ?? collected[0];
+  const stickerName = (c: { speciesId: string; skin?: Skin }) => `${c.skin ? SKIN_INFO[c.skin].label + ' ' : ''}${SPECIES_BY_ID[c.speciesId].name}`;
+  const sendSticker = (line?: string, c = chosen) => c && send('sticker', line ?? stickerName(c), { speciesId: c.speciesId, skin: c.skin, name: stickerName(c) });
+  /** With the sticker tray open, typed text goes out as the sticker's caption. */
+  const submit = () => {
+    if (stickers && chosen) {
+      const caption = text.trim();
+      sendSticker(caption || undefined);
+      setText('');
+      return;
+    }
+    send('text', text);
+  };
 
   return (
     <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={[styles.full, { backgroundColor: isTeam ? '#E9EEFA' : '#EAF6F0' }]}>
@@ -222,7 +252,7 @@ function ChatRoomScreen({ room, title, otherId, onClose }: { room: string; title
               {m.kind === 'sticker' && sp ? (
                 <View style={{ alignItems: 'center' }}>
                   <PetSprite species={sp} stage="adult" size={90} skin={m.sticker?.skin as any} mood="joy" />
-                  <Text style={styles.stickerLine}>{m.sticker?.name ? `${m.sticker.name}: ` : ''}{m.body}</Text>
+                  <Text style={styles.stickerLine}>{m.sticker?.name && m.sticker.name !== m.body ? `${m.sticker.name}: ${m.body}` : m.body}</Text>
                 </View>
               ) : (
                 <View style={[styles.bubble, mine ? [styles.mine, isTeam && { backgroundColor: '#4A8FE0' }] : styles.theirs]}>
@@ -241,6 +271,32 @@ function ChatRoomScreen({ room, title, otherId, onClose }: { room: string; title
         <Text style={[styles.err, { paddingBottom: insets.bottom + 12 }]}>Your chat is off. Turn it on in your account settings.</Text>
       ) : (
         <>
+          {stickers ? (
+            <View style={styles.tray}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 12 }}>
+                <Text style={styles.trayTitle}>Your stickers · {collected.length}</Text>
+                <Text style={styles.trayHint}>Pick one, type a message, and send</Text>
+              </View>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingHorizontal: 12, paddingVertical: 6 }}>
+                {collected.map((c) => {
+                  const on = chosen?.key === c.key;
+                  return (
+                    <Pressable
+                      key={c.key}
+                      onPress={() => (on ? sendSticker() : setPick(c.key))}
+                      onLongPress={() => { setPick(c.key); sendSticker(undefined, c); }}
+                      style={[styles.sticker, on && styles.stickerOn]}
+                      accessibilityRole="button"
+                      accessibilityLabel={on ? `Send the ${stickerName(c)} sticker` : `Choose the ${stickerName(c)} sticker`}
+                    >
+                      <PetSprite species={SPECIES_BY_ID[c.speciesId]} stage="adult" size={54} skin={c.skin} />
+                      {on ? <Text style={styles.stickerSend}>Send</Text> : null}
+                    </Pressable>
+                  );
+                })}
+              </ScrollView>
+            </View>
+          ) : null}
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flexGrow: 0 }} contentContainerStyle={[styles.phrases, { paddingLeft: 12, paddingRight: 12 }]}>
             {QUICK_PHRASES.map((p) => (
               <Pressable key={p} onPress={() => (stickers ? sendSticker(p) : send('phrase', p))} style={[styles.chip, stickers && { borderColor: '#B497EA' }]} accessibilityRole="button" accessibilityLabel={stickers ? `Send a sticker: ${p}` : `Send: ${p}`}>
@@ -249,8 +305,8 @@ function ChatRoomScreen({ room, title, otherId, onClose }: { room: string; title
             ))}
           </ScrollView>
           <View style={[styles.inputRow, { paddingBottom: insets.bottom + 10, paddingLeft: 12, paddingRight: 12 }]}>
-            <Pressable onPress={() => setStickers((v) => !v)} disabled={!pet} style={[styles.petBtn, stickers && { backgroundColor: '#B497EA' }]} accessibilityRole="button" accessibilityLabel={stickers ? 'Back to phrases' : 'Send a pet sticker'}>
-              {pet && SPECIES_BY_ID[pet.speciesId] ? <PetSprite species={SPECIES_BY_ID[pet.speciesId]} stage="adult" size={30} skin={pet.skin} /> : <Text style={styles.petBtnText}>PET</Text>}
+            <Pressable onPress={() => setStickers((v) => !v)} disabled={!collected.length} style={[styles.petBtn, stickers && { backgroundColor: '#B497EA' }]} accessibilityRole="button" accessibilityLabel={stickers ? 'Back to phrases' : 'Send a pet sticker'}>
+              {chosen ? <PetSprite species={SPECIES_BY_ID[chosen.speciesId]} stage="adult" size={30} skin={chosen.skin} /> : <Text style={styles.petBtnText}>PET</Text>}
             </Pressable>
             {chat.mode === 'phrases' ? (
               <Text style={[font.small, { flex: 1 }]}>{stickers ? 'Tap a phrase to send it as a pet sticker.' : 'Quick phrases and stickers only (Account › Chat).'}</Text>
@@ -260,13 +316,13 @@ function ChatRoomScreen({ room, title, otherId, onClose }: { room: string; title
                   style={styles.input}
                   value={text}
                   onChangeText={setText}
-                  placeholder={stickers ? 'Tap a phrase for a sticker' : isTeam ? 'Message your guild' : `Message ${title}`}
+                  placeholder={stickers ? 'Add a message to your sticker (optional)' : isTeam ? 'Message your guild' : `Message ${title}`}
                   maxLength={300}
                   returnKeyType="send"
-                  onSubmitEditing={() => send('text', text)}
+                  onSubmitEditing={submit}
                   accessibilityLabel="Message"
                 />
-                <Pressable onPress={() => send('text', text)} style={[styles.sendBtn, isTeam && { backgroundColor: '#4A8FE0' }]} accessibilityRole="button" accessibilityLabel="Send">
+                <Pressable onPress={submit} style={[styles.sendBtn, isTeam && { backgroundColor: '#4A8FE0' }]} accessibilityRole="button" accessibilityLabel="Send">
                   <Text style={styles.sendText}>›</Text>
                 </Pressable>
               </>
@@ -435,6 +491,12 @@ export function ChatSettings() {
 }
 
 const styles = StyleSheet.create({
+  tray: { backgroundColor: '#F3ECFF', borderTopWidth: 1, borderTopColor: '#E0D2FA', paddingTop: 8 },
+  trayTitle: { fontSize: 13, fontWeight: '900', color: '#4E3A80' },
+  trayHint: { fontSize: 11, fontWeight: '800', color: '#7A6AA0' },
+  sticker: { width: 70, height: 74, borderRadius: 16, backgroundColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: 'transparent' },
+  stickerOn: { borderColor: '#B497EA' },
+  stickerSend: { position: 'absolute', bottom: -2, backgroundColor: '#8A6BD8', color: '#FFFFFF', fontSize: 10, fontWeight: '900', borderRadius: 8, paddingHorizontal: 6, overflow: 'hidden' },
   card: { backgroundColor: '#FFFBF2', borderRadius: 22, padding: space.md, gap: 4 },
   rulesBack: { backgroundColor: 'rgba(20,30,28,0.55)', paddingHorizontal: 14 },
   rulesCard: { backgroundColor: '#FFFBF2', borderRadius: 28, padding: 20, gap: 2 },
