@@ -26,6 +26,7 @@ import { SKIN_INFO } from '../game/skins';
 import { DyeIcon, UseDyeSheet } from './Dyes';
 import type { Skin } from '../game/types';
 import type { Cosmetic, Slot } from '../game/cosmetics';
+import CrystalIcon from './CrystalIcon';
 
 const SLOT_TITLE: Record<Slot, string> = { toy: 'Toys', hat: 'Hats', aura: 'Auras', scene: 'Scenes' };
 const SLOT_HINT: Record<Slot, string> = {
@@ -70,7 +71,7 @@ function CrystalOffer() {
   const [msg, setMsg] = useState<string | null>(null);
   return (
     <View style={styles.crystal}>
-      <Text style={{ fontSize: 34 }}>💎</Text>
+      <CrystalIcon size={48} />
       <View style={{ flex: 1, gap: 2 }}>
         <Text style={styles.crystalTitle}>Training Crystal</Text>
         <Text style={styles.crystalBody}>+1 to any stat of any pet, from its page. You have {Pw.crystalsOf(state)}.</Text>
@@ -81,7 +82,7 @@ function CrystalOffer() {
         onPress={() => {
           apply((s) => Pw.buyCrystal(s, today));
           buzz('success');
-          setMsg('Got it! Open a pet and tap 💎 Crystals.');
+          setMsg('Got it! Open a pet and tap Crystals.');
         }}
         style={[styles.crystalBtn, (bought || state.coins < Pw.CRYSTAL_PRICE) && { opacity: 0.5 }]}
         accessibilityRole="button"

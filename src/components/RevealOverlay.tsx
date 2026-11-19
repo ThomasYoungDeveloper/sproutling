@@ -20,6 +20,7 @@ import EggSprite from './EggSprite';
 import PetSprite from './PetSprite';
 import { Button } from './ui';
 import { Confetti, Flash, PopIn, Rays, buzz, useCountUp, useIdleWobble, useShake } from './fx';
+import CrystalIcon from './CrystalIcon';
 
 export type Reveal =
   | { kind: 'egg'; rarity: Rarity; pet: OwnedPet; isNew: boolean; title?: string; eggColor?: string; eggSpots?: string[]; onMakeActive?: () => void; lucky?: number }
@@ -309,7 +310,7 @@ function ChestReveal({ r, onClose }: { r: Extract<Reveal, { kind: 'chest' }>; on
             {r.result.crystals ? (
               <PopIn delay={1000}>
                 <View style={[styles.lootCard, { borderColor: '#4A8FE0', backgroundColor: '#E9F4FF' }]}>
-                  <Text style={{ fontSize: 30 }}>💎</Text>
+                  <CrystalIcon size={40} />
                   <Text style={[styles.lootBig, { fontSize: 14, textAlign: 'center' }]}>+{r.result.crystals} Crystal{r.result.crystals > 1 ? 's' : ''}</Text>
                   <Text style={styles.lootSmall}>power up a pet</Text>
                 </View>

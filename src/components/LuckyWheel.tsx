@@ -15,6 +15,7 @@ import * as Wh from '../game/wheel';
 import * as Dy from '../game/dyes';
 import { SKIN_INFO } from '../game/skins';
 import { RARITY_INFO } from '../game/rarity';
+import CrystalIcon from './CrystalIcon';
 
 const N = Wh.SLOTS.length;
 const SVG_FONT = Platform.OS === 'web' ? 'Nunito, system-ui, sans-serif' : undefined;
@@ -61,7 +62,7 @@ function WheelArt({ size }: { size: number }) {
 function PrizeArt({ prize }: { prize: Wh.Prize }) {
   if (prize.kind === 'coins') return <Coin size={110} />;
   if (prize.kind === 'potion') return <PotionIcon kind="small" size={110} />;
-  if (prize.kind === 'crystal') return <View style={styles.crystal} />;
+  if (prize.kind === 'crystal') return <CrystalIcon size={110} />;
   if (prize.kind === 'outfit') return <ItemIcon id={prize.item.id} size={130} />;
   if (prize.kind === 'dye') return <DyeIcon skin={prize.dye.skin} size={96} />;
   return <EggSprite rarity={prize.rarity} size={130} />;

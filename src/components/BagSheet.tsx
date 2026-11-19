@@ -13,6 +13,7 @@ import PotionIcon from './PotionIcon';
 import { DyeIcon, UseDyeSheet } from './Dyes';
 import * as Dy from '../game/dyes';
 import type { Skin } from '../game/types';
+import CrystalIcon from './CrystalIcon';
 
 /** Everything you're carrying in one place: food, potions, crystals and treasures, each with what it does. */
 export default function BagSheet({ onClose, onFeed }: { onClose: () => void; onFeed?: () => void }) {
@@ -63,7 +64,7 @@ export default function BagSheet({ onClose, onFeed }: { onClose: () => void; onF
           ) : null}
           {crystals ? (
             <Section title="Training Crystals" hint="Open a pet’s page and use one to add +1 to any stat’s hidden quality.">
-              <Item icon={<View style={styles.crystal} />} name={CRYSTAL} count={crystals} text="+1 to one stat’s quality" />
+              <Item icon={<CrystalIcon size={28} />} name={CRYSTAL} count={crystals} text="+1 to one stat’s quality" />
             </Section>
           ) : null}
           {treasures.length ? (

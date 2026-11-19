@@ -63,7 +63,7 @@ function HowToEarnSheet({ onClose }: { onClose: () => void }) {
               ))}
               {odds === k ? (
                 <View style={styles.odds}>
-                  <Text style={font.small}>Coins: {CHESTS[k].coins[0]}–{CHESTS[k].coins[1]} · Egg chance: {CHESTS[k].eggChance}%{k === 'gold' ? ' · 💎 1–2 Training Crystals' : k === 'silver' ? ' · 💎 40% chance of a Training Crystal' : ''}</Text>
+                  <Text style={font.small}>Coins: {CHESTS[k].coins[0]}–{CHESTS[k].coins[1]} · Egg chance: {CHESTS[k].eggChance}%{k === 'gold' ? ' · 1–2 Training Crystals' : k === 'silver' ? ' · 40% chance of a Training Crystal' : ''}</Text>
                   {RARITIES.map((r) => (
                     <View key={r} style={{ flexDirection: 'row' }}>
                       <Text style={[font.small, { color: RARITY_INFO[r].color, width: 90 }]}>{RARITY_INFO[r].label}</Text>

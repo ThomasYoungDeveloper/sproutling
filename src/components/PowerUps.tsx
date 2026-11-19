@@ -11,6 +11,7 @@ import { SKIN_INFO } from '../game/skins';
 import * as St from '../game/stats';
 import * as Pw from '../game/powerups';
 import type { OwnedPet } from '../game/types';
+import CrystalIcon from './CrystalIcon';
 
 /** Raise a pet's grade after hatching: spend Training Crystals, or combine a spare copy of the same pet. */
 export default function PowerUps({ pet }: { pet: OwnedPet }) {
@@ -37,7 +38,7 @@ export default function PowerUps({ pet }: { pet: OwnedPet }) {
           accessibilityRole="button"
           accessibilityLabel={`Training Crystals: ${crystals}`}
         >
-          <Text style={[styles.tabText, mode === 'crystal' && styles.tabTextOn]}>💎 Crystals · {crystals}</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}><CrystalIcon size={18} /><Text style={[styles.tabText, mode === 'crystal' && styles.tabTextOn]}>Crystals · {crystals}</Text></View>
         </Pressable>
         <Pressable
           onPress={() => { setMode(mode === 'combine' ? 'none' : 'combine'); setSpareId(null); setNote(null); }}
