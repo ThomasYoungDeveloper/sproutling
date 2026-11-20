@@ -18,13 +18,19 @@ export const STAT_INFO: Record<Stat, { label: string; short: string; emoji: stri
 
 export type Personality = 'brave' | 'sturdy' | 'swift' | 'hardy' | 'lucky' | 'gentle';
 export const PERSONALITIES: Record<Personality, { label: string; emoji: string; text: string }> = {
-  brave: { label: 'Brave', emoji: '🦁', text: '+10% Attack' },
-  sturdy: { label: 'Sturdy', emoji: '🪨', text: '+10% Defense' },
-  swift: { label: 'Swift', emoji: '⚡', text: '+10% Speed' },
-  hardy: { label: 'Hardy', emoji: '💪', text: '+10% Health' },
+  brave: { label: 'Brave', emoji: '🦁', text: 'Attack grows faster' },
+  sturdy: { label: 'Sturdy', emoji: '🪨', text: 'Defense grows faster' },
+  swift: { label: 'Swift', emoji: '⚡', text: 'Speed grows faster' },
+  hardy: { label: 'Hardy', emoji: '💪', text: 'Health grows faster' },
   lucky: { label: 'Lucky', emoji: '🍀', text: 'More critical hits' },
   gentle: { label: 'Gentle', emoji: '🌷', text: 'Heals 25% more' },
 };
+/** The stat each nature favors: it grows faster every level (on top of training points) and gets +10% at the end. */
+export const NATURE_STAT: Partial<Record<Personality, Stat>> = { brave: 'atk', sturdy: 'def', swift: 'spd', hardy: 'hp' };
+/** Normal growth per level, and the extra the favored stat gets each level. */
+export const LEVEL_GROWTH: Record<Stat, number> = { hp: 8, atk: 2, def: 1.5, spd: 1.5 };
+export const NATURE_GROWTH: Record<Stat, number> = { hp: 4, atk: 1, def: 1, spd: 1 };
+
 const PERSONALITY_IDS = Object.keys(PERSONALITIES) as Personality[];
 
 function hash(str: string): number {
@@ -150,17 +156,16 @@ export function statsFor(p: { speciesId: string; xp: number; train?: Training; f
   const lv = levelFor(p.xp);
   const el = ELEMENT_BONUS[sp.element];
   const t = p.train ?? {};
-  const raw: StatBlock = {
-    hp: 60 + tier * 12 + (el.hp ?? 0) + (lv - 1) * 8 + (t.hp ?? 0) * STAT_INFO.hp.perPoint,
-    atk: 12 + tier * 3 + (el.atk ?? 0) + (lv - 1) * 2 + (t.atk ?? 0) * STAT_INFO.atk.perPoint,
-    def: 10 + tier * 2 + (el.def ?? 0) + (lv - 1) * 1.5 + (t.def ?? 0) * STAT_INFO.def.perPoint,
-    spd: 10 + tier * 2 + (el.spd ?? 0) + (lv - 1) * 1.5 + (t.spd ?? 0) * STAT_INFO.spd.perPoint,
-  };
   const pers = personalityOf({ id: p.id ?? '', personality: p.personality, speciesId: p.speciesId, nickname: p.nickname });
-  if (pers === 'brave') raw.atk *= 1.1;
-  if (pers === 'sturdy') raw.def *= 1.1;
-  if (pers === 'swift') raw.spd *= 1.1;
-  if (pers === 'hardy') raw.hp *= 1.1;
+  const fav = NATURE_STAT[pers];
+  const grow = (k: Stat) => (lv - 1) * (LEVEL_GROWTH[k] + (fav === k ? NATURE_GROWTH[k] : 0));
+  const raw: StatBlock = {
+    hp: 60 + tier * 12 + (el.hp ?? 0) + grow('hp') + (t.hp ?? 0) * STAT_INFO.hp.perPoint,
+    atk: 12 + tier * 3 + (el.atk ?? 0) + grow('atk') + (t.atk ?? 0) * STAT_INFO.atk.perPoint,
+    def: 10 + tier * 2 + (el.def ?? 0) + grow('def') + (t.def ?? 0) * STAT_INFO.def.perPoint,
+    spd: 10 + tier * 2 + (el.spd ?? 0) + grow('spd') + (t.spd ?? 0) * STAT_INFO.spd.perPoint,
+  };
+  if (fav) raw[fav] *= 1.1;
   // Grade: a perfect stat is up to 10% stronger.
   const iv = ivsOf(p);
   for (const k of ['hp', 'atk', 'def', 'spd'] as Stat[]) raw[k] *= 1 + iv[k] / 150;
@@ -168,6 +173,14 @@ export function statsFor(p: { speciesId: string; xp: number; train?: Training; f
   // (Capped here too, so a friend's card can't carry more than food could ever give: see game/food.ts.)
   for (const k of ['hp', 'atk', 'def', 'spd'] as Stat[]) raw[k] *= 1 + Math.max(0, Math.min(10, Number(p.foodBoost?.[k]) || 0)) / 100;
   return { hp: Math.round(raw.hp), atk: Math.round(raw.atk), def: Math.round(raw.def), spd: Math.round(raw.spd) };
+}
+
+/** How much a pet's nature adds to its favored stat right now (null for Lucky and Gentle, which don't favor a stat). */
+export function natureBonus(p: Parameters<typeof statsFor>[0]): { stat: Stat; amount: number } | null {
+  const pers = personalityOf({ id: p.id ?? '', personality: p.personality, speciesId: p.speciesId, nickname: p.nickname });
+  const stat = NATURE_STAT[pers];
+  if (!stat) return null;
+  return { stat, amount: statsFor({ ...p, personality: pers }) [stat] - statsFor({ ...p, personality: 'lucky' })[stat] };
 }
 
 /** Spends one stat point. Returns the pet unchanged if it has none left. */

@@ -935,4 +935,15 @@ console.log('\nEgg basket');
   ok(!none.ok, 'no potion without a trip');
 }
 
+{
+  // Natures: the favored stat grows faster every level, and the gap widens with level.
+  const base = { speciesId: 'p15', ivs: { hp: 7, atk: 7, def: 7, spd: 7 } };
+  const lo = St.natureBonus({ ...base, xp: 0, personality: 'swift' });
+  const hi = St.natureBonus({ ...base, xp: 20000, personality: 'swift' });
+  ok(!!lo && !!hi && lo.stat === 'spd' && hi.amount > lo.amount && hi.amount >= 5, 'Swift speed bonus grows with level');
+  const sw = St.statsFor({ ...base, xp: 20000, personality: 'swift' });
+  const ge = St.statsFor({ ...base, xp: 20000, personality: 'gentle' });
+  ok(sw.spd > ge.spd && sw.atk === ge.atk && sw.hp === ge.hp, 'Swift only changes Speed');
+  ok(St.natureBonus({ ...base, xp: 20000, personality: 'lucky' }) === null, 'Lucky has no stat bonus');
+}
 console.log(fails ? `${fails} FAILED` : 'ALL PASSED'); process.exit(fails ? 1 : 0);

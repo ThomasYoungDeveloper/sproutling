@@ -46,6 +46,7 @@ export default function PetSheet({ petId, onClose }: { petId: string; onClose: (
   const stats = St.statsFor(trainPreview);
   const left = St.pointsLeft(pet) - placed;
   const pers = St.PERSONALITIES[St.personalityOf(pet)];
+  const nb = St.natureBonus(trainPreview);
   const ivs = St.ivsOf(pet);
   const grade = St.gradeOf(pet);
   const gi = St.gradeInfo(grade);
@@ -77,7 +78,7 @@ export default function PetSheet({ petId, onClose }: { petId: string; onClose: (
               <View style={{ flexDirection: 'row', gap: 6, flexWrap: 'wrap' }}>
                 <RarityBadge rarity={sp.rarity} />
                 <View style={[styles.chip, { backgroundColor: ELEMENT_COLOR[sp.element] }]}><Text style={styles.chipText}>{ELEMENT_LABEL[sp.element]}</Text></View>
-                <Pressable onPress={() => setInfo('personality')} style={[styles.chip, { backgroundColor: '#F1EAFB' }]} accessibilityRole="button" accessibilityLabel={`Nature: ${pers.label}, ${pers.text}. Born with it. Tap for more`}><Text style={[styles.chipText, { color: '#6E56CF' }]}>Nature: {pers.label} ({pers.text}) ⓘ</Text></Pressable>
+                <Pressable onPress={() => setInfo('personality')} style={[styles.chip, { backgroundColor: '#F1EAFB' }]} accessibilityRole="button" accessibilityLabel={`Nature: ${pers.label}, ${pers.text}. Born with it. Tap for more`}><Text style={[styles.chipText, { color: '#6E56CF' }]}>Nature: {pers.label} ({nb ? `+${nb.amount} ${St.STAT_INFO[nb.stat].short}` : pers.text}) ⓘ</Text></Pressable>
               </View>
               <Text style={[font.tiny, { fontWeight: '800' }]}>{ELEMENT_HABIT[sp.element].emoji} While active: {ELEMENT_HABIT[sp.element].label}</Text>
               {isActive ? (
@@ -128,7 +129,7 @@ export default function PetSheet({ petId, onClose }: { petId: string; onClose: (
               return (
                 <View key={k} style={styles.statRow}>
                   <Text style={{ fontSize: 16, width: 22 }}>{info.emoji}</Text>
-                  <Text style={styles.statLabel}>{info.short}</Text>
+                  <Text style={[styles.statLabel, nb?.stat === k && { color: '#6E56CF' }]}>{info.short}</Text>
                   <View style={styles.bar}>
                     <View style={{ width: `${Math.min(100, (stats[k] / maxStat[k]) * 100)}%`, height: '100%', borderRadius: 999, backgroundColor: info.color }} />
                   </View>
@@ -150,6 +151,10 @@ export default function PetSheet({ petId, onClose }: { petId: string; onClose: (
                 </View>
               );
             })}
+            <Text style={font.tiny}>
+              {nb ? <Text style={{ color: '#6E56CF', fontWeight: '900' }}>{pers.label} adds {nb.amount} {St.STAT_INFO[nb.stat].label} and it grows faster each level. </Text> : null}
+              {St.pointsSpent(trainPreview.train) ? <Text style={{ color: colors.mintDark, fontWeight: '900' }}>Green numbers are points you trained.</Text> : null}
+            </Text>
             {placed > 0 ? (
               <View style={{ gap: 6 }}>
                 <Text style={[font.small, { fontWeight: '800', color: '#C4562F' }]}>Training is permanent. Once you lock these in, they can’t be moved.</Text>

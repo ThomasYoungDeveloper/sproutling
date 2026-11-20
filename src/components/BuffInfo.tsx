@@ -36,10 +36,10 @@ export function PersonalitySheet({ personality, name, onClose }: { personality: 
     <Sheet onClose={onClose}>
       <Text style={[styles.tag, { color: '#6E56CF' }]}>NATURE · BORN WITH IT</Text>
       <Text style={styles.title}>{p.label}</Text>
-      <Text style={styles.effect}>{p.text} in battles</Text>
+      <Text style={styles.effect}>{p.text}</Text>
       <View style={styles.box}>
         <Text style={font.body}>
-          This is {name}’s nature. Every pet is born with one of six natures, and it never changes, so it isn’t a buff you earn. It’s one reason two pets of the same kind can play differently. Buffs from your habits (like Rested or Hydrated) are separate and reset each day.
+          This is {name}’s nature. Every pet is born with one of six natures, and it never changes.{St.NATURE_STAT[personality] ? ` Its favored stat grows faster every time it levels up, on its own (training points are extra), and gets 10% more on top.` : ''} It’s one reason two pets of the same kind can play differently. Buffs from your habits (like Rested or Hydrated) are separate and reset each day.
         </Text>
       </View>
       <Text style={font.tiny}>All six: {Object.values(St.PERSONALITIES).map((x) => `${x.label} (${x.text})`).join(', ')}.</Text>
