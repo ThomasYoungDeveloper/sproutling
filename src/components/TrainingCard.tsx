@@ -35,7 +35,8 @@ export default function TrainingCard({ onOpen }: { onOpen: () => void }) {
       g.stop();
     };
   }, [pts]);
-  if (!pet) return null;
+  // Only on Home when there's something to do; stats live on the pet screen.
+  if (!pet || !pts) return null;
   const sp = SPECIES_BY_ID[pet.speciesId];
   const st = statsFor(pet);
   const max = Math.max(200, st.hp);
@@ -72,7 +73,7 @@ export default function TrainingCard({ onOpen }: { onOpen: () => void }) {
           ) : null}
           <View style={styles.grade}><Text style={styles.gradeText}>Grade {gradeOf(pet)}%</Text></View>
         </View>
-        <Text style={styles.title} numberOfLines={1}>{pts ? `Make ${pet.nickname} stronger` : `${pet.nickname}'s stats`}</Text>
+        <Text style={styles.title} numberOfLines={1}>{`Train ${pet.nickname}`}</Text>
         {STATS.map((k) => (
           <View key={k} style={styles.statRow}>
             <Text style={styles.statLabel}>{STAT_INFO[k].short}</Text>

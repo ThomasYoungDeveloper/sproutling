@@ -11,6 +11,7 @@ import EventCard from '../components/EventCard';
 import AchievementsSheet from '../components/AchievementsSheet';
 import PetSheet from '../components/PetSheet';
 import TrainingCard from '../components/TrainingCard';
+import ChestIcon from '../components/ChestIcon';
 import EggSprite from '../components/EggSprite';
 import { Button } from '../components/ui';
 import { buzz, PopIn } from '../components/fx';
@@ -26,16 +27,16 @@ type Tab = 'eggs' | 'chests' | 'friends' | 'dex';
 /** Reminders that get a chip. Everything else already shows up on Home (tray, Today card, event and expedition rows). */
 const CHIP_IDS = ['chests', 'badges', 'egg'];
 
-function chipLabel(r: C.Reminder, s: ReturnType<typeof useGame>['state']): { icon: string; text: string } {
+function chipLabel(r: C.Reminder, s: ReturnType<typeof useGame>['state']): { icon: React.ReactNode; text: string } {
   if (r.id === 'train' && r.petId) {
     const p = s.pets.find((x) => x.id === r.petId);
     const pts = r.text.match(/has (\d+)/)?.[1] ?? '';
-    return { icon: '💪', text: `Train ${p?.nickname ?? 'pet'} · ${pts} pt${pts === '1' ? '' : 's'}` };
+    return { icon: null, text: `Train ${p?.nickname ?? 'pet'} · ${pts} pt${pts === '1' ? '' : 's'}` };
   }
-  if (r.id === 'chests') return { icon: '🎁', text: s.chests.length === 1 ? 'Open a chest' : `Open ${s.chests.length} chests` };
-  if (r.id === 'badges') return { icon: '🏅', text: 'Badges' };
-  if (r.id === 'egg') return { icon: '👣', text: r.text.replace(/^Your /, '').replace(' hatches in', ' hatches in') };
-  return { icon: r.icon, text: r.text };
+  if (r.id === 'chests') return { icon: <ChestIcon kind={s.chests[0]?.kind ?? 'bronze'} size={24} />, text: s.chests.length === 1 ? 'Open a chest' : `Open ${s.chests.length} chests` };
+  if (r.id === 'badges') return { icon: null, text: 'Badges to claim' };
+  if (r.id === 'egg') return { icon: <EggSprite rarity={s.eggs.find((e) => e.incubating)?.rarity ?? 'common'} size={20} />, text: r.text.replace(/^Your /, '').replace(' hatches in', ' hatches in') };
+  return { icon: null, text: r.text };
 }
 
 export default function HomeScreen({ onNavigate, onAccount, account, banner }: { onNavigate?: (tab: Tab) => void; onAccount?: () => void; account?: { initial: string; label: string; warn?: boolean }; banner?: React.ReactNode }) {
@@ -72,7 +73,7 @@ export default function HomeScreen({ onNavigate, onAccount, account, banner }: {
             const c = chipLabel(r, state);
             return (
               <Pressable key={r.id} onPress={() => act(r)} style={({ pressed }) => [styles.chip, pressed && { transform: [{ scale: 0.96 }] }]} accessibilityRole="button" accessibilityLabel={r.text}>
-                <Text style={{ fontSize: 15 }}>{c.icon}</Text>
+                {c.icon}
                 <Text style={styles.chipText}>{c.text}</Text>
               </Pressable>
             );

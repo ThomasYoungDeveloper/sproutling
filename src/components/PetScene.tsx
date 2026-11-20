@@ -7,10 +7,8 @@ import { useGame } from '../state/GameContext';
 import PetSprite from './PetSprite';
 import { ProgressBar, RarityBadge } from './ui';
 import { buzz, PopIn, RollingNumber } from './fx';
-import { RARITY_INFO } from '../game/rarity';
 import { SKIN_INFO } from '../game/skins';
 import * as W from '../game/wishes';
-import { gradeOf } from '../game/stats';
 import { colors, space } from '../theme';
 import { SPECIES_BY_ID } from '../game/species';
 import { levelProgress, stageFor } from '../game/scoring';
@@ -19,7 +17,7 @@ import * as C from '../game/care';
 import type { Element } from '../game/types';
 import { SCENES } from './Cosmetics';
 import PowerGlow from './PowerGlow';
-import FeedSheet, { NeedsMini, NeedsSheet } from './FeedSheet';
+import FeedSheet, { NeedsSheet } from './FeedSheet';
 import { useOverlay } from './Overlay';
 import * as F from '../game/food';
 import { habitBuffs } from '../game/battle';
@@ -806,11 +804,9 @@ export default function PetScene({ onTrinketsEmpty, onDressUp, onShop, onAccount
           <View style={styles.xpTrack} accessibilityLabel={lp.max ? 'Max level' : `${lp.into} of ${lp.need} XP to level ${lp.level + 1}`}>
             <View style={[styles.xpFill, { width: `${Math.round((lp.max ? 1 : lp.into / lp.need) * 100)}%` }]} />
           </View>
-          <Text style={styles.sub} numberOfLines={1}>
-            {RARITY_INFO[sp.rarity].label}{pet.shiny ? ' ✦' : ''} · {gradeOf(pet)}% · <Text style={{ color: mi.color }}>{mi.emoji} {mi.label}</Text>
-          </Text>
-          <Pressable onPress={openNeeds} hitSlop={6} accessibilityRole="button" accessibilityLabel={`How ${pet.nickname} feels: food ${needs.food}%, fun ${needs.fun}%, water ${needs.water}%, energy ${needs.energy}%`}>
-            <NeedsMini needs={needs} />
+          <Pressable onPress={openNeeds} hitSlop={6} style={styles.moodRow} accessibilityRole="button" accessibilityLabel={`${pet.nickname} feels ${mi.label}. Food ${needs.food}%, fun ${needs.fun}%, water ${needs.water}%, energy ${needs.energy}%. Tap for details`}>
+            <View style={[styles.moodDot, { backgroundColor: mi.color }]} />
+            <Text style={[styles.sub, { color: mi.color }]} numberOfLines={1}>{mi.label}</Text>
           </Pressable>
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
@@ -948,6 +944,8 @@ const styles = StyleSheet.create({
   petSpot: { position: 'absolute', width: PET_SIZE, height: PET_SIZE + 6, alignItems: 'center', justifyContent: 'flex-end', zIndex: 6 },
   petShadow: { position: 'absolute', bottom: -PET_SIZE * 0.22, alignSelf: 'center', width: PET_SIZE * 0.5, height: PET_SIZE * 0.5, borderRadius: PET_SIZE, backgroundColor: 'rgba(0,0,0,0.14)', transform: [{ scaleY: 0.16 }] },
   hud: { position: 'absolute', top: 10, left: 12, right: 12, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8, zIndex: 20 },
+  moodRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  moodDot: { width: 8, height: 8, borderRadius: 4 },
   namePill: { flex: 1, maxWidth: 230, backgroundColor: 'rgba(255,255,255,0.9)', borderRadius: 18, paddingVertical: 7, paddingHorizontal: 10, gap: 4 },
   plus: { width: 16, height: 16, borderRadius: 8, backgroundColor: colors.mint, alignItems: 'center', justifyContent: 'center', marginLeft: 4 },
   plusText: { color: '#FFFFFF', fontSize: 12, fontWeight: '900', marginTop: -1 },

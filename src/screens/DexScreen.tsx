@@ -80,13 +80,22 @@ export default function DexScreen() {
   const overlay = useOverlay();
   const [filter, setFilter] = useState<DexFilter>('all');
   const [allStyles, setAllStyles] = useState(false);
+  const [section, setSection] = useState<'team' | 'dex' | 'nursery'>('team');
   const shinyIds = [...new Set(state.pets.filter((p) => p.shiny).map((p) => p.speciesId))];
   const filtered = filter === 'all' ? [] : filter === 'shiny' ? SPECIES.filter((sp) => shinyIds.includes(sp.id)) : SPECIES.filter((sp) => state.skinDex?.[skinKey(sp.id, filter)]);
 
   return (
     <View style={{ gap: space.md }}>
-      <BadgeBanner />
-      {U.unlocked(state, 'breeding') ? <Glow id="breeding"><NurseryCard /></Glow> : <LockedCard feature="breeding" compact />}
+      <View style={styles.tabs} accessibilityRole="tablist">
+        {(['team', 'dex', 'nursery'] as const).map((t) => (
+          <Pressable key={t} onPress={() => setSection(t)} style={[styles.tab, section === t && styles.tabOn]} accessibilityRole="tab" accessibilityState={{ selected: section === t }}>
+            <Text style={[styles.tabText, section === t && { color: colors.ink }]}>{t === 'team' ? 'Team' : t === 'dex' ? 'Pet-dex' : 'Nursery'}</Text>
+          </Pressable>
+        ))}
+      </View>
+      {section === 'nursery' ? (U.unlocked(state, 'breeding') ? <Glow id="breeding"><NurseryCard /></Glow> : <LockedCard feature="breeding" compact />) : null}
+      {section === 'team' ? <BadgeBanner /> : null}
+      {section === 'team' ? (
       <Card>
         <SectionHead title="Your team" meta={`${state.pets.length} pets`} />
         <View style={styles.grid}>
@@ -108,9 +117,10 @@ export default function DexScreen() {
             );
           })}
         </View>
-        <Text style={font.tiny}>Tap a pet to train it, pick its battle moves or make it your active pet. Your active pet earns today’s XP.</Text>
-      </Card>
+ </Card>
+      ) : null}
 
+      {section === 'dex' ? (
       <Card>
         <SectionHead title="Pet-dex" meta={filter === 'all' ? `${found} of ${SPECIES.length} found` : `${filtered.length} of ${SPECIES.length} ${FILTER_LABEL[filter]}`} />
         <View style={styles.chips} accessibilityRole="radiogroup" accessibilityLabel="Show style">
@@ -140,17 +150,18 @@ export default function DexScreen() {
         </View>
         {filter === 'all' ? (
           <>
+            <ProgressBar value={found / SPECIES.length} color={colors.mint} />
             {skinDexCount(state) > 0 ? <Text style={[font.tiny, { fontWeight: '900' }]}>Skins collected: {skinDexCount(state)}</Text> : null}
             {RARITIES.map((r) => (
               <View key={r} style={{ gap: 6 }}>
                 <Text style={[styles.tier, { color: RARITY_INFO[r].color }]}>{RARITY_INFO[r].label}</Text>
-                <View style={styles.grid}>
+                <View style={styles.dexGrid}>
                   {SPECIES.filter((s) => s.rarity === r).map((s) => {
                     const seen = !!state.dex[s.id];
                     return (
-                      <Pressable key={s.id} disabled={!seen} onPress={() => overlay.open(<PetZoom dex pet={{ speciesId: s.id, nickname: s.name, xp: 99999, shiny: false }} onClose={overlay.close} />)} style={({ pressed }) => [styles.tile, { borderColor: 'transparent', backgroundColor: seen ? RARITY_TINT[s.rarity] : '#E6ECEA' }, pressed && { transform: [{ scale: 0.96 }] }]} accessibilityRole={seen ? 'button' : undefined} accessibilityLabel={seen ? `See ${s.name} up close` : 'Not found yet'}>
-                        <PetSprite species={s} stage="adult" size={76} silhouette={!seen} />
-                        <Text style={styles.name} numberOfLines={1}>{seen ? s.name : '???'}</Text>
+                      <Pressable key={s.id} disabled={!seen} onPress={() => overlay.open(<PetZoom dex pet={{ speciesId: s.id, nickname: s.name, xp: 99999, shiny: false }} onClose={overlay.close} />)} style={({ pressed }) => [styles.dexTile, { backgroundColor: seen ? RARITY_TINT[s.rarity] : '#E6ECEA' }, pressed && { transform: [{ scale: 0.96 }] }]} accessibilityRole={seen ? 'button' : undefined} accessibilityLabel={seen ? `See ${s.name} up close` : 'Not found yet'}>
+                        <PetSprite species={s} stage="adult" size={54} silhouette={!seen} />
+                        {seen ? <Text style={styles.dexName} numberOfLines={1}>{s.name}</Text> : null}
                         {(() => {
                           // One colored dot per skin you've collected for this pet (none until you have one).
                           const got = SKINS.filter((k) => state.skinDex?.[skinKey(s.id, k)]);
@@ -193,6 +204,7 @@ export default function DexScreen() {
           </>
         )}
       </Card>
+      ) : null}
       <AdCard />
     </View>
   );
@@ -200,6 +212,13 @@ export default function DexScreen() {
 
 const styles = StyleSheet.create({
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
+  tabs: { flexDirection: 'row', backgroundColor: '#E2F0EA', borderRadius: 14, padding: 4 },
+  tab: { flex: 1, alignItems: 'center', paddingVertical: 10, borderRadius: 11 },
+  tabOn: { backgroundColor: '#FFFFFF' },
+  tabText: { fontSize: 15, fontWeight: '900', color: '#6F8A82' },
+  dexGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  dexTile: { width: '23%', flexGrow: 0, alignItems: 'center', justifyContent: 'center', gap: 2, paddingVertical: 8, borderRadius: 14, minHeight: 76 },
+  dexName: { fontWeight: '800', fontSize: 12, color: colors.ink },
   tile: { width: '30%', minWidth: 96, flexGrow: 1, maxWidth: 140, alignItems: 'center', gap: 4, padding: space.sm, borderRadius: 16, borderWidth: 1, borderColor: colors.line, backgroundColor: '#FAFCFB' },
   active: { borderColor: colors.mint, backgroundColor: colors.mintSoft },
   name: { fontWeight: '800', fontSize: 13, color: colors.ink },

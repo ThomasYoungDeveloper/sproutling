@@ -17,6 +17,7 @@ import { glassesText, stepGoalOf, waterGoalOf } from '../game/scoring';
 import { NextUnlockLine } from './Unlocks';
 import * as W from '../game/wishes';
 import { WheelBanner } from './LuckyWheel';
+import { InfoDot, InfoPop } from './InfoTip';
 
 type Habit = 'steps' | 'water' | 'sleep';
 
@@ -58,14 +59,18 @@ export default function TodayCard() {
           : null;
   const tip = tipFor(A.todayKey(state));
   const changed = state.goals?.changed;
-  const [tipOpen, setTipOpen] = useState(false);
+  const todayOverlay = useOverlay();
   const done: Record<Habit, boolean> = { steps: quests[0].done, water: quests[1].done, sleep: quests[2].done };
 
   return (
     <Card style={{ gap: 10 }}>
       <View style={styles.head}>
         <View style={{ flex: 1 }}>
-          <Text style={styles.title}>Today</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            <Text style={styles.title}>Today</Text>
+            <InfoDot label="today's tip" onPress={() => todayOverlay.open(<InfoPop tip={{ title: 'Tip of the day', text: `${tip.text}\n\nSource: ${tip.source}. Not medical advice.` }} onClose={todayOverlay.close} />)} />
+            {A.starterBoost(state) ? <View style={styles.starterChip}><Text style={styles.starterChipText}>2× coins to Lv {A.STARTER_BOOST_UNTIL}</Text></View> : null}
+          </View>
           <Text style={styles.subtitle}>{allDone ? 'All 3 done! Bronze chest earned' : 'Finish all 3 for a Bronze chest'}</Text>
         </View>
         {eb?.habit === 'quests' && pet ? (
@@ -112,18 +117,9 @@ export default function TodayCard() {
           <Text style={styles.changedX}>OK</Text>
         </Pressable>
       ) : null}
-      {next && !allDone ? <Text style={styles.next}>{next}</Text> : null}
-      {/* One quiet line; tap to read the whole tip and where it's from. */}
-      <Pressable onPress={() => setTipOpen((o) => !o)} style={styles.tipLine} accessibilityRole="button" accessibilityLabel={`Daily tip: ${tip.text}`} accessibilityState={{ expanded: tipOpen }}>
-        <Text style={styles.tipText} numberOfLines={tipOpen ? undefined : 1}>
-          <Text style={styles.tipTag}>Tip </Text>
-          {tip.text}
-        </Text>
-        {tipOpen ? <Text style={styles.tipSource}>Source: {tip.source} · Not medical advice</Text> : null}
-      </Pressable>
+      {next && !allDone && !next.startsWith('Next: feed') ? <Text style={styles.next}>{next}</Text> : null}
       <WheelBanner />
       <WishRow />
-      {A.starterBoost(state) ? <Text style={styles.starter}>New player bonus: double coins from habits until level {A.STARTER_BOOST_UNTIL}</Text> : null}
       <NextUnlockLine />
     </Card>
   );
@@ -343,6 +339,8 @@ const styles = StyleSheet.create({
   changed: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#FFF4D6', borderRadius: 12, padding: 10 },
   changedText: { flex: 1, fontSize: 13, fontWeight: '800', color: '#6A4A00' },
   changedX: { fontSize: 13, fontWeight: '900', color: '#B06A00' },
+  starterChip: { backgroundColor: '#FFF1C2', borderRadius: 999, paddingHorizontal: 8, paddingVertical: 3 },
+  starterChipText: { fontSize: 12, fontWeight: '900', color: '#8A6100' },
   tipLine: { gap: 2, paddingVertical: 2 },
   starter: { fontSize: 12, fontWeight: '800', color: '#B06A00' },
   tipTag: { fontSize: 12, fontWeight: '900', color: '#3D6E9C' },
