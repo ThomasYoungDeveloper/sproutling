@@ -136,6 +136,11 @@ const ELEMENT_BONUS: Record<Element, Partial<Record<Stat, number>>> = {
   tide: { def: 3 },
   moon: { spd: 3 },
   flower: { hp: 15 },
+  stone: { def: 3 },
+  spark: { spd: 3 },
+  frost: { def: 2, hp: 5 },
+  wind: { spd: 3 },
+  toxic: { atk: 2, hp: 5 },
 };
 
 export const pointsEarned = (xp: number) => levelFor(xp) - 1;
@@ -193,8 +198,8 @@ export function train(p: OwnedPet, stat: Stat): OwnedPet {
 /* ====================== Moves ====================== */
 
 export type MoveKind = 'attack' | 'heal' | 'buff' | 'energy';
-export type Status = 'burn' | 'soak' | 'drowsy';
-export type Buff = 'atkUp' | 'defUp' | 'dodgeUp';
+export type Status = 'burn' | 'soak' | 'drowsy' | 'stun' | 'chill' | 'poison' | 'sleep';
+export type Buff = 'atkUp' | 'defUp' | 'dodgeUp' | 'guard' | 'spdUp';
 
 export interface MoveDef {
   id: string;
@@ -213,6 +218,16 @@ export interface MoveDef {
   /** Heals this share of max HP. */
   heal?: number;
   buff?: Buff;
+  /** How long the buff lasts (default 3 turns). */
+  buffTurns?: number;
+  /** Also clears the user's status. */
+  cure?: boolean;
+  /** Hits 1.5× harder when the user is slower. */
+  slowBonus?: boolean;
+  /** A Legendary or Epic pet's special move: free, once per battle. */
+  signature?: boolean;
+  /** Also hits each benched enemy pet for this share of the damage. */
+  splash?: number;
   energy?: number;
   learn: number;
   desc: string;
@@ -240,13 +255,74 @@ export const MOVES: Record<string, MoveDef> = {
   vine: { id: 'vine', name: 'Vine Whip', emoji: '🌿', element: 'flower', kind: 'attack', cost: 1, power: 50, drain: 0.3, learn: 1, desc: 'Heals you for 30% of the damage.' },
   bloom: { id: 'bloom', name: 'Bloom', emoji: '🌸', element: 'flower', kind: 'heal', cost: 2, heal: 0.35, learn: 7, desc: 'Heal 35% and cure status.' },
   petal: { id: 'petal', name: 'Petal Storm', emoji: '💮', element: 'flower', kind: 'attack', cost: 3, power: 110, drain: 0.25, learn: 15, desc: 'Huge damage that heals you.' },
+  rootdown: { id: 'rootdown', name: 'Root Down', emoji: '🌱', element: 'flower', kind: 'buff', cost: 1, buff: 'guard', buffTurns: 2, learn: 4, desc: 'Take much less damage for 2 turns.' },
+  pollen: { id: 'pollen', name: 'Pollen Puff', emoji: '🌼', element: 'flower', kind: 'attack', cost: 2, power: 60, status: { type: 'drowsy', chance: 0.5 }, learn: 11, desc: '50% chance to make drowsy.' },
+
+  warmup: { id: 'warmup', name: 'Warm Up', emoji: '🔥', element: 'ember', kind: 'buff', cost: 1, buff: 'atkUp', learn: 4, desc: 'Attack up for 3 turns.' },
+  scorch: { id: 'scorch', name: 'Scorch', emoji: '🔥', element: 'ember', kind: 'attack', cost: 2, power: 55, status: { type: 'burn', chance: 0.9 }, learn: 11, desc: 'Almost always burns.' },
+
+  drench: { id: 'drench', name: 'Soak', emoji: '💧', element: 'tide', kind: 'attack', cost: 1, power: 30, status: { type: 'soak', chance: 1 }, learn: 4, desc: 'Weak hit that always soaks (slows).' },
+  bshield: { id: 'bshield', name: 'Bubble Shield', emoji: '🫧', element: 'tide', kind: 'buff', cost: 1, buff: 'guard', buffTurns: 2, learn: 11, desc: 'Take much less damage for 2 turns.' },
+
+  lullaby: { id: 'lullaby', name: 'Lullaby', emoji: '🎶', element: 'moon', kind: 'attack', cost: 2, power: 20, status: { type: 'sleep', chance: 0.6 }, learn: 4, desc: '60% chance to put the foe to sleep.' },
+  crescent: { id: 'crescent', name: 'Crescent Slash', emoji: '🌙', element: 'moon', kind: 'attack', cost: 2, power: 75, learn: 11, desc: 'A strong, clean hit.' },
+
+  pebble: { id: 'pebble', name: 'Pebble Toss', emoji: '🪨', element: 'stone', kind: 'attack', cost: 1, power: 50, learn: 1, desc: 'A steady stone hit.' },
+  stoneskin: { id: 'stoneskin', name: 'Stone Skin', emoji: '🗿', element: 'stone', kind: 'buff', cost: 1, buff: 'guard', buffTurns: 2, learn: 7, desc: 'Take much less damage for 2 turns.' },
+  rockslide: { id: 'rockslide', name: 'Rockslide', emoji: '⛰️', element: 'stone', kind: 'attack', cost: 3, power: 115, learn: 15, desc: 'Huge damage.' },
+  quake: { id: 'quake', name: 'Quake', emoji: '🌋', element: 'stone', kind: 'attack', cost: 2, power: 65, slowBonus: true, learn: 4, desc: 'Hits 1.5× harder if you are slower.' },
+
+  zap: { id: 'zap', name: 'Zap', emoji: '⚡', element: 'spark', kind: 'attack', cost: 1, power: 50, status: { type: 'stun', chance: 0.2 }, learn: 1, desc: '20% chance to stun.' },
+  overclock: { id: 'overclock', name: 'Overclock', emoji: '🔋', element: 'spark', kind: 'buff', cost: 1, buff: 'spdUp', learn: 7, desc: 'Speed way up for 3 turns.' },
+  thunder: { id: 'thunder', name: 'Thunderbolt', emoji: '🌩️', element: 'spark', kind: 'attack', cost: 3, power: 110, status: { type: 'stun', chance: 0.35 }, learn: 15, desc: 'Huge damage, 35% stun.' },
+  static: { id: 'static', name: 'Static', emoji: '✨', element: 'spark', kind: 'attack', cost: 2, power: 25, status: { type: 'stun', chance: 0.8 }, learn: 4, desc: 'Weak hit, 80% stun.' },
+
+  shard: { id: 'shard', name: 'Ice Shard', emoji: '🧊', element: 'frost', kind: 'attack', cost: 1, power: 42, priority: true, learn: 1, desc: 'Always goes first.' },
+  frostarmor: { id: 'frostarmor', name: 'Frost Armor', emoji: '🛡️', element: 'frost', kind: 'buff', cost: 1, buff: 'defUp', learn: 7, desc: 'Defense way up for 3 turns.' },
+  blizzard: { id: 'blizzard', name: 'Blizzard', emoji: '🌨️', element: 'frost', kind: 'attack', cost: 3, power: 110, status: { type: 'chill', chance: 0.5 }, learn: 15, desc: 'Huge damage, 50% chill.' },
+  coldsnap: { id: 'coldsnap', name: 'Chill', emoji: '❄️', element: 'frost', kind: 'attack', cost: 1, power: 30, status: { type: 'chill', chance: 1 }, learn: 4, desc: 'Weak hit that always chills (slows a lot).' },
+
+  gust: { id: 'gust', name: 'Gust', emoji: '🍃', element: 'wind', kind: 'attack', cost: 1, power: 42, priority: true, learn: 1, desc: 'Always goes first.' },
+  updraft: { id: 'updraft', name: 'Updraft', emoji: '🪽', element: 'wind', kind: 'buff', cost: 1, buff: 'dodgeUp', learn: 7, desc: 'Much harder to hit for 3 turns.' },
+  cyclone: { id: 'cyclone', name: 'Cyclone', emoji: '🌪️', element: 'wind', kind: 'attack', cost: 3, power: 110, learn: 15, desc: 'Huge damage.' },
+  tailwind: { id: 'tailwind', name: 'Tailwind', emoji: '💨', element: 'wind', kind: 'buff', cost: 1, buff: 'spdUp', learn: 4, desc: 'Speed way up for 3 turns.' },
+
+  goo: { id: 'goo', name: 'Goo Ball', emoji: '🟣', element: 'toxic', kind: 'attack', cost: 1, power: 50, status: { type: 'poison', chance: 0.3 }, learn: 1, desc: '30% chance to poison.' },
+  antidote: { id: 'antidote', name: 'Antidote', emoji: '🧪', element: 'toxic', kind: 'heal', cost: 2, heal: 0.25, cure: true, learn: 7, desc: 'Heal 25% and cure status.' },
+  sludge: { id: 'sludge', name: 'Sludge Wave', emoji: '🫧', element: 'toxic', kind: 'attack', cost: 3, power: 110, status: { type: 'poison', chance: 0.5 }, learn: 15, desc: 'Huge damage, 50% poison.' },
+  puff: { id: 'puff', name: 'Poison Puff', emoji: '☁️', element: 'toxic', kind: 'attack', cost: 1, power: 20, status: { type: 'poison', chance: 1 }, learn: 4, desc: 'Weak hit that always poisons.' },
 };
 
+/** Each Legendary and Epic pet's signature move: free, once per battle, with its type's effect. */
+const SIG = (id: string, name: string, element: Element, extra: Partial<MoveDef> = {}): MoveDef => ({ id, name, emoji: '✨', element, kind: 'attack', cost: 0, power: 120, learn: 1, signature: true, desc: 'Signature move. Free, once per battle.', ...extra });
+export const SIGNATURES: Record<string, MoveDef> = {
+  p15: SIG('sig_p15', 'Nine-Tail Fire', 'moon', { splash: 0.35, desc: 'Signature. Also hits every enemy pet on the bench. Once per battle.' }),
+  p29: SIG('sig_p29', 'Guardian Roar', 'ember', { status: { type: 'burn', chance: 1 }, desc: 'Signature. Always burns. Once per battle.' }),
+  p31: SIG('sig_p31', 'Starfall', 'moon', { status: { type: 'sleep', chance: 0.7 }, desc: 'Signature. 70% sleep. Once per battle.' }),
+  p62: SIG('sig_p62', 'Sacred Gate', 'flower', { drain: 0.6, desc: 'Signature. Heals you for 60% of the damage. Once per battle.' }),
+  p16: SIG('sig_p16', 'Iron Discipline', 'ember', { status: { type: 'burn', chance: 0.6 }, desc: 'Signature. 60% burn. Once per battle.' }),
+  p23: SIG('sig_p23', 'Ancient Ward', 'stone', { drain: 0.3, desc: 'Signature. Heals you for 30% of the damage. Once per battle.' }),
+  p25: SIG('sig_p25', 'System Crash', 'spark', { status: { type: 'stun', chance: 1 }, desc: 'Signature. Always stuns. Once per battle.' }),
+  p32: SIG('sig_p32', 'Neon Tide Cut', 'tide', { priority: true, desc: 'Signature. Goes first. Once per battle.' }),
+  p34: SIG('sig_p34', 'Data Frenzy', 'spark', { status: { type: 'stun', chance: 0.6 }, desc: 'Signature. 60% stun. Once per battle.' }),
+  p38: SIG('sig_p38', 'Storm Fist', 'spark', { priority: true, desc: 'Signature. Goes first. Once per battle.' }),
+  p66: SIG('sig_p66', 'Streak Blaze', 'ember', { status: { type: 'burn', chance: 1 }, desc: 'Signature. Always burns. Once per battle.' }),
+  p68: SIG('sig_p68', 'Mountain Howl', 'ember', { status: { type: 'burn', chance: 0.6 }, desc: 'Signature. 60% burn. Once per battle.' }),
+  p69: SIG('sig_p69', 'Mask of Sorrow', 'moon', { status: { type: 'drowsy', chance: 1 }, desc: 'Signature. Always makes drowsy. Once per battle.' }),
+  p72: SIG('sig_p72', 'Bone Plague', 'toxic', { status: { type: 'poison', chance: 1 }, desc: 'Signature. Always poisons. Once per battle.' }),
+};
+
+/** [basic attack, support move, big attack, ...extras]: the first three make the default kit. */
 const ELEMENT_MOVES: Record<Element, string[]> = {
-  ember: ['spark', 'dash', 'inferno'],
-  tide: ['bubble', 'wall', 'tidal'],
-  moon: ['beam', 'veil', 'eclipse'],
-  flower: ['vine', 'bloom', 'petal'],
+  ember: ['spark', 'dash', 'inferno', 'warmup', 'scorch'],
+  tide: ['bubble', 'wall', 'tidal', 'drench', 'bshield'],
+  moon: ['beam', 'veil', 'eclipse', 'lullaby', 'crescent'],
+  flower: ['vine', 'bloom', 'petal', 'rootdown', 'pollen'],
+  stone: ['pebble', 'stoneskin', 'rockslide', 'quake'],
+  spark: ['zap', 'overclock', 'thunder', 'static'],
+  frost: ['shard', 'frostarmor', 'blizzard', 'coldsnap'],
+  wind: ['gust', 'updraft', 'cyclone', 'tailwind'],
+  toxic: ['goo', 'antidote', 'sludge', 'puff'],
 };
 
 /** Every move a species can learn, in level order. */

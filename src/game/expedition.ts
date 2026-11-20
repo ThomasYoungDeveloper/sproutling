@@ -8,6 +8,7 @@ import * as B from './battle';
 import * as H from './hp';
 import { WALK_FOODS, addFood } from './food';
 import { seededRng } from './random';
+import { SPECIES_BY_ID } from './species';
 
 /**
  * Expeditions: send a pet on an adventure. It comes back when the timer runs out,
@@ -145,6 +146,13 @@ export function start(s: GameState, petId: string, placeId: string, now = Date.n
   };
 }
 
+/** A trip's length on the clock: Wind pets travel 25% faster. */
+export function tripMs(s: GameState, hours: number): number {
+  const pet = s.pets.find((p) => p.id === s.expedition?.petId);
+  const wind = pet && SPECIES_BY_ID[pet.speciesId]?.element === 'wind';
+  return hours * 3_600_000 * (wind ? 0.75 : 1);
+}
+
 /** Where the pet is on its route (0–1 of the full route), the fights it has already had, and its HP right now. */
 export function tripNow(s: GameState, now = Date.now()): { route: number; reached: TripFight[]; hp: number } | null {
   const e = s.expedition;
@@ -254,7 +262,7 @@ export function progress(s: GameState, now = Date.now()): Progress | null {
   if (!e) return null;
   const place = PLACE_BY_ID[e.placeId];
   if (!place) return null;
-  const ms = place.hours * 3_600_000;
+  const ms = tripMs(s, place.hours);
   const elapsed = Math.max(0, gameNow(s, now) - e.startedAt);
   const walked = Math.max(0, totalSteps(s) - e.startSteps);
   // A knocked-out pet comes home early: its trip ends at the fight it lost.

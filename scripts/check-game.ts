@@ -41,8 +41,8 @@ let s0 = newGame();
 ok(A.needsStarter(s0), 'new players must pick a starter egg');
 const st = A.chooseStarter(s0, () => 0.3);
 ok(st.state.pets.length === 1 && SPECIES.find((x) => x.id === st.pet.speciesId)!.rarity === 'common', 'starter is a Common');
-const starterEls = new Set(Array.from({ length: 200 }, () => A.chooseStarter(s0).pet.speciesId).map((id) => SPECIES.find((x) => x.id === id)!.element));
-ok(starterEls.size === 4, 'the one starter egg can hatch every element');
+const starterEls = new Set(Array.from({ length: 800 }, () => A.chooseStarter(s0).pet.speciesId).map((id) => SPECIES.find((x) => x.id === id)!.element));
+ok(starterEls.size === 9, 'the one starter egg can hatch every type');
 ok(st.state.chests.length === 1, 'starter comes with a welcome chest');
 let s = st.state; s = { ...s, eggs: [{ id: 'egg1', rarity: 'common', stepsWalked: 2100, incubating: true, foundOn: '' }, { id: 'egg2', rarity: 'rare', stepsWalked: 0, incubating: false, foundOn: '' }], days: { [A.todayKey(s)]: { steps: 4200, sleepHours: 7.5, water: 3, workoutMinutes: 0, meals: [{ name: 'Oats', calories: 320, veggies: true }] } } };
 const xp0 = A.activePet(s)!.xp, coins0 = s.coins;
@@ -122,7 +122,14 @@ ok(ap.received.id !== 'theirs' && ap.state.dex['p15'] === true, 'received pet ge
 ok(T.applyTrade(ap.state, 'trade1', notActive.id, incoming) === null, 'a trade is applied only once');
 const ap2 = T.applyTrade(TR, 'trade2', TR.activePetId!, incoming)!; ok(ap2.state.activePetId === ap2.received.id, 'if your active pet left, the new pet becomes active');
 // Battles
-ok(B.effectiveness('flower', 'tide') === 1.3 && B.effectiveness('tide', 'flower') === 0.85 && B.effectiveness('flower', 'ember') === 1, 'element strengths');
+ok(B.effectiveness('flower', 'tide') === 2 && B.effectiveness('tide', 'flower') === 0.5 && B.effectiveness('flower', 'ember') === 1, 'type strengths are 2× and ½');
+{
+  const els = Object.keys(B.BEATS) as (keyof typeof B.BEATS)[];
+  ok(els.length === 9 && els.every((e) => B.BEATS[e].length === 2 && B.weakTo(e).length === 2 && !B.BEATS[e].includes(e)), 'each of the 9 types beats two and loses to two');
+  ok(els.every((e) => B.BEATS[e].every((x) => !B.BEATS[x].includes(e))), 'no two types beat each other');
+  const counts = els.map((e) => SPECIES.filter((x) => x.element === e).length);
+  ok(counts.every((n) => n >= 8 && n <= 12), `every type has 8 to 12 pets (${counts.join(', ')})`);
+}
 let seed = 7; const rr = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
 const mk = (id: string, lv: number, extra: Partial<B.PetLike> = {}): B.PetLike => ({ id: id + lv + rr(), speciesId: id, nickname: id, xp: 25 * lv * (lv - 1), shiny: false, ...extra });
 const sim = (a: B.PetLike[], b: B.PetLike[], buffs: B.HabitBuff[] = [], opts = {}) => { const r = B.simulate(B.startBattle(a, b, buffs, opts), rr); return { over: r.battle.over, n: r.turns }; };
@@ -945,5 +952,67 @@ console.log('\nEgg basket');
   const ge = St.statsFor({ ...base, xp: 20000, personality: 'gentle' });
   ok(sw.spd > ge.spd && sw.atk === ge.atk && sw.hp === ge.hp, 'Swift only changes Speed');
   ok(St.natureBonus({ ...base, xp: 20000, personality: 'lucky' }) === null, 'Lucky has no stat bonus');
+}
+
+/* ---------- Battle rework: 9 types, new moves, signatures ---------- */
+{
+  const fixed = (v: number) => () => v;
+  const sp = (el: string, rarity = 'common') => SPECIES.find((x) => x.element === el && (rarity === 'any' || x.rarity === rarity))!.id;
+  const pet = (id: string, lv = 15, extra: Partial<B.PetLike> = {}): B.PetLike => ({ id: 'x' + id + lv, speciesId: id, nickname: id, xp: 25 * lv * (lv - 1), shiny: false, ...extra });
+  const all = Object.values(St.MOVES);
+  ok(all.every((m) => m.element === 'normal' || Object.keys(B.BEATS).includes(m.element)), 'every move has a real type');
+  ok(SPECIES.every((x) => St.learnset(x.id).length >= 8), 'every pet can learn at least 8 moves');
+  ok(SPECIES.every((x) => St.equippedMoves({ speciesId: x.id, xp: 25 * 15 * 14 }).length === 4), 'every pet brings 4 moves at level 15');
+  ok(St.equippedMoves({ speciesId: sp('tide'), xp: 0, moves: ['bogus'] }).length >= 1, 'unknown saved moves fall back to a default kit');
+  const sigs = SPECIES.filter((x) => x.rarity === 'epic' || x.rarity === 'legendary');
+  ok(sigs.every((x) => St.SIGNATURES[x.id]?.signature), 'every Epic and Legendary pet has a signature move');
+  ok(SPECIES.filter((x) => x.rarity !== 'epic' && x.rarity !== 'legendary').every((x) => !St.SIGNATURES[x.id]), 'other pets have no signature');
+  // Signature: free, once per battle.
+  const kit = pet('p15');
+  let b = B.startBattle([kit], [pet(sp('tide'), 15)]);
+  ok(B.active(b, 'me').sig?.id === 'sig_p15' && B.allMoves(B.active(b, 'me')).some((m) => m.signature), 'Kitsune brings Nine-Tail Fire');
+  let fr = B.playTurn(b, { type: 'move', moveId: 'sig_p15' }, { type: 'move', moveId: 'tackle' }, fixed(0.5));
+  b = fr[fr.length - 1].battle;
+  ok(B.active(b, 'me').sigUsed === true && !B.allMoves(B.active(b, 'me')).some((m) => m.signature), 'a signature move works once per battle');
+  // Splash hits the bench.
+  b = B.startBattle([kit], [pet(sp('tide'), 30), pet(sp('ember'), 30)]);
+  const benchHp = b.theirs[1].hp;
+  fr = B.playTurn(b, { type: 'move', moveId: 'sig_p15' }, { type: 'move', moveId: 'tackle' }, fixed(0.5));
+  ok(fr[fr.length - 1].battle.theirs[1].hp < benchHp, 'Nine-Tail Fire also hits the bench');
+  // Poison: hurts every turn, cured by switching.
+  b = B.startBattle([pet(sp('tide'), 20), pet(sp('ember'), 20)], [pet(sp('toxic'), 20)]);
+  b.mine[0].status = { type: 'poison', turns: 99 };
+  const hp0 = b.mine[0].hp;
+  fr = B.playTurn(b, { type: 'move', moveId: 'focus' }, { type: 'move', moveId: 'focus' }, fixed(0.5));
+  b = fr[fr.length - 1].battle;
+  ok(b.mine[0].hp < hp0 && b.mine[0].status?.type === 'poison', 'poison hurts each turn and stays');
+  fr = B.playTurn(b, { type: 'switch', index: 1 }, { type: 'move', moveId: 'focus' }, fixed(0.5));
+  ok(!fr[fr.length - 1].battle.mine[0].status, 'switching out cures poison');
+  // Guard cuts damage; super effective doubles it.
+  const hit = (foeId: string, moveId: string, guard = false) => {
+    const bb = B.startBattle([pet(sp('stone'), 20)], [pet(foeId, 20)]);
+    bb.mine[0].energy = 5;
+    if (guard) bb.theirs[0].buffs.guard = 2;
+    const f = B.playTurn(bb, { type: 'move', moveId }, { type: 'move', moveId: 'focus' }, fixed(0.5)).find((x) => x.event.kind === 'move' && x.event.side === 'me');
+    return f?.event.damage ?? 0;
+  };
+  const sameStats = SPECIES.find((x) => x.element === 'spark' && x.rarity === 'common')!.id;
+  ok(hit(sameStats, 'pebble', true) < hit(sameStats, 'pebble'), 'Guard means less damage');
+  const fe = B.startBattle([pet(sp('stone'), 20)], [pet(sp('spark'), 20)]);
+  const fx = B.playTurn(fe, { type: 'move', moveId: 'pebble' }, { type: 'move', moveId: 'focus' }, fixed(0.5)).find((x) => x.event.side === 'me' && x.event.kind === 'move');
+  ok(fx?.event.effect === 2 && /Super effective/.test(fx.event.text), 'Stone is super effective on Spark');
+  // Stun can cost a turn; chill slows.
+  b = B.startBattle([pet(sp('spark'), 20)], [pet(sp('frost'), 20)]);
+  b.mine[0].status = { type: 'stun', turns: 2 };
+  fr = B.playTurn(b, { type: 'move', moveId: 'tackle' }, { type: 'move', moveId: 'focus' }, fixed(0.1));
+  ok(fr.some((x) => x.event.side === 'me' && x.event.kind === 'doze'), 'a stunned pet can lose its turn');
+  // Habit perks for the new types.
+  const day = { steps: 0, sleepHours: 0, water: 0, workoutMinutes: 30, meals: [], mindfulMin: 10, rings: { move: 1, exercise: 1, stand: 1 } } as any;
+  ok(scoreDay(day, 'spark').workout === 60 && scoreDay(day).workout === 30, 'Spark pets double workout XP');
+  ok(scoreDay(day, 'frost').mindful === 2 * scoreDay(day).mindful, 'Frost pets double mindful XP');
+  ok(scoreDay(day, 'stone').rings === 2 * scoreDay(day).rings, 'Stone pets double activity-ring XP');
+  const cared = { ...day, care: { fed: true, played: 3, treat: true } };
+  ok(C.boostedTotal(cared, 'toxic') > C.boostedTotal(cared, 'flower') - scoreDay(cared, 'flower').bonus, 'Toxic pets double the care boost');
+  ok(Tw.THEMES.length === 9 && Tw.THEMES.every((t) => /hit harder/.test(t.weakTo)), 'a tower for every type');
 }
 console.log(fails ? `${fails} FAILED` : 'ALL PASSED'); process.exit(fails ? 1 : 0);

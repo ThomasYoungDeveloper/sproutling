@@ -14,6 +14,9 @@ import PetSprite from './PetSprite';
 import PetPicker from './PetPicker';
 import PowerGlow from './PowerGlow';
 import { Backdrop, skyNow } from './PetScene';
+import { ARENA } from './Cosmetics';
+import { InfoPop, type Tip } from './InfoTip';
+import type { Element } from '../game/types';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button } from './ui';
 import { Confetti, PopIn, buzz } from './fx';
@@ -36,6 +39,14 @@ type Phase = 'pick' | 'fight' | 'result';
 type Pop = { id: number; side: B.Side; text: string; color: string };
 
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
+/** Mini type chart for one type: what to hit it with and what it beats. */
+const typeTip = (e: Element): Tip => ({
+  title: `${B.ELEMENT_LABEL[e]} type`,
+  text: `Hit it with: ${B.weakTo(e).map((x) => B.ELEMENT_LABEL[x]).join(' or ')} (2× damage).\nCareful, it beats: ${B.BEATS[e].map((x) => B.ELEMENT_LABEL[x]).join(' and ')}.\nIts own moves do ½ damage to: ${B.weakTo(e).map((x) => B.ELEMENT_LABEL[x]).join(' and ')}.`,
+});
+/** 2×, ½ or nothing for one type hitting another. */
+const effTag = (eff: number) => (eff > 1 ? '2×' : eff < 1 ? '½' : '');
+const STATUS_COLOR: Record<string, string> = { burn: '#E8590C', soak: '#3D8FD6', drowsy: '#7F77DD', sleep: '#7F77DD', stun: '#E3A800', chill: '#3FB8C9', poison: '#B04FC0' };
 const moveColor = (m: MoveDef) => (m.element === 'normal' ? B.NORMAL_COLOR : B.ELEMENT_COLOR[m.element]);
 
 /** A line on the result screen for special battles (wild pets, the Sky Tower). */
@@ -70,6 +81,8 @@ export default function BattleScreen({ opponent, onClose, onResult, live, specia
   const [line, setLine] = useState('');
   const [reward, setReward] = useState<B.BattleReward | null>(null);
   const [switching, setSwitching] = useState(false);
+  const [tip, setTip] = useState<Tip | null>(null);
+  const [cutin, setCutin] = useState<{ id: number; name: string; pet: string; color: string } | null>(null);
   /** After one of your pets faints: the pet you picked to go in next (sent with your next move). */
   const [lead, setLead] = useState<number | null>(null);
   const [peek, setPeek] = useState<string | null>(null);
@@ -151,6 +164,20 @@ export default function BattleScreen({ opponent, onClose, onResult, live, specia
     const att = ev.side;
     const tgt = ev.target ?? (att === 'me' ? 'them' : 'me');
     if (ev.kind === 'move' || ev.kind === 'miss') {
+      if (ev.kind === 'move' && ev.damage === undefined) {
+        // A signature splash: the whole enemy team takes a hit.
+        doShake(10);
+        setCallout({ id: Date.now(), text: 'HITS THE WHOLE TEAM!', color: '#FFD84D' });
+        setBattle(f.battle);
+        await wait(900);
+        return;
+      }
+      if (ev.move?.signature && ev.kind === 'move' && ev.damage !== undefined) {
+        buzz('heavy', 'special');
+        setCutin({ id: Date.now(), name: ev.move.name, pet: B.active(f.battle, ev.side).nickname, color: ev.move.element === 'normal' ? '#FFD84D' : B.ELEMENT_COLOR[ev.move.element] });
+        await wait(1300);
+        setCutin(null);
+      }
       Animated.sequence([
         Animated.timing(lunge[att], { toValue: 1, duration: 160, easing: Easing.out(Easing.quad), useNativeDriver: true }),
         Animated.timing(lunge[att], { toValue: 0, duration: 220, useNativeDriver: true }),
@@ -166,8 +193,9 @@ export default function BattleScreen({ opponent, onClose, onResult, live, specia
         const elColor = ev.move && ev.move.element !== 'normal' ? B.ELEMENT_COLOR[ev.move.element] : '#FFFFFF';
         burst(tgt, elColor, big || superEff);
         if (big || superEff) doShake(superEff && big ? 12 : 8);
-        if (ev.crit || superEff) setCallout({ id: Date.now(), text: ev.crit && superEff ? 'CRITICAL! SUPER EFFECTIVE!' : ev.crit ? 'CRITICAL HIT!' : 'SUPER EFFECTIVE!', color: superEff ? elColor : '#FFD84D' });
-        else if ((ev.effect ?? 1) < 1) setCallout({ id: Date.now(), text: 'Not very effective…', color: '#D6DCF5' });
+        if (superEff) setCallout({ id: Date.now(), text: `${ev.crit ? 'CRITICAL! ' : ''}SUPER EFFECTIVE! 2×\n-${ev.damage}`, color: '#5CE08A' });
+        else if (ev.crit) setCallout({ id: Date.now(), text: `CRITICAL HIT!\n-${ev.damage}`, color: '#FFD84D' });
+        else if ((ev.effect ?? 1) < 1) setCallout({ id: Date.now(), text: `NOT VERY EFFECTIVE ½\n-${ev.damage}`, color: '#D6DCF5' });
         hit[tgt].setValue(0);
         Animated.timing(hit[tgt], { toValue: 1, duration: 420, useNativeDriver: true }).start();
         pop(tgt, `-${ev.damage}`, (ev.effect ?? 1) > 1 || ev.crit ? '#FFD84D' : '#FFFFFF');
@@ -178,7 +206,7 @@ export default function BattleScreen({ opponent, onClose, onResult, live, specia
       buzz('light', 'hit');
       hit[tgt].setValue(0);
       Animated.timing(hit[tgt], { toValue: 1, duration: 420, useNativeDriver: true }).start();
-      pop(tgt, `🔥 -${ev.damage}`, '#FF8A4C');
+      pop(tgt, `-${ev.damage}`, /poison/.test(ev.text) ? '#D58BE6' : '#FF8A4C');
       setBattle(f.battle);
       await wait(650);
     } else if (ev.kind === 'heal') {
@@ -192,8 +220,11 @@ export default function BattleScreen({ opponent, onClose, onResult, live, specia
       setBattle(f.battle);
       await wait(600);
     } else if (ev.kind === 'status') {
+      const st = B.active(f.battle, ev.side).status?.type;
+      buzz('medium', 'hit');
+      if (st) setCallout({ id: Date.now(), text: `${B.STATUS_INFO[st].label.toUpperCase()}!`, color: STATUS_COLOR[st] ?? '#FFFFFF' });
       setBattle(f.battle);
-      await wait(600);
+      await wait(900);
     } else if (ev.kind === 'faint') {
       // The last knockout plays in slow motion with a flash.
       const final = !!f.battle.over;
@@ -347,11 +378,11 @@ export default function BattleScreen({ opponent, onClose, onResult, live, specia
   return (
     <View style={[styles.full, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
       <Animated.View style={[styles.arena, { transform: [{ translateX: shake }] }]}>
-        <Backdrop element={me.element} sky={sky} scene={state.scene} />
+        <Backdrop element={them.element} sky={sky} scene={ARENA[them.element]} />
         <TeamDots fighters={battle.theirs} index={battle.ti} style={{ top: 10, right: 12 }} />
         <TeamDots fighters={battle.mine} index={battle.mi} style={{ bottom: 32, left: 16 }} />
-        <FighterCard f={them} label={opponent.name} style={{ top: 34, left: 12 }} />
-        <FighterCard f={me} label="You" style={{ bottom: 40, right: 12 }} buffs={buffs} />
+        <FighterCard f={them} label={opponent.name} style={{ top: 34, left: 12 }} onType={() => setTip(typeTip(them.element))} />
+        <FighterCard f={me} label="You" style={{ bottom: 40, right: 12 }} buffs={buffs} onType={() => setTip(typeTip(me.element))} />
         <FighterSprite f={them} side="them" lunge={lunge.them} hit={hit.them} faint={faint.them} style={{ top: 78, right: 24 }} />
         <FighterSprite f={me} side="me" lunge={lunge.me} hit={hit.me} faint={faint.me} style={{ bottom: 56, left: 20 }} glow={buffs.length} />
         {bubble ? <View style={[styles.bubble, { top: 64, right: 120 }]}><PopIn from={0.3}><Text style={styles.bubbleText}>{bubble}</Text></PopIn></View> : null}
@@ -364,8 +395,10 @@ export default function BattleScreen({ opponent, onClose, onResult, live, specia
           <HitBurst key={b.id} side={b.side} color={b.color} big={b.big} onDone={() => setBursts((list) => list.filter((x) => x.id !== b.id))} />
         ))}
         {callout ? <Callout key={callout.id} text={callout.text} color={callout.color} onDone={() => setCallout(null)} /> : null}
+        {cutin ? <SignatureCutIn key={cutin.id} {...cutin} /> : null}
         <Animated.View pointerEvents="none" style={[styles.flash, { opacity: flash }]} />
       </Animated.View>
+      {tip ? <View style={[StyleSheet.absoluteFill, { zIndex: 300 }]}><InfoPop tip={tip} onClose={() => setTip(null)} /></View> : null}
 
       <View style={styles.panel}>
         {phase === 'fight' ? (
@@ -388,6 +421,7 @@ export default function BattleScreen({ opponent, onClose, onResult, live, specia
                             <View style={styles.swTags}>
                               <View style={[styles.el, { backgroundColor: B.ELEMENT_COLOR[f.element] }]}><Text style={styles.elText}>{B.ELEMENT_LABEL[f.element]}</Text></View>
                               <Text style={styles.switchHp}>{`${f.hp}/${f.maxHp} HP`}</Text>
+                              <Matchup f={f} foe={them} />
                             </View>
                             <View style={styles.swBar}><View style={[styles.swFill, { width: `${Math.round(pct * 100)}%`, backgroundColor: pct > 0.5 ? '#2EB88A' : pct > 0.2 ? '#F2A23C' : '#E5533D' }]} /></View>
                           </View>
@@ -424,6 +458,7 @@ export default function BattleScreen({ opponent, onClose, onResult, live, specia
                             <View style={styles.swTags}>
                               <View style={[styles.el, { backgroundColor: B.ELEMENT_COLOR[f.element] }]}><Text style={styles.elText}>{B.ELEMENT_LABEL[f.element]}</Text></View>
                               <Text style={styles.switchHp}>{down ? 'Knocked out' : `${f.hp}/${f.maxHp} HP`}</Text>
+                              {!down ? <Matchup f={f} foe={them} /> : null}
                             </View>
                             <View style={styles.swBar}><View style={[styles.swFill, { width: `${Math.round(pct * 100)}%`, backgroundColor: pct > 0.5 ? '#2EB88A' : pct > 0.2 ? '#F2A23C' : '#E5533D' }]} /></View>
                           </View>
@@ -464,7 +499,7 @@ export default function BattleScreen({ opponent, onClose, onResult, live, specia
                   <Text style={styles.energyHint}>+1 each turn</Text>
                 </View>
                 <View style={styles.moves}>
-                  {me.moves.map((m) => (
+                  {B.allMoves(me).map((m) => (
                     <MoveButton key={m.id} m={m} foe={them} energy={me.energy} disabled={busy || !!lb?.iMoved} onPress={() => act({ type: 'move', moveId: m.id })} />
                   ))}
                 </View>
@@ -541,33 +576,87 @@ export default function BattleScreen({ opponent, onClose, onResult, live, specia
 
 function MoveButton({ m, foe, energy, disabled, onPress }: { m: MoveDef; foe: B.Fighter; energy: number; disabled?: boolean; onPress: () => void }) {
   const press = useRef(new Animated.Value(1)).current;
+  const glow = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    if (!m.signature) return;
+    const loop = Animated.loop(Animated.sequence([
+      Animated.timing(glow, { toValue: 1, duration: 800, useNativeDriver: false }),
+      Animated.timing(glow, { toValue: 0, duration: 800, useNativeDriver: false }),
+    ]));
+    loop.start();
+    return () => loop.stop();
+  }, [m.signature]);
   const affordable = energy >= m.cost;
   const eff = m.kind === 'attack' ? B.effectiveness(m.element, foe.element) : 1;
   const off = disabled || !affordable;
-  const c = moveColor(m);
+  const c = m.signature ? '#E5A800' : moveColor(m);
   const hint = m.kind === 'attack' ? `Power ${m.power}${m.priority ? ' · First' : ''}` : m.desc;
+  // The badge: 2× or ½ for attacks; otherwise the one-word effect.
+  const tag = m.kind === 'attack'
+    ? effTag(eff) || (m.status && m.status.chance >= 0.6 ? B.STATUS_INFO[m.status.type].label : '')
+    : m.kind === 'buff' ? B.BUFF_INFO[m.buff!].label : m.kind === 'heal' ? (m.cure ? 'Heal + cure' : 'Heal') : '';
+  const tagColor = eff > 1 ? '#1E9E6A' : eff < 1 ? '#8A93A6' : m.status ? STATUS_COLOR[m.status.type] ?? c : c;
+  const typeName = m.element === 'normal' ? 'Normal' : B.ELEMENT_LABEL[m.element];
   return (
     <Pressable
-      style={{ width: '48.5%' }}
+      style={{ width: m.signature ? '100%' : '48.5%' }}
       onPress={off ? undefined : onPress}
       onPressIn={() => !off && Animated.spring(press, { toValue: 0.93, friction: 6, useNativeDriver: true }).start()}
       onPressOut={() => Animated.spring(press, { toValue: 1, friction: 4, useNativeDriver: true }).start()}
       accessibilityRole="button"
       accessibilityState={{ disabled: off }}
-      accessibilityLabel={`${m.name}, costs ${m.cost} energy`}
+      accessibilityLabel={`${m.name}${m.signature ? ', signature move, once per battle' : ''}, ${typeName}${eff > 1 ? ', 2 times damage' : eff < 1 ? ', half damage' : ''}, costs ${m.cost} energy`}
     >
-      <Animated.View style={[styles.move, { borderColor: c }, off && { opacity: 0.4 }, { transform: [{ scale: press }] }]}>
+      <Animated.View
+        style={[
+          styles.move,
+          { borderColor: c, backgroundColor: m.signature ? '#FFF8DC' : '#FFFFFF' },
+          m.signature && { shadowColor: '#FFC400', shadowOpacity: glow.interpolate({ inputRange: [0, 1], outputRange: [0.25, 0.8] }) as any, shadowRadius: 12, shadowOffset: { width: 0, height: 0 }, elevation: 6 },
+          off && { opacity: 0.4 },
+          { transform: [{ scale: press }] },
+        ]}
+      >
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
           <Text style={{ fontSize: 20 }}>{m.emoji}</Text>
-          <Text style={styles.moveName} numberOfLines={1}>{m.name}</Text>
+          <Text style={[styles.moveName, { flex: 1 }]} numberOfLines={1}>{m.name}</Text>
+          {tag ? <View style={[styles.effTag, { backgroundColor: tagColor }]}><Text style={styles.effTagText}>{tag}</Text></View> : null}
         </View>
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-          <Text style={styles.moveHint} numberOfLines={1}>{hint}</Text>
-          <Text style={[styles.cost, { backgroundColor: m.cost ? '#FFF1C9' : '#EAF7F1' }]}>{m.cost ? `${m.cost}⚡` : 'Free'}</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
+          <Text style={[styles.moveHint, { flexShrink: 1 }]} numberOfLines={1}>
+            <Text style={{ color: m.signature ? '#B07D00' : moveColor(m), fontWeight: '900' }}>{m.signature ? 'Signature' : typeName}</Text> · {hint}
+          </Text>
+          <Text style={[styles.cost, { backgroundColor: m.cost ? '#FFF1C9' : '#EAF7F1' }]}>{m.signature ? 'Once' : m.cost ? `${m.cost}⚡` : 'Free'}</Text>
         </View>
-        {eff !== 1 ? <Text style={[styles.eff, { color: eff > 1 ? '#1E8A68' : '#C4562F' }]}>{eff > 1 ? '▲ Super effective' : '▼ Not very effective'}</Text> : null}
       </Animated.View>
     </Pressable>
+  );
+}
+
+/** 2× / 1× / ½: how this pet's own type does against the opponent out now. */
+function Matchup({ f, foe }: { f: B.Fighter; foe: B.Fighter }) {
+  const eff = B.effectiveness(f.element, foe.element);
+  const bg = eff > 1 ? '#1E9E6A' : eff < 1 ? '#7D879B' : '#9AA8A2';
+  return (
+    <View style={[styles.effTag, { backgroundColor: bg }]} accessibilityLabel={`${eff > 1 ? 'Double' : eff < 1 ? 'Half' : 'Normal'} damage against ${foe.nickname}`}>
+      <Text style={styles.effTagText}>{eff > 1 ? '2×' : eff < 1 ? '½' : '1×'} vs {foe.nickname}</Text>
+    </View>
+  );
+}
+
+/** Full-screen gold flash when a pet uses its signature move. */
+function SignatureCutIn({ name, pet, color }: { name: string; pet: string; color: string }) {
+  const v = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    Animated.timing(v, { toValue: 1, duration: 1250, easing: Easing.out(Easing.quad), useNativeDriver: true }).start();
+  }, []);
+  const opacity = v.interpolate({ inputRange: [0, 0.1, 0.8, 1], outputRange: [0, 1, 1, 0] });
+  return (
+    <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, styles.cutin, { opacity }]}>
+      <Animated.View style={[styles.cutBand, { backgroundColor: color, transform: [{ translateX: v.interpolate({ inputRange: [0, 0.15, 1], outputRange: [-400, 0, 30] }) }, { rotate: '-6deg' }] }]}>
+        <Text style={styles.cutSmall}>{pet.toUpperCase()}'S SIGNATURE MOVE</Text>
+        <Text style={styles.cutBig}>{name.toUpperCase()}!</Text>
+      </Animated.View>
+    </Animated.View>
   );
 }
 
@@ -634,26 +723,22 @@ function TeamDots({ fighters, index, style }: { fighters: B.Fighter[]; index: nu
   );
 }
 
-function FighterCard({ f, label, style, buffs }: { f: B.Fighter; label: string; style: any; buffs?: B.HabitBuff[] }) {
+function FighterCard({ f, label, style, buffs, onType }: { f: B.Fighter; label: string; style: any; buffs?: B.HabitBuff[]; onType?: () => void }) {
   const pct = f.hp / f.maxHp;
   const hpColor = pct > 0.5 ? '#2FB58A' : pct > 0.2 ? '#FFC94D' : '#FF6B4A';
   const w = useRef(new Animated.Value(pct)).current;
   useEffect(() => {
     Animated.timing(w, { toValue: pct, duration: 450, easing: Easing.out(Easing.cubic), useNativeDriver: false }).start();
   }, [pct]);
-  const icons = [
-    ...(f.status ? [B.STATUS_INFO[f.status.type].emoji] : []),
-    ...(Object.keys(f.buffs) as (keyof typeof B.BUFF_INFO)[]).map((k) => B.BUFF_INFO[k].emoji),
-  ];
+  const buffWords = (Object.keys(f.buffs) as (keyof typeof B.BUFF_INFO)[]).map((k) => B.BUFF_INFO[k].label);
   return (
     <View style={[styles.fcard, style]}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
         <Text style={styles.fname} numberOfLines={1}>{f.nickname}</Text>
         <Text style={styles.flv}>Lv {f.level}</Text>
-        {icons.length ? <Text style={{ fontSize: 13 }}>{icons.join('')}</Text> : null}
       </View>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-        <View style={[styles.el, { backgroundColor: B.ELEMENT_COLOR[f.element] }]}><Text style={styles.elText}>{B.ELEMENT_LABEL[f.element]}</Text></View>
+        <Pressable onPress={onType} hitSlop={6} accessibilityRole="button" accessibilityLabel={`${B.ELEMENT_LABEL[f.element]} type. What beats it?`} style={[styles.el, { backgroundColor: B.ELEMENT_COLOR[f.element] }]}><Text style={styles.elText}>{B.ELEMENT_LABEL[f.element]}</Text></Pressable>
         <Text style={styles.flabel} numberOfLines={1}>{label}{buffs?.length ? ` · ${buffs.map((b) => b.emoji).join('')}` : ''}</Text>
       </View>
       <View style={styles.hpTrack}>
@@ -663,6 +748,12 @@ function FighterCard({ f, label, style, buffs }: { f: B.Fighter; label: string; 
         <Text style={styles.hpText}>{f.hp} / {f.maxHp} HP</Text>
         <Text style={styles.hpText}>⚡{f.energy}</Text>
       </View>
+      {f.status || buffWords.length ? (
+        <View style={{ flexDirection: 'row', gap: 4, flexWrap: 'wrap' }}>
+          {f.status ? <View style={[styles.stTag, { backgroundColor: STATUS_COLOR[f.status.type] ?? '#888' }]}><Text style={styles.stText}>{B.STATUS_INFO[f.status.type].label}</Text></View> : null}
+          {buffWords.map((w) => <View key={w} style={[styles.stTag, { backgroundColor: '#2FB58A' }]}><Text style={styles.stText}>{w}</Text></View>)}
+        </View>
+      ) : null}
     </View>
   );
 }
@@ -761,6 +852,14 @@ function DamagePop({ side, text, color, onDone }: { side: B.Side; text: string; 
 }
 
 const styles = StyleSheet.create({
+  effTag: { borderRadius: 999, paddingHorizontal: 7, paddingVertical: 2 },
+  effTagText: { color: '#FFFFFF', fontWeight: '900', fontSize: 12 },
+  stTag: { borderRadius: 999, paddingHorizontal: 7, paddingVertical: 1 },
+  stText: { color: '#FFFFFF', fontWeight: '900', fontSize: 12 },
+  cutin: { backgroundColor: 'rgba(20,14,0,0.55)', justifyContent: 'center', alignItems: 'center', zIndex: 50 },
+  cutBand: { width: '130%', paddingVertical: 18, alignItems: 'center', borderTopWidth: 4, borderBottomWidth: 4, borderColor: '#FFD84D' },
+  cutSmall: { color: '#FFF6D6', fontWeight: '900', fontSize: 13, letterSpacing: 1.5 },
+  cutBig: { color: '#FFFFFF', fontWeight: '900', fontSize: 34, textShadowColor: 'rgba(0,0,0,0.35)', textShadowRadius: 6, textShadowOffset: { width: 0, height: 2 } },
   swGo: { fontWeight: '900', fontSize: 14, color: colors.mintDark },
   potionRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   potionBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, borderWidth: 2, borderRadius: 12, paddingHorizontal: 8, paddingVertical: 3, backgroundColor: '#FFFBF2' },

@@ -1,4 +1,5 @@
-export type Element = 'flower' | 'moon' | 'ember' | 'tide';
+export type Element = 'flower' | 'moon' | 'ember' | 'tide' | 'stone' | 'spark' | 'frost' | 'wind' | 'toxic';
+export const ELEMENTS: Element[] = ['flower', 'tide', 'ember', 'moon', 'stone', 'spark', 'frost', 'wind', 'toxic'];
 export type Rarity = 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary';
 export type Stage = 'baby' | 'teen' | 'adult';
 

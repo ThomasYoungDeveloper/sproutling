@@ -46,6 +46,11 @@ const HILLS: Record<Element, [string, string, string]> = {
   moon: ['#CBC2F2', '#AA9DE6', '#8E7CE0'],
   ember: ['#FFD39A', '#FFB36E', '#F7954A'],
   tide: ['#A7E1F0', '#73C8E3', '#3FAED6'],
+  stone: ['#D9C7AE', '#BFA383', '#A0784F'],
+  spark: ['#FFE89A', '#FFD45A', '#E3A800'],
+  frost: ['#D3F1F6', '#9EDDE8', '#3FB8C9'],
+  wind: ['#C8EEDB', '#9ADBBA', '#6CC79A'],
+  toxic: ['#E7C6EE', '#CF92DC', '#B04FC0'],
 };
 
 function Cloud({ width, top, duration, delay, scale }: { width: number; top: number; duration: number; delay: number; scale: number }) {

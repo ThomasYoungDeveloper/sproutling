@@ -71,7 +71,7 @@ const FILTER_HINT = {
   shiny: 'Shiny pets sparkle. Keep hatching!',
 } as Record<DexFilter, string>;
 
-const ELEMENT_TINT: Record<string, string> = { flower: '#DDF2D2', moon: '#E8E1FA', ember: '#FFE4CC', tide: '#D6EDF8' };
+const ELEMENT_TINT: Record<string, string> = { flower: '#DDF2D2', moon: '#E8E1FA', ember: '#FFE4CC', tide: '#D6EDF8', stone: '#EFE4D6', spark: '#FFF2C2', frost: '#DDF5F8', wind: '#DDF4E8', toxic: '#F1DDF5' };
 const RARITY_TINT: Record<string, string> = { common: '#E8F6FF', uncommon: '#E2F6E6', rare: '#F1E8FF', epic: '#FFE8F2', legendary: '#FFF2D6' };
 
 export default function DexScreen() {

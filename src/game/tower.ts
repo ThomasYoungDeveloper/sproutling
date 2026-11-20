@@ -1,5 +1,6 @@
 import type { ChestKind, Element, GameState, Rarity } from './types';
 import type { Battle, PetLike } from './battle';
+import { ELEMENT_LABEL, weakTo } from './battle';
 import { SPECIES } from './species';
 import { levelFor, xpForLevel } from './scoring';
 import { seededRng, type Rng } from './random';
@@ -26,12 +27,19 @@ export interface Theme {
   sky: [string, string, string];
 }
 
-export const THEMES: Theme[] = [
-  { id: 'ember', name: 'Ember Tower', element: 'ember', weakTo: 'Tide moves hit harder', sky: ['#1B0F2E', '#4A1F3F', '#F08A3C'] },
-  { id: 'tide', name: 'Frost Tower', element: 'tide', weakTo: 'Flower moves hit harder', sky: ['#0E1B33', '#24477A', '#8FD0F0'] },
-  { id: 'moon', name: 'Moonlit Tower', element: 'moon', weakTo: 'Ember moves hit harder', sky: ['#0B0A22', '#2C2466', '#8E7CE0'] },
-  { id: 'flower', name: 'Bloom Tower', element: 'flower', weakTo: 'Moon moves hit harder', sky: ['#14301F', '#2E6B45', '#F2B6C6'] },
-];
+const hitBy = (e: Element) => `${weakTo(e).map((x) => ELEMENT_LABEL[x]).join(' and ')} moves hit harder`;
+/** One tower a week. The order keeps the week the 9 types arrived on Bloom Tower. */
+export const THEMES: Theme[] = ([
+  ['ember', 'Ember Tower', ['#1B0F2E', '#4A1F3F', '#F08A3C']],
+  ['tide', 'Tide Tower', ['#0E1B33', '#24477A', '#8FD0F0']],
+  ['moon', 'Moonlit Tower', ['#0B0A22', '#2C2466', '#8E7CE0']],
+  ['stone', 'Stone Tower', ['#1E1712', '#4A3A2C', '#C9A27A']],
+  ['spark', 'Spark Tower', ['#0D0B24', '#2A1F5C', '#FFD23F']],
+  ['frost', 'Frost Tower', ['#0C1E2C', '#2C5C78', '#BDEFF7']],
+  ['flower', 'Bloom Tower', ['#14301F', '#2E6B45', '#F2B6C6']],
+  ['wind', 'Wind Tower', ['#10261F', '#2F6B5A', '#BFF0D6']],
+  ['toxic', 'Toxic Tower', ['#1A0E22', '#4A1F5A', '#C77DDB']],
+] as [Element, string, [string, string, string]][]).map(([element, name, sky]) => ({ id: element, name, element, weakTo: hitBy(element), sky }));
 
 export const weekOf = (s: GameState) => weekStart(A.todayKey(s));
 

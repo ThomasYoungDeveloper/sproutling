@@ -222,6 +222,16 @@ export default function PetSheet({ petId, onClose }: { petId: string; onClose: (
                   </Pressable>
                 );
               })}
+              {St.SIGNATURES[pet.speciesId] ? (
+                <View style={[styles.move, { borderColor: '#E5A800', backgroundColor: '#FFF8DC' }]} accessibilityLabel={`Signature move: ${St.SIGNATURES[pet.speciesId].name}. ${St.SIGNATURES[pet.speciesId].desc}`}>
+                  <View style={[styles.moveDot, { backgroundColor: '#E5A800' }]} />
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.moveName}>{St.SIGNATURES[pet.speciesId].name}</Text>
+                    <Text style={styles.moveCost}>{St.SIGNATURES[pet.speciesId].desc.replace(/^Signature(?: move)?\.\s*/, 'Signature · ').replace(/\.$/, '')}</Text>
+                  </View>
+                  <Text style={[styles.check, { backgroundColor: '#E5A800' }]}>★</Text>
+                </View>
+              ) : null}
               {locked.length ? <Text style={styles.lockedLine}>{locked.length} more move{locked.length === 1 ? '' : 's'} to learn · next at Lv {locked[0].learn}</Text> : null}
             </View>
           ) : null}

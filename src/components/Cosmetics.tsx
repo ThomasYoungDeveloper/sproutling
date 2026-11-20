@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { Animated, Easing, StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle, Defs, Ellipse, G, LinearGradient, Path, Polygon, Rect, Stop } from 'react-native-svg';
 import { COSMETIC_BY_ID } from '../game/cosmetics';
+import type { Element } from '../game/types';
 
 /* ====================== Hats ======================
  * Drawn in a 100×70 box. The hat's base line is at y≈62 and is placed on the top of the pet's head.
@@ -308,6 +309,80 @@ const tree = (x: number, y: number, s: number, c: string) => (
 );
 
 export const SCENES: Record<string, ScenePalette> = {
+  // Battle arenas: each type fights on its own ground (see ARENA below).
+  arena_ember: {
+    sky: ['#FF7A45', '#FFD39A'],
+    hills: ['#C2502A', '#9E3B1E', '#E8763A'],
+    extras: (
+      <G>
+        <Circle cx={80} cy={78} r={34} fill="#FFE08A" opacity={0.55} />
+        <Circle cx={80} cy={78} r={22} fill="#FFD04D" />
+        <Path d="M250 205 L300 120 L318 120 L370 205 Z" fill="#7A2E1A" />
+        <Path d="M300 120 Q309 100 318 120 Z" fill="#FF5A1F" />
+        <Path d="M305 112 Q300 80 318 60 Q312 85 322 100" stroke="#FFB067" strokeWidth={5} fill="none" strokeLinecap="round" opacity={0.8} />
+        {[[40, 150], [140, 120], [200, 160], [360, 90]].map(([x, y], i) => <Circle key={i} cx={x} cy={y} r={2.4} fill="#FFE27A" opacity={0.9} />)}
+      </G>
+    ),
+  },
+  arena_stone: {
+    sky: ['#E9B98A', '#FBE7CF'],
+    hills: ['#B88456', '#9B6B42', '#C99A6B'],
+    extras: (
+      <G>
+        <Circle cx={330} cy={60} r={20} fill="#FFE9A8" />
+        <Path d="M20 210 L20 140 L70 140 L80 210 Z" fill="#A86F45" />
+        <Path d="M20 160 H72 M22 180 H76" stroke="#8A5534" strokeWidth={3} />
+        <Path d="M300 210 L310 120 L370 115 L380 210 Z" fill="#B07A4C" />
+        <Path d="M308 150 H372 M306 175 H376" stroke="#8A5534" strokeWidth={3} />
+        <Ellipse cx={180} cy={262} rx={22} ry={12} fill="#8E8174" />
+        <Ellipse cx={240} cy={270} rx={14} ry={8} fill="#A0948A" />
+      </G>
+    ),
+  },
+  arena_spark: {
+    sky: ['#140F3A', '#3B2C86'],
+    hills: ['#2A2160', '#1E184A', '#3A2E7E'],
+    dark: true,
+    extras: (
+      <G>
+        {[[10, 120, 40, 90], [55, 100, 34, 110], [95, 135, 46, 75], [270, 110, 40, 100], [315, 90, 36, 120], [355, 125, 44, 85]].map(([x, y, w, h], i) => (
+          <G key={i}>
+            <Rect x={x} y={y} width={w} height={h} fill="#231B58" />
+            {[0, 1, 2, 3].map((r) => <Rect key={r} x={x + 6} y={y + 10 + r * 18} width={w - 12} height={5} fill={['#FFD23F', '#5CE1E6', '#FF5FA2'][(i + r) % 3]} opacity={0.85} />)}
+          </G>
+        ))}
+        <Path d="M200 20 L186 62 L200 62 L188 100" stroke="#FFD23F" strokeWidth={5} fill="none" strokeLinejoin="round" strokeLinecap="round" />
+      </G>
+    ),
+  },
+  arena_wind: {
+    sky: ['#7FD6C2', '#E3FAF0'],
+    hills: ['#86D3A8', '#5FBF8C', '#A6E3BF'],
+    extras: (
+      <G>
+        {[[30, 60, 120], [180, 40, 150], [90, 120, 110], [250, 100, 120]].map(([x, y, w], i) => (
+          <Path key={i} d={`M${x} ${y} Q${x + w / 2} ${y - 14} ${x + w} ${y} q12 4 6 14`} stroke="#FFFFFF" strokeWidth={5} fill="none" strokeLinecap="round" opacity={0.85} />
+        ))}
+        <Path d="M330 210 L334 150" stroke="#8B6A4A" strokeWidth={4} />
+        <Path d="M334 150 l-24 -8 M334 150 l20 -16 M334 150 l6 24" stroke="#FFFFFF" strokeWidth={6} strokeLinecap="round" />
+        <Circle cx={334} cy={150} r={4} fill="#8B6A4A" />
+      </G>
+    ),
+  },
+  arena_toxic: {
+    sky: ['#2B1640', '#6B3C7E'],
+    hills: ['#4F6B2A', '#3B5420', '#6A8A34'],
+    dark: true,
+    extras: (
+      <G>
+        <Circle cx={320} cy={60} r={18} fill="#D7F27A" opacity={0.85} />
+        {[[60, 150], [110, 130], [250, 140], [350, 160], [180, 110]].map(([x, y], i) => <Circle key={i} cx={x} cy={y} r={i % 2 ? 5 : 8} fill="#C77DDB" opacity={0.5} />)}
+        <Ellipse cx={200} cy={270} rx={70} ry={12} fill="#9BE04A" opacity={0.75} />
+        {[[175, 262], [215, 266], [240, 260]].map(([x, y], i) => <Circle key={i} cx={x} cy={y} r={4} fill="#E3FF9A" />)}
+        <Path d="M40 230 Q44 200 34 180 M50 232 Q60 205 56 186" stroke="#2E3F18" strokeWidth={4} fill="none" strokeLinecap="round" />
+      </G>
+    ),
+  },
   autumn: {
     sky: ['#F7B267', '#FCE8C8'],
     hills: ['#D98C3A', '#C2702A', '#E8B04B'],
@@ -464,6 +539,9 @@ export const SCENES: Record<string, ScenePalette> = {
     ),
   },
 };
+
+/** The scene each type battles on (the opponent's type picks the arena). */
+export const ARENA: Record<Element, string> = { flower: 'sakura', tide: 'beach', ember: 'arena_ember', moon: 'space', stone: 'arena_stone', spark: 'arena_spark', frost: 'snow', wind: 'arena_wind', toxic: 'arena_toxic' };
 
 /** A small swatch of a scene, for shop and wardrobe tiles. */
 export function SceneSwatch({ id, size }: { id: string; size: number }) {
