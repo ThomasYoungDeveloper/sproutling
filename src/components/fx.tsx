@@ -133,16 +133,19 @@ export function Flash({ onDone }: { onDone?: () => void }) {
   return <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: '#FFFFFF', opacity: v }]} />;
 }
 
-/** Counts a number up from 0 for a satisfying coin tally. */
+/** Counts a number up (from 0, or from where it was when the target goes up) for a satisfying coin tally. */
 export function useCountUp(target: number, duration = 900, start = true): number {
   const [n, setN] = React.useState(0);
+  const cur = useRef(0);
+  cur.current = n;
   useEffect(() => {
     if (!start) return;
     let raf: any;
     const t0 = Date.now();
+    const from = cur.current;
     const tick = () => {
       const p = Math.min(1, (Date.now() - t0) / duration);
-      setN(Math.round(target * (1 - Math.pow(1 - p, 3))));
+      setN(Math.round(from + (target - from) * (1 - Math.pow(1 - p, 3))));
       if (p < 1) raf = setTimeout(tick, 16);
     };
     tick();

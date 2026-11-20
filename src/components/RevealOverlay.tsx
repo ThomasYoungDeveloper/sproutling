@@ -272,7 +272,8 @@ function ChestReveal({ r, onClose }: { r: Extract<Reveal, { kind: 'chest' }>; on
   const [phase, setPhase] = useState<'tap' | 'flash' | 'loot'>('tap');
   const shake = useShake(taps, 10 + taps * 6);
   const idle = useIdleWobble();
-  const coins = useCountUp(r.result.coins, 900, phase === 'loot');
+  const [doubled, setDoubled] = useState(false);
+  const coins = useCountUp(r.result.coins * (doubled ? 2 : 1), doubled ? 1400 : 900, phase === 'loot');
   const eggInfo = r.result.eggRarity ? RARITY_INFO[r.result.eggRarity] : null;
   const big = r.result.eggRarity ? BIG.includes(r.result.eggRarity) : false;
 
@@ -310,7 +311,8 @@ function ChestReveal({ r, onClose }: { r: Extract<Reveal, { kind: 'chest' }>; on
           </PopIn>
           <View style={styles.lootRow}>
             <PopIn delay={150}>
-              <View style={styles.lootCard}>
+              <View style={[styles.lootCard, doubled && { borderColor: '#FF8A4C' }]}>
+                {doubled ? <PopIn from={0.3}><View style={styles.doubleTag}><Text style={styles.doubleTagText}>2× DOUBLED!</Text></View></PopIn> : null}
                 <View style={styles.coin} />
                 <Text style={styles.lootBig}>+{coins}</Text>
                 <Text style={styles.lootSmall}>coins</Text>
@@ -373,11 +375,12 @@ function ChestReveal({ r, onClose }: { r: Extract<Reveal, { kind: 'chest' }>; on
               </PopIn>
             ) : null}
           </View>
-          {r.result.basketFull ? <Text style={styles.blurb}>Your egg basket is full, so the egg became coins. Hatch some eggs to make room.</Text> : !r.result.eggRarity ? <Text style={styles.blurb}>No egg this time. Keep your streak going!</Text> : <Text style={styles.blurb}>Put it in an incubator and go for a walk.</Text>}
+          {doubled ? <Confetti key="dbl" amount={70} width={width} height={height} /> : null}
+          {r.result.basketFull ? <Text style={styles.blurb}>Your egg basket is full, so the egg became coins. Hatch some eggs to make room.</Text> : r.result.eggRarity ? <Text style={styles.blurb}>Put it in an incubator and go for a walk.</Text> : null}
           <PopIn delay={1000}>
             <View style={{ alignSelf: 'stretch', gap: 10, width: 300, maxWidth: '100%' }}>
-              {r.result.coins > 0 ? <AdBonusButton title={`Double it: +${r.result.coins * 2}`} onReward={addCoins(r.result.coins)} /> : null}
-              <Button primary label={`Collect ${r.result.coins}`} onPress={onClose} />
+              {r.result.coins > 0 ? <AdBonusButton title={`Double it: ${r.result.coins * 2} coins`} onReward={addCoins(r.result.coins)} onDone={() => setDoubled(true)} /> : null}
+              <Button primary label={`Collect ${r.result.coins * (doubled ? 2 : 1)}`} onPress={onClose} />
             </View>
           </PopIn>
         </View>
@@ -413,6 +416,8 @@ function GrowReveal({ r, onClose }: { r: Extract<Reveal, { kind: 'grow' }>; onCl
 }
 
 const styles = StyleSheet.create({
+  doubleTag: { position: 'absolute', top: -34, alignSelf: 'center', backgroundColor: '#FF8A4C', borderRadius: 999, paddingHorizontal: 12, paddingVertical: 5, transform: [{ rotate: '-6deg' }] },
+  doubleTagText: { color: '#FFFFFF', fontWeight: '900', fontSize: 15, letterSpacing: 0.5 },
   rainbowFlash: { fontSize: 20, fontWeight: '900', color: '#B45FE0', backgroundColor: '#FFFFFFEE', borderRadius: 14, paddingHorizontal: 14, paddingVertical: 6, overflow: 'hidden', marginBottom: 6, textAlign: 'center' },
   lucky: { backgroundColor: '#FFD84D', borderRadius: 999, paddingVertical: 6, paddingHorizontal: 14, marginTop: 6 },
   luckyText: { color: '#5A3A00', fontWeight: '900', fontSize: 14 },

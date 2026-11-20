@@ -34,6 +34,7 @@ export default function DailyLoginSheet({ onClose }: { onClose: () => void }) {
   const status = A.loginStatus(state);
   const resetIn = useResetIn();
   const [got, setGot] = useState<{ reward: A.LoginReward; day: number } | null>(null);
+  const [doubled, setDoubled] = useState(false);
 
   const collect = () => {
     const r = A.claimLogin(state);
@@ -81,7 +82,8 @@ export default function DailyLoginSheet({ onClose }: { onClose: () => void }) {
                 <Text style={[font.small, { fontWeight: '900' }]}>Plus your daily Small Potion</Text>
               </View>
               {got.reward.chest ? <Text style={font.small}>Open it on the Chests tab.</Text> : null}
-              {got.reward.coins ? <AdBonusButton title={`Double today’s coins: +${got.reward.coins}`} onReward={addCoins(got.reward.coins)} /> : null}
+              {got.reward.coins && !doubled ? <AdBonusButton title={`Double today’s coins: ${got.reward.coins * 2}`} onReward={addCoins(got.reward.coins)} onDone={() => setDoubled(true)} /> : null}
+              {doubled ? <PopIn from={0.4}><Text style={styles.doubled}>2× DOUBLED! +{got.reward.coins} more coins</Text></PopIn> : null}
             </View>
           </PopIn>
         ) : null}
@@ -100,6 +102,7 @@ export default function DailyLoginSheet({ onClose }: { onClose: () => void }) {
 }
 
 const styles = StyleSheet.create({
+  doubled: { fontSize: 18, fontWeight: '900', color: '#FF8A4C', textAlign: 'center' },
   backdrop: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(24,30,48,0.6)', justifyContent: 'center', alignItems: 'center', padding: space.lg, zIndex: 60 },
   sheet: { backgroundColor: '#FFFFFF', borderRadius: 22, padding: space.lg, gap: space.sm, width: '100%', maxWidth: 420 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, justifyContent: 'space-between', marginVertical: space.xs },
