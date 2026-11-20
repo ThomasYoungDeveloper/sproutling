@@ -66,7 +66,8 @@ function Overlay({ reveal, onClose }: { reveal: Reveal; onClose: () => void }) {
 /** How rare a skin sounds, from its hatch chance. */
 export function skinHype(skin: Skin): { kicker: string; odds: string | null } {
   const c = SKIN_INFO[skin].chance;
-  const kicker = c > 0 && c <= 0.001 ? 'LEGENDARY SKIN!' : c > 0 && c <= 0.004 ? 'SUPER RARE SKIN!' : 'RARE SKIN!';
+  // Same words as pet rarity, from how often the skin turns up in an egg.
+  const kicker = c <= 0 ? 'EVENT SKIN!' : c >= 0.03 ? 'UNCOMMON SKIN!' : c >= 0.005 ? 'RARE SKIN!' : c >= 0.002 ? 'EPIC SKIN!' : 'LEGENDARY SKIN!';
   return { kicker, odds: c > 0 ? `Only about 1 in ${Math.round(1 / c).toLocaleString()} eggs` : 'Only during its event' };
 }
 
@@ -232,6 +233,7 @@ function TradeReveal({ r, onClose }: { r: Extract<Reveal, { kind: 'trade' }>; on
           <PopIn from={0.1}>
             <PetSprite species={got} stage="adult" size={210} shiny={r.got.shiny} skin={r.got.skin} mood="joy" />
           </PopIn>
+          {r.got.skin ? <SkinBanner skin={r.got.skin} /> : null}
           <PopIn delay={200}>
             <View style={[styles.banner, { backgroundColor: info.color }]}>
               <Text style={styles.bannerText}>{info.label.toUpperCase()} · LV {level}</Text>
