@@ -62,6 +62,38 @@ function Overlay({ reveal, onClose }: { reveal: Reveal; onClose: () => void }) {
   );
 }
 
+/* ---------------- Skin found: a big shiny banner ---------------- */
+/** How rare a skin sounds, from its hatch chance. */
+export function skinHype(skin: Skin): { kicker: string; odds: string | null } {
+  const c = SKIN_INFO[skin].chance;
+  const kicker = c > 0 && c <= 0.001 ? 'LEGENDARY SKIN!' : c > 0 && c <= 0.004 ? 'SUPER RARE SKIN!' : 'RARE SKIN!';
+  return { kicker, odds: c > 0 ? `Only about 1 in ${Math.round(1 / c).toLocaleString()} eggs` : 'Only during its event' };
+}
+
+function SkinBanner({ skin }: { skin: Skin }) {
+  const s = SKIN_INFO[skin];
+  const hype = skinHype(skin);
+  const sweep = React.useRef(new Animated.Value(0)).current;
+  const pulse = React.useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    const a = Animated.loop(Animated.sequence([Animated.timing(sweep, { toValue: 1, duration: 1100, useNativeDriver: true }), Animated.delay(700), Animated.timing(sweep, { toValue: 0, duration: 0, useNativeDriver: true })]));
+    const b = Animated.loop(Animated.sequence([Animated.timing(pulse, { toValue: 1, duration: 650, useNativeDriver: true }), Animated.timing(pulse, { toValue: 0, duration: 650, useNativeDriver: true })]));
+    a.start();
+    b.start();
+    return () => { a.stop(); b.stop(); };
+  }, []);
+  return (
+    <PopIn delay={550} from={0.2}>
+      <Animated.View style={[styles.skinBanner, { backgroundColor: s.color, transform: [{ scale: pulse.interpolate({ inputRange: [0, 1], outputRange: [1, 1.06] }) }, { rotate: '-3deg' }] }]} accessibilityRole="header" accessibilityLabel={`${hype.kicker} ${s.label} skin. ${hype.odds ?? ''}`}>
+        <Animated.View pointerEvents="none" style={[styles.skinShine, { transform: [{ translateX: sweep.interpolate({ inputRange: [0, 1], outputRange: [-120, 320] }) }, { rotate: '20deg' }] }]} />
+        <Text style={styles.skinKicker}>{hype.kicker}</Text>
+        <Text style={styles.skinName}>{s.label.toUpperCase()}</Text>
+      </Animated.View>
+      {hype.odds ? <Text style={styles.skinOdds}>{hype.odds}</Text> : null}
+    </PopIn>
+  );
+}
+
 /* ---------------- Egg: tap 3 times to crack ---------------- */
 function EggReveal({ r, onClose }: { r: Extract<Reveal, { kind: 'egg' }>; onClose: () => void }) {
   const { width, height } = useWindowDimensions();
@@ -71,7 +103,7 @@ function EggReveal({ r, onClose }: { r: Extract<Reveal, { kind: 'egg' }>; onClos
   const idle = useIdleWobble();
   const sp = SPECIES_BY_ID[r.pet.speciesId];
   const info = RARITY_INFO[sp.rarity];
-  const big = BIG.includes(sp.rarity) || r.pet.skin === 'gold' || r.pet.skin === 'rainbow' || !!r.lucky;
+  const big = BIG.includes(sp.rarity) || !!r.pet.skin || !!r.lucky;
 
   const tap = () => {
     if (phase !== 'tap') return;
@@ -83,6 +115,12 @@ function EggReveal({ r, onClose }: { r: Extract<Reveal, { kind: 'egg' }>; onClos
   useEffect(() => {
     if (phase === 'reveal') buzz('success', 'hatch');
   }, [phase]);
+  // A second, bigger buzz when the skin banner lands.
+  useEffect(() => {
+    if (phase === 'tap' || !r.pet.skin) return;
+    const t = setTimeout(() => buzz('heavy', 'coin'), 650);
+    return () => clearTimeout(t);
+  }, [phase, r.pet.skin]);
 
   return (
     <View style={styles.stage}>
@@ -104,11 +142,12 @@ function EggReveal({ r, onClose }: { r: Extract<Reveal, { kind: 'egg' }>; onClos
       )}
       {phase !== 'tap' && (
         <View style={styles.center}>
-          <Rays color={big ? '#FFD84D' : info.color} size={big ? 420 : 340} />
-          <Confetti amount={big ? 110 : 50} width={width} height={height} />
+          <Rays color={r.pet.skin ? SKIN_INFO[r.pet.skin].color : big ? '#FFD84D' : info.color} size={big ? 420 : 340} />
+          <Confetti amount={r.pet.skin ? 160 : big ? 110 : 50} width={width} height={height} />
           <PopIn from={0.1}>
             <PetSprite species={sp} stage="baby" size={220} shiny={r.pet.shiny} skin={r.pet.skin} mood="joy" />
           </PopIn>
+          {r.pet.skin ? <SkinBanner skin={r.pet.skin} /> : null}
           <PopIn delay={250}>
             <View style={[styles.banner, { backgroundColor: info.color }]}>
               <Text style={styles.bannerText}>{sp.rarity === 'legendary' ? 'LEGENDARY!' : sp.rarity === 'epic' ? 'EPIC!' : info.label.toUpperCase()}</Text>
@@ -118,13 +157,6 @@ function EggReveal({ r, onClose }: { r: Extract<Reveal, { kind: 'egg' }>; onClos
             <PopIn delay={300}>
               <View style={styles.lucky}>
                 <Text style={styles.luckyText}>✨ LUCKY EGG! +{r.lucky} to every stat ✨</Text>
-              </View>
-            </PopIn>
-          ) : null}
-          {r.pet.skin ? (
-            <PopIn delay={330}>
-              <View style={[styles.skinTag, { borderColor: SKIN_INFO[r.pet.skin].color }]}>
-                <Text style={[styles.skinText, { color: SKIN_INFO[r.pet.skin].color }]}>{SKIN_INFO[r.pet.skin].label.toUpperCase()} SKIN!</Text>
               </View>
             </PopIn>
           ) : null}
@@ -396,6 +428,11 @@ const styles = StyleSheet.create({
   newTag: { backgroundColor: '#FF9E7A', borderRadius: 999, paddingHorizontal: 12, paddingVertical: 5 },
   newText: { color: '#FFFFFF', fontWeight: '900', fontSize: 13 },
   row: { flexDirection: 'row', gap: 10, marginTop: 4 },
+  skinBanner: { minWidth: 230, alignItems: 'center', paddingHorizontal: 26, paddingVertical: 10, borderRadius: 20, borderWidth: 4, borderColor: '#FFFFFF', overflow: 'hidden', marginTop: 18, shadowColor: '#000', shadowOpacity: 0.3, shadowRadius: 10, shadowOffset: { width: 0, height: 5 } },
+  skinShine: { position: 'absolute', top: -40, bottom: -40, width: 46, backgroundColor: 'rgba(255,255,255,0.45)' },
+  skinKicker: { color: '#FFFFFF', fontWeight: '900', fontSize: 14, letterSpacing: 2 },
+  skinName: { color: '#FFFFFF', fontWeight: '900', fontSize: 38, letterSpacing: 2, textShadowColor: 'rgba(0,0,0,0.25)', textShadowRadius: 4, textShadowOffset: { width: 0, height: 2 } },
+  skinOdds: { color: '#FFFFFF', fontWeight: '900', fontSize: 14, textAlign: 'center', marginTop: 8, textShadowColor: 'rgba(0,0,0,0.4)', textShadowRadius: 3 },
   skinTag: { backgroundColor: '#FFFFFF', borderRadius: 999, borderWidth: 3, paddingHorizontal: 16, paddingVertical: 6, marginTop: 6 },
   skinText: { fontWeight: '900', fontSize: 16, letterSpacing: 1 },
   lootRow: { flexDirection: 'row', gap: 10, flexWrap: 'wrap', justifyContent: 'center' },

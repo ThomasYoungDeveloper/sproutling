@@ -434,6 +434,66 @@ def make(path, skin, seed):
         resg = pal[lv.astype(int)]
         res = np.asarray(Image.fromarray(resg.astype(np.uint8)).resize((w, h), Image.NEAREST), dtype=np.float32)
         alpha = np.asarray(Image.fromarray(((small[..., 3] > 0.45) * 255).astype(np.uint8)).resize((w, h), Image.NEAREST), dtype=np.float32) / 255
+    elif skin in ('silver', 'silverA', 'silverB', 'silverC'):
+        # Polished silver. The body maps through a cool, slightly blue chrome ramp, then picks up a
+        # "reflection": metal mirrors its surroundings, so brightness also depends on position (light sky up
+        # top, a darker horizon band across the middle, a bright ground bounce below), plus diagonal
+        # white glints and a few four-point sparkles. Outlines become deep steel blue instead of black.
+        var = 'A' if skin == 'silver' else skin[-1]
+        line = np.clip((0.2 - lum) / 0.1, 0, 1)
+        body = alpha * (1 - line)
+        ys0 = np.nonzero(alpha > 0.5)[0]
+        xs0 = np.nonzero(alpha > 0.5)[1]
+        top, bot = (ys0.min(), ys0.max()) if len(ys0) else (0, h)
+        left, right = (xs0.min(), xs0.max()) if len(xs0) else (0, w)
+        v = (yy - top) / max(1, bot - top)
+        u = (xx - left) / max(1, right - left)
+        hi = np.percentile(lum[alpha > 0.8], 92) if (alpha > 0.8).any() else 1.0
+        l = np.clip(lum / max(hi, 1e-3), 0, 1)
+        if var == 'A':
+            # Mirror chrome: strong horizon reflection.
+            env = np.interp(v + (u - 0.5) * 0.35, [0, 0.38, 0.47, 0.53, 0.62, 1], [0.92, 0.7, 0.12, 0.2, 0.55, 0.8])
+            l2 = np.clip(l * 0.4 + env * 0.6, 0, 1)
+            stops = [(0, '#141b2a'), (0.25, '#3e4a60'), (0.5, '#8d9bb2'), (0.72, '#d3dcea'), (0.9, '#f5f8fc'), (1, '#ffffff')]
+        elif var == 'B':
+            # Bright polished silver: soft sheen bands, mostly light.
+            env = 0.5 + 0.5 * np.sin((u * 1.2 + v) * math.pi * 2.6)
+            env = env ** 2
+            l2 = np.clip(l * 0.5 + env * 0.5 - 0.02, 0, 1)
+            stops = [(0, '#2a3242'), (0.35, '#7d899c'), (0.6, '#c3ccd9'), (0.82, '#eef2f8'), (1, '#ffffff')]
+        else:
+            # Brushed silver: fine horizontal grain plus one wide sheen band.
+            rng = np.random.default_rng(seed)
+            grain = np.asarray(Image.fromarray((rng.random((h, w)) * 255).astype(np.uint8)).filter(ImageFilter.BoxBlur(0)).resize((w, h)), dtype=np.float32) / 255
+            grain = np.repeat(grain.mean(axis=1, keepdims=True), w, axis=1) * 0.5 + grain * 0.5
+            band = np.exp(-(((u + v) / 2 - 0.4) / 0.12) ** 2)
+            l2 = np.clip(l * 0.6 + band * 0.35 + (grain - 0.5) * 0.18 - 0.05, 0, 1)
+            stops = [(0, '#252c3a'), (0.35, '#6f7b8f'), (0.62, '#bcc6d4'), (0.85, '#edf1f7'), (1, '#ffffff')]
+        res = ramp(l2, stops)
+        # Diagonal glints: two thin bright streaks across the body.
+        d = (u + v * 0.9)
+        for c0, wdt, a0 in ((0.55, 0.035, 0.85), (0.68, 0.015, 0.7)):
+            g = np.exp(-((d - c0) / wdt) ** 2) * body
+            res = res * (1 - g[..., None] * a0) + 255 * g[..., None] * a0
+        # Rim light: a bright edge just inside the outline on the upper-left.
+        a_img = Image.fromarray((body * 255).astype(np.uint8))
+        inner = np.asarray(a_img.filter(ImageFilter.MinFilter(5)), dtype=np.float32) / 255
+        rim = np.clip(body - inner, 0, 1) * np.clip(1.2 - (u + v), 0, 1)
+        res = res * (1 - rim[..., None] * 0.6) + 255 * rim[..., None] * 0.6
+        # Four-point sparkles on bright spots.
+        rng = np.random.default_rng(seed + 1)
+        ys, xs = np.nonzero((body > 0.6) & (l2 > 0.72))
+        for _ in range(3 if len(ys) else 0):
+            k = rng.integers(0, len(ys)); cy, cx = ys[k], xs[k]
+            g = np.exp(-(((yy - cy) ** 2 + (xx - cx) ** 2) / (2 * (min(h, w) * 0.018) ** 2))) * (alpha > 0.5)
+            res = res * (1 - g[..., None] * 0.8) + 255 * g[..., None] * 0.8
+            r = int(max(7, min(h, w) * 0.06))
+            for dd in range(-r, r + 1):
+                a = max(0.0, 1 - abs(dd) / (r + 1)) ** 1.5
+                for (y2, x2) in ((cy + dd, cx), (cy, cx + dd)):
+                    if 0 <= y2 < h and 0 <= x2 < w and alpha[y2, x2] > 0.5:
+                        res[y2, x2] = res[y2, x2] * (1 - a) + 255 * a
+        res = res * (1 - line[..., None]) + hexc('#1a2438') * line[..., None]
     elif skin == 'ink':
         l2 = np.clip((lum - 0.15) * 1.5, 0, 1)
         l2 = np.round(l2 * 3) / 3
