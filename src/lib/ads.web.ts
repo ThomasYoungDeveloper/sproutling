@@ -5,4 +5,5 @@ export const adsAvailable = () => false;
 export const unit = (_kind: 'banner' | 'rewarded') => '';
 export const startAds = (_birthYear?: number) => Promise.resolve();
 export const requestOptions = () => ({ requestNonPersonalizedAdsOnly: true });
-export const showRewarded = () => Promise.resolve(false);
+export type AdResult = { ok: boolean; error?: string };
+export const showRewarded = (): Promise<AdResult> => Promise.resolve({ ok: false, error: 'ads not in this build' });

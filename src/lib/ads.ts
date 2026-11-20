@@ -71,27 +71,51 @@ export function startAds(birthYear?: number): Promise<void> {
 
 export const requestOptions = () => ({ requestNonPersonalizedAdsOnly: !personalized });
 
-/** Shows a rewarded ad. Resolves true only if the player watched it to the end. */
-export function showRewarded(): Promise<boolean> {
-  const m = ads();
-  if (!m) return Promise.resolve(false);
+export type AdResult = { ok: boolean; error?: string };
+
+/** Loads one rewarded ad. Resolves once it's watched (or skipped, or fails). */
+function playOnce(m: Mod): Promise<AdResult> {
   return new Promise((resolve) => {
     let earned = false;
+    let shown = false;
     let done = false;
-    const finish = (v: boolean) => {
+    const finish = (r: AdResult) => {
       if (done) return;
       done = true;
+      clearTimeout(timer);
       subs.forEach((u) => u());
-      resolve(v);
+      resolve(r);
     };
     const ad = m.RewardedAd.createForAdRequest(unit('rewarded'), requestOptions());
     const subs = [
-      ad.addAdEventListener(m.RewardedAdEventType.LOADED, () => ad.show().catch(() => finish(false))),
+      ad.addAdEventListener(m.RewardedAdEventType.LOADED, () => {
+        shown = true;
+        clearTimeout(timer);
+        ad.show().catch((e: any) => finish({ ok: false, error: `show: ${e?.message ?? e}` }));
+      }),
       ad.addAdEventListener(m.RewardedAdEventType.EARNED_REWARD, () => { earned = true; }),
-      ad.addAdEventListener(m.AdEventType.CLOSED, () => finish(earned)),
-      ad.addAdEventListener(m.AdEventType.ERROR, () => finish(false)),
+      ad.addAdEventListener(m.AdEventType.CLOSED, () => finish({ ok: earned, ...(earned ? {} : { error: 'closed early' }) })),
+      ad.addAdEventListener(m.AdEventType.ERROR, (e: any) => finish({ ok: false, error: `${shown ? 'play' : 'load'}: ${e?.message ?? e}` })),
     ];
-    setTimeout(() => finish(earned), 60_000);
-    ad.load();
+    // Loading shouldn't take long; once it's playing there's no timer.
+    const timer = setTimeout(() => { if (!shown) finish({ ok: false, error: 'load: timed out' }); }, 15_000);
+    try {
+      ad.load();
+    } catch (e: any) {
+      finish({ ok: false, error: `load: ${e?.message ?? e}` });
+    }
   });
+}
+
+/**
+ * Shows a rewarded ad. ok is true only if the player watched it to the end.
+ * Waits for AdMob to finish starting (an ad requested too early fails), and tries loading once more if the first load fails.
+ */
+export async function showRewarded(): Promise<AdResult> {
+  const m = ads();
+  if (!m) return { ok: false, error: 'ads not in this build' };
+  if (started) await started;
+  const first = await playOnce(m);
+  if (first.ok || !first.error?.startsWith('load')) return first;
+  return playOnce(m);
 }

@@ -52,15 +52,18 @@ export function AdBonusButton({ title, onReward, onDone, style }: { title: strin
   const { state, apply } = useGame();
   const [busy, setBusy] = useState(false);
   const [used, setUsed] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
   const left = B.adBonusesLeft(state);
   if (!Ad.adsAvailable() || used || (left < 1 && !busy)) return null;
   const go = async () => {
     if (busy) return;
     setBusy(true);
+    setErr(null);
     buzz('light');
-    const ok = await Ad.showRewarded();
+    const r = await Ad.showRewarded();
     setBusy(false);
-    if (ok) {
+    if (!r.ok) setErr(r.error === 'closed early' ? 'Watch to the end to get the bonus.' : `No ad ready right now. Try again in a minute. (${r.error ?? 'unknown'})`);
+    if (r.ok) {
       buzz('success', 'coin');
       apply((s) => B.useAdBonus(s, onReward));
       setUsed(true);
@@ -68,13 +71,16 @@ export function AdBonusButton({ title, onReward, onDone, style }: { title: strin
     }
   };
   return (
-    <Pressable onPress={go} style={({ pressed }) => [styles.bonus, pressed && { transform: [{ scale: 0.98 }] }, style]} accessibilityRole="button" accessibilityLabel={`${title}. Watch a short ad. ${left} left today`}>
+    <View style={[{ alignSelf: 'stretch', gap: 6 }, style]}>
+    <Pressable onPress={go} disabled={busy} style={({ pressed }) => [styles.bonus, pressed && { transform: [{ scale: 0.98 }] }, busy && { opacity: 0.7 }]} accessibilityRole="button" accessibilityLabel={`${title}. Watch a short ad. ${left} left today`}>
       <PlayIcon />
       <View style={{ flex: 1 }}>
         <Text style={styles.bonusTitle}>{busy ? 'Loading ad…' : title}</Text>
         <Text style={styles.bonusSub}>Watch a short ad · {left} left today</Text>
       </View>
     </Pressable>
+    {err ? <Text style={styles.err}>{err}</Text> : null}
+    </View>
   );
 }
 
@@ -85,5 +91,6 @@ const styles = StyleSheet.create({
   banner: { alignItems: 'center', borderRadius: 12, overflow: 'hidden' },
   bonus: { flexDirection: 'row', alignItems: 'center', gap: 10, height: 56, borderRadius: 16, paddingHorizontal: 14, backgroundColor: '#FF8A4C', alignSelf: 'stretch' },
   bonusTitle: { fontSize: 16, fontWeight: '900', color: '#FFFFFF' },
+  err: { fontSize: 12, fontWeight: '800', color: '#C2410C', textAlign: 'center' },
   bonusSub: { fontSize: 12, fontWeight: '800', color: '#FFF3E0' },
 });
