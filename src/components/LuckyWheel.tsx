@@ -1,6 +1,8 @@
 import React, { useRef, useState } from 'react';
-import { Animated, Easing, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
-import Svg, { Circle, G, Path, Text as SvgText } from 'react-native-svg';
+import { Animated, Easing, Image, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+
+const COIN_PILE = require('../../assets/items/coin_pile.png');
+import Svg, { Circle, G, Path } from 'react-native-svg';
 import { useGame } from '../state/GameContext';
 import { useOverlay } from './Overlay';
 import { Button } from './ui';
@@ -19,7 +21,6 @@ import CrystalIcon from './CrystalIcon';
 import CoinBundle from './CoinBundle';
 
 const N = Wh.SLOTS.length;
-const SVG_FONT = Platform.OS === 'web' ? 'Nunito, system-ui, sans-serif' : undefined;
 const SEG = 360 / N;
 
 /** The wheel itself: 10 slices, slice 0 at the top, going clockwise. */
@@ -34,21 +35,9 @@ function WheelArt({ size }: { size: number }) {
         const a0 = rad(i * SEG - SEG / 2);
         const a1 = rad(i * SEG + SEG / 2);
         const d = `M${c},${c} L${c + r * Math.cos(a0)},${c + r * Math.sin(a0)} A${r},${r} 0 0 1 ${c + r * Math.cos(a1)},${c + r * Math.sin(a1)} Z`;
-        const am = rad(i * SEG);
-        const tx = c + r * 0.64 * Math.cos(am);
-        const ty = c + r * 0.64 * Math.sin(am);
-        // Text runs along the slice, turned around on the left half so it never reads upside down.
-        let deg = (i * SEG - 90 + 360) % 360;
-        if (deg > 90 && deg < 270) deg += 180;
-        const light = sl.sub === 'RARE' || sl.sub === 'JACKPOT';
-        const fill = light ? '#FFFFFF' : '#24323A';
         return (
           <G key={i}>
             <Path d={d} fill={sl.color} stroke="#FFFFFF" strokeWidth={3} />
-            <G transform={`translate(${tx} ${ty}) rotate(${deg})`}>
-              <SvgText textAnchor="middle" fontFamily={SVG_FONT} fontSize={size * 0.055} fontWeight="900" fill={fill} y={0}>{sl.label}</SvgText>
-              {sl.sub ? <SvgText textAnchor="middle" fontFamily={SVG_FONT} fontSize={size * 0.034} fontWeight="900" fill={fill} y={size * 0.045} opacity={0.85}>{sl.sub}</SvgText> : null}
-            </G>
           </G>
         );
       })}
@@ -57,6 +46,38 @@ function WheelArt({ size }: { size: number }) {
       ))}
       <Circle cx={c} cy={c} r={size * 0.09} fill="#FFFCF5" stroke="#24323A" strokeWidth={4} />
     </Svg>
+  );
+}
+
+/** The picture in each slice, laid over the wheel and turning with it (the top of each picture faces outward). */
+function SlotArt({ sl, size }: { sl: (typeof Wh.SLOTS)[number]; size: number }) {
+  const s = size * 0.15;
+  if (sl.kind === 'coins') return sl.coins && sl.coins >= 150 ? <CoinBundle size={s * 1.1} /> : <Image source={COIN_PILE} style={{ width: s, height: s }} resizeMode="contain" />;
+  if (sl.kind === 'potion') return <PotionIcon kind="small" size={s} />;
+  if (sl.kind === 'crystal') return <CrystalIcon size={s} />;
+  if (sl.kind === 'outfit') return <ItemIcon id="wizard" size={s * 1.1} />;
+  if (sl.kind === 'dye') return <DyeIcon skin="galaxy" size={s * 0.95} />;
+  return <EggSprite rarity="legendary" size={s} />;
+}
+
+function WheelPictures({ size }: { size: number }) {
+  const c = size / 2;
+  const r = c - 8;
+  const box = size * 0.22;
+  return (
+    <View pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, width: size, height: size }}>
+      {Wh.SLOTS.map((sl, i) => {
+        const a = ((i * SEG - 90) * Math.PI) / 180;
+        const rr = r * 0.66;
+        const light = sl.sub === 'RARE' || sl.sub === 'JACKPOT';
+        return (
+          <View key={i} style={{ position: 'absolute', left: c + rr * Math.cos(a) - box / 2, top: c + rr * Math.sin(a) - box / 2, width: box, height: box, alignItems: 'center', justifyContent: 'center', transform: [{ rotate: `${i * SEG}deg` }] }}>
+            <SlotArt sl={sl} size={size} />
+            {sl.kind === 'coins' ? <Text style={[styles.slotNum, { fontSize: size * 0.045 }, light && { color: '#FFFFFF' }]}>{sl.coins}</Text> : null}
+          </View>
+        );
+      })}
+    </View>
   );
 }
 
@@ -83,6 +104,7 @@ export function WheelSheet({ onClose }: { onClose: () => void }) {
   const { state, apply } = useGame();
   const rot = useRef(new Animated.Value(0)).current;
   const [spinning, setSpinning] = useState(false);
+  const [showOdds, setShowOdds] = useState(false);
   const [prize, setPrize] = useState<Wh.Prize | null>(null);
   const [turns, setTurns] = useState(0);
   const left = Wh.spinsLeft(state);
@@ -137,6 +159,7 @@ export function WheelSheet({ onClose }: { onClose: () => void }) {
           <View style={{ width: size, height: size + 24, alignItems: 'center', marginTop: 8 }}>
             <Animated.View style={{ position: 'absolute', top: 24, transform: [{ rotate: spinDeg }] }}>
               <WheelArt size={size} />
+              <WheelPictures size={size} />
             </Animated.View>
             <Svg width={34} height={34} style={{ position: 'absolute', top: 4 }}>
               <Path d="M3 3 L31 3 L17 31 Z" fill="#F2617A" stroke="#24323A" strokeWidth={3} strokeLinejoin="round" />
@@ -146,7 +169,10 @@ export function WheelSheet({ onClose }: { onClose: () => void }) {
             <Button primary label={spinning ? 'Spinning…' : left > 0 ? 'Spin!' : 'No spins left today'} onPress={go} disabled={spinning || left < 1} />
             {!spinning ? <Button label="Close" onPress={onClose} /> : null}
           </View>
-          <Text style={styles.odds}>Odds: coins 60% (jackpot 1%) · outfit 10% · potion 12% · crystal 9% · dye 6% · egg 3%. Dye and egg rarity are rolled after the spin.</Text>
+          <Pressable onPress={() => setShowOdds((v) => !v)} accessibilityRole="button" hitSlop={8}>
+            <Text style={styles.oddsLink}>{showOdds ? 'Hide odds' : 'Odds'}</Text>
+          </Pressable>
+          {showOdds ? <Text style={styles.odds}>Coins 60% (jackpot 1%) · outfit 10% · potion 12% · crystal 9% · dye 6% · egg 3%. Dye and egg rarity are rolled after the spin.</Text> : null}
         </View>
       )}
     </View>
@@ -181,6 +207,8 @@ const styles = StyleSheet.create({
   prizeTitle: { fontSize: 28, fontWeight: '900', color: '#FFFFFF', textAlign: 'center' },
   prizeBody: { fontSize: 14, fontWeight: '700', color: '#D8CEFF', textAlign: 'center', maxWidth: 300 },
   tag: { borderRadius: 8, paddingHorizontal: 8, paddingVertical: 2 },
+  slotNum: { fontWeight: '900', color: '#24323A', marginTop: -2 },
+  oddsLink: { fontSize: 14, fontWeight: '900', color: '#FFFFFF', opacity: 0.8, textAlign: 'center', marginTop: 12, textDecorationLine: 'underline' },
   tagText: { fontSize: 11, fontWeight: '900', color: '#FFFFFF', letterSpacing: 1 },
   crystal: { width: 60, height: 84, backgroundColor: '#7FD3F0', borderRadius: 10, transform: [{ rotate: '45deg' }], borderWidth: 3, borderColor: '#3B9CC2' },
   banner: { flexDirection: 'row', alignItems: 'center', gap: 12, borderRadius: 18, padding: 12, backgroundColor: '#FF8A4C', borderWidth: 3, borderColor: '#FFE7B0' },
