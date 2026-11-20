@@ -5,11 +5,14 @@ import { Button, Card, ProgressBar } from './ui';
 import PetSprite from './PetSprite';
 import { buzz, Confetti, PopIn } from './fx';
 import { colors, font, space } from '../theme';
+import { InfoDot, InfoPop } from './InfoTip';
+import { useOverlay } from './Overlay';
 import { SPECIES_BY_ID } from '../game/species';
 import { stageFor } from '../game/scoring';
 import * as R from '../game/ranked';
 
 export default function RankedCard() {
+  const overlay = useOverlay();
   const { ranked, claimSeason } = useRanked();
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [party, setParty] = useState(0);
@@ -28,7 +31,10 @@ export default function RankedCard() {
           <Text style={{ fontSize: 30 }}>{tier.emoji}</Text>
         </View>
         <View style={{ flex: 1 }}>
-          <Text style={styles.label}>RANKED · {R.seasonName(ranked.season).toUpperCase()}</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            <Text style={styles.label}>RANKED · {R.seasonName(ranked.season).toUpperCase()}</Text>
+            <InfoDot color="#D6DCF5" label="ranked points" onPress={() => overlay.open(<InfoPop tip={{ title: 'Ranked points', text: `Friend battles: win +${R.RANKED_POINTS.friendWin}, lose ${R.RANKED_POINTS.friendLoss} (the first ${R.RANKED_POINTS.perFriendPerDay} a day with each friend count). Wild wins: +${R.RANKED_POINTS.wildWin}, up to ${R.RANKED_POINTS.wildPerDay} a day. Rewards come at the end of the month, by tier.` }} onClose={overlay.close} />)} />
+          </View>
           <Text style={styles.tier}>{tier.name}</Text>
           <Text style={styles.sub}>
             {ranked.points} points · {ranked.wins}W {ranked.losses}L · {days} day{days === 1 ? '' : 's'} left
@@ -39,9 +45,6 @@ export default function RankedCard() {
         <ProgressBar value={prog.frac} height={12} color={prog.next ? prog.next.color : tier.color} />
         <Text style={styles.sub}>{prog.next ? `${prog.need} points to ${prog.next.emoji} ${prog.next.name}` : 'Top tier! You’re a Legend this season.'}</Text>
       </View>
-      <Text style={styles.help}>
-        Friend battles: win +{R.RANKED_POINTS.friendWin}, lose {R.RANKED_POINTS.friendLoss} (first {R.RANKED_POINTS.perFriendPerDay} a day per friend). Wild wins: +{R.RANKED_POINTS.wildWin} ({R.RANKED_POINTS.wildPerDay} a day). Rewards at the end of the month by tier.
-      </Text>
 
       {last && !last.claimed && lastTier ? (
         <PopIn>

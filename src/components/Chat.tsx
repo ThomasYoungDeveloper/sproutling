@@ -154,7 +154,6 @@ export function ChatList() {
           );
         })}
       </View>
-      <Text style={[font.tiny, { textAlign: 'center' }]}>Chat is only with your friends and your guild.</Text>
     </View>
   );
 }

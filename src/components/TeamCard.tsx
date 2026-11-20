@@ -5,6 +5,8 @@ import { Button, Card, ProgressBar } from './ui';
 import PetSprite from './PetSprite';
 import { buzz, Confetti, PopIn } from './fx';
 import { colors, font, space } from '../theme';
+import ChestIcon from './ChestIcon';
+import { shortNumber } from '../lib/shortNumber';
 import { SPECIES_BY_ID } from '../game/species';
 import { stageFor } from '../game/scoring';
 import { TEAM_EMOJIS, raidBoss, RAID_HITS_PER_DAY } from '../game/team';
@@ -70,7 +72,7 @@ function RaidBox({ onWin, onMsg }: { onWin: () => void; onMsg: (m: { ok: boolean
           ? claimed
             ? 'Your guild beat this week’s boss. A new one appears Monday!'
             : 'Your guild beat the boss! Everyone gets a Gold chest and 150 coins.'
-          : `Every 10 steps hits the boss for 1. Battles hit it too: ${hits_left} of ${RAID_HITS_PER_DAY} battle hits left today.`}
+          : `Steps and battles hit the boss. ${hits_left} of ${RAID_HITS_PER_DAY} battle hits left today.`}
       </Text>
       {beaten && !claimed ? (
         <PopIn>
@@ -239,10 +241,10 @@ export default function TeamCard({ initialJoin, onUsedInitialJoin }: { initialJo
         </View>
         <View style={{ position: 'relative' }}>
           <ProgressBar value={pct} height={16} color={superReached ? colors.gold : colors.mint} />
-          <View style={[styles.marker, { left: '50%' }]}><Text style={styles.markerText}>🎁</Text></View>
-          <View style={[styles.marker, { right: -4 }]}><Text style={styles.markerText}>🌟</Text></View>
+          <View style={[styles.marker, { left: '50%' }]}><ChestIcon kind="silver" size={26} /></View>
+          <View style={[styles.marker, { right: -4 }]}><ChestIcon kind="gold" size={26} /></View>
         </View>
-        <Text style={font.tiny}>Goal: {team.goal.toLocaleString()} steps for a Silver chest each. Super goal: {(team.goal * 2).toLocaleString()} for a Gold chest each.</Text>
+        <Text style={font.tiny}>Silver chest at {shortNumber(team.goal)} steps · Gold at {shortNumber(team.goal * 2)}</Text>
         {canGoal || canSuper ? (
           <View style={styles.row}>
             {canGoal ? (

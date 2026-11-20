@@ -240,7 +240,6 @@ export default function FriendsScreen({ initialAdd, onUsedInitialAdd, initialGui
             />
           </Pressable>
         ))}
-        {friends.length > 0 ? <Text style={font.tiny}>Send up to 3 gifts a day, one per friend. Each gift holds {GIFT_COINS} coins, and sometimes a surprise chest.</Text> : null}
       </Card>
 
       {friends.length > 0 && !inviteTop && invite}

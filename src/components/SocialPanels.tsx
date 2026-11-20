@@ -266,7 +266,7 @@ export function ArenaCard() {
         ))}
       </View>
       <Text style={[font.small, { color: '#D6DCF5' }]}>
-        {left > 0 ? `${left} rewarded battle${left === 1 ? '' : 's'} left today (first win gets a chest!).` : `Rewards are used up for today (back in ${resetIn}), but you can still battle for fun.`} Train pets and pick moves on the Pets tab.
+        {left > 0 ? `${left} rewarded battle${left === 1 ? '' : 's'} left today. First win gets a chest.` : `Rewards are back in ${resetIn}. You can still battle for fun.`}
       </Text>
       <View style={{ flexDirection: 'row', gap: space.sm }}>
         <Button
@@ -279,7 +279,6 @@ export function ArenaCard() {
           }}
         />
       </View>
-      <Text style={[font.tiny, { color: '#AEB6DA' }]}>To battle a friend, tap them in your friends list.</Text>
     </Card>
   );
 }
@@ -348,7 +347,7 @@ function TradeRow({ t, onDismiss }: { t: Trade; onDismiss?: () => void }) {
     text = `Waiting for ${t.friendName} to pick a pet to offer back.`;
     actions = <Button small label="Cancel" onPress={() => cancelTrade(t.id)} />;
   } else if (t.status === 'offered') {
-    text = `${t.friendName} wants to trade ${t.offer.nickname}! Pick a pet to offer back.`;
+    text = `${t.friendName} wants your ${t.offer.nickname}`;
     actions = (
       <>
         <Button small label="No thanks" onPress={() => cancelTrade(t.id)} />
@@ -370,7 +369,7 @@ function TradeRow({ t, onDismiss }: { t: Trade; onDismiss?: () => void }) {
       </>
     );
   } else if (t.status === 'countered' && t.fromMe) {
-    text = `${t.friendName} offered ${t.counter?.nickname} for your ${t.offer.nickname}. Deal?`;
+    text = `${t.friendName} offers ${t.counter?.nickname} for ${t.offer.nickname}`;
     actions = (
       <>
         <Button small label="No deal" onPress={() => cancelTrade(t.id)} />
