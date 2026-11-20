@@ -37,9 +37,7 @@ export function careMultiplier(d: DayLog): number {
 
 /** Today's XP after the care boost. This is what pets and coins actually receive. */
 export function boostedTotal(d: DayLog, element?: Element): number {
-  // Toxic pets double the care boost.
-  const care = element === 'toxic' ? 1 + (careMultiplier(d) - 1) * 2 : careMultiplier(d);
-  return Math.round(scoreDay(d, element).total * care);
+  return Math.round(scoreDay(d, element).total * careMultiplier(d));
 }
 
 export type Mood = 'joy' | 'happy' | 'sleepy' | 'hungry' | 'thirsty' | 'bored';

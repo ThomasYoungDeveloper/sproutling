@@ -6,7 +6,7 @@ import { useOverlay } from './Overlay';
 import { Button, Card } from './ui';
 import { buzz, PopIn } from './fx';
 import { colors, font, space } from '../theme';
-import { dailyQuests, ELEMENT_HABIT, EXERCISE_MINUTES, MINDFUL_MINUTES, RING_XP, ringsClosed, scoreDay } from '../game/scoring';
+import { dailyQuests, EXERCISE_MINUTES, MINDFUL_MINUTES, RING_XP, ringsClosed, scoreDay } from '../game/scoring';
 import * as A from '../game/actions';
 import * as C from '../game/care';
 import { healthProvider, isVerified } from '../lib/health';
@@ -36,7 +36,6 @@ export default function TodayCard() {
   const overlay = useOverlay();
   const d = A.today(state);
   const el = A.activeElement(state);
-  const eb = el ? ELEMENT_HABIT[el] : null;
   const pet = A.activePet(state);
   const quests = dailyQuests(d);
   const allDone = quests.every((q) => q.done);
@@ -73,16 +72,12 @@ export default function TodayCard() {
           </View>
           <Text style={styles.subtitle}>{allDone ? 'All 3 done! Bronze chest earned' : 'Finish all 3 for a Bronze chest'}</Text>
         </View>
-        {eb?.habit === 'quests' && pet ? (
-          <View style={[styles.mult, { position: 'relative', top: 0, right: 0 }]}><Text style={styles.multText}>2× quest XP</Text></View>
-        ) : null}
         <PopIn key={C.boostedTotal(d, el)} from={0.7}>
           <View style={styles.xp}><Text style={styles.xpText}>+{C.boostedTotal(d, el)} XP</Text></View>
         </PopIn>
       </View>
       <View style={styles.tiles}>
         {(['steps', 'water', 'sleep'] as Habit[]).map((h) => {
-          const boosted = eb?.habit === h;
           return (
             <Pressable
               key={h}
@@ -90,13 +85,10 @@ export default function TodayCard() {
                 buzz('light');
                 overlay.open(<LogSheet habit={h} onClose={overlay.close} />);
               }}
-              style={({ pressed }) => [styles.tile, { backgroundColor: TINT[h] }, boosted && { borderColor: INFO[h].color, borderWidth: 2 }, pressed && { transform: [{ scale: 0.96 }] }]}
+              style={({ pressed }) => [styles.tile, { backgroundColor: TINT[h] }, pressed && { transform: [{ scale: 0.96 }] }]}
               accessibilityRole="button"
-              accessibilityLabel={`${INFO[h].label}: ${shown[h]}${done[h] ? ', done' : ''}${boosted ? `, ${pet?.nickname ?? 'your pet'} boosts this` : ''}. Tap to log`}
+              accessibilityLabel={`${INFO[h].label}: ${shown[h]}${done[h] ? ', done' : ''}. Tap to log`}
             >
-              {boosted ? (
-                <View style={[styles.mult, { backgroundColor: INFO[h].color }]}><Text style={styles.multText}>{eb!.mult === 2 ? '2×' : `${eb!.mult}×`} XP</Text></View>
-              ) : null}
               <Ring frac={Math.min(1, value[h] / goalOf[h])} color={INFO[h].color} done={done[h]} icon={INFO[h].icon} />
               <Text style={styles.value}>{shown[h]}</Text>
               <Text style={styles.label}>{label[h]}</Text>

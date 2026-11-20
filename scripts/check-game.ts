@@ -326,12 +326,6 @@ let HB = { ...br.state, eggs: br.state.eggs.map((e) => ({ ...e, incubating: true
 const hb = A.hatch(HB, HB.eggs[0].id, () => 0.001)!;
 ok(hb.pet.speciesId === br.egg.bred!.speciesId, 'the nursery egg hatches the promised species');
 ok(hb.pet.skin === "gold" && !!hb.state.skinDex?.[`${hb.pet.speciesId}:gold`], 'lucky babies inherit a parent skin and fill the Skin-dex');
-// Element habit bonuses
-const dEl = { ...A.today(t), steps: 5000, water: 6, sleepHours: 8 };
-ok(scoreDay(dEl, 'tide').water === scoreDay(dEl).water * 2, 'Tide pets double water XP');
-ok(scoreDay(dEl, 'moon').sleep === scoreDay(dEl).sleep * 2, 'Moon pets double sleep XP');
-ok(scoreDay(dEl, 'ember').steps === Math.floor(scoreDay(dEl).steps * 1.5), 'Ember pets give +50% walking XP');
-ok(scoreDay(dEl, 'flower').bonus === scoreDay(dEl).quests, 'Flower pets double quest XP');
 // Streak shields
 let SH = { ...newGame(), dayOffset: 0, days: {}, pets: t.pets, activePetId: t.activePetId } as GameState;
 for (let i = 0; i < 7; i++) { SH = A.setSleep(A.setWater(A.addSteps(SH, 9000), 6), 8); if (i < 6) SH = A.nextDay(SH); }
@@ -1006,13 +1000,9 @@ console.log('\nEgg basket');
   b.mine[0].status = { type: 'stun', turns: 2 };
   fr = B.playTurn(b, { type: 'move', moveId: 'tackle' }, { type: 'move', moveId: 'focus' }, fixed(0.1));
   ok(fr.some((x) => x.event.side === 'me' && x.event.kind === 'doze'), 'a stunned pet can lose its turn');
-  // Habit perks for the new types.
   const day = { steps: 0, sleepHours: 0, water: 0, workoutMinutes: 30, meals: [], mindfulMin: 10, rings: { move: 1, exercise: 1, stand: 1 } } as any;
-  ok(scoreDay(day, 'spark').workout === 60 && scoreDay(day).workout === 30, 'Spark pets double workout XP');
-  ok(scoreDay(day, 'frost').mindful === 2 * scoreDay(day).mindful, 'Frost pets double mindful XP');
-  ok(scoreDay(day, 'stone').rings === 2 * scoreDay(day).rings, 'Stone pets double activity-ring XP');
-  const cared = { ...day, care: { fed: true, played: 3, treat: true } };
-  ok(C.boostedTotal(cared, 'toxic') > C.boostedTotal(cared, 'flower') - scoreDay(cared, 'flower').bonus, 'Toxic pets double the care boost');
+  // Habit XP is the same whatever the type.
+  ok((['flower', 'tide', 'ember', 'moon', 'stone', 'spark', 'frost', 'wind', 'toxic'] as const).every((e) => scoreDay(day, e).total === scoreDay(day).total), 'habit XP is the same for every type');
   ok(Tw.THEMES.length === 9 && Tw.THEMES.every((t) => /hit harder/.test(t.weakTo)), 'a tower for every type');
 }
 console.log(fails ? `${fails} FAILED` : 'ALL PASSED'); process.exit(fails ? 1 : 0);

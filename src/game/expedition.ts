@@ -146,11 +146,9 @@ export function start(s: GameState, petId: string, placeId: string, now = Date.n
   };
 }
 
-/** A trip's length on the clock: Wind pets travel 25% faster. */
-export function tripMs(s: GameState, hours: number): number {
-  const pet = s.pets.find((p) => p.id === s.expedition?.petId);
-  const wind = pet && SPECIES_BY_ID[pet.speciesId]?.element === 'wind';
-  return hours * 3_600_000 * (wind ? 0.75 : 1);
+/** A trip's length on the clock (the same for every pet). */
+export function tripMs(_s: GameState, hours: number): number {
+  return hours * 3_600_000;
 }
 
 /** Where the pet is on its route (0–1 of the full route), the fights it has already had, and its HP right now. */

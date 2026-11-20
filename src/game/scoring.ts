@@ -42,20 +42,6 @@ export function dailyQuests(d: DayLog): Quest[] {
 }
 
 /** XP is capped per habit so steady days beat one extreme day. */
-/** Your active pet's element doubles the XP from one habit (Ember gives +50% walking). */
-export type HabitKey = 'steps' | 'sleep' | 'water' | 'quests' | 'workout' | 'rings' | 'mindful' | 'care' | 'trips';
-/** care and trips are applied elsewhere (care boost in care.ts, trip time in expedition.ts). */
-export const ELEMENT_HABIT: Record<Element, { habit: HabitKey; mult: number; label: string; emoji: string }> = {
-  ember: { habit: 'steps', mult: 1.5, label: '+50% walking XP', emoji: '🔥' },
-  tide: { habit: 'water', mult: 2, label: 'Double water XP', emoji: '🌊' },
-  moon: { habit: 'sleep', mult: 2, label: 'Double sleep XP', emoji: '🌙' },
-  flower: { habit: 'quests', mult: 2, label: 'Double quest XP', emoji: '🌸' },
-  stone: { habit: 'rings', mult: 2, label: 'Double activity-ring XP', emoji: '🪨' },
-  spark: { habit: 'workout', mult: 2, label: 'Double workout XP', emoji: '⚡' },
-  frost: { habit: 'mindful', mult: 2, label: 'Double mindful XP', emoji: '❄️' },
-  wind: { habit: 'trips', mult: 0.75, label: 'Trips go 25% faster', emoji: '🍃' },
-  toxic: { habit: 'care', mult: 2, label: 'Double pet-care XP boost', emoji: '🧪' },
-};
 
 /** Activity rings: each closed ring earns XP, and closing all three earns one more ring's worth. */
 export const RING_XP = 15;
@@ -78,26 +64,12 @@ export function scoreDay(d: DayLog, element?: Element): DayScore {
   let workout = Math.min(d.workoutMinutes, 60);
   const logged = d.meals.slice(0, 4);
   const meals = logged.length * 5 + logged.filter((m) => m.veggies).length * 5;
-  let quests = dailyQuests(d).filter((q) => q.done).length * 15;
-  let bonus = 0;
+  const quests = dailyQuests(d).filter((q) => q.done).length * 15;
+  // Habit XP is the same for every pet; type only matters in battle.
+  const bonus = 0;
   const closed = ringsClosed(d);
-  let rings = closed * RING_XP + (closed === 3 ? RING_XP : 0);
-  let mindful = (d.mindfulMin ?? 0) >= MINDFUL_MINUTES ? MINDFUL_XP : 0;
-  if (element) {
-    const eb = ELEMENT_HABIT[element];
-    const parts: Partial<Record<HabitKey, number>> = { steps, sleep, water, quests, workout, rings, mindful };
-    const base = parts[eb.habit];
-    if (base !== undefined) {
-      bonus = Math.floor(base * (eb.mult - 1));
-      if (eb.habit === 'steps') steps += bonus;
-      if (eb.habit === 'sleep') sleep += bonus;
-      if (eb.habit === 'water') water += bonus;
-      if (eb.habit === 'quests') quests += bonus;
-      if (eb.habit === 'workout') workout += bonus;
-      if (eb.habit === 'rings') rings += bonus;
-      if (eb.habit === 'mindful') mindful += bonus;
-    }
-  }
+  const rings = closed * RING_XP + (closed === 3 ? RING_XP : 0);
+  const mindful = (d.mindfulMin ?? 0) >= MINDFUL_MINUTES ? MINDFUL_XP : 0;
   return { steps, sleep, water, workout, meals, quests, bonus, rings, mindful, total: steps + sleep + water + workout + meals + quests + rings + mindful };
 }
 

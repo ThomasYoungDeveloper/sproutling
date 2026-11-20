@@ -8,7 +8,7 @@ import { Button, RarityBadge } from './ui';
 import { buzz, PopIn } from './fx';
 import { colors, font, space } from '../theme';
 import { SPECIES_BY_ID } from '../game/species';
-import { levelFor, stageFor, ELEMENT_HABIT } from '../game/scoring';
+import { levelFor, stageFor } from '../game/scoring';
 import { SKIN_INFO } from '../game/skins';
 import * as FD from '../game/food';
 import { ELEMENT_COLOR, ELEMENT_LABEL, NORMAL_COLOR } from '../game/battle';
@@ -97,7 +97,7 @@ export default function PetSheet({ petId, onClose }: { petId: string; onClose: (
                 </Pressable>
               </View>
               {isActive ? (
-                <Text style={styles.active}>Active pet · {ELEMENT_HABIT[sp.element].label}</Text>
+                <Text style={styles.active}>Active pet</Text>
               ) : (
                 <Button small primary label="Make active" onPress={() => { buzz('success'); apply((s) => A.setActivePet(s, pet.id)); }} />
               )}
@@ -245,10 +245,6 @@ export default function PetSheet({ petId, onClose }: { petId: string; onClose: (
               <View style={styles.section}>
                 <Text style={styles.title}>Favorite food</Text>
                 <Text style={styles.body}>{(() => { const t = FD.tasteOf(pet); const fav = pet.tasted?.includes(t.fav) ? FD.FOOD_BY_ID[t.fav]?.name : null; const no = pet.tasted?.includes(t.dislike) ? FD.FOOD_BY_ID[t.dislike]?.name : null; return fav || no ? [fav ? `Loves ${fav}` : null, no ? `not a fan of ${no}` : null].filter(Boolean).join(', ') + '.' : 'Not found yet. Try feeding it new foods.'; })()}</Text>
-              </View>
-              <View style={styles.section}>
-                <Text style={styles.title}>While active</Text>
-                <Text style={styles.body}>{ELEMENT_HABIT[sp.element].label}</Text>
               </View>
               <View style={styles.section}>
                 <View style={styles.titleRow}>
