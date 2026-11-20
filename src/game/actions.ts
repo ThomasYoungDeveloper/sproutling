@@ -367,7 +367,7 @@ export function claimLogin(s: GameState, rng: Rng = defaultRng): { state: GameSt
 export const GIFT_COINS = 10;
 export const GIFT_CHEST_CHANCE = 0.1;
 /** How many gifts a player can send per day (one per friend). */
-export const GIFTS_PER_DAY = 3;
+export const GIFTS_PER_DAY = 10;
 
 export function openGifts(s: GameState, count: number, rng: Rng = defaultRng): { state: GameState; coins: number; chests: number } {
   let next = s;
