@@ -20,5 +20,5 @@ export const font = {
   h2: { fontSize: 18, fontWeight: '800' as const, color: colors.ink },
   body: { fontSize: 15, color: colors.ink },
   small: { fontSize: 13, color: colors.muted, fontWeight: '600' as const },
-  tiny: { fontSize: 11, color: colors.muted, fontWeight: '700' as const },
+  tiny: { fontSize: 13, color: colors.muted, fontWeight: '700' as const },
 };

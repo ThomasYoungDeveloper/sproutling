@@ -137,11 +137,11 @@ export function FriendsProvider({ children }: { children: React.ReactNode }) {
     const fresh = incomingNow.filter((r) => !seen!.incoming.includes(r.id)).map((r) => r.name);
     const list = (n: string[]) => (n.length === 1 ? n[0] : n.length === 2 ? `${n[0]} and ${n[1]}` : `${n[0]} and ${n.length - 1} others`);
     if (accepted.length) {
-      say(`🎉 ${list(accepted)} accepted your friend request! You can battle, trade and send gifts now.`);
+      say(`${list(accepted)} accepted your friend request! You can battle, trade and send gifts now.`);
       play('chime');
       buzz('success', 'none');
     } else if (fresh.length) {
-      say(`👋 ${list(fresh)} sent you a friend request. Check the Social tab!`);
+      say(`${list(fresh)} sent you a friend request. Check the Social tab!`);
       play('pop');
     }
   }, [say]);
@@ -229,7 +229,7 @@ export function FriendsProvider({ children }: { children: React.ReactNode }) {
     if (battles.length) {
       const b = battles[battles.length - 1];
       const more = battles.length > 1 ? ` (+${battles.length - 1} more battle${battles.length > 2 ? 's' : ''})` : '';
-      say(b.theyWon ? `⚔ ${b.name} battled your team and won! Time for a rematch?${more}` : `🛡 ${b.name} battled your team and your pets won!${more}`);
+      say(b.theyWon ? `${b.name} battled your team and won! Time for a rematch?${more}` : `${b.name} battled your team and your pets won!${more}`);
     }
     const names = (err ? [] : (data as string[] | null)) ?? [];
     if (!names.length) return;
@@ -237,7 +237,7 @@ export function FriendsProvider({ children }: { children: React.ReactNode }) {
     apply(() => opened.state);
     const who = names.length === 1 ? names[0] : names.length === 2 ? `${names[0]} and ${names[1]}` : `${names[0]} and ${names.length - 1} others`;
     const extra = opened.chests ? ` and ${opened.chests === 1 ? 'a surprise Bronze chest' : `${opened.chests} surprise Bronze chests`}` : '';
-    say(`🎁 ${who} sent you a gift! +${opened.coins} coins${extra}`);
+    say(`${who} sent you a gift! +${opened.coins} coins${extra}`);
   }, [user?.id, loaded, apply, say]);
 
   useEffect(() => {

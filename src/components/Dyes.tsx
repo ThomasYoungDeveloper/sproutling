@@ -162,5 +162,5 @@ const styles = StyleSheet.create({
   petName: { fontSize: 12, fontWeight: '900', color: colors.ink },
   msg: { fontSize: 13, fontWeight: '800', color: '#B5462E', textAlign: 'center' },
   tag: { borderRadius: 8, paddingHorizontal: 8, paddingVertical: 2, alignSelf: 'flex-start' },
-  tagText: { color: '#FFFFFF', fontSize: 10, fontWeight: '900', letterSpacing: 1 },
+  tagText: { color: '#FFFFFF', fontSize: 12, fontWeight: '900', letterSpacing: 1 },
 });

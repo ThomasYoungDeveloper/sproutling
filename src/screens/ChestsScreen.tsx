@@ -228,7 +228,7 @@ const styles = StyleSheet.create({
   chestGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   chestTile: { width: '30%', flexGrow: 1, maxWidth: 160, alignItems: 'center', gap: 2, backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 18, paddingVertical: 10, paddingHorizontal: 4 },
   chestName: { fontSize: 14, fontWeight: '900', color: '#FFFFFF' },
-  chestWhy: { fontSize: 11, fontWeight: '800', color: '#DCD8F5', textAlign: 'center' },
+  chestWhy: { fontSize: 12, fontWeight: '800', color: '#DCD8F5', textAlign: 'center' },
   openAll: { backgroundColor: colors.gold, borderRadius: 16, minHeight: 52, alignItems: 'center', justifyContent: 'center', borderBottomWidth: 4, borderBottomColor: '#C99212' },
   openAllText: { fontSize: 17, fontWeight: '900', color: '#3B2A00' },
   tapHint: { fontSize: 13, fontWeight: '800', color: '#DCD8F5', textAlign: 'center' },

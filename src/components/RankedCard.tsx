@@ -28,7 +28,7 @@ export default function RankedCard() {
           <Text style={{ fontSize: 30 }}>{tier.emoji}</Text>
         </View>
         <View style={{ flex: 1 }}>
-          <Text style={styles.label}>🏆 RANKED · {R.seasonName(ranked.season).toUpperCase()}</Text>
+          <Text style={styles.label}>RANKED · {R.seasonName(ranked.season).toUpperCase()}</Text>
           <Text style={styles.tier}>{tier.name}</Text>
           <Text style={styles.sub}>
             {ranked.points} points · {ranked.wins}W {ranked.losses}L · {days} day{days === 1 ? '' : 's'} left
@@ -51,7 +51,7 @@ export default function RankedCard() {
             </Text>
             <Button
               primary
-              label="🎁 Claim season reward"
+              label="Claim season reward"
               onPress={async () => {
                 const r = await claimSeason();
                 setMsg(r);
@@ -68,7 +68,7 @@ export default function RankedCard() {
       <View style={styles.tabs}>
         {(['global', 'friends'] as const).map((t) => (
           <Pressable key={t} onPress={() => setTab(t)} style={[styles.tab, tab === t && styles.tabOn]} accessibilityRole="tab" accessibilityState={{ selected: tab === t }}>
-            <Text style={[styles.tabText, tab === t && styles.tabTextOn]}>{t === 'global' ? '🌎 Everyone' : '👋 Friends'}</Text>
+            <Text style={[styles.tabText, tab === t && styles.tabTextOn]}>{t === 'global' ? 'Everyone' : 'Friends'}</Text>
           </Pressable>
         ))}
       </View>
@@ -108,7 +108,7 @@ export default function RankedCard() {
 const styles = StyleSheet.create({
   card: { backgroundColor: '#1B2240', borderColor: '#1B2240', gap: space.sm },
   badge: { width: 58, height: 58, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
-  label: { fontSize: 11, fontWeight: '900', color: '#AFB8E8', letterSpacing: 1 },
+  label: { fontSize: 12, fontWeight: '900', color: '#AFB8E8', letterSpacing: 1 },
   tier: { fontSize: 24, fontWeight: '900', color: '#FFFFFF' },
   sub: { fontSize: 12, fontWeight: '800', color: '#C8CEF0' },
   help: { fontSize: 12, fontWeight: '700', color: '#AFB8E8' },

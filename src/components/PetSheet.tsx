@@ -340,7 +340,7 @@ const styles = StyleSheet.create({
   statLabel: { width: 36, fontWeight: '900', fontSize: 14, color: colors.ink },
   bar: { flex: 1, height: 10, borderRadius: 999, backgroundColor: '#E7EEEA', overflow: 'hidden' },
   statVal: { width: 40, textAlign: 'right', fontWeight: '900', fontSize: 15, color: colors.ink },
-  trained: { width: 24, fontWeight: '800', fontSize: 11, color: colors.mintDark },
+  trained: { width: 24, fontWeight: '800', fontSize: 12, color: colors.mintDark },
   plus: { width: 32, height: 32, borderRadius: 10, backgroundColor: colors.mint, alignItems: 'center', justifyContent: 'center' },
   plusText: { color: '#FFFFFF', fontWeight: '900', fontSize: 18, lineHeight: 20 },
   reset: { fontSize: 12, fontWeight: '800', color: colors.muted, textDecorationLine: 'underline', textAlign: 'right' },

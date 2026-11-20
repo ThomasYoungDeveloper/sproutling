@@ -250,7 +250,7 @@ const styles = StyleSheet.create({
   backdrop: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(24,30,48,0.5)', justifyContent: 'center', padding: space.lg, zIndex: 80 },
   sheet: { gap: space.md, width: '100%', maxWidth: 420, alignSelf: 'center' },
   newCard: { backgroundColor: '#FFF4D6', borderWidth: 2, borderColor: '#F2C27B', gap: 4 },
-  newTag: { fontSize: 11, fontWeight: '900', color: '#B06A00', letterSpacing: 1 },
+  newTag: { fontSize: 12, fontWeight: '900', color: '#B06A00', letterSpacing: 1 },
   newTitle: { fontSize: 19, fontWeight: '900', color: colors.ink },
   next: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   nextText: { flex: 1, fontSize: 12, fontWeight: '800', color: '#5C6F69' },

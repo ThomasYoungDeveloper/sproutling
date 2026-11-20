@@ -55,7 +55,7 @@ export default function NurseryCard() {
   if (adults.length < 2) {
     return (
       <Card>
-        <SectionHead title="💞 Pet Nursery" meta={`Unlocks with 2 adults`} />
+        <SectionHead title="Pet Nursery" meta={`Unlocks with 2 adults`} />
         <Text style={font.small}>
           When two of your pets grow into adults (level {Br.ADULT_LEVEL}), they can make an egg together. Nursery eggs are 3× more likely to hatch with a rare skin, and parents can pass their skin down!
         </Text>
@@ -114,12 +114,12 @@ export default function NurseryCard() {
   return (
     <Card style={{ backgroundColor: '#FFF4F8', borderColor: '#F9C9DD' }}>
       {made ? <Confetti key={made.egg.id} amount={40} width={400} height={400} colors={['#FF8FB1', '#FFD6E5', '#FFE27A', '#B18CFF']} /> : null}
-      <SectionHead title="💞 Pet Nursery" meta={`${adults.length} adults ready`} />
+      <SectionHead title="Pet Nursery" meta={`${adults.length} adults ready`} />
       {made ? (
         <PopIn>
           <View style={styles.made}>
             <EggSprite rarity={made.egg.rarity} size={90} spots={['#FF8FB1', '#FFD6E5', '#FF8FB1', '#B18CFF']} />
-            <Text style={styles.madeTitle}>{made.egg.bred?.lucky ? `✨ A Lucky ${RARITY_INFO[made.egg.rarity].label.toLowerCase()} egg!` : `A new ${RARITY_INFO[made.egg.rarity].label.toLowerCase()} egg! 💕`}</Text>
+            <Text style={styles.madeTitle}>{made.egg.bred?.lucky ? `A Lucky ${RARITY_INFO[made.egg.rarity].label.toLowerCase()} egg!` : `A new ${RARITY_INFO[made.egg.rarity].label.toLowerCase()} egg! 💕`}</Text>
             {made.egg.bred?.lucky ? <Text style={styles.luckyNote}>It shimmers! The baby gets +{made.egg.bred.lucky} on every stat.</Text> : null}
             <Text style={[font.small, { textAlign: 'center' }]}>Put it in an incubator on the Eggs tab and walk to hatch it. Who knows what skin it’ll have!</Text>
             <Button small label="Make another" onPress={() => setMade(null)} />
@@ -137,10 +137,10 @@ export default function NurseryCard() {
               <Text style={styles.oddsTitle}>The baby could be:</Text>
               {Br.outcomes(pa, pb).map((o) => (
                 <Text key={o.speciesId} style={font.small}>
-                  {o.speciesId === '?' ? '✨ A surprise pet of the same element' : SPECIES_BY_ID[o.speciesId].name} · {Math.round(o.chance * 100)}%
+                  {o.speciesId === '?' ? 'A surprise pet of the same element' : SPECIES_BY_ID[o.speciesId].name} · {Math.round(o.chance * 100)}%
                 </Text>
               ))}
-              <Text style={font.small}>🎨 Skin chance: {skinChance}% (3× normal eggs)</Text>
+              <Text style={font.small}>Skin chance: {skinChance}% (3× normal eggs)</Text>
               <GradePreview a={pa} b={pb} />
               {skinnedParents.length ? (
                 <Text style={[font.small, { color: '#9C4C77', fontWeight: '800' }]}>
@@ -151,7 +151,7 @@ export default function NurseryCard() {
           ) : (
             <Text style={font.small}>Pick two adult pets. Their baby is usually one of their species, with a 10% chance of a surprise!</Text>
           )}
-          <Button primary label={`💞 Make an egg (${Br.BREED_COST} coins)`} disabled={!a || !b} onPress={makeEgg} />
+          <Button primary label={`Make an egg (${Br.BREED_COST} coins)`} disabled={!a || !b} onPress={makeEgg} />
           {check && !check.ok ? <Text style={styles.msg}>{check.reason}</Text> : null}
           {msg ? <Text style={styles.msg}>{msg}</Text> : null}
         </>
@@ -187,7 +187,7 @@ function GradePreview({ a, b }: { a: { nickname: string } & Parameters<typeof iv
           <Text style={[styles.chipValue, { color: '#5B2E99' }]}>{range.low === range.high ? `${range.low}%` : `${range.low}–${range.high}%`}</Text>
         </View>
         <View style={[styles.chip, { backgroundColor: '#FFF1C4' }]}>
-          <Text style={[styles.chipLabel, { color: '#9A6A00' }]}>✨ LUCKY EGG</Text>
+          <Text style={[styles.chipLabel, { color: '#9A6A00' }]}>LUCKY EGG</Text>
           <Text style={[styles.chipValue, { color: '#7A5200' }]}>{Math.round(LUCKY_CHANCE * 100)}% chance</Text>
           <Text style={[styles.small, { color: '#8A6A20' }]}>+1 to +2 on every stat</Text>
         </View>
@@ -200,13 +200,13 @@ const styles = StyleSheet.create({
   preview: { marginTop: 6, gap: 4 },
   statRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   statName: { width: 64, fontSize: 12, fontWeight: '800', color: colors.ink },
-  statHead: { flex: 1, fontSize: 11, fontWeight: '900', color: colors.muted },
+  statHead: { flex: 1, fontSize: 12, fontWeight: '900', color: colors.muted },
   statVal: { flex: 1, fontSize: 13, fontWeight: '700', color: colors.ink },
   better: { fontWeight: '900', color: '#C9662A' },
-  small: { fontSize: 11, fontWeight: '700', color: colors.muted },
+  small: { fontSize: 12, fontWeight: '700', color: colors.muted },
   chips: { flexDirection: 'row', gap: 8, marginTop: 4 },
   chip: { flex: 1, borderRadius: 12, padding: 8 },
-  chipLabel: { fontSize: 10, fontWeight: '900' },
+  chipLabel: { fontSize: 12, fontWeight: '900' },
   chipValue: { fontSize: 17, fontWeight: '900' },
   luckyNote: { fontSize: 13, fontWeight: '800', color: '#9A6A00', textAlign: 'center' },
   parents: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: space.sm },
@@ -214,7 +214,7 @@ const styles = StyleSheet.create({
   slotFull: { borderStyle: 'solid', borderColor: '#E26AA0' },
   plus: { fontSize: 40, fontWeight: '300', color: '#E26AA0' },
   slotName: { fontWeight: '900', fontSize: 13, color: colors.ink },
-  slotSub: { fontWeight: '700', fontSize: 11, color: colors.muted },
+  slotSub: { fontWeight: '700', fontSize: 12, color: colors.muted },
   heart: { fontSize: 30 },
   odds: { backgroundColor: '#FFFFFF', borderRadius: 14, padding: space.sm, gap: 2 },
   oddsTitle: { fontWeight: '900', fontSize: 13, color: colors.ink },

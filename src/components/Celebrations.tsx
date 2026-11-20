@@ -123,7 +123,7 @@ export function DayComplete({ onClose, onChests }: { onClose: () => void; onChes
             <BigChest />
           </Animated.View>
         </View>
-        <Text style={styles.bigLine}>🎁 Bronze chest earned</Text>
+        <Text style={styles.bigLine}>Bronze chest earned</Text>
         <Text style={styles.bigLine}>🔥 {streak}-day streak{streak > 0 && streak % 7 === 0 ? ' · Silver chest too!' : ''}</Text>
         <View style={{ alignSelf: 'stretch', gap: space.sm, marginTop: space.sm }}>
           <Button primary label="Open my chest" onPress={() => { onClose(); onChests(); }} />

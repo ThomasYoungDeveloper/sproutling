@@ -67,7 +67,7 @@ export default function EggsScreen() {
             <>
               <View style={{ flexDirection: 'row', gap: 6, alignItems: 'center' }}>
                 <RarityBadge rarity={shown.rarity} />
-                {shown.bred ? <Text style={styles.nursery}>{shown.bred.lucky ? '✨ Lucky nursery egg' : '💞 Nursery egg'}</Text> : null}
+                {shown.bred ? <Text style={styles.nursery}>{shown.bred.lucky ? 'Lucky nursery egg' : 'Nursery egg'}</Text> : null}
               </View>
               {A.isReady(shown) ? (
                 <>
@@ -173,7 +173,7 @@ const styles = StyleSheet.create({
   slotEmpty: { borderStyle: 'dashed' },
   slotLocked: { backgroundColor: '#EEF1F0', opacity: 0.8 },
   slotPremium: { backgroundColor: '#EFE9FC', borderColor: '#CDBEF2' },
-  slotText: { fontSize: 11, fontWeight: '900', color: colors.muted },
-  nursery: { fontWeight: '900', fontSize: 11, color: '#C2185B' },
+  slotText: { fontSize: 12, fontWeight: '900', color: colors.muted },
+  nursery: { fontWeight: '900', fontSize: 12, color: '#C2185B' },
   eggRow: { flexDirection: 'row', alignItems: 'center', gap: space.md, borderTopWidth: 1, borderTopColor: colors.line, paddingTop: space.sm },
 });

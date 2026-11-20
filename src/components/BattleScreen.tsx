@@ -497,7 +497,7 @@ export default function BattleScreen({ opponent, onClose, onResult, live, specia
                 ) : null}
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                   <Pressable onPress={() => !busy && !lb?.iMoved && battle.mine.filter((f) => f.hp > 0).length > 1 && setSwitching(true)} accessibilityRole="button" style={{ opacity: battle.mine.filter((f) => f.hp > 0).length > 1 ? 1 : 0.4 }}>
-                    <Text style={styles.link}>🔄 Switch pet</Text>
+                    <Text style={styles.link}>Switch pet</Text>
                   </Pressable>
                   {live ? (
                     <Pressable onPress={() => { if (!sureQuit) { setSureQuit(true); setTimeout(() => setSureQuit(false), 4000); } else if (live) L.forfeit(live); }} accessibilityRole="button">
@@ -578,7 +578,7 @@ function Result({ won, lines, special, reward, raid, rp, points, name, onRematch
     <View style={{ alignItems: 'center', gap: 8 }}>
       {won ? <Confetti width={width} height={height} amount={70} /> : null}
       <PopIn from={0.2}>
-        <Text style={[styles.result, { color: won ? '#E5A800' : colors.ink }]}>{won ? '🏆 YOU WIN!' : 'So close!'}</Text>
+        <Text style={[styles.result, { color: won ? '#E5A800' : colors.ink }]}>{won ? 'YOU WIN!' : 'So close!'}</Text>
       </PopIn>
       <Text style={styles.resultSub}>{special ? (won ? special.winText : special.loseText) ?? '' : won ? `You beat ${nm}!` : `${nm[0].toUpperCase() + nm.slice(1)} won this time. Train your pets and try new moves!`}</Text>
       {special ? (
@@ -765,7 +765,7 @@ const styles = StyleSheet.create({
   potionRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   potionBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, borderWidth: 2, borderRadius: 12, paddingHorizontal: 8, paddingVertical: 3, backgroundColor: '#FFFBF2' },
   potionText: { fontWeight: '900', fontSize: 13, color: colors.ink },
-  potionHint: { fontSize: 11, fontWeight: '700', color: colors.muted, marginLeft: 'auto' },
+  potionHint: { fontSize: 12, fontWeight: '700', color: colors.muted, marginLeft: 'auto' },
   lines: { alignSelf: 'stretch', backgroundColor: '#F6F1E7', borderRadius: 14, padding: 12, gap: 6, minWidth: 260 },
   lineRow: { flexDirection: 'row', justifyContent: 'space-between', gap: 10 },
   lineLabel: { fontSize: 15, fontWeight: '800', color: colors.ink, flexShrink: 1 },
@@ -773,7 +773,7 @@ const styles = StyleSheet.create({
   bubble: { position: 'absolute', backgroundColor: '#fff', borderRadius: 18, paddingHorizontal: 10, paddingVertical: 4, shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 6, shadowOffset: { width: 0, height: 2 }, elevation: 4 },
   bubbleText: { fontSize: 30 },
   liveTag: { position: 'absolute', top: 10, left: 12, backgroundColor: 'rgba(214,40,57,0.9)', borderRadius: 10, paddingHorizontal: 8, paddingVertical: 3 },
-  liveTagText: { color: '#fff', fontSize: 11, fontWeight: '800', letterSpacing: 0.5 },
+  liveTagText: { color: '#fff', fontSize: 12, fontWeight: '800', letterSpacing: 0.5 },
   reactRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 4 },
   reactBtn: { width: 44, height: 40, borderRadius: 12, backgroundColor: '#F4F1EA', alignItems: 'center', justifyContent: 'center' },
   full: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: '#1B2240', zIndex: 90 },
@@ -787,17 +787,17 @@ const styles = StyleSheet.create({
   pip: { width: 24, height: 24, borderRadius: 7, backgroundColor: '#EEF1F0', alignItems: 'center', justifyContent: 'center' },
   pipOn: { backgroundColor: '#FFE27A' },
   pipText: { fontSize: 12 },
-  energyHint: { fontSize: 11, fontWeight: '700', color: colors.muted, marginLeft: 'auto' },
+  energyHint: { fontSize: 12, fontWeight: '700', color: colors.muted, marginLeft: 'auto' },
   moves: { flexDirection: 'row', flexWrap: 'wrap', gap: '3%', rowGap: 8 },
   move: { padding: 9, borderRadius: 14, borderWidth: 2, backgroundColor: '#FAFCFB', gap: 3, minHeight: 66 },
   moveName: { fontWeight: '900', fontSize: 14, color: colors.ink, flexShrink: 1 },
-  moveHint: { fontWeight: '700', fontSize: 10.5, color: colors.muted, flexShrink: 1 },
-  cost: { fontWeight: '900', fontSize: 11, color: '#5A3E00', borderRadius: 999, paddingHorizontal: 6, paddingVertical: 1, overflow: 'hidden', flexShrink: 0, marginLeft: 4 },
-  eff: { fontWeight: '900', fontSize: 10.5 },
+  moveHint: { fontWeight: '700', fontSize: 12.5, color: colors.muted, flexShrink: 1 },
+  cost: { fontWeight: '900', fontSize: 12, color: '#5A3E00', borderRadius: 999, paddingHorizontal: 6, paddingVertical: 1, overflow: 'hidden', flexShrink: 0, marginLeft: 4 },
+  eff: { fontWeight: '900', fontSize: 12.5 },
   switchRow: { flexDirection: 'row', gap: 8, justifyContent: 'center' },
   swCard: { backgroundColor: '#fff', borderRadius: 16, padding: 10, borderWidth: 2, borderColor: colors.line },
   swHead: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  swLv: { fontWeight: '800', fontSize: 11, color: colors.muted },
+  swLv: { fontWeight: '800', fontSize: 12, color: colors.muted },
   swTags: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   swBar: { height: 5, borderRadius: 3, backgroundColor: '#E3ECE7', overflow: 'hidden' },
   swFill: { height: '100%', borderRadius: 3 },
@@ -805,22 +805,22 @@ const styles = StyleSheet.create({
   swMove: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 6, borderTopWidth: 1, borderTopColor: '#EEF2F0' },
   swMoveBar: { width: 5, alignSelf: 'stretch', borderRadius: 3 },
   swMoveName: { fontSize: 13, fontWeight: '900', color: colors.ink },
-  swMoveDesc: { fontSize: 11, fontWeight: '700', color: colors.muted },
-  swCost: { fontSize: 11, fontWeight: '900', color: '#C98A12' },
+  swMoveDesc: { fontSize: 12, fontWeight: '700', color: colors.muted },
+  swCost: { fontSize: 12, fontWeight: '900', color: '#C98A12' },
   switchPet: { alignItems: 'center', width: 96, padding: 6, borderRadius: 14, borderWidth: 1.5, borderColor: colors.line, backgroundColor: '#FAFCFB' },
   switchName: { fontWeight: '900', fontSize: 14, color: colors.ink },
-  switchHp: { fontWeight: '800', fontSize: 11, color: colors.muted },
+  switchHp: { fontWeight: '800', fontSize: 12, color: colors.muted },
   tip: { fontSize: 12, fontWeight: '700', color: colors.muted, textAlign: 'center' },
   link: { fontSize: 13, fontWeight: '900', color: colors.mintDark, paddingVertical: 4 },
   run: { fontSize: 13, fontWeight: '800', color: colors.muted, paddingVertical: 4, textDecorationLine: 'underline' },
   fcard: { position: 'absolute', backgroundColor: 'rgba(255,255,255,0.94)', borderRadius: 16, padding: 10, width: 196, gap: 4, shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 8, elevation: 3, zIndex: 4 },
   fname: { fontWeight: '900', fontSize: 15, color: colors.ink, flexShrink: 1 },
   flv: { fontWeight: '900', fontSize: 12, color: '#5A3E00', backgroundColor: colors.gold, borderRadius: 7, paddingHorizontal: 6, paddingVertical: 1, overflow: 'hidden' },
-  flabel: { fontWeight: '700', fontSize: 11, color: colors.muted, flexShrink: 1 },
+  flabel: { fontWeight: '700', fontSize: 12, color: colors.muted, flexShrink: 1 },
   el: { borderRadius: 999, paddingHorizontal: 7, paddingVertical: 1 },
-  elText: { color: '#fff', fontWeight: '900', fontSize: 10 },
+  elText: { color: '#fff', fontWeight: '900', fontSize: 12 },
   hpTrack: { height: 10, borderRadius: 999, backgroundColor: '#E7EEEA', overflow: 'hidden' },
-  hpText: { fontWeight: '800', fontSize: 11, color: colors.muted },
+  hpText: { fontWeight: '800', fontSize: 12, color: colors.muted },
   dots: { position: 'absolute', flexDirection: 'row', gap: 5, zIndex: 4 },
   ball: { width: 14, height: 14, borderRadius: 7, backgroundColor: '#FFFFFF', borderWidth: 2, borderColor: colors.ink },
   ballOn: { backgroundColor: colors.gold },

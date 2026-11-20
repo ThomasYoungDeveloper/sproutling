@@ -127,7 +127,7 @@ export function IncubatorSheet({ onClose }: { onClose: () => void }) {
     <View style={styles.backdrop}>
       <Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessibilityLabel="Close" />
       <View style={styles.sheet}>
-        <Text style={font.title}>🥚 Incubators</Text>
+        <Text style={font.title}>Incubators</Text>
         <IncubatorOffer />
         <Button primary label="Done" onPress={onClose} />
       </View>

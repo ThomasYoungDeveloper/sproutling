@@ -157,7 +157,7 @@ function EggReveal({ r, onClose }: { r: Extract<Reveal, { kind: 'egg' }>; onClos
           {r.lucky ? (
             <PopIn delay={300}>
               <View style={styles.lucky}>
-                <Text style={styles.luckyText}>✨ LUCKY EGG! +{r.lucky} to every stat ✨</Text>
+                <Text style={styles.luckyText}>LUCKY EGG! +{r.lucky} to every stat</Text>
               </View>
             </PopIn>
           ) : null}
@@ -167,7 +167,7 @@ function EggReveal({ r, onClose }: { r: Extract<Reveal, { kind: 'egg' }>; onClos
           <PopIn delay={460}>
             <View style={[styles.skinTag, { borderColor: gradeInfo(gradeOf(r.pet)).color }]}>
               <Text style={[styles.skinText, { color: gradeInfo(gradeOf(r.pet)).color }]}>
-                {gradeOf(r.pet) >= 100 ? '💯 PERFECT 100%!' : `${gradeStars(gradeOf(r.pet)) ? `${gradeStars(gradeOf(r.pet))} ` : ''}Grade ${gradeOf(r.pet)}% · ${gradeInfo(gradeOf(r.pet)).label}`}
+                {gradeOf(r.pet) >= 100 ? 'PERFECT 100%!' : `${gradeStars(gradeOf(r.pet)) ? `${gradeStars(gradeOf(r.pet))} ` : ''}Grade ${gradeOf(r.pet)}% · ${gradeInfo(gradeOf(r.pet)).label}`}
               </Text>
             </View>
           </PopIn>

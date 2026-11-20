@@ -33,7 +33,7 @@ export default function AchievementsSheet({ onClose }: { onClose: () => void }) 
       <View style={styles.sheet}>
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
           <View style={{ flex: 1 }}>
-            <Text style={font.title}>🏅 Badges</Text>
+            <Text style={font.title}>Badges</Text>
             <Text style={font.small}>{earned} of {all.length} earned{ready.length ? ` · ${ready.length} ready to claim!` : ''}</Text>
           </View>
         </View>
@@ -45,7 +45,7 @@ export default function AchievementsSheet({ onClose }: { onClose: () => void }) 
         <ScrollView style={{ maxHeight: 560 }} contentContainerStyle={{ gap: space.sm, paddingBottom: space.sm }}>
           {[...(ready.length ? ['Ready to claim'] : []), ...groups].map((g) => (
             <View key={g} style={{ gap: 6 }}>
-              <Text style={styles.group}>{g === 'Ready to claim' ? '🎉 Ready to claim' : g}</Text>
+              <Text style={styles.group}>{g === 'Ready to claim' ? 'Ready to claim' : g}</Text>
               {all
                 .filter((x) => (g === 'Ready to claim' ? x.done && !x.claimed : x.a.group === g && !(x.done && !x.claimed)))
                 .sort((x, y) => Number(y.done && !y.claimed) - Number(x.done && !x.claimed))
@@ -94,7 +94,7 @@ const styles = StyleSheet.create({
   badge: { width: 46, height: 46, borderRadius: 23, backgroundColor: '#FFFFFF', borderWidth: 2, borderColor: colors.gold, alignItems: 'center', justifyContent: 'center' },
   name: { fontWeight: '900', fontSize: 14, color: colors.ink },
   desc: { fontWeight: '600', fontSize: 12, color: colors.muted },
-  prog: { fontWeight: '800', fontSize: 11, color: colors.muted },
+  prog: { fontWeight: '800', fontSize: 12, color: colors.muted },
   reward: { fontWeight: '800', fontSize: 12, color: colors.mintDark },
   msg: { fontSize: 14, fontWeight: '900', color: '#9A6A00', textAlign: 'center', backgroundColor: '#FFF6DD', borderRadius: 12, padding: 8 },
 });

@@ -94,5 +94,5 @@ const styles = StyleSheet.create({
   potions: { flexDirection: 'row', gap: 8 },
   potion: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 6, borderWidth: 2, borderRadius: 14, padding: 8, backgroundColor: '#FFFBF2' },
   potionName: { fontWeight: '900', fontSize: 13, color: colors.ink },
-  potionSub: { fontWeight: '700', fontSize: 11, color: colors.muted },
+  potionSub: { fontWeight: '700', fontSize: 12, color: colors.muted },
 });

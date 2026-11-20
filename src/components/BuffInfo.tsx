@@ -62,7 +62,7 @@ function Sheet({ children, onClose }: { children: React.ReactNode; onClose: () =
 const styles = StyleSheet.create({
   backdrop: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(24,30,48,0.55)', justifyContent: 'center', padding: space.lg, zIndex: 95 },
   sheet: { backgroundColor: colors.card, borderRadius: 24, padding: space.lg, gap: 8, width: '100%', maxWidth: 420, alignSelf: 'center' },
-  tag: { fontSize: 11, fontWeight: '900', letterSpacing: 1 },
+  tag: { fontSize: 12, fontWeight: '900', letterSpacing: 1 },
   title: { fontSize: 22, fontWeight: '900', color: colors.ink },
   effect: { fontSize: 15, fontWeight: '800', color: colors.mintDark },
   box: { backgroundColor: '#F2F6F4', borderRadius: 14, padding: 12, gap: 2 },

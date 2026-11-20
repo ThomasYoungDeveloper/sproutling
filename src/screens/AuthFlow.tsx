@@ -177,9 +177,9 @@ export default function AuthFlow() {
             </View>
             <Text style={styles.tagline}>Hatch adorable pets by building healthy habits.</Text>
             <View style={styles.points}>
-              <Text style={styles.point}>🥚  Walk to hatch eggs and collect 89 pets</Text>
-              <Text style={styles.point}>💧  Water, sleep and veggies help them grow</Text>
-              <Text style={styles.point}>🎁  Earn chests just for staying active</Text>
+              <Text style={styles.point}>Walk to hatch eggs and collect 89 pets</Text>
+              <Text style={styles.point}>Water, sleep and veggies help them grow</Text>
+              <Text style={styles.point}>Earn chests just for staying active</Text>
             </View>
             <Button primary label="Get started — it’s free" onPress={() => go('signup')} style={styles.big} />
             <Link label="I already have an account" onPress={() => go('signin')} />

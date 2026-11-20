@@ -282,7 +282,6 @@ function Shell() {
         <View style={styles.top}>
           <View style={{ flex: 1, minWidth: 0 }}>
             <Text style={styles.pageTitle} numberOfLines={1}>{starter ? 'Sproutling' : PAGE[tab].title}</Text>
-            {!starter ? <Text style={styles.pageSub} numberOfLines={1}>{PAGE[tab].sub(state)}</Text> : null}
           </View>
           <View style={styles.pills}>
             <View style={styles.pill}><Text style={styles.pillText}>🔥 {A.streak(state)}{state.shields ? ` 🛡️${state.shields}` : ''}</Text></View>
@@ -336,7 +335,7 @@ function Shell() {
           tabs={TABS}
           active={tab}
           onPick={setTab}
-          badges={{ eggs: readyEggs, chests: state.chests.length, friends: incoming.length + tradesForMe + liveWaiting + chatUnread, dex: Ach.claimable(state).length }}
+          badges={{ eggs: readyEggs, chests: state.chests.length, friends: incoming.length + tradesForMe + liveWaiting + chatUnread, dex: Ach.claimable(state).length ? -1 : 0 }}
         />
       )}
       {/* Pop-ups and toasts stay inside the app's own area (never under a side camera column). */}
@@ -464,7 +463,7 @@ const styles = StyleSheet.create({
   navActive: { backgroundColor: colors.mintSoft },
   navText: { fontWeight: '800', color: colors.muted, fontSize: 14 },
   dot: { backgroundColor: colors.peach, borderRadius: 999, minWidth: 18, height: 18, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 5 },
-  dotText: { color: '#fff', fontWeight: '900', fontSize: 11 },
+  dotText: { color: '#fff', fontWeight: '900', fontSize: 12 },
   daily: { flexDirection: 'row', alignItems: 'center', gap: space.md, backgroundColor: '#fff', borderRadius: 18, borderWidth: 1, borderColor: colors.line, paddingVertical: space.sm, paddingHorizontal: space.md },
   dailyReady: { backgroundColor: '#FFF6DD', borderColor: colors.gold },
   dailyTitle: { fontWeight: '900', fontSize: 15, color: colors.ink },

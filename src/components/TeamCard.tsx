@@ -53,14 +53,14 @@ function RaidBox({ onWin, onMsg }: { onWin: () => void; onMsg: (m: { ok: boolean
           {beaten ? <Text style={styles.bossKo}>KO!</Text> : null}
         </View>
         <View style={{ flex: 1, gap: 4 }}>
-          <Text style={styles.raidLabel}>🐉 WEEKLY GUILD BOSS</Text>
+          <Text style={styles.raidLabel}>WEEKLY GUILD BOSS</Text>
           <Text style={styles.bossName} numberOfLines={1}>{boss.name}</Text>
           <Text style={styles.bossTitle}>{boss.title}</Text>
         </View>
       </View>
       <View style={{ gap: 4 }}>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-          <Text style={styles.raidHp}>{beaten ? 'Defeated!' : `❤️ ${left.toLocaleString()} / ${hp.toLocaleString()} HP`}</Text>
+          <Text style={styles.raidHp}>{beaten ? 'Defeated!' : `${left.toLocaleString()} / ${hp.toLocaleString()} HP`}</Text>
           <Text style={styles.raidMine}>You: {mine.toLocaleString()} dmg</Text>
         </View>
         <ProgressBar value={hp ? left / hp : 0} height={14} color="#E5484D" />
@@ -76,7 +76,7 @@ function RaidBox({ onWin, onMsg }: { onWin: () => void; onMsg: (m: { ok: boolean
         <PopIn>
           <Button
             primary
-            label="🏆 Claim raid loot"
+            label="Claim raid loot"
             onPress={async () => {
               const r = await claimRaid();
               onMsg(r);
@@ -224,7 +224,7 @@ export default function TeamCard({ initialJoin, onUsedInitialJoin }: { initialJo
       </View>
 
       <Button
-        label="📣 Invite friends to the guild"
+        label="Invite friends to the guild"
         onPress={async () => {
           const r = await shareGuildInvite(team.code, team.name);
           if (r === 'copied') setMsg({ ok: true, text: 'Invite link copied! Paste it in a text or group chat.' });
@@ -234,7 +234,7 @@ export default function TeamCard({ initialJoin, onUsedInitialJoin }: { initialJo
 
       <View style={styles.goalBox}>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-          <Text style={styles.goalTitle}>{superReached ? '🌟 Super goal reached!' : reached ? '🎉 Weekly goal reached!' : 'This week’s goal'}</Text>
+          <Text style={styles.goalTitle}>{superReached ? 'Super goal reached!' : reached ? 'Weekly goal reached!' : 'This week’s goal'}</Text>
           <Text style={styles.goalNum}>{team.total.toLocaleString()} / {(reached ? team.goal * 2 : team.goal).toLocaleString()}</Text>
         </View>
         <View style={{ position: 'relative' }}>
@@ -247,12 +247,12 @@ export default function TeamCard({ initialJoin, onUsedInitialJoin }: { initialJo
           <View style={styles.row}>
             {canGoal ? (
               <PopIn>
-                <Button primary label="🎁 Open Silver chest" onPress={() => open('goal')} />
+                <Button primary label="Open Silver chest" onPress={() => open('goal')} />
               </PopIn>
             ) : null}
             {canSuper ? (
               <PopIn>
-                <Button primary label="🌟 Open Gold chest" onPress={() => open('super')} />
+                <Button primary label="Open Gold chest" onPress={() => open('super')} />
               </PopIn>
             ) : null}
           </View>
@@ -299,7 +299,7 @@ const styles = StyleSheet.create({
   raidBox: { backgroundColor: '#2A1E3D', borderRadius: 16, padding: space.md, gap: 8 },
   bossArt: { width: 86, height: 86, borderRadius: 18, backgroundColor: '#463066', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
   bossKo: { position: 'absolute', fontSize: 26, fontWeight: '900', color: '#FFD84D', transform: [{ rotate: '-12deg' }] },
-  raidLabel: { fontSize: 11, fontWeight: '900', color: '#C9B4F2', letterSpacing: 1 },
+  raidLabel: { fontSize: 12, fontWeight: '900', color: '#C9B4F2', letterSpacing: 1 },
   bossName: { fontSize: 19, fontWeight: '900', color: '#FFFFFF' },
   bossTitle: { fontSize: 13, fontWeight: '700', color: '#C9B4F2' },
   raidHp: { fontSize: 13, fontWeight: '900', color: '#FFFFFF' },

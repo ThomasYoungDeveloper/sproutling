@@ -38,7 +38,7 @@ export function TabIcon({ id, color, size = 24 }: { id: string; color: string; s
   );
 }
 
-/** The dark, rounded bottom bar with an icon per tab and a number badge for things waiting. */
+/** The dark, rounded bottom bar with an icon per tab and a number badge for things waiting (-1 shows a small dot instead). */
 export default function TabBar<T extends string>({ tabs, active, badges, onPick }: { tabs: { id: T; label: string }[]; active: T; badges: Partial<Record<T, number>>; onPick: (id: T) => void }) {
   // Dock the bar to the very bottom: the dark panel runs down under the home indicator,
   // with the buttons sitting just above it.
@@ -53,11 +53,13 @@ export default function TabBar<T extends string>({ tabs, active, badges, onPick 
           const fg = on ? '#FFFFFF' : '#CFE3DA';
           const badge = badges[t.id] ?? 0;
           return (
-            <Pressable key={t.id} onPress={() => onPick(t.id)} style={[styles.btn, on && styles.on]} accessibilityRole="tab" accessibilityState={{ selected: on }} accessibilityLabel={badge ? `${t.label}, ${badge} waiting` : t.label}>
+            <Pressable key={t.id} onPress={() => onPick(t.id)} style={[styles.btn, on && styles.on]} accessibilityRole="tab" accessibilityState={{ selected: on }} accessibilityLabel={badge > 0 ? `${t.label}, ${badge} waiting` : badge < 0 ? `${t.label}, something new` : t.label}>
               <TabIcon id={t.id} color={fg} />
               <Text style={[styles.label, { color: fg }]}>{t.label}</Text>
               {badge > 0 ? (
                 <View style={styles.badge}><Text style={styles.badgeText}>{badge > 9 ? '9+' : badge}</Text></View>
+              ) : badge < 0 ? (
+                <View style={styles.dot} />
               ) : null}
             </Pressable>
           );
@@ -74,5 +76,6 @@ const styles = StyleSheet.create({
   on: { backgroundColor: '#2FB58A' },
   label: { fontSize: 11, fontWeight: '900' },
   badge: { position: 'absolute', top: 3, right: 7, minWidth: 17, height: 17, borderRadius: 9, paddingHorizontal: 4, backgroundColor: '#FF6B5B', alignItems: 'center', justifyContent: 'center' },
+  dot: { position: 'absolute', top: 6, right: 14, width: 10, height: 10, borderRadius: 5, backgroundColor: '#FF6B5B' },
   badgeText: { color: '#FFFFFF', fontSize: 10, fontWeight: '900' },
 });

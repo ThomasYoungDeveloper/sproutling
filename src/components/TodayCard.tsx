@@ -148,7 +148,7 @@ function ActivityRow({ d }: { d: ReturnType<typeof A.today> }) {
         <Text style={styles.actSub}>{closed === 3 ? 'Rings Closed buff: +5% all stats' : `+${RING_XP} XP per ring, bonus for all 3`}</Text>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
           {(d.exerciseMin ?? 0) >= EXERCISE_MINUTES || r.exercise >= 1 ? (
-            <View style={[styles.mindful, { backgroundColor: '#E3F6D8' }]}><Text style={[styles.mindfulText, { color: '#3E7A1E' }]}>🏋️ Trained</Text></View>
+            <View style={[styles.mindful, { backgroundColor: '#E3F6D8' }]}><Text style={[styles.mindfulText, { color: '#3E7A1E' }]}>Trained</Text></View>
           ) : null}
           <View style={[styles.mindful, mindful >= MINDFUL_MINUTES && styles.mindfulOn]}>
             <Text style={[styles.mindfulText, mindful >= MINDFUL_MINUTES && { color: '#5B3FA8' }]}>🧘 {mindful} mindful min{mindful >= MINDFUL_MINUTES ? ' · Calm' : ''}</Text>
@@ -225,7 +225,7 @@ function LogSheet({ habit, onClose }: { habit: Habit; onClose: () => void }) {
 
         {habit !== 'water' && isVerified(healthProvider()) ? (
           <View style={styles.goal}>
-            <Text style={styles.goalText}>❤️ Synced from Apple Health. Walk and sleep with your phone or watch and it fills in by itself.</Text>
+            <Text style={styles.goalText}>Synced from Apple Health. Walk and sleep with your phone or watch and it fills in by itself.</Text>
           </View>
         ) : habit === 'steps' ? (
           <View style={styles.controls}>
@@ -347,10 +347,10 @@ const styles = StyleSheet.create({
   starter: { fontSize: 12, fontWeight: '800', color: '#B06A00' },
   tipTag: { fontSize: 12, fontWeight: '900', color: '#3D6E9C' },
   tipText: { fontSize: 12, fontWeight: '700', color: colors.muted },
-  tipSource: { fontSize: 11, fontWeight: '700', color: colors.muted },
+  tipSource: { fontSize: 12, fontWeight: '700', color: colors.muted },
   why: { backgroundColor: '#F6FAF8', borderRadius: 12, padding: 10, gap: 3 },
   whyText: { fontSize: 13, fontWeight: '700', color: colors.ink },
-  small: { fontSize: 11, fontWeight: '900', color: colors.muted, letterSpacing: 0.8 },
+  small: { fontSize: 12, fontWeight: '900', color: colors.muted, letterSpacing: 0.8 },
   activity: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: '#FFF0F3', borderRadius: 14, padding: 10 },
   actTitle: { fontSize: 14, fontWeight: '900', color: colors.ink },
   actSub: { fontSize: 12, fontWeight: '800', color: colors.muted },
@@ -367,7 +367,7 @@ const styles = StyleSheet.create({
   value: { fontSize: 16, fontWeight: '900', color: colors.ink },
   label: { fontSize: 12, fontWeight: '800', color: colors.muted },
   mult: { position: 'absolute', top: -9, right: -5, backgroundColor: '#7F77DD', borderRadius: 999, paddingHorizontal: 7, paddingVertical: 2, zIndex: 2 },
-  multText: { color: '#FFFFFF', fontSize: 11, fontWeight: '900' },
+  multText: { color: '#FFFFFF', fontSize: 12, fontWeight: '900' },
   backdrop: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(24,30,48,0.5)', justifyContent: 'flex-end', alignItems: 'center', zIndex: 50 },
   sheet: { backgroundColor: '#FFFFFF', borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: space.lg, paddingTop: 10, gap: space.md, width: '100%', maxWidth: 520 },
   grab: { width: 44, height: 5, borderRadius: 999, backgroundColor: colors.line, alignSelf: 'center' },

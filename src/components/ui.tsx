@@ -71,7 +71,7 @@ export function GradeChip({ grade, small }: { grade: number; small?: boolean }) 
   const g = gradeInfo(grade);
   return (
     <View style={[styles.badge, { backgroundColor: g.color }, small && { paddingHorizontal: 5, paddingVertical: 1 }]} accessibilityLabel={`Grade ${grade}%, ${g.label}`}>
-      <Text style={[styles.badgeText, { color: '#FFFFFF' }, small && { fontSize: 10 }]}>{grade >= 100 ? '💯' : `${grade}%`}</Text>
+      <Text style={[styles.badgeText, { color: '#FFFFFF' }, small && { fontSize: 12 }]}>{grade >= 100 ? '💯' : `${grade}%`}</Text>
     </View>
   );
 }

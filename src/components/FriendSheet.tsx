@@ -91,10 +91,10 @@ export default function FriendSheet({ friend, onClose }: { friend: Friend; onClo
           </View>
 
           <View style={styles.stats}>
-            <Stat label="Streak" value={`🔥 ${card?.streak ?? 0}`} bg="#FFE7DA" ink="#B4532A" />
+            <Stat label="Streak" value={`${card?.streak ?? 0}`} bg="#FFE7DA" ink="#B4532A" />
             <Stat label="Pets" value={`${card?.pets ?? 0}`} bg="#DCEBFB" ink="#245C94" />
             <Stat label="Pet-dex" value={`${card?.dex ?? 0}/${SPECIES.length}`} bg="#E8E1FA" ink="#4F3A9E" />
-            <Stat label="Badges" value={`🏅 ${card?.badges ?? 0}`} bg="#FFF4CC" ink="#7A5900" />
+            <Stat label="Badges" value={`${card?.badges ?? 0}`} bg="#FFF4CC" ink="#7A5900" />
           </View>
 
           <View style={styles.actions}>
@@ -159,7 +159,7 @@ export default function FriendSheet({ friend, onClose }: { friend: Friend; onClo
                 style={[styles.chooseBtn, { backgroundColor: '#E0567A' }]}
                 accessibilityRole="button"
               >
-                <Text style={styles.chooseTitle}>⚡ Live battle</Text>
+                <Text style={styles.chooseTitle}>Live battle</Text>
                 <Text style={styles.chooseSub}>{live.username} picks their own moves</Text>
               </Pressable>
               <Pressable
@@ -173,7 +173,7 @@ export default function FriendSheet({ friend, onClose }: { friend: Friend; onClo
                 style={[styles.chooseBtn, { backgroundColor: '#5B6BB5' }]}
                 accessibilityRole="button"
               >
-                <Text style={styles.chooseTitle}>🤖 Practice</Text>
+                <Text style={styles.chooseTitle}>Practice</Text>
                 <Text style={styles.chooseSub}>Battle their team right now</Text>
               </Pressable>
             </View>
@@ -287,7 +287,7 @@ const styles = StyleSheet.create({
   choose: { flexDirection: 'row', gap: space.sm },
   chooseBtn: { flex: 1, borderRadius: 16, padding: 12, gap: 2 },
   chooseTitle: { color: '#fff', fontWeight: '900', fontSize: 15 },
-  chooseSub: { color: 'rgba(255,255,255,0.85)', fontWeight: '700', fontSize: 11 },
+  chooseSub: { color: 'rgba(255,255,255,0.85)', fontWeight: '700', fontSize: 12 },
   screen: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: colors.bg, zIndex: 50 },
   yard: { height: 460, overflow: 'hidden' },
   yardTop: { position: 'absolute', top: 14, left: 14, right: 14, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
@@ -300,7 +300,7 @@ const styles = StyleSheet.create({
   sheetBody: { marginTop: -26, borderTopLeftRadius: 28, borderTopRightRadius: 28, backgroundColor: colors.bg, padding: space.lg, gap: space.md, width: '100%', maxWidth: 520, alignSelf: 'center' },
   who: { fontSize: 26, fontWeight: '900', color: '#1F3A33' },
   whoSub: { fontSize: 13, fontWeight: '800', color: '#3E6B5E' },
-  statLabel: { fontSize: 11, fontWeight: '900' },
+  statLabel: { fontSize: 12, fontWeight: '900' },
   actions: { flexDirection: 'row', gap: space.sm },
   action: { flex: 1, height: 48, borderRadius: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 },
   actionIcon: { fontSize: 18, color: '#FFFFFF', fontWeight: '900' },
@@ -309,7 +309,7 @@ const styles = StyleSheet.create({
   teamTitle: { fontSize: 18, fontWeight: '900', color: colors.ink },
   hint: { fontSize: 13, fontWeight: '800', color: '#3E6B5E', backgroundColor: '#E4F2EC', borderRadius: 12, paddingHorizontal: 10, paddingVertical: 8, overflow: 'hidden' },
   away: { position: 'absolute', bottom: 40, zIndex: 2, backgroundColor: '#E8590C', borderRadius: 999, paddingHorizontal: 7, paddingVertical: 1 },
-  awayText: { color: '#FFFFFF', fontSize: 10, fontWeight: '900' },
+  awayText: { color: '#FFFFFF', fontSize: 12, fontWeight: '900' },
   remove: { alignSelf: 'center', padding: 10 },
   removeText: { fontSize: 13, fontWeight: '800', color: colors.muted },
   back: { alignSelf: 'flex-start', minHeight: 40, paddingHorizontal: 10, marginLeft: -8, marginTop: -6, marginBottom: 4, justifyContent: 'center' },
@@ -325,7 +325,7 @@ const styles = StyleSheet.create({
   tile: { width: '31%', alignItems: 'center', gap: 3, padding: space.xs, borderRadius: 14, borderWidth: 1, borderColor: colors.line, backgroundColor: '#FAFCFB' },
   name: { fontWeight: '800', fontSize: 12, color: colors.ink },
   lv: { position: 'absolute', top: 4, left: 4, backgroundColor: colors.ink, borderRadius: 7, paddingHorizontal: 5, paddingVertical: 1 },
-  lvText: { color: '#fff', fontWeight: '900', fontSize: 10 },
+  lvText: { color: '#fff', fontWeight: '900', fontSize: 12 },
   row2: { flexDirection: 'row', gap: space.sm, marginTop: space.xs },
   soon: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, justifyContent: 'center', marginTop: space.xs },
   row: { flexDirection: 'row', gap: space.sm, alignItems: 'center', marginTop: space.md },

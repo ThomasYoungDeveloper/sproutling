@@ -46,7 +46,7 @@ export default function PowerUps({ pet }: { pet: OwnedPet }) {
           accessibilityRole="button"
           accessibilityLabel={`Combine a spare: ${spares.length} spares`}
         >
-          <Text style={[styles.tabText, mode === 'combine' && styles.tabTextOn]}>🔁 Combine · {spares.length}</Text>
+          <Text style={[styles.tabText, mode === 'combine' && styles.tabTextOn]}>Combine · {spares.length}</Text>
         </Pressable>
       </View>
 
@@ -192,10 +192,10 @@ const styles = StyleSheet.create({
   spareRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   spare: { width: 92, alignItems: 'center', borderRadius: 12, backgroundColor: '#F6FAF8', padding: 6 },
   spareName: { fontSize: 12, fontWeight: '900', color: colors.ink },
-  spareSub: { fontSize: 11, fontWeight: '800', color: colors.muted },
+  spareSub: { fontSize: 12, fontWeight: '800', color: colors.muted },
   table: { flexDirection: 'row', flexWrap: 'wrap', backgroundColor: '#F6FAF8', borderRadius: 12, padding: 8 },
   cell: { width: '25%', fontSize: 13, fontWeight: '700', color: colors.ink, paddingVertical: 2 },
-  head: { fontSize: 11, fontWeight: '900', color: colors.muted },
+  head: { fontSize: 12, fontWeight: '900', color: colors.muted },
   gradeLine: { fontSize: 20, fontWeight: '900', color: '#E5484D', textAlign: 'center' },
   warn: { fontSize: 12, fontWeight: '800', color: '#C4562F' },
   note: { fontSize: 13, fontWeight: '800', color: colors.mintDark },

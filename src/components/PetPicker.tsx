@@ -102,7 +102,7 @@ export default function PetPicker({
 }
 
 const styles = StyleSheet.create({
-  hpText: { fontSize: 10, fontWeight: '900', textAlign: 'center' },
+  hpText: { fontSize: 12, fontWeight: '900', textAlign: 'center' },
   backdrop: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(24,30,48,0.6)', justifyContent: 'center', alignItems: 'center', padding: space.lg, zIndex: 80 },
   sheet: { backgroundColor: '#FFFFFF', borderRadius: 22, padding: space.lg, gap: space.sm, width: '100%', maxWidth: 440 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: '3.5%', rowGap: space.sm, paddingVertical: space.xs },
@@ -110,7 +110,7 @@ const styles = StyleSheet.create({
   on: { borderColor: colors.mint, backgroundColor: colors.mintSoft },
   off: { opacity: 0.4 },
   lv: { position: 'absolute', top: 4, left: 4, backgroundColor: colors.ink, borderRadius: 7, paddingHorizontal: 5, paddingVertical: 1 },
-  lvText: { color: '#fff', fontWeight: '900', fontSize: 10 },
+  lvText: { color: '#fff', fontWeight: '900', fontSize: 12 },
   num: { position: 'absolute', top: 4, right: 4, width: 22, height: 22, borderRadius: 11, backgroundColor: colors.mint, alignItems: 'center', justifyContent: 'center' },
   numText: { color: '#fff', fontWeight: '900', fontSize: 12 },
   name: { fontWeight: '800', fontSize: 12, color: colors.ink },

@@ -235,7 +235,7 @@ function PlaceSheet({ onPick, onClose }: { onPick: (place: Ex.Place) => void; on
       <Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessibilityLabel="Close" />
       <View style={styles.bottomSheet}>
         <View style={styles.grab} />
-        <Text style={font.title}>🧭 Expeditions</Text>
+        <Text style={font.title}>Expeditions</Text>
         <Text style={font.small}>Send a pet on an adventure. They come back with coins, treasure and a story. Walking brings them home sooner.</Text>
         <View style={styles.places}>
           {Ex.PLACES.map((pl) => {
@@ -471,19 +471,19 @@ export default function ExpeditionCard() {
 const styles = StyleSheet.create({
   tripPotion: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#FFFFFF', borderRadius: 12, padding: 8, borderWidth: 1.5, borderColor: colors.line },
   tripPotionName: { fontSize: 13, fontWeight: '900', color: colors.ink },
-  tripPotionSub: { fontSize: 11, fontWeight: '800', color: colors.muted },
+  tripPotionSub: { fontSize: 12, fontWeight: '800', color: colors.muted },
   tripStats: { backgroundColor: '#F4F8F6', borderRadius: 16, padding: 12, gap: 8 },
   tripLv: { fontSize: 15, fontWeight: '900', color: colors.ink },
   tripEl: { borderRadius: 8, paddingHorizontal: 8, paddingVertical: 2 },
-  tripElText: { color: '#FFFFFF', fontSize: 11, fontWeight: '900' },
+  tripElText: { color: '#FFFFFF', fontSize: 12, fontWeight: '900' },
   tripHpText: { fontSize: 15, fontWeight: '900' },
   tripHpBar: { height: 10, borderRadius: 6, backgroundColor: '#E3ECE7', overflow: 'hidden' },
   tripStat: { alignItems: 'center', minWidth: 56 },
-  tripStatK: { fontSize: 11, fontWeight: '900', color: colors.muted },
+  tripStatK: { fontSize: 12, fontWeight: '900', color: colors.muted },
   tripStatV: { fontSize: 16, fontWeight: '900', color: colors.ink },
   scene: { height: 150, borderRadius: 22, overflow: 'hidden', shadowColor: '#000', shadowOpacity: 0.15, shadowRadius: 0, shadowOffset: { width: 0, height: 4 }, elevation: 3 },
   sceneHead: { position: 'absolute', left: 14, right: 14, top: 12, flexDirection: 'row', alignItems: 'flex-start', gap: 8 },
-  sceneKicker: { fontSize: 11, fontWeight: '900', letterSpacing: 1.2 },
+  sceneKicker: { fontSize: 12, fontWeight: '900', letterSpacing: 1.2 },
   sceneTitle: { fontSize: 19, fontWeight: '900' },
   scenePill: { backgroundColor: 'rgba(0,0,0,0.28)', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4 },
   scenePillText: { fontSize: 13, fontWeight: '900', color: '#FFFFFF' },
@@ -509,12 +509,12 @@ const styles = StyleSheet.create({
   place: { width: '48.5%', alignItems: 'center', gap: 2, padding: space.sm, borderRadius: 16, borderWidth: 1.5, borderColor: colors.line, backgroundColor: '#FAFCFB' },
   placeName: { fontWeight: '900', fontSize: 14, color: colors.ink },
   placeWho: { fontSize: 12, fontWeight: '800', color: '#1E8A68', marginTop: 2 },
-  placeSub: { fontWeight: '700', fontSize: 11, color: colors.muted },
+  placeSub: { fontWeight: '700', fontSize: 12, color: colors.muted },
   backdrop: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(22,28,46,0.92)', justifyContent: 'center', alignItems: 'center', padding: space.lg },
   sheet: { backgroundColor: '#FFFFFF', borderRadius: 24, padding: space.lg, gap: space.sm, width: '100%', maxWidth: 420 },
   placeHead: { alignSelf: 'stretch', height: 170, borderRadius: 18, overflow: 'hidden' },
   fights: { alignSelf: 'stretch', backgroundColor: '#F6F1E7', borderRadius: 14, padding: 10, gap: 6 },
-  fightsHead: { fontSize: 11, fontWeight: '900', letterSpacing: 0.6, color: colors.muted },
+  fightsHead: { fontSize: 12, fontWeight: '900', letterSpacing: 0.6, color: colors.muted },
   fightRow: { flexDirection: 'row', justifyContent: 'space-between', gap: 8 },
   fightName: { fontSize: 14, fontWeight: '800', color: colors.ink, flexShrink: 1 },
   fightRes: { fontSize: 13, fontWeight: '900' },

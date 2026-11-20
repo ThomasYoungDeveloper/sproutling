@@ -142,7 +142,7 @@ const styles = StyleSheet.create({
   body: { fontSize: 14, fontWeight: '800', color: '#1F3A33', textAlign: 'center' },
   foot: { fontSize: 12, fontWeight: '800', color: '#1F3A33', opacity: 0.8, textAlign: 'center' },
   card: { backgroundColor: '#FFFBF2', borderRadius: 22, padding: space.md, gap: 8, borderWidth: 2, borderColor: '#8FD19B' },
-  cardHead: { fontSize: 11, fontWeight: '900', letterSpacing: 0.8, color: colors.muted },
+  cardHead: { fontSize: 12, fontWeight: '900', letterSpacing: 0.8, color: colors.muted },
   row: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   rowName: { ...font.body, fontWeight: '900' },
   rowSub: { fontSize: 12, fontWeight: '900' },

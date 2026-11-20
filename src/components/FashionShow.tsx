@@ -58,11 +58,11 @@ export function themeFor(week: string) {
 }
 
 const PRIZES: Record<number, { coins: number; chest?: 'gold' | 'silver' | 'bronze'; label: string }> = {
-  1: { coins: 100, chest: 'gold', label: '🥇 1st place: Gold chest + 100 coins' },
-  2: { coins: 50, chest: 'silver', label: '🥈 2nd place: Silver chest + 50 coins' },
-  3: { coins: 30, chest: 'bronze', label: '🥉 3rd place: Bronze chest + 30 coins' },
+  1: { coins: 100, chest: 'gold', label: '1st place: Gold chest + 100 coins' },
+  2: { coins: 50, chest: 'silver', label: '2nd place: Silver chest + 50 coins' },
+  3: { coins: 30, chest: 'bronze', label: '3rd place: Bronze chest + 30 coins' },
 };
-const prizeFor = (place: number) => PRIZES[place] ?? { coins: 30, label: '🎀 Thanks for strutting: 30 coins' };
+const prizeFor = (place: number) => PRIZES[place] ?? { coins: 30, label: 'Thanks for strutting: 30 coins' };
 
 function Stage({ pet, size = 120 }: { pet: ShowPet; size?: number }) {
   const sp = SPECIES_BY_ID[pet.speciesId];
@@ -125,7 +125,7 @@ export default function FashionShow() {
     if (data === 'ok') {
       buzz('success', 'pop');
       apply((s) => ({ ...s, coins: s.coins + 5 }));
-      setMsg(`❤️ You gave ${e.username}’s ${e.pet.nickname} a heart! +5 coins`);
+      setMsg(`You gave ${e.username}’s ${e.pet.nickname} a heart! +5 coins`);
     } else if (data === 'no_votes') setMsg('You’ve used all 3 hearts this week.');
     else if (data === 'already') setMsg('You already gave them a heart.');
     else setMsg('Couldn’t vote right now.');
@@ -179,8 +179,8 @@ export default function FashionShow() {
           <View style={{ flex: 1, gap: 6 }}>
             <Text style={styles.enterTitle}>Enter {myPet.nickname}?</Text>
             <Text style={font.small}>Your pet walks the runway in its outfit and scene. Entering gives you 15 coins.</Text>
-            <Button primary label={busy ? 'Entering…' : '✨ Enter the show'} disabled={busy} onPress={enter} />
-            <Button small label="🎨 Change outfit first" onPress={openWardrobe} />
+            <Button primary label={busy ? 'Entering…' : 'Enter the show'} disabled={busy} onPress={enter} />
+            <Button small label="Change outfit first" onPress={openWardrobe} />
           </View>
         </View>
       ) : null}
@@ -190,7 +190,7 @@ export default function FashionShow() {
       <View style={styles.grid}>
         {board.entries.map((e, i) => (
           <View key={e.id} style={[styles.entry, e.mine && styles.entryMine]}>
-            {i === 0 && e.votes > 0 ? <Text style={styles.leader}>👑 Leading</Text> : null}
+            {i === 0 && e.votes > 0 ? <Text style={styles.leader}>Leading</Text> : null}
             <Stage pet={e.pet} />
             <Text style={styles.entryName} numberOfLines={1}>{e.pet.nickname}</Text>
             <Text style={styles.entryOwner} numberOfLines={1}>{e.mine ? 'You' : e.username}</Text>
@@ -206,7 +206,7 @@ export default function FashionShow() {
         ))}
       </View>
       {msg ? <Text style={styles.msg}>{msg}</Text> : null}
-      <Text style={font.tiny}>You and your friends compete each week (Monday to Sunday). Most hearts wins! Prizes: 🥇 Gold chest, 🥈 Silver, 🥉 Bronze.</Text>
+      <Text style={font.tiny}>You and your friends compete each week (Monday to Sunday). Most hearts wins! Prizes: Gold, Silver and Bronze chests.</Text>
     </Card>
   );
 }
@@ -222,7 +222,7 @@ const styles = StyleSheet.create({
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: '3%', rowGap: space.sm },
   entry: { width: '48.5%', backgroundColor: '#FFFFFF', borderRadius: 16, padding: 8, gap: 3, alignItems: 'center', borderWidth: 1.5, borderColor: '#F9C9DD' },
   entryMine: { borderColor: '#E26AA0', borderWidth: 2 },
-  leader: { position: 'absolute', top: 12, left: 12, zIndex: 3, backgroundColor: colors.gold, color: '#5A3E00', fontWeight: '900', fontSize: 11, borderRadius: 999, paddingHorizontal: 8, paddingVertical: 2, overflow: 'hidden' },
+  leader: { position: 'absolute', top: 12, left: 12, zIndex: 3, backgroundColor: colors.gold, color: '#5A3E00', fontWeight: '900', fontSize: 12, borderRadius: 999, paddingHorizontal: 8, paddingVertical: 2, overflow: 'hidden' },
   entryName: { fontWeight: '900', fontSize: 14, color: colors.ink },
   entryOwner: { fontWeight: '700', fontSize: 12, color: colors.muted },
   hearts: { fontWeight: '900', fontSize: 14, color: '#C2185B' },

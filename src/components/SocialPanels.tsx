@@ -176,7 +176,7 @@ function liveLine(b: LiveBattle) {
   if (b.status === 'invited') return b.iChallenged ? 'Waiting for them to accept' : 'Challenged you!';
   if (b.status === 'declined') return 'Said not right now';
   if (b.status === 'cancelled') return 'Challenge expired';
-  if (b.status === 'done') return b.won ? '🏆 You won' : 'They won';
+  if (b.status === 'done') return b.won ? 'You won' : 'They won';
   if (b.myTurn) return `Turn ${b.turn + 1} · Your move!`;
   return `Turn ${b.turn + 1} · Waiting for their move`;
 }
@@ -189,7 +189,7 @@ export function LiveBattlesCard() {
   const waiting = shown.filter((b) => b.myTurn).length;
   return (
     <Card style={waiting ? { borderColor: '#E0567A' } : undefined}>
-      <SectionHead title="⚡ Live battles" meta={waiting ? `${waiting} waiting on you` : undefined} />
+      <SectionHead title="Live battles" meta={waiting ? `${waiting} waiting on you` : undefined} />
       {shown.map((b) => {
         const invite = b.status === 'invited' && !b.iChallenged;
         const canOpen = b.status === 'active' || (b.status === 'done' && !!b.battle);
@@ -271,7 +271,7 @@ export function ArenaCard() {
       <View style={{ flexDirection: 'row', gap: space.sm }}>
         <Button
           primary
-          label="🌿 Wild battle"
+          label="Wild battle"
           style={{ flex: 1 }}
           onPress={() => {
             const levels = B.defaultTeam(state).map((id) => levelFor(state.pets.find((p) => p.id === id)!.xp));
@@ -463,7 +463,7 @@ const styles = StyleSheet.create({
   buffs: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   buff: { flexDirection: 'row', alignItems: 'center', gap: 4, borderRadius: 999, paddingHorizontal: 9, paddingVertical: 4, backgroundColor: 'rgba(255,255,255,0.12)' },
   buffOn: { backgroundColor: colors.gold },
-  buffText: { fontWeight: '900', fontSize: 11, color: '#D6DCF5' },
+  buffText: { fontWeight: '900', fontSize: 12, color: '#D6DCF5' },
   closedRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   trade: { borderTopWidth: 1, borderTopColor: colors.line, paddingTop: space.sm, gap: 6 },
   swap: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: space.sm },
@@ -471,9 +471,9 @@ const styles = StyleSheet.create({
   mini: { alignItems: 'center', width: 110 },
   miniArt: { width: 72, height: 72, borderRadius: 18, backgroundColor: colors.sky, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
   miniName: { fontWeight: '900', fontSize: 13, color: colors.ink, marginTop: 2 },
-  miniSub: { fontWeight: '700', fontSize: 11, color: colors.muted },
-  miniTop: { fontWeight: '900', fontSize: 10, letterSpacing: 0.5, marginBottom: 2 },
-  miniLink: { fontWeight: '900', fontSize: 11, color: colors.mintDark },
+  miniSub: { fontWeight: '700', fontSize: 12, color: colors.muted },
+  miniTop: { fontWeight: '900', fontSize: 12, letterSpacing: 0.5, marginBottom: 2 },
+  miniLink: { fontWeight: '900', fontSize: 12, color: colors.mintDark },
   actions: { flexDirection: 'row', gap: space.sm, justifyContent: 'flex-end' },
   liveRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm, borderTopWidth: 1, borderTopColor: colors.line, paddingTop: space.sm },
   liveDot: { width: 10, height: 10, borderRadius: 5 },

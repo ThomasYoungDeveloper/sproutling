@@ -127,7 +127,7 @@ function HatchCard({ rarity, count, onPress }: { rarity: Parameters<typeof EggSp
     <PopIn>
       <Pressable onPress={onPress} style={({ pressed }) => [styles.hatch, pressed && { transform: [{ scale: 0.98 }] }]} accessibilityRole="button" accessibilityLabel={`Your ${label} egg is ready to hatch. Hatch it now`}>
         <Animated.Text style={[styles.spark, { top: 8, left: 70, opacity: sparkle(0) }]}>✦</Animated.Text>
-        <Animated.Text style={[styles.spark, { bottom: 8, left: 10, fontSize: 11, opacity: sparkle(0.3) }]}>✦</Animated.Text>
+        <Animated.Text style={[styles.spark, { bottom: 8, left: 10, fontSize: 12, opacity: sparkle(0.3) }]}>✦</Animated.Text>
         <Animated.Text style={[styles.spark, { top: 10, right: 100, fontSize: 12, opacity: sparkle(0.6) }]}>✦</Animated.Text>
         <View style={styles.eggBox}>
           <Animated.View style={{ transform: [{ rotate: wobble.interpolate({ inputRange: [-1, 1], outputRange: ['-12deg', '12deg'] }) }] }}>

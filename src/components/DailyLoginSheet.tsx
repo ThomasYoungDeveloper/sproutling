@@ -108,10 +108,10 @@ const styles = StyleSheet.create({
   tileBig: { backgroundColor: '#FFF6DD', borderColor: colors.gold },
   tileToday: { borderColor: colors.mint, borderWidth: 2.5, backgroundColor: colors.mintSoft },
   tileDone: { opacity: 0.55 },
-  day: { fontSize: 11, fontWeight: '900', color: colors.muted, textTransform: 'uppercase', letterSpacing: 0.5 },
+  day: { fontSize: 12, fontWeight: '900', color: colors.muted, textTransform: 'uppercase', letterSpacing: 0.5 },
   tileText: { fontSize: 13, fontWeight: '900', color: colors.ink },
   bigText: { fontSize: 22, fontWeight: '900', color: colors.ink },
   check: { position: 'absolute', top: 4, right: 4, width: 18, height: 18, borderRadius: 9, backgroundColor: colors.mint, alignItems: 'center', justifyContent: 'center' },
-  checkText: { color: '#fff', fontSize: 11, fontWeight: '900' },
+  checkText: { color: '#fff', fontSize: 12, fontWeight: '900' },
   got: { alignItems: 'center', gap: 4, paddingVertical: space.sm, backgroundColor: '#FFF6DD', borderRadius: 16 },
 });

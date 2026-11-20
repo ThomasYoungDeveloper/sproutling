@@ -110,6 +110,6 @@ const styles = StyleSheet.create({
   planOn: { borderColor: '#6E56CF', backgroundColor: '#F2EEFF' },
   planName: { fontWeight: '900', fontSize: 14, color: colors.ink },
   planPrice: { fontWeight: '900', fontSize: 24, color: '#6E56CF' },
-  save: { position: 'absolute', top: -10, backgroundColor: colors.gold, color: '#5A3E00', fontWeight: '900', fontSize: 11, borderRadius: 999, paddingHorizontal: 8, paddingVertical: 2, overflow: 'hidden' },
+  save: { position: 'absolute', top: -10, backgroundColor: colors.gold, color: '#5A3E00', fontWeight: '900', fontSize: 12, borderRadius: 999, paddingHorizontal: 8, paddingVertical: 2, overflow: 'hidden' },
   soon: { fontWeight: '800', fontSize: 13, color: '#6E56CF', textAlign: 'center' },
 });

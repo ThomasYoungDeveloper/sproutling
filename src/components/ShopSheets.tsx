@@ -337,7 +337,7 @@ export function WardrobeSheet({ onClose, onShop }: { onClose: () => void; onShop
     <View style={styles.backdrop}>
       <Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessibilityLabel="Close" />
       <View style={styles.sheet}>
-        <Text style={font.title}>🎨 Style {pet.nickname}</Text>
+        <Text style={font.title}>Style {pet.nickname}</Text>
         <View style={styles.preview}>
           <Backdrop element={sp.element} sky={sky} scene={state.scene} />
           <PopIn key={`${pet.look?.hat}-${pet.look?.aura}`}>
@@ -373,7 +373,7 @@ export function WardrobeSheet({ onClose, onShop }: { onClose: () => void; onShop
           ))}
         </ScrollView>
         <View style={styles.row}>
-          <Button label="🛍️ Shop" onPress={onShop} style={{ flex: 1 }} />
+          <Button label="Shop" onPress={onShop} style={{ flex: 1 }} />
           <Button primary label="Done" onPress={onClose} style={{ flex: 1 }} />
         </View>
       </View>
@@ -401,16 +401,16 @@ const styles = StyleSheet.create({
   tryName: { fontSize: 22, fontWeight: '900', color: colors.ink },
   featured: { flexDirection: 'row', alignItems: 'center', gap: 12, borderRadius: 22, padding: 14, paddingTop: 18, backgroundColor: '#4E3EA8' },
   featTag: { position: 'absolute', top: 0, right: 14, backgroundColor: '#FFE27A', borderBottomLeftRadius: 10, borderBottomRightRadius: 10, paddingHorizontal: 10, paddingVertical: 3 },
-  featTagText: { fontSize: 11, fontWeight: '900', color: '#3E3290' },
+  featTagText: { fontSize: 12, fontWeight: '900', color: '#3E3290' },
   featArt: { width: 96, height: 96, borderRadius: 18, backgroundColor: 'rgba(255,255,255,0.16)', alignItems: 'center', justifyContent: 'center' },
-  featKicker: { fontSize: 11, fontWeight: '900', letterSpacing: 1, color: '#D8CEFF' },
+  featKicker: { fontSize: 12, fontWeight: '900', letterSpacing: 1, color: '#D8CEFF' },
   featName: { fontSize: 20, fontWeight: '900', color: '#FFFFFF' },
   featBody: { fontSize: 13, fontWeight: '700', color: '#E3DCFF' },
   featPrice: { marginTop: 6, alignSelf: 'flex-start', backgroundColor: '#FFE27A', borderRadius: 12, paddingHorizontal: 12, paddingVertical: 6 },
   featPriceText: { fontSize: 15, fontWeight: '900', color: '#3E3290' },
   dyeCard: { borderRadius: 22, paddingHorizontal: 14, paddingTop: 30, paddingBottom: 16, backgroundColor: '#221A4D', borderWidth: 3, borderColor: '#FFD24D', alignItems: 'center', gap: 6 },
   dyeTop: { position: 'absolute', top: -1, alignSelf: 'center', backgroundColor: '#FFD24D', borderBottomLeftRadius: 10, borderBottomRightRadius: 10, paddingHorizontal: 12, paddingVertical: 3 },
-  dyeTopText: { fontSize: 11, fontWeight: '900', color: '#2A1F5C' },
+  dyeTopText: { fontSize: 12, fontWeight: '900', color: '#2A1F5C' },
   dyeRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   dyeBottle: { width: 92, height: 106, borderRadius: 18, backgroundColor: 'rgba(255,255,255,0.08)', alignItems: 'center', justifyContent: 'center' },
   dyeArrow: { fontSize: 26, fontWeight: '900', color: '#B9A8FF' },
@@ -427,13 +427,13 @@ const styles = StyleSheet.create({
   storeName: { fontSize: 18, fontWeight: '900', color: colors.ink },
   storeSub: { fontSize: 13, fontWeight: '800' },
   newTag: { borderRadius: 999, paddingHorizontal: 8, paddingVertical: 3 },
-  newTagText: { color: '#FFFFFF', fontSize: 10, fontWeight: '900' },
+  newTagText: { color: '#FFFFFF', fontSize: 12, fontWeight: '900' },
   foodRow: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: '#FFFFFF', borderRadius: 16, padding: 10 },
   specialRow: { borderWidth: 2, borderColor: '#FFD84D', backgroundColor: '#FFF8DC' },
   foodName: { fontSize: 15, fontWeight: '900', color: colors.ink },
   have: { fontSize: 12, fontWeight: '800', color: colors.muted },
-  foodMeta: { fontSize: 11, fontWeight: '900' },
-  foodLeft: { fontSize: 11, fontWeight: '800', color: colors.muted },
+  foodMeta: { fontSize: 12, fontWeight: '900' },
+  foodLeft: { fontSize: 12, fontWeight: '800', color: colors.muted },
   buyBtn: { minWidth: 76, height: 40, borderRadius: 12, backgroundColor: colors.mint, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 10 },
   buyText: { color: '#FFFFFF', fontSize: 14, fontWeight: '900' },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: '3%', rowGap: space.sm },
@@ -441,7 +441,7 @@ const styles = StyleSheet.create({
   tileOn: { borderColor: colors.mint, backgroundColor: colors.mintSoft },
   iconBox: { height: 50, alignItems: 'center', justifyContent: 'center' },
   tileName: { fontWeight: '800', fontSize: 12, color: colors.ink, textAlign: 'center' },
-  rarity: { fontWeight: '900', fontSize: 10, textTransform: 'uppercase', letterSpacing: 0.5 },
+  rarity: { fontWeight: '900', fontSize: 12, textTransform: 'uppercase', letterSpacing: 0.5 },
   price: { marginTop: 4, backgroundColor: '#FFF1C9', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4, alignSelf: 'stretch', alignItems: 'center' },
   priceText: { fontWeight: '900', fontSize: 13, color: '#5A3E00' },
   owned: { backgroundColor: colors.mintSoft },

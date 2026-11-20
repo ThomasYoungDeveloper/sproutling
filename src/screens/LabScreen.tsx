@@ -12,7 +12,7 @@ export default function LabScreen() {
       {SPECIES.map((sp, i) => (
         <View key={sp.id} style={{ width: 96, height: 120, alignItems: 'center', marginBottom: 6 }}>
           <PetSprite species={sp} stage="adult" size={86} hat={hats[i % hats.length].id} />
-          <Text style={{ fontSize: 10 }}>{sp.id} {hats[i % hats.length].id}</Text>
+          <Text style={{ fontSize: 12 }}>{sp.id} {hats[i % hats.length].id}</Text>
         </View>
       ))}
     </ScrollView>
