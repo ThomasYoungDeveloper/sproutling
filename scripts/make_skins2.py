@@ -2,6 +2,7 @@
 
 Habit skins: sakura, moonlit, ocean, ember. Seasonal: frost, harvest, spooky.
 Rare loot: galaxy, crystal, shadow. Style: pastel, retro, ink.
+Silver (polished, look B; silverA / silverC are the other looks) replaces the old make_skins.py silver.
 
 Usage: python3 scripts/make_skins2.py assets/pets public/skins [p01,p02] [skin1,skin2]
 """
@@ -13,7 +14,7 @@ src, out = sys.argv[1], sys.argv[2]
 only = sys.argv[3].split(',') if len(sys.argv) > 3 and sys.argv[3] else None
 which = sys.argv[4].split(',') if len(sys.argv) > 4 else None
 
-SKINS = ['slime', 'ancient', 'sakura', 'moonlit', 'ocean', 'ember', 'frost', 'harvest', 'spooky', 'galaxy', 'crystal', 'shadow', 'pastel', 'retro', 'ink']
+SKINS = ['silver', 'slime', 'ancient', 'sakura', 'moonlit', 'ocean', 'ember', 'frost', 'harvest', 'spooky', 'galaxy', 'crystal', 'shadow', 'pastel', 'retro', 'ink']
 
 
 def hexc(h):
@@ -439,7 +440,7 @@ def make(path, skin, seed):
         # "reflection": metal mirrors its surroundings, so brightness also depends on position (light sky up
         # top, a darker horizon band across the middle, a bright ground bounce below), plus diagonal
         # white glints and a few four-point sparkles. Outlines become deep steel blue instead of black.
-        var = 'A' if skin == 'silver' else skin[-1]
+        var = 'B' if skin == 'silver' else skin[-1]
         line = np.clip((0.2 - lum) / 0.1, 0, 1)
         body = alpha * (1 - line)
         ys0 = np.nonzero(alpha > 0.5)[0]
