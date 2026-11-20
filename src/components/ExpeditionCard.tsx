@@ -282,7 +282,7 @@ function TripSheet({ onClose }: { onClose: () => void }) {
       <Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessibilityLabel="Close" />
       <View style={styles.bottomSheet}>
         <View style={styles.grab} />
-        <Text style={font.title}>{prog.place.emoji} {pet.nickname} at {prog.place.name}</Text>
+        <Text style={font.title}>{pet.nickname} at {prog.place.name}</Text>
         <Walker speciesId={pet.speciesId} xp={pet.xp} hat={pet.look?.hat} pct={prog.pct} />
         {(() => {
           // What has happened so far (fights ahead stay a surprise), and the pet's HP right now.
@@ -379,7 +379,7 @@ export default function ExpeditionCard() {
   const pickPet = (place: Ex.Place) =>
     open(
       <PetPicker
-        title={`Explore ${place.name} ${place.emoji}`}
+        title={`Explore ${place.name}`}
         subtitle={`Takes ${place.hours} hour${place.hours > 1 ? 's' : ''}, or walk ${place.steps.toLocaleString()} steps to bring them home sooner. ${place.fights[0] === 0 ? 'Up to' : `${place.fights[0]} to`} ${place.fights[1]} wild fights on the way. If your pet is knocked out, it comes home early. Pets need level ${place.minLevel}+.`}
         pets={[...state.pets]
           .sort((a, b) => b.xp - a.xp)

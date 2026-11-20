@@ -126,7 +126,6 @@ export default function EggsScreen() {
               );
             })}
           </View>
-          <Text style={font.tiny}>Every step warms every egg in an incubator. Tap a locked one to unlock more and hatch more eggs at once.</Text>
         </View>
       </View>
 
@@ -146,7 +145,7 @@ export default function EggsScreen() {
             {free > 0 ? (
               <Button small primary label="Incubate" onPress={() => apply((s) => A.incubate(s, e.id))} />
             ) : state.incubatorSlots < MAX_INCUBATORS ? (
-              <Button small label="Get more room" onPress={openShop} />
+              <Button small label="Get an incubator" onPress={openShop} />
             ) : (
               <Text style={[font.tiny, { fontWeight: '900' }]}>All full</Text>
             )}

@@ -215,7 +215,7 @@ export default function TowerScreen({ onClose }: { onClose: () => void }) {
         ) : (
           <Text style={styles.why}>{can.reason}</Text>
         )}
-        <Text style={styles.foot}>HP carries from floor to floor. Heal with potions from a pet’s page.</Text>
+        <Text style={styles.foot}>HP carries between floors.</Text>
       </View>
     </View>
   );
@@ -252,7 +252,7 @@ export function BlessingPick({ onDone }: { onDone: () => void }) {
         </PopIn>
       ))}
       <View style={{ flex: 1 }} />
-      <Text style={[styles.foot, { textAlign: 'center' }]}>Your team’s HP carries from floor to floor. Rest with a potion or push on.</Text>
+      <Text style={[styles.foot, { textAlign: 'center' }]}>HP carries between floors.</Text>
     </View>
   );
 }

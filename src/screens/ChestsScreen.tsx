@@ -142,12 +142,12 @@ export default function ChestsScreen() {
           pct: team.claimed.includes('raid') ? 1 : Math.min(1, team.raid.damage / team.raid.hp),
           hint: team.claimed.includes('raid') ? 'New boss on Monday' : `Ends Sunday · ${team.raid.hits_left} hit${team.raid.hits_left === 1 ? '' : 's'} left today`,
         }
-      : { key: 'gold', kind: 'gold', title: 'Gold: guild raid boss', count: 'No guild', pct: 0, hint: 'Join a guild in the Social tab to fight the weekly boss' },
+      : { key: 'gold', kind: 'gold', title: 'Gold: guild raid boss', count: 'No guild', pct: 0, hint: 'Join a guild to fight the weekly boss' },
     {
       key: 'rainbow', kind: 'rainbow', title: 'Rainbow: 30-day streak',
       count: streak > 0 && streak % RAINBOW_STREAK === 0 ? 'Earned ✓' : `Day ${streak % RAINBOW_STREAK} of ${RAINBOW_STREAK}`,
       pct: streak > 0 && streak % RAINBOW_STREAK === 0 ? 1 : (streak % RAINBOW_STREAK) / RAINBOW_STREAK,
-      hint: 'Super rare: always an Epic or Legendary egg. Also at the top of the Sky Tower.',
+      hint: 'Always an Epic or Legendary egg inside',
     },
     {
       key: 'walk', kind: 'walk', title: 'Walking finds',

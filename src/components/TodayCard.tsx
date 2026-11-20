@@ -185,6 +185,7 @@ function Ring({ frac, color, done, icon }: { frac: number; color: string; done: 
 /** The sheet that opens from a habit tile: log steps, water or sleep. */
 function LogSheet({ habit, onClose }: { habit: Habit; onClose: () => void }) {
   const { state, apply } = useGame();
+  const [whyOpen, setWhyOpen] = useState(false);
   const d = A.today(state);
   const el = A.activeElement(state);
   const score = scoreDay(d, el);
@@ -253,16 +254,19 @@ function LogSheet({ habit, onClose }: { habit: Habit; onClose: () => void }) {
             </View>
           </View>
         )}
-        <View style={styles.why}>
-          <Text style={styles.small}>WHY IT MATTERS</Text>
-          <Text style={styles.whyText}>{why.text} {why.pet.split('{pet}').join(pet?.nickname ?? 'Your pet')}</Text>
-          <Text style={styles.tipSource}>Source: {why.source} · Not medical advice</Text>
-        </View>
+        <Pressable onPress={() => setWhyOpen((v) => !v)} accessibilityRole="button" accessibilityState={{ expanded: whyOpen }} hitSlop={6}>
+          <Text style={styles.whyLink}>{whyOpen ? 'Hide' : `Why ${({ steps: 'walking', water: 'water', sleep: 'sleep' } as const)[habit]}?`}</Text>
+        </Pressable>
+        {whyOpen ? (
+          <View style={styles.why}>
+            <Text style={styles.whyText}>{why.text} {why.pet.split('{pet}').join(pet?.nickname ?? 'Your pet')}</Text>
+            <Text style={styles.tipSource}>Source: {why.source} · Not medical advice</Text>
+          </View>
+        ) : null}
 
         <View style={[styles.goal, questDone && { backgroundColor: colors.mintSoft }]}>
           <Text style={[styles.goalText, questDone && { color: colors.mintDark }]}>{questDone ? `✓ ${goal} Keep going for more XP.` : goal}</Text>
         </View>
-        {isVerified(healthProvider()) ? null : <Text style={font.tiny}>Preview build: you log habits by hand. The phone app fills in steps and sleep from Apple Health or Health Connect.</Text>}
         <Button primary label="Done" onPress={onClose} />
       </View>
     </View>
@@ -341,6 +345,7 @@ const styles = StyleSheet.create({
   changedX: { fontSize: 13, fontWeight: '900', color: '#B06A00' },
   starterChip: { backgroundColor: '#FFF1C2', borderRadius: 999, paddingHorizontal: 8, paddingVertical: 3 },
   starterChipText: { fontSize: 12, fontWeight: '900', color: '#8A6100' },
+  whyLink: { fontSize: 14, fontWeight: '900', color: '#3D6E9C', textDecorationLine: 'underline' },
   tipLine: { gap: 2, paddingVertical: 2 },
   starter: { fontSize: 12, fontWeight: '800', color: '#B06A00' },
   tipTag: { fontSize: 12, fontWeight: '900', color: '#3D6E9C' },
