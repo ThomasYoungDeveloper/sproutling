@@ -16,6 +16,7 @@ import { MAX_INCUBATORS, incubatorPrice } from '../game/incubators';
 import * as A from '../game/actions';
 import type { Egg } from '../game/types';
 import { shortNumber } from '../lib/shortNumber';
+import EggChooser from '../components/EggChooser';
 
 /** Harvest Eggs: warm orange with autumn spots, so they stand out in the basket. */
 const HARVEST_EGG = '#F6A13A';
@@ -27,7 +28,9 @@ export default function EggsScreen() {
   const reveal = useReveal();
   const overlay = useOverlay();
   const incubating = state.eggs.filter((e) => e.incubating);
-  const waiting = state.eggs.filter((e) => !e.incubating);
+  const waiting = A.basketEggs(state);
+  const overflow = A.overflowEggs(state);
+  const full = waiting.length >= A.EGG_BASKET;
   const free = state.incubatorSlots - incubating.length;
   // The big incubator shows the egg you picked, else the one closest to hatching.
   const [pickedId, setPickedId] = useState<string | null>(null);
@@ -129,12 +132,21 @@ export default function EggsScreen() {
         </View>
       </View>
 
+      {overflow.length ? (
+        <Pressable onPress={() => overlay.open(<EggChooser onClose={overlay.close} />)} style={styles.waitCard} accessibilityRole="button" accessibilityLabel={`${overflow.length === 1 ? 'An egg is' : `${overflow.length} eggs are`} waiting. Your basket is full. Open to make room`}>
+          <EggSprite rarity={overflow[0].rarity} size={50} />
+          <View style={{ flex: 1 }}>
+            <Text style={styles.waitTitle}>{overflow.length === 1 ? 'An egg is waiting!' : `${overflow.length} eggs are waiting!`}</Text>
+            <Text style={styles.waitSub}>Your basket is full. Pick one egg to leave behind.</Text>
+          </View>
+          <View style={styles.waitBtn}><Text style={styles.waitBtnText}>Open</Text></View>
+        </Pressable>
+      ) : null}
+
       <Card>
-        <SectionHead title="Your eggs" meta={`Basket ${waiting.length}/${A.EGG_BASKET}`} />
-        {waiting.length === 0 ? <Text style={font.small}>Open chests, go on expeditions and walk to find more eggs.</Text> : null}
-        {waiting.length >= A.EGG_BASKET ? (
-          <Text style={[font.small, { color: '#C76A1A', fontWeight: '800' }]}>Your basket is full. New eggs you find will turn into coins until you hatch some.</Text>
-        ) : null}
+        <SectionHead title="Egg basket" meta={`${waiting.length} / ${A.EGG_BASKET}${full ? ' · Full' : ''}`} />
+        <View style={styles.meter}><View style={[styles.meterFill, { width: `${Math.min(100, Math.round((waiting.length / A.EGG_BASKET) * 100))}%`, backgroundColor: full ? '#F2A23C' : '#2FB58A' }]} /></View>
+        <Text style={font.small}>{waiting.length === 0 ? 'Open chests, go on trips and walk to find eggs.' : `Your basket holds ${A.EGG_BASKET} eggs. Eggs in incubators don’t count.`}</Text>
         {waiting.map((e) => (
           <View key={e.id} style={styles.eggRow}>
             <EggSprite rarity={e.rarity} size={46} spots={e.skin === 'harvest' ? HARVEST_SPOTS : e.bred ? NURSERY_SPOTS : undefined} color={e.skin === 'harvest' ? HARVEST_EGG : undefined} />
@@ -157,6 +169,13 @@ export default function EggsScreen() {
 }
 
 const styles = StyleSheet.create({
+  waitCard: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: '#F4ECFF', borderWidth: 3, borderColor: '#9C5FD8', borderRadius: 22, padding: 14 },
+  waitTitle: { fontSize: 17, fontWeight: '900', color: colors.ink },
+  waitSub: { fontSize: 13, fontWeight: '800', color: '#6A5A8A' },
+  waitBtn: { backgroundColor: '#9C5FD8', borderRadius: 12, paddingHorizontal: 12, paddingVertical: 8 },
+  waitBtnText: { color: '#FFFFFF', fontWeight: '900', fontSize: 15 },
+  meter: { height: 10, borderRadius: 5, backgroundColor: '#F0E9DD', overflow: 'hidden' },
+  meterFill: { height: '100%', borderRadius: 5 },
   card: { backgroundColor: colors.card, borderRadius: 22, overflow: 'hidden' },
   hero: { backgroundColor: '#FFE9C7', padding: space.md, paddingBottom: space.lg, alignItems: 'center', gap: 6 },
   heroHead: { flexDirection: 'row', alignSelf: 'stretch', justifyContent: 'space-between', alignItems: 'center' },

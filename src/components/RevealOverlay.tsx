@@ -19,6 +19,8 @@ import { ItemIcon } from './Cosmetics';
 import EggSprite from './EggSprite';
 import PetSprite from './PetSprite';
 import { Button } from './ui';
+import EggChooser from './EggChooser';
+import { EGG_BASKET } from '../game/actions';
 import { Confetti, Flash, PopIn, Rays, buzz, useCountUp, useIdleWobble, useShake } from './fx';
 import CrystalIcon from './CrystalIcon';
 import ChestIcon from './ChestIcon';
@@ -273,6 +275,7 @@ function ChestReveal({ r, onClose }: { r: Extract<Reveal, { kind: 'chest' }>; on
   const shake = useShake(taps, 10 + taps * 6);
   const idle = useIdleWobble();
   const [doubled, setDoubled] = useState(false);
+  const [choosing, setChoosing] = useState(false);
   const coins = useCountUp(r.result.coins * (doubled ? 2 : 1), doubled ? 1400 : 900, phase === 'loot');
   const eggInfo = r.result.eggRarity ? RARITY_INFO[r.result.eggRarity] : null;
   const big = r.result.eggRarity ? BIG.includes(r.result.eggRarity) : false;
@@ -376,16 +379,18 @@ function ChestReveal({ r, onClose }: { r: Extract<Reveal, { kind: 'chest' }>; on
             ) : null}
           </View>
           {doubled ? <Confetti key="dbl" amount={70} width={width} height={height} /> : null}
-          {r.result.basketFull ? <Text style={styles.blurb}>Your egg basket is full, so the egg became coins. Hatch some eggs to make room.</Text> : r.result.eggRarity ? <Text style={styles.blurb}>Put it in an incubator and go for a walk.</Text> : null}
+          {r.result.basketFull ? <Text style={[styles.blurb, { color: '#FFC27A' }]}>Your basket is full ({EGG_BASKET} / {EGG_BASKET})</Text> : r.result.eggRarity ? <Text style={styles.blurb}>Put it in an incubator and go for a walk.</Text> : null}
           <PopIn delay={1000}>
             <View style={{ alignSelf: 'stretch', gap: 10, width: 300, maxWidth: '100%' }}>
               {r.result.coins > 0 ? <AdBonusButton title={`Double it: ${r.result.coins * 2} coins`} onReward={addCoins(r.result.coins)} onDone={() => setDoubled(true)} /> : null}
-              <Button primary label={`Collect ${r.result.coins * (doubled ? 2 : 1)}`} onPress={onClose} />
+              {r.result.basketFull ? <Button primary label="Make room for it" onPress={() => setChoosing(true)} /> : null}
+              <Button primary={!r.result.basketFull} label={`Collect ${r.result.coins * (doubled ? 2 : 1)}`} onPress={onClose} />
             </View>
           </PopIn>
         </View>
       )}
       {phase === 'flash' && <Flash onDone={() => setPhase('loot')} />}
+      {choosing ? <EggChooser onClose={onClose} /> : null}
     </View>
   );
 }

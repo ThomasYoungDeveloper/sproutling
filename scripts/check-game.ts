@@ -694,18 +694,29 @@ console.log('\nEgg basket');
   const base = newGame();
   const full = { ...base, eggs: Array.from({ length: A.EGG_BASKET }, (_, i) => ({ ...A.newEgg(base, 'common'), id: `b${i}` })) };
   ok(A.basketFull(full), `the basket holds ${A.EGG_BASKET}`);
-  const r = A.addEgg(full, 'rare');
-  ok(r.coins === A.EGG_COINS.rare && r.state.eggs.length === A.EGG_BASKET && r.state.coins === full.coins + A.EGG_COINS.rare, 'a new egg in a full basket becomes coins');
+  ok(A.EGG_BASKET === 12, 'the basket holds 12 eggs');
+  const r = A.addEgg(full, 'epic');
+  const ov = r.state.eggs.find((e) => e.overflow)!;
+  ok(r.overflow && ov?.rarity === 'epic' && A.basketCount(r.state) === 12 && r.state.coins === full.coins, 'a new egg in a full basket waits (no coins, nothing lost)');
+  ok(A.incubate({ ...r.state, incubatorSlots: 4 }, ov.id).eggs.find((e) => e.id === ov.id)!.incubating === false, 'a waiting egg can\'t go in an incubator');
+  const pet = { ...r.state, pets: [{ id: 'pp', speciesId: 'p01', nickname: 'P', xp: 0, shiny: false } as any], activePetId: 'pp' };
+  const left = A.leaveEgg(pet, 'b0')!;
+  ok(!left.state.eggs.some((e) => e.id === 'b0') && !left.state.eggs.some((e) => e.overflow) && A.basketCount(left.state) === 12 && left.state.eggs.some((e) => e.id === ov.id), 'leaving a basket egg moves the waiting egg in');
+  ok(left.xp === A.LEAVE_XP.common && left.state.pets[0].xp === A.LEAVE_XP.common, 'leaving an egg gives the active pet XP');
+  const leftNew = A.leaveEgg(pet, ov.id)!;
+  ok(!leftNew.state.eggs.some((e) => e.id === ov.id) && A.basketCount(leftNew.state) === 12 && leftNew.xp === A.LEAVE_XP.epic, 'you can leave the new egg itself');
+  let many = full as GameState;
+  for (let i = 0; i < 5; i++) many = A.addEgg(many, 'rare').state;
+  ok(A.overflowEggs(many).length === A.MAX_OVERFLOW, `up to ${A.MAX_OVERFLOW} eggs can wait`);
   const inc = { ...full, eggs: full.eggs.map((e, i) => (i === 0 ? { ...e, incubating: true } : e)) };
-  ok(!A.basketFull(inc) && A.addEgg(inc, 'common').coins === 0, 'eggs in an incubator do not count toward the basket');
-  // A full basket: chests turn their egg into coins and say so.
+  ok(!A.basketFull(inc) && !A.addEgg(inc, 'common').overflow, 'eggs in an incubator do not count toward the basket');
   let saw = false;
   for (let i = 0; i < 40 && !saw; i++) {
     const g = A.grantChest(full, 'silver', 'test');
     const o = A.openChestById(g, g.chests[g.chests.length - 1].id)!;
-    if (o.result.basketFull) saw = o.result.eggRarity === null && o.state.eggs.length === A.EGG_BASKET;
+    if (o.result.basketFull) saw = !!o.result.eggRarity && o.state.eggs.some((e) => e.overflow);
   }
-  ok(saw, 'a Silver chest opened with a full basket gives coins instead of an egg');
+  ok(saw, 'a Silver chest opened with a full basket still shows its egg, which waits');
   ok(stepsToHatch('common') === 3 * 1300 && stepsToHatch('legendary') === 25 * 1300, 'eggs take longer to hatch (Common 3 km, Legendary 25 km)');
   ok(CHESTS.bronze.eggChance === 10, 'Bronze chests have a 10% egg chance');
 }

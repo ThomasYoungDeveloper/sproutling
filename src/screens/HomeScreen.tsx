@@ -25,7 +25,7 @@ import { LockedSheet, UnlockCard } from '../components/Unlocks';
 type Tab = 'eggs' | 'chests' | 'friends' | 'dex';
 
 /** Reminders that get a chip. Everything else already shows up on Home (tray, Today card, event and expedition rows). */
-const CHIP_IDS = ['chests', 'badges', 'egg'];
+const CHIP_IDS = ['eggwait', 'chests', 'badges', 'egg'];
 
 function chipLabel(r: C.Reminder, s: ReturnType<typeof useGame>['state']): { icon: React.ReactNode; text: string } {
   if (r.id === 'train' && r.petId) {
@@ -33,6 +33,7 @@ function chipLabel(r: C.Reminder, s: ReturnType<typeof useGame>['state']): { ico
     const pts = r.text.match(/has (\d+)/)?.[1] ?? '';
     return { icon: null, text: `Train ${p?.nickname ?? 'pet'} · ${pts} pt${pts === '1' ? '' : 's'}` };
   }
+  if (r.id === 'eggwait') return { icon: <EggSprite rarity={A.overflowEggs(s)[0]?.rarity ?? 'common'} size={20} />, text: 'An egg is waiting' };
   if (r.id === 'chests') return { icon: <ChestIcon kind={s.chests[0]?.kind ?? 'bronze'} size={24} />, text: s.chests.length === 1 ? 'Open a chest' : `Open ${s.chests.length} chests` };
   if (r.id === 'badges') return { icon: null, text: 'Badges to claim' };
   if (r.id === 'egg') return { icon: <EggSprite rarity={s.eggs.find((e) => e.incubating)?.rarity ?? 'common'} size={20} />, text: r.text.replace(/^Your /, '').replace(' hatches in', ' hatches in') };

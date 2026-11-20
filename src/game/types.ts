@@ -101,6 +101,8 @@ export interface Egg {
   bred?: { speciesId: string; parents: [string, string]; parentSkins: (Skin | null)[]; parentIvs?: [import('./stats').Ivs, import('./stats').Ivs]; lucky?: number };
   /** Event eggs (e.g. Harvest Eggs) always hatch with this skin. */
   skin?: Skin;
+  /** Came in while the basket was full: waits until the player picks an egg to leave behind. */
+  overflow?: boolean;
 }
 
 /** Rare color variants of a pet. */

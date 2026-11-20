@@ -137,6 +137,8 @@ export function reminders(s: GameState): Reminder[] {
   if (close && close.left <= 1500) out.push({ id: 'egg', icon: '👣', text: `Your ${RARITY_INFO[close.e.rarity].label} egg hatches in ${close.left.toLocaleString()} steps!`, action: 'steps' });
   if (d.steps < stepGoalOf(d)) out.push({ id: 'steps', icon: '👟', text: `${(stepGoalOf(d) - d.steps).toLocaleString()} steps to today’s walking quest`, action: 'steps' });
   if (!c.treat && trinketCount(s) > 0) out.push({ id: 'treat', icon: '✨', text: `Give ${name} a treat from your bag for +10% XP`, action: 'treat' });
+  const over = A.overflowEggs(s).length;
+  if (over) out.push({ id: 'eggwait', icon: '🥚', text: over === 1 ? 'An egg is waiting! Your basket is full' : `${over} eggs are waiting! Your basket is full`, action: 'eggs' });
   if (s.chests.length) out.push({ id: 'chests', icon: '🎁', text: s.chests.length === 1 ? 'You have a chest to open' : `You have ${s.chests.length} chests to open`, action: 'chests' });
   return out;
 }

@@ -325,21 +325,21 @@ export function finish(s: GameState, rng: Rng = defaultRng, now = Date.now()): {
   if (pet && fights.length) next = H.setHp(next, pet.id, fights[fights.length - 1].hpAfter);
   if (pet) next = { ...next, pets: next.pets.map((x) => (x.id === pet.id ? { ...x, xp: x.xp + xp } : x)) };
   if (chest) next = A.grantChest(next, chest, `Found at ${place.name}`, rng);
-  let eggCoins = 0;
+  let eggSkipped = false;
   if (egg) {
     const r = A.addEgg(next, egg, rng);
     next = r.state;
-    eggCoins = r.coins;
+    eggSkipped = !!r.skipped;
   }
   if (item) next = { ...next, items: { ...next.items, [item]: (next.items[item] ?? 0) + 1 } };
   if (cosmetic) next = grantCosmetic(next, cosmetic);
   const event = pickOne(place.events, rng);
-  const found = [item ? `a ${item}` : null, chest ? `a ${chest[0].toUpperCase() + chest.slice(1)} chest` : null, egg && !eggCoins ? 'a mysterious egg' : null, eggCoins ? `an egg that became ${eggCoins} coins (basket full)` : null].filter(Boolean);
+  const found = [item ? `a ${item}` : null, chest ? `a ${chest[0].toUpperCase() + chest.slice(1)} chest` : null, egg && !eggSkipped ? 'a mysterious egg' : null].filter(Boolean);
   const lostTo = fights.find((f) => !f.won);
   const story = knockedOut
     ? `${name} was knocked out by a ${lostTo?.name ?? 'wild pet'} and came home early.`
     : `${name} ${event}${found.length ? `, and came home with ${found.join(' and ')}` : ''}!`;
-  return { state: next, loot: { coins: coins + eggCoins, xp, chest, egg: eggCoins ? null : egg, item, cosmetic, story, petName: name, speciesId: pet?.speciesId ?? 'p01', fights, knockedOut, foods, placeName: place.name, placeId: place.id } };
+  return { state: next, loot: { coins, xp, chest, egg: eggSkipped ? null : egg, item, cosmetic, story, petName: name, speciesId: pet?.speciesId ?? 'p01', fights, knockedOut, foods, placeName: place.name, placeId: place.id } };
 }
 
 /** Cancels an expedition early. The pet comes home with nothing, but nothing is lost either. */

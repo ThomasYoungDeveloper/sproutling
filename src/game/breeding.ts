@@ -35,6 +35,7 @@ export function canBreed(s: GameState, aId: string, bId: string, now = Date.now(
     if (restLeftMs(s, p, now) > 0) return { ok: false, reason: `${p.nickname} is resting after the last egg.` };
     if (s.expedition?.petId === p.id) return { ok: false, reason: `${p.nickname} is out exploring.` };
   }
+  if (A.basketFull(s)) return { ok: false, reason: `Your egg basket is full (${A.EGG_BASKET} / ${A.EGG_BASKET}). Hatch an egg to make room first.` };
   if (s.coins < BREED_COST) return { ok: false, reason: `The nursery costs ${BREED_COST} coins.` };
   return { ok: true };
 }

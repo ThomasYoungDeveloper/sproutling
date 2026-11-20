@@ -176,19 +176,46 @@ export function addSkinEgg(s: GameState, skin: Skin, rng: Rng = defaultRng): Gam
 }
 
 /** Eggs waiting to hatch (not counting ones in an incubator) are kept in a basket that holds this many. */
-export const EGG_BASKET = 9;
-/** A new egg that doesn't fit in a full basket is turned into this many coins instead. */
-export const EGG_COINS: Record<Rarity, number> = { common: 15, uncommon: 25, rare: 50, epic: 100, legendary: 200 };
-export const basketCount = (s: GameState) => s.eggs.filter((e) => !e.incubating).length;
+export const EGG_BASKET = 12;
+/** Eggs that came in while the basket was full wait here (up to this many) until the player makes room. */
+export const MAX_OVERFLOW = 3;
+/** Leaving an egg behind gives the active pet this much XP. Set all to 0 to turn the reward off. */
+export const LEAVE_XP: Record<Rarity, number> = { common: 20, uncommon: 35, rare: 60, epic: 120, legendary: 250 };
+export const basketEggs = (s: GameState) => s.eggs.filter((e) => !e.incubating && !e.overflow);
+export const overflowEggs = (s: GameState) => s.eggs.filter((e) => e.overflow);
+export const basketCount = (s: GameState) => basketEggs(s).length;
 export const basketFull = (s: GameState) => basketCount(s) >= EGG_BASKET;
 
-/** Adds a found egg, or turns it into coins when the basket is full. `coins` > 0 means it became coins. */
-export function addEgg(s: GameState, rarity: Rarity, rng: Rng = defaultRng): { state: GameState; coins: number } {
+/**
+ * Adds a found egg. With a full basket it waits as an overflow egg until the player picks one to
+ * leave behind (`overflow: true`). With the overflow spots full too, the egg is skipped.
+ */
+export function addEgg(s: GameState, rarity: Rarity, rng: Rng = defaultRng): { state: GameState; overflow: boolean; skipped?: boolean } {
   if (basketFull(s)) {
-    const coins = EGG_COINS[rarity];
-    return { state: { ...s, coins: s.coins + coins }, coins };
+    if (overflowEggs(s).length >= MAX_OVERFLOW) return { state: s, overflow: false, skipped: true };
+    return { state: { ...s, eggs: [...s.eggs, { ...newEgg(s, rarity, rng), overflow: true }] }, overflow: true };
   }
-  return { state: { ...s, eggs: [...s.eggs, newEgg(s, rarity, rng)] }, coins: 0 };
+  return { state: { ...s, eggs: [...s.eggs, newEgg(s, rarity, rng)] }, overflow: false };
+}
+
+/**
+ * Leaves one egg behind (from the basket or an overflow egg) to make room. The active pet gets a little XP,
+ * and the oldest overflow egg moves into the basket.
+ */
+export function leaveEgg(s: GameState, eggId: string): { state: GameState; xp: number } | null {
+  const egg = s.eggs.find((e) => e.id === eggId);
+  if (!egg || egg.incubating) return null;
+  let eggs = s.eggs.filter((e) => e.id !== eggId);
+  let next: GameState = { ...s, eggs };
+  const firstOverflow = eggs.find((e) => e.overflow);
+  if (firstOverflow && basketCount(next) < EGG_BASKET) {
+    eggs = eggs.map((e) => (e.id === firstOverflow.id ? { ...e, overflow: undefined } : e));
+    next = { ...next, eggs };
+  }
+  const xp = LEAVE_XP[egg.rarity] ?? 0;
+  const pid = next.activePetId;
+  if (xp && pid) next = { ...next, pets: next.pets.map((p) => (p.id === pid ? { ...p, xp: p.xp + xp } : p)) };
+  return { state: next, xp };
 }
 
 /**
@@ -234,11 +261,11 @@ export function openChestById(s: GameState, chestId: string, rng: Rng = defaultR
   const result: ChestResult = { ...openChest(chest.kind, rng), ...(upgraded ? { upgraded: true } : {}) };
   let next: GameState = { ...s, chests: s.chests.filter((c) => c.id !== chestId), coins: s.coins + result.coins };
   if (upgraded) next = { ...next, questChestDays: { ...next.questChestDays, [rainbowKey('gold', goldWeek)]: true } };
-  let eggCoins = 0;
+  let overflow = false;
   if (result.eggRarity) {
     const r = addEgg(next, result.eggRarity, rng);
     next = r.state;
-    eggCoins = r.coins;
+    overflow = r.overflow;
   }
   if (result.item) next = { ...next, items: { ...next.items, [result.item]: (next.items[result.item] ?? 0) + 1 } };
   const cosmetic = rollChestCosmetic(next, chest.kind, rng);
@@ -253,8 +280,8 @@ export function openChestById(s: GameState, chestId: string, rng: Rng = defaultR
     if (dye) { next = addDye(next, dye.skin); result.dye = dye.skin; }
   }
   next = bump(next, 'chests');
-  // An egg that didn't fit in a full basket shows up as extra coins instead.
-  const shown = eggCoins ? { ...result, eggRarity: null, coins: result.coins + eggCoins, basketFull: true } : result;
+  // An egg that didn't fit in a full basket waits until the player makes room.
+  const shown = overflow ? { ...result, basketFull: true } : result;
   return { state: next, result: { ...shown, cosmetic, crystals, potions } };
 }
 
@@ -262,6 +289,7 @@ export const incubatingCount = (s: GameState) => s.eggs.filter((e) => e.incubati
 
 export function incubate(s: GameState, eggId: string): GameState {
   if (incubatingCount(s) >= s.incubatorSlots) return s;
+  if (s.eggs.find((e) => e.id === eggId)?.overflow) return s;
   return { ...s, eggs: s.eggs.map((e) => (e.id === eggId ? { ...e, incubating: true } : e)) };
 }
 

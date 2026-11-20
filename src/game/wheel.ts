@@ -46,7 +46,7 @@ export type Prize =
   | { kind: 'crystal' }
   | { kind: 'outfit'; item: Cosmetic }
   | { kind: 'dye'; dye: Dye }
-  | { kind: 'egg'; rarity: Rarity; coins: number };
+  | { kind: 'egg'; rarity: Rarity; overflow: boolean };
 
 /** Spins earned today: 1 once all 3 habit quests are done. */
 export function spinsEarned(s: GameState): number {
@@ -124,7 +124,7 @@ export function spin(s: GameState, rng: Rng = defaultRng): { state: GameState; s
     const rarity = pickEgg(rng);
     const r = A.addEgg(next, rarity, rng);
     next = r.state;
-    prize = { kind: 'egg', rarity, coins: r.coins };
+    prize = { kind: 'egg', rarity, overflow: r.overflow };
   }
   return { state: next, slot, prize };
 }

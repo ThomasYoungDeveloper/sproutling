@@ -96,7 +96,7 @@ function prizeText(p: Wh.Prize): { kicker: string; title: string; body: string; 
   if (p.kind === 'crystal') return { kicker: 'YOU WON', title: 'Training Crystal', body: '+1 to one stat’s quality. Use it from a pet’s page.' };
   if (p.kind === 'outfit') return { kicker: 'NEW LOOK', title: p.item.name, body: 'Added to your looks. Put it on from Style.', tag: { text: p.item.rarity.toUpperCase(), color: '#5C6F69' } };
   if (p.kind === 'dye') return { kicker: 'YOU WON A DYE', title: Dy.dyeName(p.dye.skin), body: `Gives one pet the ${SKIN_INFO[p.dye.skin].label} skin for good. Saved in your Bag.`, tag: { text: Dy.DYE_RARITY_LABEL[p.dye.rarity].toUpperCase(), color: Dy.DYE_RARITY_COLOR[p.dye.rarity] } };
-  return { kicker: 'MYSTERY EGG', title: `${RARITY_INFO[p.rarity].label} egg`, body: p.coins ? `Your basket was full, so it became ${p.coins} coins.` : 'It’s waiting in your Eggs tab.', tag: { text: RARITY_INFO[p.rarity].label.toUpperCase(), color: RARITY_INFO[p.rarity].color } };
+  return { kicker: 'MYSTERY EGG', title: `${RARITY_INFO[p.rarity].label} egg`, body: p.overflow ? 'Your basket is full. Pick an egg to leave behind on the Eggs tab.' : 'It’s waiting in your Eggs tab.', tag: { text: RARITY_INFO[p.rarity].label.toUpperCase(), color: RARITY_INFO[p.rarity].color } };
 }
 
 /** The wheel screen: spin, watch it land, see the prize. */
