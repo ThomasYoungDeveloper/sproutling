@@ -6,6 +6,7 @@ import * as St from '../game/stats';
 import type { OwnedPet } from '../game/types';
 import PotionIcon, { POTION_COLOR } from './PotionIcon';
 import { buzz, PopIn } from './fx';
+import { InfoDot } from './InfoTip';
 import { colors, font, space } from '../theme';
 
 export const HP_COLOR = { ready: '#2EB88A', hurt: '#F0B429', out: '#C4562F' } as const;
@@ -23,7 +24,7 @@ export function HpBar({ pet, height = 8 }: { pet: OwnedPet; height?: number }) {
 }
 
 /** HP and potions for one pet (in the pet sheet). */
-export default function HpCard({ pet }: { pet: OwnedPet }) {
+export default function HpCard({ pet, onInfo }: { pet: OwnedPet; onInfo?: () => void }) {
   const { state, apply } = useGame();
   const [msg, setMsg] = useState<string | null>(null);
   const pct = H.hpPct(pet);
@@ -43,18 +44,18 @@ export default function HpCard({ pet }: { pet: OwnedPet }) {
   return (
     <View style={styles.card}>
       <View style={styles.row}>
-        <Text style={styles.title}>HP</Text>
-        <Text style={[styles.state, { color: HP_COLOR[st] }]}>{HP_LABEL[st]}</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+          <Text style={styles.title}>HP</Text>
+          {onInfo ? <InfoDot onPress={onInfo} label="HP" /> : null}
+        </View>
+        <Text style={[styles.state, { color: HP_COLOR[st] }]}>{st === 'ready' ? `${now} / ${max}` : `${HP_LABEL[st]} · ${now} / ${max}`}</Text>
       </View>
       <HpBar pet={pet} height={12} />
-      <Text style={font.small}>
-        {now} / {max} HP.{' '}
-        {st === 'out'
-          ? `${pet.nickname} is resting. HP starts coming back in about ${H.minutesToWake(pet, state)} min (10% an hour). Potions can’t wake a knocked-out pet.`
-          : pct < 100
-            ? `Healing by itself: 10% an hour, about ${Math.ceil((100 - pct) / H.REST_PER_HOUR)} hour${Math.ceil((100 - pct) / H.REST_PER_HOUR) === 1 ? '' : 's'} to full. Potions heal right away.`
-            : 'Fights on trips and with wild pets lower HP. Friend battles never do.'}
-      </Text>
+      {st === 'out' ? (
+        <Text style={font.small}>Resting. Starts healing in about {H.minutesToWake(pet, state)} min.</Text>
+      ) : pct < 100 ? (
+        <Text style={font.small}>Full in about {Math.ceil((100 - pct) / H.REST_PER_HOUR)} hour{Math.ceil((100 - pct) / H.REST_PER_HOUR) === 1 ? '' : 's'}, or use a potion.</Text>
+      ) : null}
       {pct < 100 && pct > 0 ? (
         <View style={styles.potions}>
           {(['small', 'full'] as const).map((k) => {
