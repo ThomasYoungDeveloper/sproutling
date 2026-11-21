@@ -91,7 +91,9 @@ export function applyTrade(s: GameState, tradeId: string, giveId: string, get: T
   if (s.appliedTrades?.[tradeId]) return null;
   if (!SPECIES_BY_ID[get.speciesId]) return null;
   const received: OwnedPet = {
-    id: makeId(rng),
+    // The same id on every device, so if two phones both apply this trade the copies merge into one.
+    id: `tr_${tradeId.replace(/[^a-zA-Z0-9]/g, '').slice(0, 20)}`,
+    fromTrade: tradeId,
     speciesId: get.speciesId,
     nickname: get.nickname.slice(0, 14) || SPECIES_BY_ID[get.speciesId].name,
     xp: Math.max(0, Math.floor(get.xp)),

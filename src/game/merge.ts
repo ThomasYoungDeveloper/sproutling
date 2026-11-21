@@ -64,13 +64,17 @@ export function mergeSaves(base: GameState | null, mine: GameState, theirs: Game
   for (const [k, d] of Object.entries(mine.days ?? {})) days[k] = days[k] ? mergeDay(d, days[k]) : d;
 
   const activePetId = pick(base.activePetId, mine.activePetId, theirs.activePetId);
+  // Duplicates cleaned up on either device stay gone.
+  const dupesRemoved = [...new Set([...(theirs.dupesRemoved ?? []), ...(mine.dupesRemoved ?? [])])].slice(-50);
+  const gone = new Set(dupesRemoved);
   const merged: GameState = {
     ...theirs,
     coins: counter(base.coins, mine.coins, theirs.coins),
     items,
     foods,
     stats,
-    pets,
+    pets: gone.size ? pets.filter((p) => !gone.has(p.id)) : pets,
+    ...(dupesRemoved.length ? { dupesRemoved } : {}),
     eggs,
     chests,
     days,

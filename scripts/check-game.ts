@@ -1044,4 +1044,20 @@ console.log('\nEgg basket');
   ok(new Date(r8.find((x) => x.id === 'habits-0')!.at).getHours() === 21, 'the check-in time can be changed');
   ok(!R({ ...base, reminderPrefs: { evening: false } }, { now: day.getTime() }).some((x) => x.id.startsWith('habits')), 'the evening check-in can be turned off');
 }
+
+/* ---------- Trades can't duplicate pets ---------- */
+{
+  const T2 = T;
+  const base = { ...newGame(), pets: [{ id: 'give', speciesId: 'p84', nickname: 'Melon', xp: 100, shiny: false, hatchedOn: '' }, { id: 'keep', speciesId: 'p01', nickname: 'K', xp: 0, shiny: false, hatchedOn: '' }], activePetId: 'give' } as GameState;
+  const get = { id: 'theirs', speciesId: 'p47', nickname: 'Fizzle Fish', xp: 0, shiny: false, hatchedOn: '2026-11-16', ivs: { hp: 5, atk: 6, def: 7, spd: 8 } } as any;
+  const a1 = T2.applyTrade(base, 'trade-123', 'give', get)!.state;
+  const a2 = T2.applyTrade(base, 'trade-123', 'give', get)!.state; // the other phone applies it too
+  const m = A.cleanSave(mergeSaves(base, a1, a2));
+  ok(m.pets.filter((p) => p.speciesId === 'p47').length === 1 && !m.pets.some((p) => p.id === 'give'), 'a trade applied on two phones gives one pet, not two');
+  const dup = { ...base, pets: [...base.pets, { id: 'x1', speciesId: 'p47', nickname: 'F', xp: 0, shiny: false, hatchedOn: '1', ivs: { hp: 1, atk: 2, def: 3, spd: 4 } }, { id: 'x2', speciesId: 'p47', nickname: 'F', xp: 0, shiny: false, hatchedOn: '1', ivs: { hp: 1, atk: 2, def: 3, spd: 4 } }], activePetId: 'x2' } as GameState;
+  const cl = A.cleanSave(dup);
+  ok(cl.pets.filter((p) => p.speciesId === 'p47').length === 1 && cl.activePetId === 'x2' && !!cl.dupesRemoved?.includes('x1'), 'exact duplicate pets are cleaned up, keeping the active one');
+  const back = A.cleanSave(mergeSaves(dup, cl, dup));
+  ok(back.pets.filter((p) => p.speciesId === 'p47').length === 1, 'a cleaned-up duplicate does not come back from another device');
+}
 console.log(fails ? `${fails} FAILED` : 'ALL PASSED'); process.exit(fails ? 1 : 0);

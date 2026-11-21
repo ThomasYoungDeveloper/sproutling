@@ -61,6 +61,8 @@ export interface DayCare {
 
 export interface OwnedPet {
   id: string;
+  /** Arrived in this trade (so the same trade applied on two devices can't make two copies). */
+  fromTrade?: string;
   speciesId: string;
   nickname: string;
   xp: number;
@@ -178,6 +180,8 @@ export interface GameState {
   crystalShopDay?: string;
   /** The first-time walkthrough has been seen. */
   tutorialDone?: boolean;
+  /** Ids of duplicate pets cleaned up (kept so another device's copy can't bring them back). */
+  dupesRemoved?: string[];
   /** Which reminders the player wants, and when the evening check-in comes (hour, 18 to 21). */
   reminderPrefs?: { hour?: number; evening?: boolean; trips?: boolean; eggs?: boolean; raid?: boolean };
   /** Battle record and today's rewarded battles. */

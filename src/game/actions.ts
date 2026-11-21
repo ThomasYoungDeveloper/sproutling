@@ -145,6 +145,34 @@ export function cleanSave(s: GameState): GameState {
     s = { ...s, onboard: { legacy: true, hatched: true } };
     changed = true;
   }
+  // Remove duplicate pets: the same trade applied twice, or exact copies that only differ by id
+  // (a trade applied on two devices before they synced, before trade ids were fixed).
+  const seen = new Map<string, string>();
+  const keep: OwnedPet[] = [];
+  const dropped: string[] = [];
+  const sig = (p: OwnedPet) => (p.fromTrade ? `t:${p.fromTrade}` : p.ivs ? JSON.stringify({ ...p, id: undefined, look: undefined, restUntil: undefined }) : null);
+  const ordered = [...s.pets].sort((a, b) => (a.id === s.activePetId ? -1 : b.id === s.activePetId ? 1 : 0));
+  for (const p of ordered) {
+    const k = sig(p);
+    if (k && seen.has(k)) dropped.push(p.id);
+    else {
+      if (k) seen.set(k, p.id);
+      keep.push(p);
+    }
+  }
+  if (dropped.length) {
+    const gone = new Set(dropped);
+    s = {
+      ...s,
+      pets: s.pets.filter((p) => !gone.has(p.id)),
+      dupesRemoved: [...(s.dupesRemoved ?? []), ...dropped].slice(-50),
+    } as GameState;
+    changed = true;
+  }
+  if (s.activePetId && s.pets.length && !s.pets.some((p) => p.id === s.activePetId)) {
+    s = { ...s, activePetId: s.pets[0].id };
+    changed = true;
+  }
   const days = { ...s.days };
   for (const k of Object.keys(days)) {
     if ((days[k]?.steps ?? 0) > MAX_DAY_STEPS) {
