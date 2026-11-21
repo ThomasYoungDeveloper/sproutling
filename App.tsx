@@ -41,6 +41,7 @@ import { onPushTap, registerPushToken } from './src/lib/pushTokens';
 import { onRemindersChange } from './src/lib/remindersState';
 import { useWalkFinds } from './src/lib/useWalkFinds';
 import YardTips from './src/components/YardTips';
+import { InfoPop, type Tip } from './src/components/InfoTip';
 import TabBar from './src/components/TabBar';
 import { yardSkyTop } from './src/components/PetScene';
 import { DayComplete, QuestBanner, useCelebrations } from './src/components/Celebrations';
@@ -104,6 +105,7 @@ function Shell() {
   const loginShownFor = useRef<string | null>(null);
   const { user, username } = useAuth();
   const [showAccount, setShowAccount] = useState(false);
+  const [streakTip, setStreakTip] = useState<Tip | null>(null);
   const [tab, setTab] = useState<Tab>('home');
   const [confirmReset, setConfirmReset] = useState(false);
   const readyEggs = state.eggs.filter(A.isReady).length;
@@ -285,7 +287,19 @@ function Shell() {
             <Text style={styles.pageTitle} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6} maxFontSizeMultiplier={1.15}>{starter ? 'Sproutling' : PAGE[tab].title}</Text>
           </View>
           <View style={styles.pills}>
-            <View style={styles.pill}><Text style={styles.pillText} maxFontSizeMultiplier={1.15}>🔥 {A.streak(state)}{state.shields ? ` 🛡️${state.shields}` : ''}</Text></View>
+            <Pressable
+              onPress={() =>
+                setStreakTip({
+                  title: `${A.streak(state)}-day streak`,
+                  text: `Your streak goes up each day you finish your daily goals.\n\nThe shield is a streak shield${state.shields ? ` (you have ${state.shields})` : ''}. If you miss a day, a shield is used up automatically and your streak is saved. You earn one every 7 days of streak and can hold up to ${A.MAX_SHIELDS}.`,
+                })
+              }
+              style={styles.pill}
+              accessibilityRole="button"
+              accessibilityLabel={`${A.streak(state)}-day streak${state.shields ? `, ${state.shields} streak shield${state.shields === 1 ? '' : 's'}` : ''}. What's this?`}
+            >
+              <Text style={styles.pillText} maxFontSizeMultiplier={1.15}>🔥 {A.streak(state)}{state.shields ? ` 🛡️${state.shields}` : ''}</Text>
+            </Pressable>
             <View style={[styles.pill, { flexDirection: 'row', alignItems: 'center', gap: 5 }]}><Image source={COIN_PILE} style={{ width: 26, height: 26 }} resizeMode="contain" /><RollingNumber value={state.coins} prefix="" short style={styles.pillText} /></View>
             <Pressable onPress={() => setShowAccount(true)} style={[styles.avatar, (!user || sync === 'error') && { backgroundColor: '#E8590C' }]} accessibilityRole="button" accessibilityLabel={user ? `Account: ${username ?? 'you'}${sync === 'error' ? ', offline' : ''}` : 'Sign in to save your pets'}>
               <Text style={styles.avatarText}>{!user || sync === 'error' ? '!' : (username ?? 'T')[0].toUpperCase()}</Text>
@@ -342,6 +356,7 @@ function Shell() {
       {/* Pop-ups and toasts stay inside the app's own area (never under a side camera column). */}
       <View pointerEvents="box-none" style={{ position: 'absolute', top: 0, bottom: 0, left: layerInsets.left, right: layerInsets.right, zIndex: 70 }}>
       {settled && !starter && !state.tutorialDone && tab === 'home' ? <YardTips /> : null}
+      {streakTip ? <View style={[StyleSheet.absoluteFill, { zIndex: 300 }]}><InfoPop tip={streakTip} onClose={() => setStreakTip(null)} /></View> : null}
       {settled && !starter && state.tutorialDone && !showLogin ? <LevelUpPopup onGo={goUnlock} /> : null}
       {showAccount && <AccountSheet onClose={() => setShowAccount(false)} />}
       {showLogin && !starter && <DailyLoginSheet onClose={() => setShowLogin(false)} />}

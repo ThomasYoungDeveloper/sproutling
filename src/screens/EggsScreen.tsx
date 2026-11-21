@@ -81,7 +81,7 @@ export default function EggsScreen() {
               ) : (
                 <View style={{ alignSelf: 'stretch', gap: 4, paddingHorizontal: space.md }}>
                   <Text style={styles.heroSub}>
-                    {(Math.min(shown.stepsWalked, eggSteps(shown)) / STEPS_PER_KM).toFixed(1)} of {+(eggSteps(shown) / STEPS_PER_KM).toFixed(1)} km walked
+                    {walkedText(shown.stepsWalked, eggSteps(shown))}
                   </Text>
                   <ProgressBar value={progressOf(shown)} color={RARITY_INFO[shown.rarity].color} />
                 </View>
@@ -167,6 +167,15 @@ export default function EggsScreen() {
       </Card>
     </View>
   );
+}
+
+/** "7.9 of 8 km walked": rounds down so it never says done before the egg is ready; the last stretch shows meters. */
+function walkedText(walked: number, need: number): string {
+  const total = +(need / STEPS_PER_KM).toFixed(1);
+  if (walked >= need) return `${total} of ${total} km walked`;
+  const km = Math.floor((walked / STEPS_PER_KM) * 10) / 10;
+  const leftM = Math.ceil(((need - walked) / STEPS_PER_KM) * 1000);
+  return leftM < 1000 ? `${km.toFixed(1)} of ${total} km · ${leftM} m to go` : `${km.toFixed(1)} of ${total} km walked`;
 }
 
 const styles = StyleSheet.create({
