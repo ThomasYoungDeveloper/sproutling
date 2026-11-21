@@ -172,6 +172,8 @@ export default function TowerScreen({ onClose }: { onClose: () => void }) {
             const floor = i + 1;
             const chest = T.chestFor(floor);
             const mine = mates.filter((m) => m.floor === floor);
+            // Only label the floors that matter: chests, your next floor, the boss and floors friends reached.
+            if (!chest && floor !== nextFloor && floor !== T.FLOORS && !mine.length) return null;
             return (
               <View key={floor} style={[styles.floorTag, { top: yOf(floor) + 12, left: cx + towerW / 2 + 8 }]}>
                 <Text style={[styles.floorText, floor <= t.floor && { color: '#FFD98A' }]}>{floor === T.FLOORS ? 'Boss' : `Floor ${floor}`}{chest ? ` · ${chest === 'rainbow' ? 'Rainbow Chest' : chest[0].toUpperCase() + chest.slice(1)}` : ''}</Text>

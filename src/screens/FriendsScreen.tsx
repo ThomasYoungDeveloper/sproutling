@@ -87,65 +87,63 @@ export default function FriendsScreen({ initialAdd, onUsedInitialAdd, initialGui
   };
 
   const invite = (
-    <>
-      <Card style={{ backgroundColor: colors.mintSoft, borderColor: '#BFE8D6' }}>
-        <Text style={font.small}>Your friend code</Text>
-        <View style={styles.codeRow}>
-          {(myCode ?? '······').split('').map((ch, i) => (
-            <View key={i} style={styles.codeChar}>
-              <Text style={styles.codeText}>{ch}</Text>
-            </View>
-          ))}
+    <Card>
+      <SectionHead title="Add a friend" />
+      <View style={styles.row}>
+        <TextInput
+          style={[styles.input, { flex: 1 }]}
+          value={target}
+          onChangeText={(v) => {
+            setTarget(v);
+            setAddMsg(null);
+          }}
+          placeholder="Friend code or trainer name"
+          autoCapitalize="none"
+          autoCorrect={false}
+          maxLength={20}
+          returnKeyType="send"
+          onSubmitEditing={submit}
+          accessibilityLabel="Friend code or trainer name"
+        />
+        <Button primary label={busy ? 'Adding…' : 'Add'} disabled={busy} onPress={submit} />
+      </View>
+      {addMsg ? <Text style={[styles.msg, addMsg.ok && styles.ok]}>{addMsg.text}</Text> : null}
+      <View style={styles.codeBox}>
+        <View style={{ flex: 1, gap: 4 }}>
+          <Text style={font.small}>Or share yours</Text>
+          <View style={styles.codeRow}>
+            {(myCode ?? '······').split('').map((ch, i) => (
+              <View key={i} style={styles.codeChar}>
+                <Text style={styles.codeText}>{ch}</Text>
+              </View>
+            ))}
+          </View>
         </View>
-        <View style={styles.row}>
-          <Button
-            primary
-            label="Share invite link"
-            disabled={!myCode}
-            style={{ flex: 1 }}
-            onPress={async () => {
-              if (!myCode) return;
-              const r = await shareInvite(myCode);
-              setCodeMsg(r === 'copied' ? 'Invite link copied. Paste it in a text!' : r === 'failed' ? 'Couldn’t open sharing. Tell them your code instead.' : null);
-            }}
-          />
-          <Button
-            label="Copy code"
-            disabled={!myCode}
-            onPress={async () => {
-              if (!myCode) return;
-              const r = await copyText(myCode);
-              setCodeMsg(r === 'copied' ? 'Code copied!' : 'Tell your friend this code.');
-            }}
-          />
-        </View>
-        {codeMsg ? <Text style={[font.small, { color: colors.mintDark }]}>{codeMsg}</Text> : null}
-      </Card>
-
-      <Card>
-        <SectionHead title="Add a friend" />
-        <View style={styles.row}>
-          <TextInput
-            style={[styles.input, { flex: 1 }]}
-            value={target}
-            onChangeText={(v) => {
-              setTarget(v);
-              setAddMsg(null);
-            }}
-            placeholder="Friend code or trainer name"
-            autoCapitalize="none"
-            autoCorrect={false}
-            maxLength={20}
-            returnKeyType="send"
-            onSubmitEditing={submit}
-            accessibilityLabel="Friend code or trainer name"
-          />
-          <Button primary label={busy ? 'Adding…' : 'Add'} disabled={busy} onPress={submit} />
-        </View>
-        {addMsg ? <Text style={[styles.msg, addMsg.ok && styles.ok]}>{addMsg.text}</Text> : null}
-      </Card>
-
-    </>
+      </View>
+      <View style={styles.row}>
+        <Button
+          primary
+          label="Share invite link"
+          disabled={!myCode}
+          style={{ flex: 1 }}
+          onPress={async () => {
+            if (!myCode) return;
+            const r = await shareInvite(myCode);
+            setCodeMsg(r === 'copied' ? 'Invite link copied. Paste it in a text!' : r === 'failed' ? 'Couldn’t open sharing. Tell them your code instead.' : null);
+          }}
+        />
+        <Button
+          label="Copy code"
+          disabled={!myCode}
+          onPress={async () => {
+            if (!myCode) return;
+            const r = await copyText(myCode);
+            setCodeMsg(r === 'copied' ? 'Code copied!' : 'Tell your friend this code.');
+          }}
+        />
+      </View>
+      {codeMsg ? <Text style={[font.small, { color: colors.mintDark }]}>{codeMsg}</Text> : null}
+    </Card>
   );
 
   return (
@@ -277,6 +275,7 @@ function Avatar({ t }: { t: Trainer }) {
 }
 
 const styles = StyleSheet.create({
+  codeBox: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.mintSoft, borderRadius: 16, padding: 12, marginTop: 4 },
   msgDot: { backgroundColor: '#E0567A', borderRadius: 999, paddingHorizontal: 7, paddingVertical: 1 },
   msgDotText: { color: '#fff', fontWeight: '900', fontSize: 12 },
   segs: { flexDirection: 'row', gap: 3, backgroundColor: '#B9E2D1', borderRadius: 19, padding: 4 },
