@@ -1,3 +1,4 @@
+import { ContactFriendsCard } from '../components/ContactFriends';
 import { AdCard } from '../components/Ads';
 import { useResetIn } from '../lib/useResetIn';
 import { Glow, useSpotlight } from '../components/Spotlight';
@@ -242,6 +243,7 @@ export default function FriendsScreen({ initialAdd, onUsedInitialAdd, initialGui
       </Card>
 
       {friends.length > 0 && !inviteTop && invite}
+      <ContactFriendsCard />
 
       {outgoing.length > 0 && (
         <Card>
