@@ -178,6 +178,8 @@ export interface GameState {
   crystalShopDay?: string;
   /** The first-time walkthrough has been seen. */
   tutorialDone?: boolean;
+  /** Which reminders the player wants, and when the evening check-in comes (hour, 18 to 21). */
+  reminderPrefs?: { hour?: number; evening?: boolean; trips?: boolean; eggs?: boolean; raid?: boolean };
   /** Battle record and today's rewarded battles. */
   battle?: { day: string; rewarded: number; wonToday: boolean; wins: number; losses: number };
   /** This week's Sky Tower climb. */

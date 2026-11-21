@@ -3,6 +3,7 @@ import * as A from '../src/game/actions';
 import { CHESTS, oddsFor } from '../src/game/loot';
 import { SPECIES, speciesOfRarity } from '../src/game/species';
 import { RARITIES, stepsToHatch, eggSteps } from '../src/game/rarity';
+import { planReminders as planRemindersFn } from '../src/game/reminders';
 import { buildCard, readCard } from '../src/game/card';
 import * as C from '../src/game/care';
 import * as T from '../src/game/trade';
@@ -1028,5 +1029,19 @@ console.log('\nEgg basket');
   // Habit XP is the same whatever the type.
   ok((['flower', 'tide', 'ember', 'moon', 'stone', 'spark', 'frost', 'wind', 'toxic'] as const).every((e) => scoreDay(day, e).total === scoreDay(day).total), 'habit XP is the same for every type');
   ok(Tw.THEMES.length === 9 && Tw.THEMES.every((t) => /hit harder/.test(t.weakTo)), 'a tower for every type');
+}
+
+/* ---------- Evening reminders ---------- */
+{
+  const day = new Date(); day.setHours(12, 0, 0, 0);
+  const R = planRemindersFn;
+  const base = { ...newGame(), dayOffset: 0, pets: t.pets, activePetId: t.activePetId } as GameState;
+  const r = R(base, { now: day.getTime() });
+  const ev = r.find((x) => x.id === 'habits-0')!;
+  ok(!!ev && new Date(ev.at).getHours() === 19 && /steps/.test(ev.body) && /glass/.test(ev.body), 'the evening check-in says what is left, at 7 pm by default');
+  ok(r.every((x) => !/[\u{1F300}-\u{1FAFF}]/u.test(x.title)), 'reminder titles have no emoji');
+  const r8 = R({ ...base, reminderPrefs: { hour: 21 } }, { now: day.getTime() });
+  ok(new Date(r8.find((x) => x.id === 'habits-0')!.at).getHours() === 21, 'the check-in time can be changed');
+  ok(!R({ ...base, reminderPrefs: { evening: false } }, { now: day.getTime() }).some((x) => x.id.startsWith('habits')), 'the evening check-in can be turned off');
 }
 console.log(fails ? `${fails} FAILED` : 'ALL PASSED'); process.exit(fails ? 1 : 0);

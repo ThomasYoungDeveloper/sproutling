@@ -46,6 +46,48 @@ function SoundToggle() {
   );
 }
 
+const REMINDER_KINDS: { id: 'evening' | 'trips' | 'eggs' | 'raid'; title: string; sub: string }[] = [
+  { id: 'evening', title: 'Evening check-in', sub: 'Only if today’s habits aren’t done yet' },
+  { id: 'trips', title: 'Trip is home', sub: 'When your pet gets back' },
+  { id: 'eggs', title: 'Eggs', sub: 'Ready to hatch, almost ready, or done nesting' },
+  { id: 'raid', title: 'Guild raid', sub: 'Saturday evening, if you still have hits' },
+];
+
+function ReminderSettings() {
+  const { state, apply } = useGame();
+  const prefs = state.reminderPrefs ?? {};
+  const hour = prefs.hour ?? 19;
+  const set = (patch: NonNullable<typeof state.reminderPrefs>) => apply((s) => ({ ...s, reminderPrefs: { ...s.reminderPrefs, ...patch } }));
+  return (
+    <View style={styles.coming}>
+      <Text style={[font.tiny, { fontWeight: '900' }]}>Never more than one habit reminder a day.</Text>
+      {REMINDER_KINDS.map((k) => {
+        const on = prefs[k.id] !== false;
+        return (
+          <View key={k.id} style={{ gap: 6 }}>
+            <Pressable onPress={() => set({ [k.id]: !on })} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 4 }} accessibilityRole="switch" accessibilityState={{ checked: on }} accessibilityLabel={k.title}>
+              <View style={{ flex: 1 }}>
+                <Text style={[font.body, { fontWeight: '800' }]}>{k.title}</Text>
+                <Text style={font.tiny}>{k.sub}</Text>
+              </View>
+              <View style={[styles.switch, on && styles.switchOn]}><View style={[styles.knob, on && { alignSelf: 'flex-end' }]} /></View>
+            </Pressable>
+            {k.id === 'evening' && on ? (
+              <View style={{ flexDirection: 'row', gap: 6 }}>
+                {[18, 19, 20, 21].map((h) => (
+                  <Pressable key={h} onPress={() => set({ hour: h })} style={[styles.hourChip, hour === h && styles.hourChipOn]} accessibilityRole="radio" accessibilityState={{ selected: hour === h }}>
+                    <Text style={[styles.hourText, hour === h && { color: '#FFFFFF' }]}>{h - 12} pm</Text>
+                  </Pressable>
+                ))}
+              </View>
+            ) : null}
+          </View>
+        );
+      })}
+    </View>
+  );
+}
+
 function RemindersToggle() {
   const { state } = useGame();
   const { team } = useTeam();
@@ -69,7 +111,6 @@ function RemindersToggle() {
         accessibilityState={{ checked: on }}
         accessibilityLabel="Reminders"
       >
-        <Text style={{ fontSize: 20 }}>{on ? '🔔' : '🔕'}</Text>
         <View style={{ flex: 1 }}>
           <Text style={[font.body, { fontWeight: '800' }]}>Reminders & alerts</Text>
           <Text style={font.tiny}>Streaks, eggs, expeditions, guild raids, plus friend requests, gifts and trades{remindersSupported ? '' : ' · phone app only'}</Text>
@@ -79,6 +120,7 @@ function RemindersToggle() {
         </View>
       </Pressable>
       {note ? <Text style={styles.msg}>{note}</Text> : null}
+      {on ? <ReminderSettings /> : null}
       {list.length ? (
         <View style={styles.coming}>
           <Text style={[font.tiny, { fontWeight: '900' }]}>Coming up</Text>
@@ -255,6 +297,9 @@ export default function AccountSheet({ onClose }: { onClose: () => void }) {
 }
 
 const styles = StyleSheet.create({
+  hourChip: { flex: 1, borderRadius: 12, backgroundColor: '#EEF4F1', paddingVertical: 8, alignItems: 'center' },
+  hourChipOn: { backgroundColor: colors.mint },
+  hourText: { fontSize: 14, fontWeight: '900', color: colors.ink },
   coming: { backgroundColor: '#F6FAF8', borderRadius: 12, padding: 10, gap: 3, marginTop: 6 },
   soundRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 8 },
   switch: { width: 46, height: 26, borderRadius: 13, backgroundColor: '#D6DEDA', padding: 3, justifyContent: 'center' },
