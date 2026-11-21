@@ -1,6 +1,7 @@
 import Coin from './Coin';
 import BagSheet from './BagSheet';
 import React, { useEffect, useRef, useState } from 'react';
+import { useYardTip } from './YardTips';
 import { Animated, Easing, Image, PanResponder, Platform, Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { Text } from './ScaledText';
 import Svg, { Circle, Defs, Ellipse, LinearGradient, Path, Rect, Stop } from 'react-native-svg';
@@ -455,6 +456,7 @@ export default function PetScene({ onTrinketsEmpty, onDressUp, onShop, onAccount
   const wish = W.activeWish(state);
   const mi = C.MOOD_INFO[mood];
   const tasks = C.careTasks(d);
+  const yardTip = useYardTip();
   const needs = F.needsFor(d);
   const overlay = useOverlay();
   const trinkets = C.trinketCount(state);
@@ -884,12 +886,13 @@ export default function PetScene({ onTrinketsEmpty, onDressUp, onShop, onAccount
         </View>
       ) : null}
       <View style={styles.care}>
-        <CareButton icon="🍙" label="Feed" color="#F28C38" done={tasks[0].done} onPress={() => goBowl(true)} />
+        <CareButton icon="🍙" label="Feed" color="#F28C38" done={tasks[0].done} glow={yardTip === 'feed'} onPress={() => goBowl(true)} />
         <CareButton
           icon="🧸"
           label={tasks[1].done ? 'Play' : `Play ${tasks[1].progress}`}
           color="#4A8FE0"
           done={tasks[1].done}
+          glow={yardTip === 'play'}
           on={showToys}
           onPress={() => {
             if (!allToys.length) return doPlay();
@@ -901,6 +904,7 @@ export default function PetScene({ onTrinketsEmpty, onDressUp, onShop, onAccount
           icon="🍪"
           label="Snack"
           color="#C9772A"
+          glow={yardTip === 'snack'}
           badge={tasks[2].done ? undefined : trinkets}
           done={tasks[2].done}
           dim={!tasks[2].done && trinkets === 0}
@@ -919,8 +923,18 @@ export default function PetScene({ onTrinketsEmpty, onDressUp, onShop, onAccount
 }
 
 /** A big round care button at the bottom of the yard: Feed, Play and Snack. */
-function CareButton({ icon, label, color, done, dim, badge, on, onPress }: { icon: string; label: string; color: string; done?: boolean; dim?: boolean; badge?: number; on?: boolean; onPress: () => void }) {
+function CareButton({ icon, label, color, done, dim, badge, on, glow, onPress }: { icon: string; label: string; color: string; done?: boolean; dim?: boolean; badge?: number; on?: boolean; glow?: boolean; onPress: () => void }) {
   const press = useRef(new Animated.Value(1)).current;
+  const pulse = useRef(new Animated.Value(0.8)).current;
+  useEffect(() => {
+    if (!glow) return;
+    const l = Animated.loop(Animated.sequence([
+      Animated.timing(pulse, { toValue: 1, duration: 650, useNativeDriver: false }),
+      Animated.timing(pulse, { toValue: 0.45, duration: 650, useNativeDriver: false }),
+    ]));
+    l.start();
+    return () => l.stop();
+  }, [glow]);
   return (
     <Pressable
       onPress={onPress}
@@ -931,6 +945,7 @@ function CareButton({ icon, label, color, done, dim, badge, on, onPress }: { ico
       accessibilityState={{ checked: done, selected: on }}
       accessibilityLabel={badge !== undefined ? `${label}, ${badge} left` : done ? `${label}, done today` : label}
     >
+      {glow ? <Animated.View pointerEvents="none" style={[styles.careGlow, { opacity: pulse, transform: [{ scale: pulse.interpolate({ inputRange: [0, 1], outputRange: [1, 1.12] }) }] }]} /> : null}
       <Animated.View style={[styles.careBtn, { backgroundColor: color }, on && { borderColor: '#FFE27A' }, dim && { opacity: 0.55 }, { transform: [{ scale: press }] }]}>
         <Text style={{ fontSize: 26 }}>{icon}</Text>
         {done ? (
@@ -945,6 +960,7 @@ function CareButton({ icon, label, color, done, dim, badge, on, onPress }: { ico
 }
 
 const styles = StyleSheet.create({
+  careGlow: { position: 'absolute', top: -7, width: 74, height: 74, borderRadius: 37, borderWidth: 5, borderColor: '#FFE27A', shadowColor: '#FFD23F', shadowOpacity: 0.9, shadowRadius: 12, shadowOffset: { width: 0, height: 0 } },
   scene: { height: SCENE_H, overflow: 'hidden' },
   decor: { position: 'absolute', zIndex: 4 },
   petSpot: { position: 'absolute', width: PET_SIZE, height: PET_SIZE + 6, alignItems: 'center', justifyContent: 'flex-end', zIndex: 6 },

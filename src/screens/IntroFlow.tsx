@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { Text } from '../components/ScaledText';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -17,14 +17,10 @@ import * as I from '../game/intro';
 import * as A from '../game/actions';
 import { healthAvailable, nativeHealth } from '../lib/health';
 
-type Step = 'eggs' | 'name' | 'age' | 'under' | 'goals' | 'health' | 'skip' | 'ready';
+type Step = 'eggs' | 'name' | 'age' | 'under' | 'habits';
 
-/** Three eggs in the meadow, each with its own look (no hints about what's inside). */
-const EGG_LOOKS = [
-  { color: '#F6E7C8', spots: ['#E9B872', '#F2CF8E', '#E0A85E'] },
-  { color: '#DDEFF5', spots: ['#9CC9DC', '#B8DAE7', '#86BBD2'] },
-  { color: '#F4DDE8', spots: ['#E2A6C2', '#EDBFD3', '#D893B3'] },
-];
+import { EGG_LOOKS } from './PlayFirst';
+import { clearPendingStarter, loadPendingStarter } from '../lib/pendingStarter';
 
 const FOCUS: { id: I.Focus; label: string; sub: string }[] = [
   { id: 'move', label: 'Move more', sub: 'Steps and walks' },
@@ -50,7 +46,24 @@ export default function IntroFlow() {
   const pet = A.activePet(state);
   const thisYear = new Date().getFullYear();
 
-  const [step, setStep] = useState<Step>(quick || state.onboard?.hatched || pet ? 'age' : 'eggs');
+  const [step, setStep] = useState<Step>(quick || state.onboard?.hatched || pet ? (state.onboard?.birthYear ? 'habits' : 'age') : 'eggs');
+  // A pet hatched before sign-up (play-first) moves into the new game here.
+  const [checking, setChecking] = useState(!pet);
+  useEffect(() => {
+    if (pet) return;
+    loadPendingStarter().then((p) => {
+      if (p && !state.pets.length) {
+        apply((s) => {
+          const r = I.adoptStarter(s, p.pet);
+          return { ...r.state, onboard: { ...r.state.onboard, hatched: true, ...(p.birthYear ? { birthYear: p.birthYear } : {}) } };
+        });
+        if (p.birthYear) setYear(p.birthYear);
+        setStep(p.birthYear && !I.tooYoung(p.birthYear) ? 'habits' : 'age');
+      }
+      clearPendingStarter();
+      setChecking(false);
+    });
+  }, []);
   const eggs = useMemo(() => [I.rollStarterEgg(), I.rollStarterEgg(), I.rollStarterEgg()], []);
   const [picked, setPicked] = useState<number | null>(null);
   const [name, setName] = useState('');
@@ -175,7 +188,7 @@ export default function IntroFlow() {
               </ScrollView>
             </View>
             <Text style={[styles.small, { textAlign: 'center' }]}>Sproutling is for ages 13 and up. Chat and battles are only ever with friends you add.</Text>
-            <Cta label="Next" disabled={!year} onPress={() => (year && I.tooYoung(year) ? go('under') : go(quick ? 'health' : 'goals'))} />
+            <Cta label="Next" disabled={!year} onPress={() => (year && I.tooYoung(year) ? go('under') : go('habits'))} />
           </>
         );
       case 'under':
@@ -198,122 +211,44 @@ export default function IntroFlow() {
             </Pressable>
           </>
         );
-      case 'goals':
-        return (
-          <>
-            <Head kicker="Your goals" title="What do you want help with?" sub={`Pick one or more. ${petName}’s daily quests start with these.`} />
-            <View style={{ gap: 8 }}>
-              {FOCUS.map((f) => {
-                const on = focus.includes(f.id);
-                return (
-                  <Pressable key={f.id} onPress={() => { buzz('light'); setFocus((x) => (on ? x.filter((y) => y !== f.id) : [...x, f.id])); }} style={[styles.option, on && styles.optionOn]} accessibilityRole="checkbox" accessibilityState={{ checked: on }}>
-                    <View style={[styles.check, on && styles.checkOn]}>{on ? <Text style={styles.checkMark}>✓</Text> : null}</View>
-                    <View style={{ flex: 1 }}>
-                      <Text style={styles.optionTitle}>{f.label}</Text>
-                      <Text style={styles.small}>{f.sub}</Text>
-                    </View>
-                  </Pressable>
-                );
-              })}
-            </View>
-            <Text style={[styles.kicker, { marginTop: space.md }]}>HOW ACTIVE ARE YOU MOST DAYS?</Text>
-            <View style={{ flexDirection: 'row', gap: 6 }}>
-              {ACTIVITY.map((a) => (
-                <Pressable key={a.id} onPress={() => { buzz('light'); setActivity(a.id); setGoal(I.ACTIVITY_GOAL[a.id]); }} style={[styles.seg, activity === a.id && styles.segOn]} accessibilityRole="radio" accessibilityState={{ selected: activity === a.id }}>
-                  <Text style={[styles.segText, activity === a.id && { color: '#FFFFFF' }]}>{a.label}</Text>
-                </Pressable>
-              ))}
-            </View>
-            <Cta label="Next" onPress={() => go('health')} />
-          </>
-        );
-      case 'health': {
+      case 'habits': {
         const canHealth = healthAvailable();
-        const goalBox = (
-          <View style={[styles.card, { alignItems: 'center' }]}>
-            <Text style={styles.kicker}>YOUR DAILY STEP GOAL</Text>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.lg }}>
-              <Round label="−" onPress={() => setGoal((g) => I.clampGoal(g - 500))} a11y="Lower goal" />
-              <Text style={styles.goal}>{goal.toLocaleString()}</Text>
-              <Round label="+" onPress={() => setGoal((g) => I.clampGoal(g + 500))} a11y="Raise goal" />
-            </View>
-            <Text style={styles.small}>{avg ? 'A little above your normal. It rises as you do.' : 'It moves with you each week: up after good weeks, down after slow ones.'}</Text>
-          </View>
-        );
-        if (!canHealth || health === 'connected') {
-          return (
-            <>
-              <Head kicker="Your goal" title={health === 'connected' ? 'Let your steps grow your pet' : 'Set your step goal'} sub={health === 'connected' ? 'We read steps and sleep from Apple Health. Nothing else, and it never leaves your account.' : `Your steps grow ${petName}. Start with a goal that feels doable.`} />
-              {avg ? (
-                <View style={styles.card}>
-                  <Text style={styles.kicker}>YOUR LAST 4 WEEKS</Text>
-                  <Text style={styles.big}>About {avg.toLocaleString()} steps a day</Text>
-                </View>
-              ) : null}
-              {goalBox}
-              <Cta label={quick ? 'Done' : 'Next'} onPress={() => (quick ? finish(health) : go('ready'))} />
-            </>
-          );
-        }
+        const connected = health === 'connected';
         return (
           <>
-            <Head kicker="Apple Health" title="Let your steps grow your pet" sub="We read steps and sleep from Apple Health. Nothing else, and it never leaves your account." />
+            <Head kicker="Your habits" title={`What helps ${petName} grow`} sub="Three easy habits. Your goals move with you each week." />
             <View style={styles.card}>
-              <Text style={styles.body}>With Apple Health, we look at your last 4 weeks and suggest a goal a little above your normal.</Text>
+              <HabitRow color="#2FB58A" title="Move" text={`${goal.toLocaleString()} steps a day`}>
+                <Round label="−" onPress={() => setGoal((g) => I.clampGoal(g - 500))} a11y="Lower step goal" />
+                <Round label="+" onPress={() => setGoal((g) => I.clampGoal(g + 500))} a11y="Raise step goal" />
+              </HabitRow>
+              <HabitRow color="#3D8FD6" title="Water" text={`${I.DEFAULT_WATER_GOAL} glasses (${I.DEFAULT_WATER_GOAL * I.OZ_PER_GLASS} oz)`} />
+              <HabitRow color="#7F77DD" title="Sleep" text="7 to 9 hours a night" last />
             </View>
-            <Cta label={busy ? 'Connecting…' : 'Connect Apple Health'} disabled={busy} onPress={connect} />
-            <Pressable onPress={() => go('skip')} style={{ alignSelf: 'center', padding: 8 }} accessibilityRole="button">
-              <Text style={styles.link}>Skip for now (start at {I.ACTIVITY_GOAL[activity].toLocaleString()})</Text>
-            </Pressable>
+            {canHealth ? (
+              <View style={[styles.card, { backgroundColor: connected ? '#E6F7EF' : '#FFF6E8', borderWidth: 2, borderColor: connected ? colors.mint : '#F2C27A' }]}>
+                <Text style={styles.optionTitle}>{connected ? 'Apple Health is connected' : 'Connect Apple Health for bonuses'}</Text>
+                <Bonus text="Eggs turn up on your walks" />
+                <Bonus text="Steps and sleep fill in on their own" />
+                <Bonus text="3 extra battle buffs: Trained, Calm and Rings Closed" />
+                <Bonus text={avg ? `A goal that fits you: about ${avg.toLocaleString()} steps a day lately` : 'A step goal that fits you, from your last 4 weeks'} />
+                {!connected ? (
+                  <Pressable onPress={busy ? undefined : connect} style={[styles.healthBtn, busy && { opacity: 0.6 }]} accessibilityRole="button">
+                    <Text style={styles.healthBtnText}>{busy ? 'Connecting…' : 'Connect Apple Health'}</Text>
+                  </Pressable>
+                ) : null}
+                <Text style={styles.small}>We only read steps, sleep, exercise and mindful minutes. It never leaves your account.</Text>
+              </View>
+            ) : null}
+            <Cta label="Let’s go" onPress={() => finish(health ?? (canHealth ? 'skipped' : null))} />
+            {canHealth && !connected ? <Text style={[styles.small, { textAlign: 'center' }]}>You can connect any time from your account page.</Text> : null}
           </>
         );
       }
-      case 'skip':
-        return (
-          <>
-            <Head kicker="Before you skip" title="Play without Apple Health?" sub="You can still play. Here’s what Apple Health adds:" />
-            <View style={{ gap: 8 }}>
-              <Perk title="Steps and sleep fill in on their own" text="Without it, you type them in yourself each day." />
-              <Perk title="Eggs on your walks" text="Walks can turn up eggs only with steps from Apple Health." />
-              <Perk title="Extra battle buffs" text="Trained, Calm and Rings Closed come from exercise minutes, mindful minutes and activity rings." />
-            </View>
-            <Text style={[styles.small, { textAlign: 'center' }]}>You can connect any time from your account page.</Text>
-            <Cta label={busy ? 'Connecting…' : 'Connect Apple Health'} disabled={busy} onPress={async () => { await connect(); go('health'); }} />
-            <Pressable
-              onPress={() => {
-                setHealth('skipped');
-                setGoal(I.ACTIVITY_GOAL[activity]);
-                if (quick) finish('skipped');
-                else go('ready');
-              }}
-              style={{ alignSelf: 'center', padding: 8 }}
-              accessibilityRole="button"
-            >
-              <Text style={styles.link}>Skip anyway (goal starts at {I.ACTIVITY_GOAL[activity].toLocaleString()})</Text>
-            </Pressable>
-          </>
-        );
-      case 'ready':
-        return (
-          <>
-            <Head kicker="All set" title={`You and ${petName} are bonded`} sub="Here’s your first day together." />
-            {pet && sp ? (
-              <View style={{ alignItems: 'center' }}>
-                <PetSprite species={sp} stage="baby" size={130} shiny={pet.shiny} skin={pet.skin} />
-              </View>
-            ) : null}
-            <View style={{ gap: 8 }}>
-              <Quest text={`Walk ${goal.toLocaleString()} steps`} reward="+XP" />
-              <Quest text={`Drink ${I.DEFAULT_WATER_GOAL} glasses of water (${I.DEFAULT_WATER_GOAL * I.OZ_PER_GLASS} oz)`} reward="+XP" />
-              <Quest text={`Feed ${petName} once`} reward="+XP" />
-            </View>
-            <Text style={[styles.small, { textAlign: 'center' }]}>Finish your quests for a Bronze chest. More of the game opens as {petName} levels up.</Text>
-            <Cta label="Let’s go" onPress={() => finish(health)} />
-          </>
-        );
     }
   })();
 
+  if (checking) return <View style={styles.root} />;
   return (
     <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={[styles.root, { paddingTop: insets.top, paddingLeft: insets.left, paddingRight: insets.right }]}>
       <ScrollView ref={scroll} contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + space.xl }]} keyboardShouldPersistTaps="handled">
@@ -346,6 +281,28 @@ function Round({ label, onPress, a11y }: { label: string; onPress: () => void; a
     <Pressable onPress={() => { buzz('light'); onPress(); }} style={styles.round} accessibilityRole="button" accessibilityLabel={a11y}>
       <Text style={styles.roundText}>{label}</Text>
     </Pressable>
+  );
+}
+
+function HabitRow({ color, title, text, last, children }: { color: string; title: string; text: string; last?: boolean; children?: React.ReactNode }) {
+  return (
+    <View style={[styles.habitRow, !last && { borderBottomWidth: 1, borderBottomColor: colors.line }]}>
+      <View style={[styles.habitDot, { backgroundColor: color }]}><Text style={styles.habitCheck}>✓</Text></View>
+      <View style={{ flex: 1 }}>
+        <Text style={styles.optionTitle}>{title}</Text>
+        <Text style={styles.small}>{text}</Text>
+      </View>
+      {children ? <View style={{ flexDirection: 'row', gap: 8 }}>{children}</View> : null}
+    </View>
+  );
+}
+
+function Bonus({ text }: { text: string }) {
+  return (
+    <View style={{ flexDirection: 'row', gap: 8, alignItems: 'flex-start' }}>
+      <Text style={{ color: colors.mintDark, fontWeight: '900', fontSize: 15 }}>✓</Text>
+      <Text style={[styles.body, { flex: 1, fontSize: 15 }]}>{text}</Text>
+    </View>
   );
 }
 
@@ -399,6 +356,11 @@ function EggPick({ look, on, onPress, index }: { look: (typeof EGG_LOOKS)[number
 }
 
 const styles = StyleSheet.create({
+  habitRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10 },
+  habitDot: { width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center' },
+  habitCheck: { color: '#FFFFFF', fontWeight: '900', fontSize: 16 },
+  healthBtn: { marginTop: 6, minHeight: 50, borderRadius: 16, backgroundColor: '#FF5A5F', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 12 },
+  healthBtnText: { color: '#FFFFFF', fontSize: 17, fontWeight: '900', textAlign: 'center' },
   root: { flex: 1, backgroundColor: colors.bg },
   scroll: { padding: space.lg, gap: space.md, maxWidth: 520, width: '100%', alignSelf: 'center' },
   kicker: { fontSize: 12, fontWeight: '900', color: colors.mintDark, letterSpacing: 1 },

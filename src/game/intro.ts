@@ -52,21 +52,32 @@ export function rollStarterEgg(rng: Rng = defaultRng): StarterEgg {
   return si < 0 ? { rarity } : { rarity, skin: STARTER_SKINS[si].skin };
 }
 
-/** Hatches the chosen starter egg: your first pet, set as active, plus a welcome chest. */
-export function hatchStarter(s: GameState, egg: StarterEgg, rng: Rng = defaultRng): { state: GameState; pet: OwnedPet } {
+/** Rolls the pet inside a starter egg (used before sign-up, so it needs no game state). */
+export function rollStarterPet(egg: StarterEgg, hatchedOn: string, rng: Rng = defaultRng): OwnedPet {
   const pool = speciesOfRarity(egg.rarity);
   const species = pickOne(pool.length ? pool : speciesOfRarity('common'), rng);
-  const pet: OwnedPet = {
+  return {
     id: makeId(rng),
     speciesId: species.id,
     nickname: species.name,
     xp: 0,
     shiny: rng() < SHINY_CHANCE,
-    hatchedOn: todayKey(s),
+    hatchedOn,
     ...(egg.skin ? { skin: egg.skin } : {}),
     personality: randomPersonality(rng),
     ivs: rollIvs(rng),
   };
+}
+
+/** Hatches the chosen starter egg: your first pet, set as active, plus a welcome chest. */
+export function hatchStarter(s: GameState, egg: StarterEgg, rng: Rng = defaultRng): { state: GameState; pet: OwnedPet } {
+  return adoptStarter(s, rollStarterPet(egg, todayKey(s), rng), rng);
+}
+
+/** Adds an already-hatched starter pet (from the play-first intro) to a new game. */
+export function adoptStarter(s: GameState, pet: OwnedPet, rng: Rng = defaultRng): { state: GameState; pet: OwnedPet } {
+  const species = { id: pet.speciesId };
+  const egg = { skin: pet.skin };
   let next: GameState = {
     ...s,
     pets: [...s.pets, pet],
@@ -79,6 +90,9 @@ export function hatchStarter(s: GameState, egg: StarterEgg, rng: Rng = defaultRn
   next = grantChest(next, 'bronze', 'Welcome gift', rng);
   return { state: next, pet };
 }
+
+/** How rare a starter rarity is, for the hatch banner ("only 12% of eggs"). */
+export const starterPct = (r: Rarity) => STARTER_ODDS.find((o) => o.rarity === r)?.pct ?? 0;
 
 /* ---------- Age ---------- */
 

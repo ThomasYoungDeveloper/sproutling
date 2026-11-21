@@ -5,8 +5,12 @@ import { useAuth } from '../state/AuthContext';
 import { Button } from '../components/ui';
 import { PET_IMAGES } from '../components/petImages';
 import { colors, space } from '../theme';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import PlayFirst from './PlayFirst';
+import { loadPendingStarter, savePendingStarter, type PendingStarter } from '../lib/pendingStarter';
+import { tooYoung } from '../game/intro';
 
-type Step = 'welcome' | 'signup' | 'signin' | 'check' | 'forgot' | 'resetSent' | 'newPassword';
+type Step = 'play' | 'welcome' | 'signup' | 'under' | 'signin' | 'check' | 'forgot' | 'resetSent' | 'newPassword';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const NAME_RE = /^[A-Za-z0-9_]{3,20}$/;
@@ -100,7 +104,14 @@ function Card({ children }: { children: React.ReactNode }) {
 
 export default function AuthFlow() {
   const auth = useAuth();
-  const [step, setStep] = useState<Step>(auth.recovering ? 'newPassword' : auth.lastEmail ? 'signin' : 'welcome');
+  const [step, setStep] = useState<Step>(auth.recovering ? 'newPassword' : auth.lastEmail ? 'signin' : 'play');
+  const insets = useSafeAreaInsets();
+  const [pending, setPending] = useState<PendingStarter | null>(null);
+  const [year, setYear] = useState('');
+  useEffect(() => {
+    loadPendingStarter().then((p) => p && setPending(p));
+  }, []);
+  const petName = pending?.pet.nickname;
   const [email, setEmail] = useState(auth.lastEmail);
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
@@ -146,7 +157,16 @@ export default function AuthFlow() {
 
   const doSignUp = async () => {
     setTouched(true);
-    if (!NAME_RE.test(name.trim()) || nameState === 'taken' || !EMAIL_RE.test(email.trim()) || password.length < 6 || !age) return;
+    const by = Number(year);
+    const yearOk = /^\d{4}$/.test(year) && by > 1900 && by <= new Date().getFullYear();
+    if (!NAME_RE.test(name.trim()) || nameState === 'taken' || !EMAIL_RE.test(email.trim()) || password.length < 6 || !yearOk) return;
+    // Under 13: no account is made and nothing is sent anywhere.
+    if (tooYoung(by)) return go('under');
+    if (pending) {
+      const p = { ...pending, birthYear: by };
+      setPending(p);
+      await savePendingStarter(p);
+    }
     setBusy(true);
     setError(null);
     const r = await auth.signUp({ email, password, username: name });
@@ -165,9 +185,22 @@ export default function AuthFlow() {
   };
 
 
+  if (step === 'play') {
+    return (
+      <PlayFirst
+        existing={pending}
+        onSave={(p) => {
+          setPending(p);
+          go('signup');
+        }}
+        onSignIn={() => go('signin')}
+      />
+    );
+  }
+
   return (
     <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
-      <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+      <ScrollView contentContainerStyle={[styles.scroll, { paddingTop: insets.top + space.lg, paddingBottom: insets.bottom + space.lg }]} keyboardShouldPersistTaps="handled">
         {step === 'welcome' && (
           <View style={styles.welcome}>
             <Text style={styles.brand}>Sprout<Text style={{ color: colors.mint }}>ling</Text></Text>
@@ -189,8 +222,13 @@ export default function AuthFlow() {
 
         {step === 'signup' && (
           <Card>
-            <Text style={styles.title}>Create your account</Text>
-            <Text style={styles.sub}>Takes about 30 seconds. Then you’ll pick your first egg!</Text>
+            {pending ? (
+              <View style={{ alignItems: 'center' }}>
+                {PET_IMAGES[pending.pet.speciesId] ? <Image source={PET_IMAGES[pending.pet.speciesId]} style={{ width: 96, height: 96 }} resizeMode="contain" /> : null}
+              </View>
+            ) : null}
+            <Text style={styles.title}>{pending ? `Save ${petName}` : 'Create your account'}</Text>
+            <Text style={styles.sub}>{pending ? `Make a free account so ${petName} is safe, on any phone. Takes about 30 seconds.` : 'Takes about 30 seconds. Then you’ll pick your first egg!'}</Text>
             <Field
               label="Trainer name"
               value={name}
@@ -206,11 +244,30 @@ export default function AuthFlow() {
             />
             <Field label="Email" value={email} onChangeText={setEmail} placeholder="you@example.com" keyboardType="email-address" autoComplete="email" error={emailErr} inputRef={emailRef} onSubmitEditing={() => passRef.current?.focus()} returnKeyType="next" />
             <Field label="Password" value={password} onChangeText={setPassword} placeholder="At least 6 characters" secure autoComplete="new-password" error={passErr} inputRef={passRef} onSubmitEditing={doSignUp} returnKeyType="go" />
-            <Check checked={age} onToggle={() => setAge(!age)}>I’m 13 or older</Check>
-            {touched && !age ? <Text style={styles.err}>Sproutling is for players 13 and up.</Text> : null}
+            <Field
+              label="Birth year"
+              value={year}
+              onChangeText={(t) => setYear(t.replace(/[^0-9]/g, '').slice(0, 4))}
+              placeholder="YYYY"
+              keyboardType="number-pad"
+              maxLength={4}
+              help="Only the year is saved. It sets up chat and safety for you."
+              error={touched && !/^\d{4}$/.test(year) ? 'Enter the year you were born.' : null}
+            />
             {error ? <Text style={styles.errBox}>{error}</Text> : null}
-            <Button primary label={busy ? 'Creating your account…' : 'Create my account'} disabled={busy} onPress={doSignUp} style={styles.big} />
+            <Button primary label={busy ? 'Creating your account…' : pending ? `Save ${petName}` : 'Create my account'} disabled={busy} onPress={doSignUp} style={styles.big} />
             <Link label="Already have an account? Sign in" onPress={() => go('signin')} />
+            {pending ? <Link label={`Back to ${petName}`} onPress={() => go('play')} /> : null}
+          </Card>
+        )}
+
+        {step === 'under' && (
+          <Card>
+            <Text style={[styles.title, { textAlign: 'center' }]}>Come back when you’re 13!</Text>
+            <Text style={[styles.sub, { textAlign: 'center' }]}>
+              Sproutling is made for ages 13 and up. {pending ? `${petName} will wait for you on this phone.` : ''} No account was made and nothing about you was saved.
+            </Text>
+            <Link label="I typed the wrong year" onPress={() => go('signup')} />
           </Card>
         )}
 
@@ -234,7 +291,7 @@ export default function AuthFlow() {
             {notice ? <Text style={styles.noticeBox}>{notice}</Text> : null}
             <Button primary label={busy ? 'Signing in…' : 'Sign in'} disabled={busy} onPress={doSignIn} style={styles.big} />
             <Link label="Forgot your password?" onPress={() => go('forgot')} />
-            <Link label="New here? Create an account" onPress={() => go('signup')} />
+            <Link label="New here? Pick your egg" onPress={() => go(pending ? 'signup' : 'play')} />
           </Card>
         )}
 
@@ -246,7 +303,7 @@ export default function AuthFlow() {
               We sent a confirmation link to{'\n'}
               <Text style={{ fontWeight: '900', color: colors.ink }}>{email.trim()}</Text>
             </Text>
-            <Text style={[styles.sub, { textAlign: 'center' }]}>Tap the link and you’ll come right back here, signed in and ready to pick your egg.</Text>
+            <Text style={[styles.sub, { textAlign: 'center' }]}>{pending ? `Tap the link and you’ll come right back, signed in with ${petName}.` : 'Tap the link and you’ll come right back here, signed in and ready to pick your egg.'}</Text>
             {notice ? <Text style={styles.noticeBox}>{notice}</Text> : null}
             <Button
               label="Resend the email"

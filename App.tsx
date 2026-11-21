@@ -40,7 +40,7 @@ import { useReminders } from './src/lib/useReminders';
 import { onPushTap, registerPushToken } from './src/lib/pushTokens';
 import { onRemindersChange } from './src/lib/remindersState';
 import { useWalkFinds } from './src/lib/useWalkFinds';
-import Tutorial from './src/components/Tutorial';
+import YardTips from './src/components/YardTips';
 import TabBar from './src/components/TabBar';
 import { yardSkyTop } from './src/components/PetScene';
 import { DayComplete, QuestBanner, useCelebrations } from './src/components/Celebrations';
@@ -341,7 +341,7 @@ function Shell() {
       )}
       {/* Pop-ups and toasts stay inside the app's own area (never under a side camera column). */}
       <View pointerEvents="box-none" style={{ position: 'absolute', top: 0, bottom: 0, left: layerInsets.left, right: layerInsets.right, zIndex: 70 }}>
-      {settled && !starter && !state.tutorialDone ? <Tutorial /> : null}
+      {settled && !starter && !state.tutorialDone && tab === 'home' ? <YardTips /> : null}
       {settled && !starter && state.tutorialDone && !showLogin ? <LevelUpPopup onGo={goUnlock} /> : null}
       {showAccount && <AccountSheet onClose={() => setShowAccount(false)} />}
       {showLogin && !starter && <DailyLoginSheet onClose={() => setShowLogin(false)} />}
@@ -395,10 +395,10 @@ function Gate() {
   }
   if (!user || recovering) {
     return (
-      <SafeAreaView style={styles.root}>
+      <View style={styles.root}>
         <StatusBar style="dark" />
         <AuthFlow />
-      </SafeAreaView>
+      </View>
     );
   }
   return (
