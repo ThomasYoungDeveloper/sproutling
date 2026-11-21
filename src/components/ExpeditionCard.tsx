@@ -5,7 +5,8 @@ import { Glow } from './Spotlight';
 import React, { useEffect, useRef, useState } from 'react';
 import * as H from '../game/hp';
 import { FOOD_BY_ID } from '../game/food';
-import { Animated, Easing, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { Animated, Easing, Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { Text } from './ScaledText';
 import Svg, { Circle, Defs, LinearGradient, Path, Rect, Stop } from 'react-native-svg';
 import { useGame } from '../state/GameContext';
 import { useOverlay } from './Overlay';
@@ -13,7 +14,7 @@ import PetPicker from './PetPicker';
 import PetSprite from './PetSprite';
 import EggSprite from './EggSprite';
 import { ItemIcon } from './Cosmetics';
-import { Button } from './ui';
+import { FitSheet, Button } from './ui';
 import { buzz, Confetti, PopIn, Rays } from './fx';
 import { colors, font, space } from '../theme';
 import { SPECIES_BY_ID } from '../game/species';
@@ -232,7 +233,7 @@ function PlaceSheet({ onPick, onClose }: { onPick: (place: Ex.Place) => void; on
   const best = Math.max(1, ...state.pets.map((p) => levelFor(p.xp)));
   return (
     <View style={styles.dim}>
-      <Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessibilityLabel="Close" />
+      <FitSheet onClose={onClose}>
       <View style={styles.bottomSheet}>
         <View style={styles.grab} />
         <Text style={font.title}>Expeditions</Text>
@@ -265,6 +266,7 @@ function PlaceSheet({ onPick, onClose }: { onPick: (place: Ex.Place) => void; on
         {msg ? <Text style={[font.small, { color: '#C4562F' }]}>{msg}</Text> : null}
         <Button label="Close" onPress={onClose} />
       </View>
+      </FitSheet>
     </View>
   );
 }
@@ -279,7 +281,7 @@ function TripSheet({ onClose }: { onClose: () => void }) {
   if (!prog || !pet) return null;
   return (
     <View style={styles.dim}>
-      <Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessibilityLabel="Close" />
+      <FitSheet onClose={onClose}>
       <View style={styles.bottomSheet}>
         <View style={styles.grab} />
         <Text style={font.title}>{pet.nickname} at {prog.place.name}</Text>
@@ -359,6 +361,7 @@ function TripSheet({ onClose }: { onClose: () => void }) {
         </Pressable>
         <Button primary label="OK" onPress={onClose} />
       </View>
+      </FitSheet>
     </View>
   );
 }

@@ -62,7 +62,7 @@ export const COLLECTIBLES = ['Ember Sticker', 'Moon Seed', 'Tide Shell', 'Star S
 export interface ChestResult {
   coins: number;
   eggRarity: Rarity | null;
-  /** The chest had an egg but the basket was full: the egg is waiting for the player to make room.
+  /** The chest had an egg but the basket was full: the egg is waiting for the player to make room. */
   basketFull?: boolean;
   item: string | null;
   /** A dress-up item, if the chest held one (added when opened). */

@@ -1,7 +1,8 @@
 import { AdCard } from '../components/Ads';
 import { useResetIn } from '../lib/useResetIn';
 import React, { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Text } from '../components/ScaledText';
 import Svg, { Path, Rect } from 'react-native-svg';
 import { useGame } from '../state/GameContext';
 import { useTeam } from '../state/TeamContext';

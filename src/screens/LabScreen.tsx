@@ -1,5 +1,6 @@
 import React from 'react';
-import { ScrollView, Text, View } from 'react-native';
+import { ScrollView, View } from 'react-native';
+import { Text } from '../components/ScaledText';
 import PetSprite from '../components/PetSprite';
 import { SPECIES } from '../game/species';
 import { COSMETICS } from '../game/cosmetics';

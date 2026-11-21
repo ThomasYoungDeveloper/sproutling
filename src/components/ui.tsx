@@ -1,6 +1,7 @@
 import { gradeInfo } from '../game/stats';
 import React, { useEffect, useRef } from 'react';
-import { Animated, Pressable, StyleSheet, Text, View, type ViewStyle, type StyleProp, type LayoutChangeEvent } from 'react-native';
+import { Animated, Pressable, ScrollView, StyleSheet, View, type ViewStyle, type StyleProp, type LayoutChangeEvent } from 'react-native';
+import { Text } from './ScaledText';
 import { colors, radius, space, font } from '../theme';
 import type { Rarity } from '../game/types';
 import { RARITY_INFO } from '../game/rarity';
@@ -93,8 +94,28 @@ const styles = StyleSheet.create({
   btnPrimary: { backgroundColor: colors.mint, borderColor: colors.mint },
   btnSmall: { paddingVertical: 6, paddingHorizontal: 10 },
   btnDisabled: { opacity: 0.45 },
-  btnText: { fontWeight: '800', fontSize: 14, color: colors.ink },
+  btnText: { fontWeight: '800', fontSize: 14, color: colors.ink, textAlign: 'center' },
   track: { borderRadius: 999, backgroundColor: '#EEF4F1', borderWidth: 1, borderColor: '#CFE6DB', overflow: 'hidden' },
   badge: { borderRadius: 999, paddingHorizontal: 9, paddingVertical: 3, alignSelf: 'flex-start' },
   badgeText: { fontSize: 12, fontWeight: '800' },
 });
+
+/**
+ * Wraps a pop-up card so it scrolls when it's taller than the screen (big accessibility text sizes).
+ * Tapping the empty space above it closes it, like before.
+ */
+export function FitSheet({ onClose, center, children }: { onClose: () => void; center?: boolean; children: React.ReactNode }) {
+  return (
+    <ScrollView
+      style={{ flex: 1, alignSelf: 'stretch' }}
+      contentContainerStyle={{ flexGrow: 1, justifyContent: center ? 'center' : 'flex-end', ...(center ? { alignItems: 'center' as const } : {}) }}
+      keyboardShouldPersistTaps="handled"
+      showsVerticalScrollIndicator={false}
+      bounces={false}
+    >
+      <Pressable style={{ flexGrow: 1, minHeight: 24 }} onPress={onClose} accessibilityLabel="Close" />
+      {children}
+      {center ? <Pressable style={{ flexGrow: 1, minHeight: 24 }} onPress={onClose} accessible={false} /> : null}
+    </ScrollView>
+  );
+}

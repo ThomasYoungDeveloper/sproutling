@@ -1,10 +1,11 @@
 import React from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
+import { Text } from './ScaledText';
 import { useGame } from '../state/GameContext';
 import { useOverlay } from './Overlay';
 import BattleScreen, { type ResultLine } from './BattleScreen';
 import PetSprite from './PetSprite';
-import { Button } from './ui';
+import { FitSheet, Button } from './ui';
 import { buzz, PopIn } from './fx';
 import { colors, font, space } from '../theme';
 import { SPECIES_BY_ID } from '../game/species';
@@ -87,7 +88,7 @@ export function WildSheet({ w, onFight, onLetGo, onClose, canFight }: { w: WildE
   const r = RARITY_INFO[w.rarity];
   return (
     <View style={styles.backdrop}>
-      <Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessibilityLabel="Close" />
+      <FitSheet onClose={onClose}>
       <View style={[styles.sheet, { backgroundColor: (BG[w.rarity] ?? BG.common)[1] }]}>
         <View style={styles.pill}><Text style={styles.pillText}>{w.at.toLocaleString()} steps</Text></View>
         <Text style={styles.title}>A wild {sp?.name ?? 'pet'} appeared!</Text>
@@ -100,6 +101,7 @@ export function WildSheet({ w, onFight, onLetGo, onClose, canFight }: { w: WildE
         <Button label="Let it go" onPress={onLetGo} style={{ alignSelf: 'stretch' }} />
         <Text style={styles.foot}>Wild pets wait until you open the app. Up to {MAX_WILD_PER_DAY} a day.</Text>
       </View>
+      </FitSheet>
     </View>
   );
 }

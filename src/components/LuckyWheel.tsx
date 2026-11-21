@@ -1,5 +1,6 @@
 import React, { useRef, useState } from 'react';
-import { Animated, Easing, Image, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Animated, Easing, Image, Platform, Pressable, StyleSheet, View } from 'react-native';
+import { Text } from './ScaledText';
 
 const COIN_PILE = require('../../assets/items/coin_pile.png');
 import Svg, { Circle, G, Path } from 'react-native-svg';

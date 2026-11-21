@@ -1,5 +1,6 @@
 import React from 'react';
-import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Animated, Pressable, StyleSheet, View } from 'react-native';
+import { Text } from '../components/ScaledText';
 import { useGame } from '../state/GameContext';
 import { useReveal } from '../components/RevealOverlay';
 import EggSprite from '../components/EggSprite';

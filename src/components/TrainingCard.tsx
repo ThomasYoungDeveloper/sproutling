@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Animated, Easing, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Animated, Easing, Pressable, StyleSheet, View } from 'react-native';
+import { Text } from './ScaledText';
 import Svg, { Ellipse, Path, Rect } from 'react-native-svg';
 import { useGame } from '../state/GameContext';
 import PetSprite from './PetSprite';

@@ -1,7 +1,8 @@
 import * as U from '../game/unlocks';
 import { PersonalitySheet } from './BuffInfo';
 import React, { useRef, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Text } from './ScaledText';
 import { useGame } from '../state/GameContext';
 import PetSprite from './PetSprite';
 import { Button, RarityBadge } from './ui';

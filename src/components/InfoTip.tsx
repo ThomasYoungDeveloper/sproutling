@@ -1,5 +1,7 @@
+import { FitSheet } from './ui';
 import React from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
+import { Text } from './ScaledText';
 import { colors } from '../theme';
 import { buzz } from './fx';
 
@@ -27,7 +29,7 @@ export function InfoPop({ tip, onClose }: { tip: Tip | null; onClose: () => void
   if (!tip) return null;
   return (
     <View style={styles.backdrop}>
-      <Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessibilityLabel="Close" />
+      <FitSheet onClose={onClose} center>
       <View style={styles.card} accessibilityViewIsModal>
         <Text style={styles.title} accessibilityRole="header">{tip.title}</Text>
         <Text style={styles.text}>{tip.text}</Text>
@@ -35,6 +37,7 @@ export function InfoPop({ tip, onClose }: { tip: Tip | null; onClose: () => void
           <Text style={styles.okText}>Got it</Text>
         </Pressable>
       </View>
+      </FitSheet>
     </View>
   );
 }

@@ -1,6 +1,7 @@
 import { CoinText } from '../components/Coin';
 import React, { useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
+import { Text } from '../components/ScaledText';
 import Svg, { Path, Rect } from 'react-native-svg';
 import { useGame } from '../state/GameContext';
 import { Card, SectionHead, Button, ProgressBar, RarityBadge } from '../components/ui';

@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { KeyboardAvoidingView, Linking, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { KeyboardAvoidingView, Linking, Platform, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { Text } from './ScaledText';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useChat, QUICK_PHRASES, type ChatMessage, type ChatRoom } from '../state/ChatContext';
 import { useFriends } from '../state/FriendsContext';
@@ -8,7 +9,7 @@ import { useAuth } from '../state/AuthContext';
 import { useGame } from '../state/GameContext';
 import { useOverlay } from './Overlay';
 import PetSprite from './PetSprite';
-import { Button } from './ui';
+import { FitSheet, Button } from './ui';
 import { buzz } from './fx';
 import { colors, font, space } from '../theme';
 import { SPECIES_BY_ID } from '../game/species';
@@ -61,7 +62,7 @@ export function ChatRules({ onAgree, onClose }: { onAgree?: () => void; onClose:
   const pet = A.activePet(useGame().state);
   return (
     <View style={[styles.full, styles.rulesBack, { paddingBottom: insets.bottom + 14, paddingLeft: 14, paddingRight: 14 }]}>
-      <Pressable style={{ flex: 1 }} onPress={onClose} accessibilityLabel="Close" />
+      <FitSheet onClose={onClose}>
       <View style={styles.rulesCard}>
         {pet && SPECIES_BY_ID[pet.speciesId] ? <View style={{ alignSelf: 'center' }}><PetSprite species={SPECIES_BY_ID[pet.speciesId]} stage={stageFor(pet.xp)} size={84} shiny={pet.shiny} skin={pet.skin} /></View> : null}
         <Text style={styles.rulesTitle}>{onAgree ? 'Before you chat' : 'Community rules'}</Text>
@@ -90,6 +91,7 @@ export function ChatRules({ onAgree, onClose }: { onAgree?: () => void; onClose:
           <View style={{ marginTop: 10 }}><Button label="Close" onPress={onClose} /></View>
         )}
       </View>
+      </FitSheet>
     </View>
   );
 }
@@ -405,7 +407,7 @@ export function SupportSheet({ onClose }: { onClose: () => void }) {
   };
   return (
     <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={[styles.full, styles.rulesBack, { paddingBottom: insets.bottom + 14, paddingLeft: 14, paddingRight: 14 }]}>
-      <Pressable style={{ flex: 1 }} onPress={onClose} accessibilityLabel="Close" />
+      <FitSheet onClose={onClose}>
       <View style={[styles.rulesCard, { gap: 10 }]}>
         <Text style={styles.rulesTitle}>Help and support</Text>
         {state === 'sent' ? (
@@ -431,6 +433,7 @@ export function SupportSheet({ onClose }: { onClose: () => void }) {
           </>
         )}
       </View>
+      </FitSheet>
     </KeyboardAvoidingView>
   );
 }

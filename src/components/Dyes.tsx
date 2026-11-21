@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Text } from './ScaledText';
 import { useGame } from '../state/GameContext';
 import PetSprite from './PetSprite';
 import { Button } from './ui';

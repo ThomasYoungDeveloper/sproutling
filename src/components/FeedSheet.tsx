@@ -1,6 +1,7 @@
 import { useResetIn } from '../lib/useResetIn';
 import React, { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Text } from './ScaledText';
 import { useGame } from '../state/GameContext';
 import * as A from '../game/actions';
 import * as F from '../game/food';

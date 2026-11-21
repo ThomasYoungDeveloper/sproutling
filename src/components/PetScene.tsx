@@ -1,7 +1,8 @@
 import Coin from './Coin';
 import BagSheet from './BagSheet';
 import React, { useEffect, useRef, useState } from 'react';
-import { Animated, Easing, Image, PanResponder, Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Animated, Easing, Image, PanResponder, Platform, Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { Text } from './ScaledText';
 import Svg, { Circle, Defs, Ellipse, LinearGradient, Path, Rect, Stop } from 'react-native-svg';
 import { useGame } from '../state/GameContext';
 import PetSprite from './PetSprite';

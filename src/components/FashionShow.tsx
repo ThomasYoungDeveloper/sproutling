@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { StyleSheet, View, useWindowDimensions } from 'react-native';
+import { Text } from './ScaledText';
 import { supabase } from '../lib/supabase';
 import { useGame } from '../state/GameContext';
 import { useOverlay } from './Overlay';

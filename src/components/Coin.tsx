@@ -1,5 +1,6 @@
 import React from 'react';
-import { StyleSheet, Text, View, type StyleProp, type TextStyle } from 'react-native';
+import { StyleSheet, View, type StyleProp, type TextStyle } from 'react-native';
+import { Text } from './ScaledText';
 import Svg, { Circle, Defs, LinearGradient, Path, Stop } from 'react-native-svg';
 import { shortNumber } from '../lib/shortNumber';
 

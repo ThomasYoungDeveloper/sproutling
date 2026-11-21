@@ -4,9 +4,10 @@ import { useResetIn } from '../lib/useResetIn';
 import Coin from './Coin';
 import React, { useState } from 'react';
 import PotionIcon from './PotionIcon';
-import { Animated, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { Animated, Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { Text } from './ScaledText';
 import { useGame } from '../state/GameContext';
-import { Button } from './ui';
+import { FitSheet, Button } from './ui';
 import { Confetti, PopIn, buzz, useIdleWobble } from './fx';
 import { colors, font, space } from '../theme';
 import * as A from '../game/actions';
@@ -46,7 +47,7 @@ export default function DailyLoginSheet({ onClose }: { onClose: () => void }) {
 
   return (
     <View style={styles.backdrop}>
-      <Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessibilityLabel="Close" />
+      <FitSheet onClose={onClose}>
       {got ? <Confetti width={width} height={height} amount={60} /> : null}
       <View style={styles.sheet}>
         <Text style={[font.title, { textAlign: 'center' }]}>Daily rewards</Text>
@@ -97,6 +98,7 @@ export default function DailyLoginSheet({ onClose }: { onClose: () => void }) {
           </>
         )}
       </View>
+      </FitSheet>
     </View>
   );
 }

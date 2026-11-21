@@ -1,7 +1,8 @@
 import React from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
+import { Text } from './ScaledText';
 import { useGame } from '../state/GameContext';
-import { Button } from './ui';
+import { FitSheet, Button } from './ui';
 import { colors, font, space } from '../theme';
 import * as B from '../game/battle';
 import * as St from '../game/stats';
@@ -50,11 +51,12 @@ export function PersonalitySheet({ personality, name, onClose }: { personality: 
 function Sheet({ children, onClose }: { children: React.ReactNode; onClose: () => void }) {
   return (
     <View style={styles.backdrop}>
-      <Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessibilityLabel="Close" />
+      <FitSheet onClose={onClose}>
       <View style={styles.sheet}>
         {children}
         <Button label="Got it" primary onPress={onClose} />
       </View>
+      </FitSheet>
     </View>
   );
 }

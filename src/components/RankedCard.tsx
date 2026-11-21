@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
+import { Text } from './ScaledText';
 import { useRanked } from '../state/RankedContext';
 import { Button, Card, ProgressBar } from './ui';
 import PetSprite from './PetSprite';

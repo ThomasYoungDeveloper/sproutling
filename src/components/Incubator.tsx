@@ -1,8 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Animated, Easing, Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Animated, Easing, Image, Pressable, StyleSheet, View } from 'react-native';
+import { Text } from './ScaledText';
 import Svg, { Circle, Defs, LinearGradient, Path, RadialGradient, Rect, Stop } from 'react-native-svg';
 import { useGame } from '../state/GameContext';
-import { Button } from './ui';
+import { FitSheet, Button } from './ui';
 import { buzz, PopIn } from './fx';
 import { play } from '../lib/sound';
 import { colors, font, space } from '../theme';
@@ -125,12 +126,13 @@ export function IncubatorOffer() {
 export function IncubatorSheet({ onClose }: { onClose: () => void }) {
   return (
     <View style={styles.backdrop}>
-      <Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessibilityLabel="Close" />
+      <FitSheet onClose={onClose}>
       <View style={styles.sheet}>
         <Text style={font.title}>Incubators</Text>
         <IncubatorOffer />
         <Button primary label="Done" onPress={onClose} />
       </View>
+      </FitSheet>
     </View>
   );
 }

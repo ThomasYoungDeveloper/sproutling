@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
-import { Animated, Easing, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { Animated, Easing, Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { Text } from './ScaledText';
 import PetSprite from './PetSprite';
 import { Backdrop, skyNow } from './PetScene';
 import { RarityBadge } from './ui';

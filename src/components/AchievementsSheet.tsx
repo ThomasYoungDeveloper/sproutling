@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { Text } from './ScaledText';
 import { useGame } from '../state/GameContext';
 import { Button, ProgressBar } from './ui';
 import { buzz, Confetti, PopIn } from './fx';

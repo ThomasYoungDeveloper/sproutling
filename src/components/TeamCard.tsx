@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { Text } from './ScaledText';
 import { useTeam, type TeamMember } from '../state/TeamContext';
 import { Button, Card, ProgressBar } from './ui';
 import PetSprite from './PetSprite';

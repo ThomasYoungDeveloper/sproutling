@@ -1,7 +1,8 @@
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Coin from './src/components/Coin';
 import React, { useEffect, useRef, useState } from 'react';
-import { Image, Linking, Platform, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Image, Linking, Platform, Pressable, SafeAreaView, ScrollView, StyleSheet, View } from 'react-native';
+import { Text } from './src/components/ScaledText';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import ErrorBoundary from './src/components/ErrorBoundary';
@@ -281,10 +282,10 @@ function Shell() {
       {tab === 'home' && !starter ? null : (
         <View style={styles.top}>
           <View style={{ flex: 1, minWidth: 0 }}>
-            <Text style={styles.pageTitle} numberOfLines={1}>{starter ? 'Sproutling' : PAGE[tab].title}</Text>
+            <Text style={styles.pageTitle} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6} maxFontSizeMultiplier={1.15}>{starter ? 'Sproutling' : PAGE[tab].title}</Text>
           </View>
           <View style={styles.pills}>
-            <View style={styles.pill}><Text style={styles.pillText}>🔥 {A.streak(state)}{state.shields ? ` 🛡️${state.shields}` : ''}</Text></View>
+            <View style={styles.pill}><Text style={styles.pillText} maxFontSizeMultiplier={1.15}>🔥 {A.streak(state)}{state.shields ? ` 🛡️${state.shields}` : ''}</Text></View>
             <View style={[styles.pill, { flexDirection: 'row', alignItems: 'center', gap: 5 }]}><Image source={COIN_PILE} style={{ width: 26, height: 26 }} resizeMode="contain" /><RollingNumber value={state.coins} prefix="" short style={styles.pillText} /></View>
             <Pressable onPress={() => setShowAccount(true)} style={[styles.avatar, (!user || sync === 'error') && { backgroundColor: '#E8590C' }]} accessibilityRole="button" accessibilityLabel={user ? `Account: ${username ?? 'you'}${sync === 'error' ? ', offline' : ''}` : 'Sign in to save your pets'}>
               <Text style={styles.avatarText}>{!user || sync === 'error' ? '!' : (username ?? 'T')[0].toUpperCase()}</Text>

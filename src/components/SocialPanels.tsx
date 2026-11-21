@@ -1,7 +1,8 @@
 import { useResetIn } from '../lib/useResetIn';
 import React, { useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
+import { Text } from './ScaledText';
 import { useLive, type LiveBattle } from '../state/LiveBattleContext';
 import { useGame } from '../state/GameContext';
 import { useFriends, type Friend, type Trade } from '../state/FriendsContext';

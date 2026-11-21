@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Text } from './ScaledText';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useGame } from '../state/GameContext';
 import EggSprite from './EggSprite';
@@ -113,6 +114,6 @@ const styles = StyleSheet.create({
   xText: { color: '#FFFFFF', fontWeight: '900', fontSize: 14 },
   rar: { fontSize: 12, fontWeight: '900' },
   leave: { backgroundColor: '#E5533D', borderRadius: 16, paddingVertical: 15, alignItems: 'center' },
-  leaveText: { color: '#FFFFFF', fontWeight: '900', fontSize: 16 },
+  leaveText: { color: '#FFFFFF', fontWeight: '900', fontSize: 16, textAlign: 'center' },
   later: { textAlign: 'center', fontSize: 14, fontWeight: '800', color: colors.muted, paddingVertical: 4 },
 });

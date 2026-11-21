@@ -1,5 +1,6 @@
 import React, { forwardRef } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import { Text } from './ScaledText';
 import Svg, { Circle, Defs, LinearGradient, RadialGradient, Rect, Stop } from 'react-native-svg';
 import PetSprite from './PetSprite';
 import { SPECIES_BY_ID } from '../game/species';

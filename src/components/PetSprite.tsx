@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
-import { Animated, Easing, Image, StyleSheet, Text, View } from 'react-native';
+import { Animated, Easing, Image, StyleSheet, View } from 'react-native';
+import { Text } from './ScaledText';
 import type { Species, Stage } from '../game/types';
 import { RARITY_INFO } from '../game/rarity';
 import { PET_IMAGES } from './petImages';

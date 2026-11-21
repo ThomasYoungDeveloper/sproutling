@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import WildCard from '../components/WildCard';
-import { Animated, Easing, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Animated, Easing, Pressable, StyleSheet, View } from 'react-native';
+import { Text } from '../components/ScaledText';
 import { useGame } from '../state/GameContext';
 import PetScene from '../components/PetScene';
 import TodayCard from '../components/TodayCard';

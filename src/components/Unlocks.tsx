@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { Text } from './ScaledText';
 import Svg, { Path, Rect } from 'react-native-svg';
 import { useGame } from '../state/GameContext';
-import { Button, Card } from './ui';
+import { FitSheet, Button, Card } from './ui';
 import { buzz, Confetti, PopIn } from './fx';
 import PetSprite from './PetSprite';
 import { SPECIES_BY_ID } from '../game/species';
@@ -42,11 +43,12 @@ export function LockedCard({ feature, compact }: { feature: U.Feature; compact?:
 export function LockedSheet({ feature, onClose }: { feature: U.Feature; onClose: () => void }) {
   return (
     <View style={styles.backdrop}>
-      <Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessibilityLabel="Close" />
+      <FitSheet onClose={onClose}>
       <View style={styles.sheet}>
         <LockedCard feature={feature} />
         <Button label="OK" primary onPress={onClose} />
       </View>
+      </FitSheet>
     </View>
   );
 }

@@ -1,9 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Animated, Pressable, StyleSheet, View } from 'react-native';
+import { Text } from './ScaledText';
 import Svg, { Circle, Path } from 'react-native-svg';
 import { useGame } from '../state/GameContext';
 import { useOverlay } from './Overlay';
-import { Button, Card } from './ui';
+import { FitSheet, Button, Card } from './ui';
 import { buzz, PopIn } from './fx';
 import { colors, font, space } from '../theme';
 import { dailyQuests, EXERCISE_MINUTES, MINDFUL_MINUTES, RING_XP, ringsClosed, scoreDay } from '../game/scoring';
@@ -200,7 +201,7 @@ function LogSheet({ habit, onClose }: { habit: Habit; onClose: () => void }) {
 
   return (
     <View style={styles.backdrop}>
-      <Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessibilityLabel="Close" />
+      <FitSheet onClose={onClose}>
       <View style={styles.sheet}>
         <View style={styles.grab} />
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
@@ -261,6 +262,7 @@ function LogSheet({ habit, onClose }: { habit: Habit; onClose: () => void }) {
         </View>
         <Button primary label="Done" onPress={onClose} />
       </View>
+      </FitSheet>
     </View>
   );
 }

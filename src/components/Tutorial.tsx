@@ -1,6 +1,7 @@
 import * as U from '../game/unlocks';
 import React, { useState } from 'react';
-import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Image, Pressable, StyleSheet, View } from 'react-native';
+import { Text } from './ScaledText';
 import { useGame } from '../state/GameContext';
 import * as A from '../game/actions';
 import { PET_IMAGES } from './petImages';

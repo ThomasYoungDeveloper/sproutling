@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Animated, Easing, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Animated, Easing, Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Text } from './ScaledText';
 import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
 import { useGame } from '../state/GameContext';
 import { Button, Card, ProgressBar } from './ui';

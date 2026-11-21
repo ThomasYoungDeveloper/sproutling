@@ -1,5 +1,6 @@
 import React from 'react';
-import { Pressable, ScrollView, Text } from 'react-native';
+import { Pressable, ScrollView } from 'react-native';
+import { Text } from './ScaledText';
 import { reportCrash } from '../lib/crashReport';
 
 /** If a screen crashes, show what happened (and report it) instead of a white screen. */
