@@ -12,7 +12,7 @@ import { useReveal } from '../components/RevealOverlay';
 import { useOverlay } from '../components/Overlay';
 import { Wobble } from '../components/fx';
 import { colors, font, space } from '../theme';
-import { RARITY_INFO, STEPS_PER_KM, stepsToHatch } from '../game/rarity';
+import { RARITY_INFO, STEPS_PER_KM, stepsToHatch, eggSteps } from '../game/rarity';
 import { MAX_INCUBATORS, incubatorPrice } from '../game/incubators';
 import * as A from '../game/actions';
 import type { Egg } from '../game/types';
@@ -35,7 +35,7 @@ export default function EggsScreen() {
   const free = state.incubatorSlots - incubating.length;
   // The big incubator shows the egg you picked, else the one closest to hatching.
   const [pickedId, setPickedId] = useState<string | null>(null);
-  const progressOf = (e: Egg) => e.stepsWalked / stepsToHatch(e.rarity);
+  const progressOf = (e: Egg) => e.stepsWalked / eggSteps(e);
   const shown = incubating.find((e) => e.id === pickedId) ?? [...incubating].sort((a, b) => progressOf(b) - progressOf(a))[0];
 
   const hatch = (e: Egg) => {
@@ -81,7 +81,7 @@ export default function EggsScreen() {
               ) : (
                 <View style={{ alignSelf: 'stretch', gap: 4, paddingHorizontal: space.md }}>
                   <Text style={styles.heroSub}>
-                    {(Math.min(shown.stepsWalked, stepsToHatch(shown.rarity)) / STEPS_PER_KM).toFixed(1)} of {RARITY_INFO[shown.rarity].eggKm} km walked
+                    {(Math.min(shown.stepsWalked, eggSteps(shown)) / STEPS_PER_KM).toFixed(1)} of {+(eggSteps(shown) / STEPS_PER_KM).toFixed(1)} km walked
                   </Text>
                   <ProgressBar value={progressOf(shown)} color={RARITY_INFO[shown.rarity].color} />
                 </View>
@@ -153,7 +153,7 @@ export default function EggsScreen() {
             <EggSprite rarity={e.rarity} size={46} spots={e.skin === 'harvest' ? HARVEST_SPOTS : e.bred ? NURSERY_SPOTS : undefined} color={e.skin === 'harvest' ? HARVEST_EGG : undefined} />
             <View style={{ flex: 1, gap: 2 }}>
               <Text style={[font.body, { fontWeight: '900' }]}>{RARITY_INFO[e.rarity].label} egg{e.bred ? (e.bred.lucky ? ' ✨ Lucky' : ' 💞') : ''}</Text>
-              <Text style={font.tiny}>{RARITY_INFO[e.rarity].eggKm} km to hatch</Text>
+              <Text style={font.tiny}>{+(eggSteps(e) / STEPS_PER_KM).toFixed(1)} km to hatch{e.bred ? ' (nursery eggs: half the walk)' : ''}</Text>
             </View>
             {free > 0 ? (
               <Button small primary label="Incubate" onPress={() => apply((s) => A.incubate(s, e.id))} />

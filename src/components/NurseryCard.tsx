@@ -1,4 +1,6 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useWindowDimensions } from 'react-native';
+import { Rays } from './fx';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { Text } from './ScaledText';
 import { useGame } from '../state/GameContext';
@@ -12,7 +14,7 @@ import { colors, font, space } from '../theme';
 import { SPECIES_BY_ID } from '../game/species';
 import { levelFor, stageFor } from '../game/scoring';
 import { SKIN_INFO, BRED_SKIN_BOOST, INHERIT_CHANCE } from '../game/skins';
-import { RARITY_INFO } from '../game/rarity';
+import { RARITY_INFO, STEPS_PER_KM, eggSteps } from '../game/rarity';
 import { formatLeft } from '../game/expedition';
 import * as Br from '../game/breeding';
 import type { Egg } from '../game/types';
@@ -107,11 +109,13 @@ export default function NurseryCard() {
     if (!r) return setMsg(check && !check.ok ? check.reason : 'Can’t make an egg right now.');
     buzz('success', 'chime');
     apply(() => r.state);
-    setMade({ egg: r.egg, surprise: r.surprise });
     setMsg(null);
     setA(null);
     setB(null);
   };
+
+  const nest = Br.nestingEgg(state);
+  if (nest) return <NestView egg={nest} />;
 
   return (
     <Card style={{ backgroundColor: '#FFF4F8', borderColor: '#F9C9DD' }}>
@@ -205,6 +209,18 @@ function GradePreview({ a, b }: { a: { nickname: string } & Parameters<typeof iv
 }
 
 const styles = StyleSheet.create({
+  nest: { height: 150, alignItems: 'center', justifyContent: 'flex-end' },
+  nestBowl: { position: 'absolute', bottom: 6, width: 170, height: 56, borderRadius: 85, backgroundColor: '#C99A6B', borderWidth: 5, borderColor: '#A87A4E' },
+  nestTitle: { fontSize: 20, fontWeight: '900', color: colors.ink, textAlign: 'center' },
+  nestBar: { height: 12, borderRadius: 6, backgroundColor: '#FBD9E6', overflow: 'hidden' },
+  nestFill: { height: '100%', borderRadius: 6, backgroundColor: '#FF8FB1' },
+  reveal: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: '#2A1F3D', zIndex: 150 },
+  rarBanner: { borderRadius: 18, paddingHorizontal: 24, paddingVertical: 10, transform: [{ rotate: '-4deg' }], alignItems: 'center', maxWidth: '92%' },
+  luckyTop: { color: '#FFF6C9', fontSize: 16, fontWeight: '900', letterSpacing: 2 },
+  rarBannerText: { color: '#FFFFFF', fontSize: 32, fontWeight: '900', letterSpacing: 0.5 },
+  revealSub: { color: '#FFE9A8', fontSize: 16, fontWeight: '900', textAlign: 'center', paddingHorizontal: 30 },
+  revealCard: { margin: 16, marginBottom: 34, backgroundColor: '#FFFFFF', borderRadius: 24, padding: 18, gap: 12 },
+  revealCardText: { fontSize: 15, fontWeight: '800', color: colors.ink, textAlign: 'center' },
   babyLine: { fontSize: 15, fontWeight: '900', color: colors.ink },
   detailsLink: { fontSize: 14, fontWeight: '900', color: '#9C4C77', textDecorationLine: 'underline' },
   preview: { marginTop: 6, gap: 4 },
@@ -232,3 +248,80 @@ const styles = StyleSheet.create({
   made: { alignItems: 'center', gap: 6, paddingVertical: space.sm },
   madeTitle: { fontWeight: '900', fontSize: 17, color: '#7A2E58' },
 });
+
+const NEST_SPOTS = ['#FF8FB1', '#FFD6E5', '#FF8FB1', '#B18CFF'];
+
+/** An egg nesting in the nursery: a countdown that steps shorten, then a big reveal when it's ready. */
+function NestView({ egg }: { egg: Egg }) {
+  const { state, apply } = useGame();
+  const overlay = useOverlay();
+  const [, tick] = useState(0);
+  useEffect(() => {
+    const t = setInterval(() => tick((n) => n + 1), 15_000);
+    return () => clearInterval(t);
+  }, []);
+  const left = Br.nestLeftMs(state);
+  const total = Br.NEST_HOURS[egg.rarity] * 3_600_000;
+  const ready = left <= 0;
+  const [err, setErr] = useState<string | null>(null);
+  const collect = () => {
+    const r = Br.collectNest(state);
+    if (!r) return;
+    if ('error' in r) return setErr(r.error);
+    buzz('heavy', 'special');
+    apply(() => r.state);
+    overlay.open(<NestReveal egg={r.egg} overflow={r.overflow} onClose={overlay.close} />);
+  };
+  return (
+    <Card style={{ backgroundColor: '#FFF4F8', borderColor: '#F9C9DD' }}>
+      <SectionHead title="Pet Nursery" meta={ready ? 'Ready!' : 'Nesting'} />
+      <View style={styles.nest}>
+        <View style={styles.nestBowl} />
+        <View style={{ marginBottom: 18 }}>
+          <EggSprite rarity="common" size={96} color="#FFF6F9" spots={NEST_SPOTS} />
+        </View>
+      </View>
+      {ready ? (
+        <>
+          <Text style={styles.nestTitle}>Your egg is ready!</Text>
+          <Button primary label="Collect the egg" onPress={collect} />
+          {err ? <Text style={styles.msg}>{err}</Text> : null}
+        </>
+      ) : (
+        <>
+          <Text style={styles.nestTitle} accessibilityLiveRegion="polite">Ready in {formatLeft(left)}</Text>
+          <View style={styles.nestBar}><View style={[styles.nestFill, { width: `${Math.round(Math.min(1, Math.max(0, 1 - left / total)) * 100)}%` }]} /></View>
+          <Text style={[font.small, { textAlign: 'center' }]}>Walk to speed it up: every 1,000 steps takes 15 minutes off. Rarer eggs nest longer.</Text>
+        </>
+      )}
+    </Card>
+  );
+}
+
+function NestReveal({ egg, overflow, onClose }: { egg: Egg; overflow: boolean; onClose: () => void }) {
+  const { width, height } = useWindowDimensions();
+  const info = RARITY_INFO[egg.rarity];
+  const lucky = egg.bred?.lucky;
+  return (
+    <View style={styles.reveal}>
+      <Confetti amount={egg.rarity === 'common' ? 40 : 80} width={width} height={height} />
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 14 }}>
+        <Rays color={info.color} size={Math.min(width, 420)} />
+        <PopIn from={0.3}><EggSprite rarity={egg.rarity} size={170} spots={NEST_SPOTS} /></PopIn>
+        <PopIn delay={250}>
+          <View style={[styles.rarBanner, { backgroundColor: info.color }]}>
+            {lucky ? <Text style={styles.luckyTop}>LUCKY</Text> : null}
+            <Text style={styles.rarBannerText} numberOfLines={1} adjustsFontSizeToFit>{info.label.toUpperCase()} EGG!</Text>
+          </View>
+        </PopIn>
+        {lucky ? <Text style={styles.revealSub}>It shimmers! The baby gets +{lucky} on every stat.</Text> : null}
+      </View>
+      <View style={styles.revealCard}>
+        <Text style={styles.revealCardText}>
+          {overflow ? 'Your basket is full, so it’s waiting on the Eggs tab.' : `It’s in your basket. Nursery eggs hatch with half the walk: ${+(eggSteps(egg) / STEPS_PER_KM).toFixed(1)} km.`}
+        </Text>
+        <Button primary label="Nice!" onPress={onClose} />
+      </View>
+    </View>
+  );
+}

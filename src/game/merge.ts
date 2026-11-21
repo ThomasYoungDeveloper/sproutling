@@ -54,6 +54,9 @@ export function mergeSaves(base: GameState | null, mine: GameState, theirs: Game
     ...m,
     incubating: m.incubating || t.incubating,
     stepsWalked: Math.max(m.stepsWalked ?? 0, t.stepsWalked ?? 0),
+    // Collected from the nursery / moved into the basket on either side sticks; otherwise the nearer finish wins.
+    nestUntil: m.nestUntil != null && t.nestUntil != null ? Math.min(m.nestUntil, t.nestUntil) : undefined,
+    overflow: m.overflow && t.overflow ? true : undefined,
   }));
   const chests = mergeById(base.chests, mine.chests, theirs.chests, (m) => m);
 

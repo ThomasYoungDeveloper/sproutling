@@ -16,6 +16,11 @@ export const RARITY_INFO: Record<Rarity, { label: string; color: string; soft: s
  */
 export const STEPS_PER_KM = 1300;
 
+/** Steps for this egg: nursery eggs need half the walk. */
+export function eggSteps(e: { rarity: Rarity; bred?: unknown }): number {
+  return Math.round(stepsToHatch(e.rarity) * (e.bred ? 0.5 : 1));
+}
+
 export function stepsToHatch(rarity: Rarity): number {
   return RARITY_INFO[rarity].eggKm * STEPS_PER_KM;
 }

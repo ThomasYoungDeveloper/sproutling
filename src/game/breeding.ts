@@ -14,6 +14,24 @@ import * as A from './actions';
 export const ADULT_LEVEL = 7;
 export const BREED_COST = 300;
 export const REST_HOURS = 24;
+/** Bred eggs nest in the nursery this long before they're ready (steps make it shorter). */
+export const NEST_HOURS: Record<Rarity, number> = { common: 1, uncommon: 2, rare: 4, epic: 8, legendary: 12 };
+/** The egg nesting in the nursery right now, if any. */
+export const nestingEgg = (s: GameState) => s.eggs.find((e) => e.nestUntil != null);
+export const nestLeftMs = (s: GameState, now = Date.now()) => {
+  const e = nestingEgg(s);
+  return e ? Math.max(0, e.nestUntil! - gameNow(s, now)) : 0;
+};
+/** Moves a finished nest egg into the basket (or the waiting spot when the basket is full). */
+export function collectNest(s: GameState, now = Date.now()): { state: GameState; egg: Egg; overflow: boolean } | { error: string } | null {
+  const e = nestingEgg(s);
+  if (!e || nestLeftMs(s, now) > 0) return null;
+  const full = A.basketFull(s);
+  if (full && A.overflowEggs(s).length >= A.MAX_OVERFLOW) return { error: 'Your basket is full. Hatch or leave an egg first.' };
+  const egg: Egg = { ...e, nestUntil: undefined, ...(full ? { overflow: true } : {}) };
+  delete (egg as any).nestUntil;
+  return { state: { ...s, eggs: s.eggs.map((x) => (x.id === e.id ? egg : x)) }, egg, overflow: full };
+}
 /** Chance the baby is a surprise species that shares a parent's element. */
 export const SURPRISE_CHANCE = 0.1;
 
@@ -35,6 +53,7 @@ export function canBreed(s: GameState, aId: string, bId: string, now = Date.now(
     if (restLeftMs(s, p, now) > 0) return { ok: false, reason: `${p.nickname} is resting after the last egg.` };
     if (s.expedition?.petId === p.id) return { ok: false, reason: `${p.nickname} is out exploring.` };
   }
+  if (nestingEgg(s)) return { ok: false, reason: 'An egg is already nesting. Collect it first.' };
   if (A.basketFull(s)) return { ok: false, reason: `Your egg basket is full (${A.EGG_BASKET} / ${A.EGG_BASKET}). Hatch an egg to make room first.` };
   if (s.coins < BREED_COST) return { ok: false, reason: `The nursery costs ${BREED_COST} coins.` };
   return { ok: true };
@@ -72,6 +91,7 @@ export function breed(s: GameState, aId: string, bId: string, rng: Rng = default
     stepsWalked: 0,
     incubating: false,
     foundOn: A.todayKey(s),
+    nestUntil: gameNow(s, now) + NEST_HOURS[SPECIES_BY_ID[speciesId].rarity] * 3_600_000,
     bred: { speciesId, parents: [a.speciesId, b.speciesId], parentSkins: [a.skin ?? null, b.skin ?? null], parentIvs: [ivsOf(a), ivsOf(b)], ...(lucky ? { lucky } : {}) },
   };
   const rest = gameNow(s, now) + REST_HOURS * 3_600_000;

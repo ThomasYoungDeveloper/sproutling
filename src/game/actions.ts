@@ -10,7 +10,7 @@ import { randomPersonality, rollIvs, inheritIvs } from './stats';
 import { openChest, RAINBOW_STREAK, RAINBOW_UPGRADE_CHANCE, type ChestResult } from './loot';
 import { addDye, rollDye } from './dyes';
 import { speciesOfRarity, SPECIES, SPECIES_BY_ID } from './species';
-import { SHINY_CHANCE, stepsToHatch } from './rarity';
+import { SHINY_CHANCE, stepsToHatch, eggSteps } from './rarity';
 import { makeId, pickOne, type Rng, defaultRng } from './random';
 
 /**
@@ -48,7 +48,7 @@ export function updateToday(s: GameState, change: (d: DayLog) => DayLog): GameSt
   // Steps also warm every egg sitting in an incubator.
   const stepDelta = after.steps - before.steps;
   if (stepDelta > 0) {
-    next.eggs = next.eggs.map((e) => (e.incubating ? { ...e, stepsWalked: e.stepsWalked + stepDelta } : e));
+    next.eggs = next.eggs.map((e) => warmEgg(e, stepDelta));
   }
 
   if (gained !== 0) {
@@ -119,7 +119,7 @@ export function syncHealthSteps(s: GameState, total: number): GameState {
   const raise = Math.max(0, total - d.steps);
   let next = raise > 0 ? addSteps(s, raise) : s;
   const extra = walked - raise;
-  if (extra > 0) next = { ...next, eggs: next.eggs.map((e) => (e.incubating ? { ...e, stepsWalked: e.stepsWalked + extra } : e)) };
+  if (extra > 0) next = { ...next, eggs: next.eggs.map((e) => warmEgg(e, extra)) };
   const key = todayKey(next);
   return { ...next, days: { ...next.days, [key]: { ...next.days[key], healthSteps: total } } };
 }
@@ -175,13 +175,22 @@ export function addSkinEgg(s: GameState, skin: Skin, rng: Rng = defaultRng): Gam
   return { ...s, eggs: [...s.eggs, { ...newEgg(s, rarity, rng), skin }] };
 }
 
+/** Every 1,000 steps takes 15 minutes off a nursery nest. */
+export const NEST_MS_PER_STEP = 900;
+/** Steps warm eggs in incubators and bring a nursery nest closer. */
+function warmEgg(e: Egg, steps: number): Egg {
+  if (e.incubating) return { ...e, stepsWalked: e.stepsWalked + steps };
+  if (e.nestUntil != null) return { ...e, nestUntil: e.nestUntil - steps * NEST_MS_PER_STEP };
+  return e;
+}
+
 /** Eggs waiting to hatch (not counting ones in an incubator) are kept in a basket that holds this many. */
 export const EGG_BASKET = 12;
 /** Eggs that came in while the basket was full wait here (up to this many) until the player makes room. */
 export const MAX_OVERFLOW = 3;
 /** Leaving an egg behind gives the active pet this much XP. Set all to 0 to turn the reward off. */
 export const LEAVE_XP: Record<Rarity, number> = { common: 20, uncommon: 35, rare: 60, epic: 120, legendary: 250 };
-export const basketEggs = (s: GameState) => s.eggs.filter((e) => !e.incubating && !e.overflow);
+export const basketEggs = (s: GameState) => s.eggs.filter((e) => !e.incubating && !e.overflow && e.nestUntil == null);
 export const overflowEggs = (s: GameState) => s.eggs.filter((e) => e.overflow);
 export const basketCount = (s: GameState) => basketEggs(s).length;
 export const basketFull = (s: GameState) => basketCount(s) >= EGG_BASKET;
@@ -204,7 +213,7 @@ export function addEgg(s: GameState, rarity: Rarity, rng: Rng = defaultRng): { s
  */
 export function leaveEgg(s: GameState, eggId: string): { state: GameState; xp: number } | null {
   const egg = s.eggs.find((e) => e.id === eggId);
-  if (!egg || egg.incubating) return null;
+  if (!egg || egg.incubating || egg.nestUntil != null) return null;
   let eggs = s.eggs.filter((e) => e.id !== eggId);
   let next: GameState = { ...s, eggs };
   const firstOverflow = eggs.find((e) => e.overflow);
@@ -289,11 +298,12 @@ export const incubatingCount = (s: GameState) => s.eggs.filter((e) => e.incubati
 
 export function incubate(s: GameState, eggId: string): GameState {
   if (incubatingCount(s) >= s.incubatorSlots) return s;
-  if (s.eggs.find((e) => e.id === eggId)?.overflow) return s;
+  const pick = s.eggs.find((e) => e.id === eggId);
+  if (pick?.overflow || pick?.nestUntil != null) return s;
   return { ...s, eggs: s.eggs.map((e) => (e.id === eggId ? { ...e, incubating: true } : e)) };
 }
 
-export const isReady = (e: Egg) => e.incubating && e.stepsWalked >= stepsToHatch(e.rarity);
+export const isReady = (e: Egg) => e.incubating && e.stepsWalked >= eggSteps(e);
 
 export interface Hatched {
   state: GameState;

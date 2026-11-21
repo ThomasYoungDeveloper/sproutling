@@ -103,6 +103,8 @@ export interface Egg {
   skin?: Skin;
   /** Came in while the basket was full: waits until the player picks an egg to leave behind. */
   overflow?: boolean;
+  /** Bred eggs nest in the nursery until this time (game clock, ms). Steps bring it closer. */
+  nestUntil?: number;
 }
 
 /** Rare color variants of a pet. */

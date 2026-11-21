@@ -13,7 +13,7 @@ import * as C from '../game/care';
 import { healthProvider, isVerified } from '../lib/health';
 import * as I from '../game/intro';
 import { tipFor, WHY } from '../game/tips';
-import { stepsToHatch } from '../game/rarity';
+import { stepsToHatch, eggSteps } from '../game/rarity';
 import { glassesText, stepGoalOf, waterGoalOf } from '../game/scoring';
 import { NextUnlockLine } from './Unlocks';
 import * as W from '../game/wishes';
@@ -47,7 +47,7 @@ export default function TodayCard() {
   const label: Record<Habit, string> = { steps: `of ${goalOf.steps.toLocaleString()}`, water: `of ${I.waterText(goalOf.water, unit)}`, sleep: 'sleep' };
   const name = pet?.nickname ?? 'your pet';
   const fed = !!d.care?.fed;
-  const egg = state.eggs.filter((e) => e.incubating && !A.isReady(e)).map((e) => stepsToHatch(e.rarity) - e.stepsWalked).sort((a, b) => a - b)[0];
+  const egg = state.eggs.filter((e) => e.incubating && !A.isReady(e)).map((e) => eggSteps(e) - e.stepsWalked).sort((a, b) => a - b)[0];
   const next = !fed
     ? `Next: feed ${name}`
     : d.water < goalOf.water

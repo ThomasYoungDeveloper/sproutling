@@ -2,7 +2,7 @@ import { COLLECTIBLES } from './loot';
 import { claimableCount, currentEvent } from './events';
 import type { DayLog, Element, GameState } from './types';
 import { glassesText, scoreDay, stepGoalOf, waterGoalOf } from './scoring';
-import { stepsToHatch, RARITY_INFO } from './rarity';
+import { stepsToHatch, eggSteps, RARITY_INFO } from './rarity';
 import * as A from './actions';
 import { progress } from './expedition';
 import { claimable } from './achievements';
@@ -132,7 +132,7 @@ export function reminders(s: GameState): Reminder[] {
   if (wLeft > 0) out.push({ id: 'water', icon: '💧', text: `${glassesText(wLeft)} more glass${wLeft === 1 ? '' : 'es'} of water for today’s quest`, action: 'water' });
   const close = s.eggs
     .filter((e) => e.incubating && !A.isReady(e))
-    .map((e) => ({ e, left: stepsToHatch(e.rarity) - e.stepsWalked }))
+    .map((e) => ({ e, left: eggSteps(e) - e.stepsWalked }))
     .sort((a, b) => a.left - b.left)[0];
   if (close && close.left <= 1500) out.push({ id: 'egg', icon: '👣', text: `Your ${RARITY_INFO[close.e.rarity].label} egg hatches in ${close.left.toLocaleString()} steps!`, action: 'steps' });
   if (d.steps < stepGoalOf(d)) out.push({ id: 'steps', icon: '👟', text: `${(stepGoalOf(d) - d.steps).toLocaleString()} steps to today’s walking quest`, action: 'steps' });
