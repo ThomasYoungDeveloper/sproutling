@@ -466,6 +466,19 @@ ok(A.applyShields(shielded.state).used === 0, 'shields are not used twice');
   ok(R.planReminders(S0, { now: morning.getTime(), inGuild: true, raidHitsLeft: 2 }).some((r: any) => r.id === 'raid') || morning.getDay() === 0 || morning.getDay() === 6, 'guild raid reminder before the weekend ends');
   ok(!R.planReminders(S0, { now: morning.getTime(), inGuild: true, raidHitsLeft: 0 }).some((r: any) => r.id === 'raid'), 'no raid reminder when out of hits');
   ok(R.planReminders({ ...S0, pets: [], activePetId: null }, { now: morning.getTime() }).length === 0, 'no reminders before you have a pet');
+  // Guild boss already beaten: no "hit the boss" nudge; point at the next chest instead, and announce Monday's boss.
+  const wed = new Date(2026, 10, 18, 9).getTime();
+  const team = (damage: number, total: number) => ({ raid: { hp: 5000, damage, hits_left: 5 }, total, goal: 100000 });
+  const alive = R.planReminders(S0, { now: wed, ...R.guildReminderOpts(team(1000, 50000)) });
+  ok(alive.some((r: any) => r.id === 'raid'), 'raid reminder while the boss is still alive');
+  const beatenPlan = R.planReminders(S0, { now: wed, ...R.guildReminderOpts(team(5000, 80806)) });
+  ok(!beatenPlan.some((r: any) => r.id === 'raid'), 'no raid reminder once the guild boss is defeated');
+  ok(beatenPlan.some((r: any) => r.id === 'guild' && r.body.includes('19,194') && r.body.includes('Silver')), 'beaten boss: Saturday nudge names the steps left for the Silver chest');
+  ok(R.planReminders(S0, { now: wed, ...R.guildReminderOpts(team(5000, 150000)) }).some((r: any) => r.id === 'guild' && r.body.includes('Gold')), 'Silver earned: nudge points at the Gold chest');
+  ok(!R.planReminders(S0, { now: wed, ...R.guildReminderOpts(team(5000, 200000)) }).some((r: any) => r.id === 'guild'), 'no guild nudge once both chests are earned');
+  const newBoss = beatenPlan.find((r: any) => r.id === 'raid-new');
+  ok(!!newBoss && new Date(newBoss.at).getDay() === 1 && new Date(newBoss.at).getHours() === 12, 'new boss reminder at noon next Monday');
+  ok(!R.planReminders(S0, { now: wed }).some((r: any) => r.id === 'raid-new' || r.id === 'guild'), 'no guild reminders when not in a guild');
 }
 // Walking finds
 {

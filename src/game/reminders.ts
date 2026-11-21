@@ -6,6 +6,7 @@ import { dailyQuests, glassesText, stepGoalOf, waterGoalOf } from './scoring';
 const joinList = (xs: string[]) => (xs.length <= 1 ? xs.join('') : `${xs.slice(0, -1).join(', ')} and ${xs[xs.length - 1]}`);
 import { progress } from './expedition';
 import { stepsToHatch, eggSteps } from './rarity';
+import { raidBoss } from './team';
 
 /**
  * Which reminders to schedule, worked out from the save. The phone app turns these into
@@ -30,7 +31,7 @@ function atHour(now: number, daysAhead: number, hour: number): number {
   return d.getTime();
 }
 
-export function planReminders(s: GameState, opts: { now?: number; inGuild?: boolean; raidHitsLeft?: number } = {}): Reminder[] {
+export function planReminders(s: GameState, opts: { now?: number; inGuild?: boolean; raidHitsLeft?: number; raidBeaten?: boolean; guildSteps?: number; guildGoal?: number } = {}): Reminder[] {
   const now = opts.now ?? Date.now();
   const pet = s.pets.find((p) => p.id === s.activePetId);
   const name = pet?.nickname ?? 'Your pet';
@@ -98,13 +99,40 @@ export function planReminders(s: GameState, opts: { now?: number; inGuild?: bool
   const nestLeft = Br.nestLeftMs(s, now);
   if (prefs.eggs !== false && Br.nestingEgg(s) && nestLeft > 0) out.push({ id: 'nest', at: now + nestLeft, title: 'Your nursery egg is ready!', body: 'Come see how rare it is.' });
 
-  // 4. Guild raid ends Sunday night: nudge on Saturday evening if you still have hits left.
-  if (prefs.raid !== false && opts.inGuild && (opts.raidHitsLeft ?? 1) > 0) {
+  // 4. Guild week ends Sunday night. Saturday evening: nudge to hit the boss only while it's still alive and you have
+  // hits left; once it's beaten, nudge toward the next guild chest instead (if there's one left to earn).
+  if (prefs.raid !== false && opts.inGuild) {
     const d = new Date(now);
     const toSat = (6 - d.getDay() + 7) % 7;
     const sat = atHour(now, toSat, 18);
-    if (sat > now) out.push({ id: 'raid', at: sat, title: 'Guild raid ends tomorrow!', body: 'Hit the boss before it escapes. Your guild is counting on you.' });
+    if (!opts.raidBeaten && (opts.raidHitsLeft ?? 1) > 0) {
+      out.push({ id: 'raid', at: sat, title: 'Guild raid ends tomorrow!', body: 'Hit the boss before it escapes. Your guild is counting on you.' });
+    } else if (opts.guildGoal && opts.guildSteps != null) {
+      const silverLeft = opts.guildGoal - opts.guildSteps;
+      const goldLeft = opts.guildGoal * 2 - opts.guildSteps;
+      const [left, chest] = silverLeft > 0 ? [silverLeft, 'Silver'] : [goldLeft, 'Gold'];
+      if (left > 0) out.push({ id: 'guild', at: sat, title: 'Guild week ends tomorrow!', body: `Your guild needs ${left.toLocaleString()} more steps for the ${chest} chest.` });
+    }
+
+    // A new boss shows up every Monday: let them know at lunchtime.
+    const toMon = ((8 - d.getDay()) % 7) || 7;
+    const mon = atHour(now, toMon, 12);
+    const m = new Date(mon);
+    const week = `${m.getFullYear()}-${String(m.getMonth() + 1).padStart(2, '0')}-${String(m.getDate()).padStart(2, '0')}`;
+    out.push({ id: 'raid-new', at: mon, title: 'A new guild boss appeared!', body: `${raidBoss(week).name} is here. Team up with your guild to take it down.` });
   }
 
   return out.filter((r) => r.at > now).sort((a, b) => a.at - b.at);
+}
+
+/** The guild facts the planner needs, from the guild loaded in the app (null when not in one). */
+export function guildReminderOpts(team: { raid: { hp: number; damage: number; hits_left: number }; total: number; goal: number } | null | undefined) {
+  if (!team) return { inGuild: false };
+  return {
+    inGuild: true,
+    raidHitsLeft: team.raid.hits_left,
+    raidBeaten: team.raid.hp > 0 && team.raid.damage >= team.raid.hp,
+    guildSteps: team.total,
+    guildGoal: team.goal,
+  };
 }

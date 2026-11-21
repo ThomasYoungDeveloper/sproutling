@@ -13,7 +13,7 @@ import { useOverlay } from './Overlay';
 import PremiumSheet from './PremiumSheet';
 import { colors, font, space } from '../theme';
 import { useTeam } from '../state/TeamContext';
-import { planReminders } from '../game/reminders';
+import { guildReminderOpts, planReminders } from '../game/reminders';
 import { getRemindersOn, onRemindersChange, remindersSupported, setRemindersOn } from '../lib/remindersState';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { appBuild } from '../lib/appBuild';
@@ -97,7 +97,7 @@ function RemindersToggle() {
     getRemindersOn().then(setOn);
     return onRemindersChange(setOn);
   }, []);
-  const list = on ? planReminders(state, { inGuild: !!team, raidHitsLeft: team?.raid.hits_left }).slice(0, 4) : [];
+  const list = on ? planReminders(state, guildReminderOpts(team)).slice(0, 4) : [];
   const when = (t: number) => new Date(t).toLocaleString(undefined, { weekday: 'short', hour: 'numeric', minute: '2-digit' });
   return (
     <View>
