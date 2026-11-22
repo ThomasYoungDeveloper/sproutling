@@ -464,7 +464,6 @@ ok(A.applyShields(shielded.state).used === 0, 'shields are not used twice');
   const late = new Date(morning); late.setHours(21);
   ok(!R.planReminders(S0, { now: late.getTime() }).some((r: any) => r.id === 'habits-0'), 'no reminder for an evening that already passed');
   ok(R.planReminders(S0, { now: morning.getTime(), inGuild: true, raidHitsLeft: 2 }).some((r: any) => r.id === 'raid') || morning.getDay() === 0 || morning.getDay() === 6, 'guild raid reminder before the weekend ends');
-  ok(!R.planReminders(S0, { now: morning.getTime(), inGuild: true, raidHitsLeft: 0 }).some((r: any) => r.id === 'raid'), 'no raid reminder when out of hits');
   ok(R.planReminders({ ...S0, pets: [], activePetId: null }, { now: morning.getTime() }).length === 0, 'no reminders before you have a pet');
   // Guild boss already beaten: no "hit the boss" nudge; point at the next chest instead, and announce Monday's boss.
   const wed = new Date(2026, 10, 18, 9).getTime();

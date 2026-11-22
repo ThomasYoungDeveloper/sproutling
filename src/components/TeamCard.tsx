@@ -73,7 +73,7 @@ function RaidBox({ onWin, onMsg }: { onWin: () => void; onMsg: (m: { ok: boolean
           ? claimed
             ? 'Your guild beat this week’s boss. A new one appears Monday!'
             : 'Your guild beat the boss! Everyone gets a Gold chest and 150 coins.'
-          : `Walking does most of the damage: every 10 steps is 1 hit point. Battles add a little (${hits_left} of ${RAID_HITS_PER_DAY} left today).`}
+          : 'Walk to beat the boss: every 10 steps your guild takes is 1 damage.'}
       </Text>
       {beaten && !claimed ? (
         <PopIn>

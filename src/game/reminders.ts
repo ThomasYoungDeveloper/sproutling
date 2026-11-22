@@ -105,8 +105,8 @@ export function planReminders(s: GameState, opts: { now?: number; inGuild?: bool
     const d = new Date(now);
     const toSat = (6 - d.getDay() + 7) % 7;
     const sat = atHour(now, toSat, 18);
-    if (!opts.raidBeaten && (opts.raidHitsLeft ?? 1) > 0) {
-      out.push({ id: 'raid', at: sat, title: 'Guild raid ends tomorrow!', body: 'Hit the boss before it escapes. Your guild is counting on you.' });
+    if (!opts.raidBeaten) {
+      out.push({ id: 'raid', at: sat, title: 'Guild boss escapes tomorrow!', body: 'Every step hits the boss. Take a walk with your guild!' });
     } else if (opts.guildGoal && opts.guildSteps != null) {
       const silverLeft = opts.guildGoal - opts.guildSteps;
       const goldLeft = opts.guildGoal * 2 - opts.guildSteps;

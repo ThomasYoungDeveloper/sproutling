@@ -274,8 +274,7 @@ export default function BattleScreen({ opponent, onClose, onResult, live, specia
       apply(() => r.state);
       setReward(r.reward);
       report(opponent.friendId ?? null, won).then(setRp);
-      const dmg = after ? B.raidDamage(after) : 0;
-      if (guild && dmg) raidHit(dmg).then((res) => setRaid(res === 'ok' ? { dmg, boss: raidBoss(guild.week).name } : null));
+      // The guild boss is beaten by walking only; battles don't hit it.
     }
     onResult?.(won);
     buzz(won ? 'success' : 'medium', won ? 'win' : 'lose');

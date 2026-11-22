@@ -141,7 +141,7 @@ export default function ChestsScreen() {
           key: 'gold', kind: 'gold', title: 'Gold: guild raid boss',
           count: team.claimed.includes('raid') ? 'Earned ✓' : `${Math.min(100, Math.round((team.raid.damage / team.raid.hp) * 100))}%`,
           pct: team.claimed.includes('raid') ? 1 : Math.min(1, team.raid.damage / team.raid.hp),
-          hint: team.claimed.includes('raid') ? 'New boss on Monday' : `Ends Sunday · ${team.raid.hits_left} hit${team.raid.hits_left === 1 ? '' : 's'} left today`,
+          hint: team.claimed.includes('raid') ? 'New boss on Monday' : 'Walk with your guild before Sunday',
         }
       : { key: 'gold', kind: 'gold', title: 'Gold: guild raid boss', count: 'No guild', pct: 0, hint: 'Join a guild to fight the weekly boss' },
     {
