@@ -1,4 +1,4 @@
-"""Generates skin variants (gold, rainbow; silver is now in make_skins2.py; 'mono' is now the Ink style from make_skins2.py) of every pet image."""
+"""Generates skin variants (rainbow; gold and silver is now in make_skins2.py; 'mono' is now the Ink style from make_skins2.py) of every pet image."""
 import sys, os, colorsys
 from PIL import Image, ImageOps, ImageEnhance
 
@@ -48,12 +48,12 @@ def make(path, skin):
     # Same palette size as the originals to keep files small.
     return res.quantize(colors=128, method=Image.Quantize.FASTOCTREE)
 
-for skin in ['gold', 'rainbow']:
+for skin in ['rainbow']:
     os.makedirs(f'{out}/{skin}', exist_ok=True)
 names = sorted(f[:-4] for f in os.listdir(src) if f.endswith('.png'))
 for pid in names:
     if only and pid not in only:
         continue
-    for skin in ['gold', 'rainbow']:
+    for skin in ['rainbow']:
         make(f'{src}/{pid}.png', skin).save(f'{out}/{skin}/{pid}.png', optimize=True)
 print('made', len(names) if not only else len(only))

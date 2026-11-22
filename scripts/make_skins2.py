@@ -14,7 +14,7 @@ src, out = sys.argv[1], sys.argv[2]
 only = sys.argv[3].split(',') if len(sys.argv) > 3 and sys.argv[3] else None
 which = sys.argv[4].split(',') if len(sys.argv) > 4 else None
 
-SKINS = ['silver', 'slime', 'ancient', 'sakura', 'moonlit', 'ocean', 'ember', 'frost', 'harvest', 'spooky', 'galaxy', 'crystal', 'shadow', 'pastel', 'retro', 'ink']
+SKINS = ['silver', 'gold', 'slime', 'ancient', 'sakura', 'moonlit', 'ocean', 'ember', 'frost', 'harvest', 'spooky', 'galaxy', 'crystal', 'shadow', 'pastel', 'retro', 'ink']
 
 
 def hexc(h):
@@ -435,12 +435,13 @@ def make(path, skin, seed):
         resg = pal[lv.astype(int)]
         res = np.asarray(Image.fromarray(resg.astype(np.uint8)).resize((w, h), Image.NEAREST), dtype=np.float32)
         alpha = np.asarray(Image.fromarray(((small[..., 3] > 0.45) * 255).astype(np.uint8)).resize((w, h), Image.NEAREST), dtype=np.float32) / 255
-    elif skin in ('silver', 'silverA', 'silverB', 'silverC'):
+    elif skin in ('silver', 'silverA', 'silverB', 'silverC', 'gold', 'goldA', 'goldB', 'goldC'):
         # Polished silver. The body maps through a cool, slightly blue chrome ramp, then picks up a
         # "reflection": metal mirrors its surroundings, so brightness also depends on position (light sky up
         # top, a darker horizon band across the middle, a bright ground bounce below), plus diagonal
         # white glints and a few four-point sparkles. Outlines become deep steel blue instead of black.
-        var = 'B' if skin == 'silver' else skin[-1]
+        var = 'B' if skin in ('silver', 'gold') else skin[-1]
+        gold = skin.startswith('gold')
         line = np.clip((0.2 - lum) / 0.1, 0, 1)
         body = alpha * (1 - line)
         ys0 = np.nonzero(alpha > 0.5)[0]
@@ -470,6 +471,9 @@ def make(path, skin, seed):
             band = np.exp(-(((u + v) / 2 - 0.4) / 0.12) ** 2)
             l2 = np.clip(l * 0.6 + band * 0.35 + (grain - 0.5) * 0.18 - 0.05, 0, 1)
             stops = [(0, '#252c3a'), (0.35, '#6f7b8f'), (0.62, '#bcc6d4'), (0.85, '#edf1f7'), (1, '#ffffff')]
+        if gold:
+            # Same polish, warm metal: deep amber shadows up to pale gold highlights.
+            stops = [(0, '#3a2206'), (0.3, '#8a5a12'), (0.55, '#d79a1e'), (0.75, '#f6c94a'), (0.9, '#fff0b0'), (1, '#fffbe8')]
         res = ramp(l2, stops)
         # Diagonal glints: two thin bright streaks across the body.
         d = (u + v * 0.9)
@@ -494,7 +498,7 @@ def make(path, skin, seed):
                 for (y2, x2) in ((cy + dd, cx), (cy, cx + dd)):
                     if 0 <= y2 < h and 0 <= x2 < w and alpha[y2, x2] > 0.5:
                         res[y2, x2] = res[y2, x2] * (1 - a) + 255 * a
-        res = res * (1 - line[..., None]) + hexc('#1a2438') * line[..., None]
+        res = res * (1 - line[..., None]) + hexc('#3a1f05' if gold else '#1a2438') * line[..., None]
     elif skin == 'ink':
         l2 = np.clip((lum - 0.15) * 1.5, 0, 1)
         l2 = np.round(l2 * 3) / 3
