@@ -641,7 +641,9 @@ export function battlesLeftToday(s: GameState): number {
 }
 
 /** Damage your team dealt in a finished battle, sent to your guild's boss (wins count 1.5×, max 400 a hit). */
+/** Battles chip in a little to the guild boss (walking does most of it): up to 80 per battle, 5 a day. */
+export const RAID_BATTLE_MAX = 80;
 export function raidDamage(b: Battle): number {
   const dealt = b.theirs.reduce((a, f) => a + (f.maxHp - Math.max(0, f.hp)), 0);
-  return Math.min(400, Math.round(dealt * (b.over === 'win' ? 1.5 : 1)));
+  return Math.min(RAID_BATTLE_MAX, Math.round(dealt * 0.3 * (b.over === 'win' ? 1.5 : 1)));
 }

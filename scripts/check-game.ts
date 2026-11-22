@@ -356,10 +356,10 @@ ok(A.applyShields(shielded.state).used === 0, 'shields are not used twice');
   ok(bosses.size === 4, 'a different guild boss each week for 4 weeks');
   const RB = B.startBattle([t.pets[0]], [t.pets[0]]);
   ok(B.raidDamage(RB) === 0, 'no raid damage before any hits');
-  RB.theirs[0].hp = RB.theirs[0].maxHp - 30; RB.over = 'win';
-  ok(B.raidDamage(RB) === 45, 'a win counts raid damage 1.5×');
+  RB.theirs[0].hp = RB.theirs[0].maxHp - 100; RB.over = 'win';
+  ok(B.raidDamage(RB) === 45, 'a battle win adds a little raid damage (30% of damage dealt, 1.5× for a win)');
   RB.theirs[0].hp = -999;
-  ok(B.raidDamage(RB) <= 400, 'raid hits are capped at 400');
+  ok(B.raidDamage(RB) <= B.RAID_BATTLE_MAX && B.RAID_BATTLE_MAX === 80, 'battle raid hits are capped at 80 (walking does most of it)');
 }
 // Ranked seasons
 {

@@ -137,7 +137,7 @@ export function TeamProvider({ children }: { children: React.ReactNode }) {
 
   const raidHit = useCallback(
     async (amount: number) => {
-      if (!team || amount <= 0) return 'none' as const;
+      if (!team || amount <= 0 || team.raid.damage >= team.raid.hp) return 'none' as const;
       const { data, error } = await supabase.rpc('raid_hit', { amount: Math.round(amount) });
       if (error || (data !== 'ok' && data !== 'limit')) return 'none' as const;
       refresh();
