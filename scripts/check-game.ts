@@ -463,15 +463,15 @@ ok(A.applyShields(shielded.state).used === 0, 'shields are not used twice');
   ok(!R.planReminders(doneDay, { now: morning.getTime() }).some((r: any) => r.id === 'habits-0'), 'no reminder tonight once habits are done');
   const late = new Date(morning); late.setHours(21);
   ok(!R.planReminders(S0, { now: late.getTime() }).some((r: any) => r.id === 'habits-0'), 'no reminder for an evening that already passed');
-  ok(R.planReminders(S0, { now: morning.getTime(), inGuild: true, raidHitsLeft: 2 }).some((r: any) => r.id === 'raid') || morning.getDay() === 0 || morning.getDay() === 6, 'guild raid reminder before the weekend ends');
+  ok(R.planReminders(S0, { now: morning.getTime(), inGuild: true, raidHpLeft: 900 }).some((r: any) => r.id === 'guild') || morning.getDay() === 0 || morning.getDay() === 6, 'guild reminder before the weekend ends');
   ok(R.planReminders({ ...S0, pets: [], activePetId: null }, { now: morning.getTime() }).length === 0, 'no reminders before you have a pet');
   // Guild boss already beaten: no "hit the boss" nudge; point at the next chest instead, and announce Monday's boss.
   const wed = new Date(2026, 10, 18, 9).getTime();
   const team = (damage: number, total: number) => ({ raid: { hp: 5000, damage, hits_left: 5 }, total, goal: 100000 });
   const alive = R.planReminders(S0, { now: wed, ...R.guildReminderOpts(team(1000, 50000)) });
-  ok(alive.some((r: any) => r.id === 'raid'), 'raid reminder while the boss is still alive');
+  ok(alive.some((r: any) => r.id === 'guild' && /HP left/.test(r.body)), 'the Saturday reminder mentions the boss while it is still alive');
   const beatenPlan = R.planReminders(S0, { now: wed, ...R.guildReminderOpts(team(5000, 80806)) });
-  ok(!beatenPlan.some((r: any) => r.id === 'raid'), 'no raid reminder once the guild boss is defeated');
+  ok(!beatenPlan.some((r: any) => /HP left/.test(r.body)), 'no boss mention once the guild boss is defeated');
   ok(beatenPlan.some((r: any) => r.id === 'guild' && r.body.includes('19,194') && r.body.includes('Silver')), 'beaten boss: Saturday nudge names the steps left for the Silver chest');
   ok(R.planReminders(S0, { now: wed, ...R.guildReminderOpts(team(5000, 150000)) }).some((r: any) => r.id === 'guild' && r.body.includes('Gold')), 'Silver earned: nudge points at the Gold chest');
   ok(!R.planReminders(S0, { now: wed, ...R.guildReminderOpts(team(5000, 200000)) }).some((r: any) => r.id === 'guild'), 'no guild nudge once both chests are earned');

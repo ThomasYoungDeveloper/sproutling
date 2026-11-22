@@ -31,7 +31,7 @@ function atHour(now: number, daysAhead: number, hour: number): number {
   return d.getTime();
 }
 
-export function planReminders(s: GameState, opts: { now?: number; inGuild?: boolean; raidHitsLeft?: number; raidBeaten?: boolean; guildSteps?: number; guildGoal?: number } = {}): Reminder[] {
+export function planReminders(s: GameState, opts: { now?: number; inGuild?: boolean; raidHitsLeft?: number; raidBeaten?: boolean; raidHpLeft?: number; guildSteps?: number; guildGoal?: number } = {}): Reminder[] {
   const now = opts.now ?? Date.now();
   const pet = s.pets.find((p) => p.id === s.activePetId);
   const name = pet?.nickname ?? 'Your pet';
@@ -99,19 +99,30 @@ export function planReminders(s: GameState, opts: { now?: number; inGuild?: bool
   const nestLeft = Br.nestLeftMs(s, now);
   if (prefs.eggs !== false && Br.nestingEgg(s) && nestLeft > 0) out.push({ id: 'nest', at: now + nestLeft, title: 'Your nursery egg is ready!', body: 'Come see how rare it is.' });
 
-  // 4. Guild week ends Sunday night. Saturday evening: nudge to hit the boss only while it's still alive and you have
-  // hits left; once it's beaten, nudge toward the next guild chest instead (if there's one left to earn).
+  // 4. Guild week ends Sunday night. Midweek (Wednesday) and Saturday evening: one message with what's left —
+  // steps to the next guild chest and the boss's HP — so the guild walks together.
   if (prefs.raid !== false && opts.inGuild) {
     const d = new Date(now);
     const toSat = (6 - d.getDay() + 7) % 7;
     const sat = atHour(now, toSat, 18);
-    if (!opts.raidBeaten) {
-      out.push({ id: 'raid', at: sat, title: 'Guild boss escapes tomorrow!', body: 'Every step hits the boss. Take a walk with your guild!' });
-    } else if (opts.guildGoal && opts.guildSteps != null) {
+    const toWed = (3 - d.getDay() + 7) % 7;
+    const wed = atHour(now, toWed, 18);
+    const parts: string[] = [];
+    if (opts.guildGoal && opts.guildSteps != null) {
       const silverLeft = opts.guildGoal - opts.guildSteps;
       const goldLeft = opts.guildGoal * 2 - opts.guildSteps;
       const [left, chest] = silverLeft > 0 ? [silverLeft, 'Silver'] : [goldLeft, 'Gold'];
-      if (left > 0) out.push({ id: 'guild', at: sat, title: 'Guild week ends tomorrow!', body: `Your guild needs ${left.toLocaleString()} more steps for the ${chest} chest.` });
+      if (left > 0) parts.push(`${left.toLocaleString()} more steps for the ${chest} chest`);
+    }
+    if (!opts.raidBeaten && opts.raidHpLeft) parts.push(`the boss has ${opts.raidHpLeft.toLocaleString()} HP left`);
+    if (parts.length) {
+      const body = `Your guild needs ${parts.join(', and ')}. Every step counts!`;
+      out.push({ id: 'guild', at: sat, title: 'Guild week ends tomorrow!', body });
+      // Wednesday only if the week is still behind (the Silver chest isn't reached yet).
+      if (toWed !== 0 || wed > now) {
+        if (opts.guildGoal && opts.guildSteps != null && opts.guildSteps < opts.guildGoal * 0.5)
+          out.push({ id: 'guild-mid', at: wed, title: 'Halfway through the guild week', body: `Your guild needs ${parts[0]}. A walk today helps everyone!` });
+      }
     }
 
     // A new boss shows up every Monday: let them know at lunchtime.
@@ -132,6 +143,7 @@ export function guildReminderOpts(team: { raid: { hp: number; damage: number; hi
     inGuild: true,
     raidHitsLeft: team.raid.hits_left,
     raidBeaten: team.raid.hp > 0 && team.raid.damage >= team.raid.hp,
+    raidHpLeft: Math.max(0, team.raid.hp - team.raid.damage),
     guildSteps: team.total,
     guildGoal: team.goal,
   };
