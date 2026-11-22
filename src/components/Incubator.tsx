@@ -150,5 +150,5 @@ const styles = StyleSheet.create({
   slotNote: { fontSize: 13, fontWeight: '900', color: colors.muted },
   msg: { fontSize: 13, fontWeight: '800', color: '#B4532A', textAlign: 'center' },
   backdrop: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(24,30,48,0.6)', justifyContent: 'center', alignItems: 'center', padding: space.md, zIndex: 80 },
-  sheet: { backgroundColor: '#FFFFFF', borderRadius: 22, padding: space.lg, width: '100%', maxWidth: 460, gap: space.md },
+  sheet: { backgroundColor: '#FFFFFF', borderRadius: 22, padding: space.lg, width: '100%', maxWidth: 460, gap: space.md, alignSelf: 'center' },
 });

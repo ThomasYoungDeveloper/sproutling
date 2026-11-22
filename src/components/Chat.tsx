@@ -9,7 +9,7 @@ import { useAuth } from '../state/AuthContext';
 import { useGame } from '../state/GameContext';
 import { useOverlay } from './Overlay';
 import PetSprite from './PetSprite';
-import { FitSheet, Button } from './ui';
+import { FitSheet, Button, useSidePad } from './ui';
 import { buzz } from './fx';
 import { colors, font, space } from '../theme';
 import { SPECIES_BY_ID } from '../game/species';
@@ -212,6 +212,8 @@ function ChatRoomScreen({ room, title, otherId, onClose }: { room: string; title
   const chosen = collected.find((c) => c.key === pick) ?? collected[0];
   const stickerName = (c: { speciesId: string; skin?: Skin }) => `${c.skin ? SKIN_INFO[c.skin].label + ' ' : ''}${SPECIES_BY_ID[c.speciesId].name}`;
   const sendSticker = (line?: string, c = chosen) => c && send('sticker', line ?? stickerName(c), { speciesId: c.speciesId, skin: c.skin, name: stickerName(c) });
+  // Wide screens: keep the chat to a readable column.
+  const side = useSidePad(680, 0);
   /** With the sticker tray open, typed text goes out as the sticker's caption. */
   const submit = () => {
     if (stickers && chosen) {
@@ -224,7 +226,7 @@ function ChatRoomScreen({ room, title, otherId, onClose }: { room: string; title
   };
 
   return (
-    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={[styles.full, { backgroundColor: isTeam ? '#E9EEFA' : '#EAF6F0' }]}>
+    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={[styles.full, { backgroundColor: isTeam ? '#E9EEFA' : '#EAF6F0', paddingHorizontal: side }]}>
       <View style={[styles.head, { paddingTop: insets.top + 8, paddingLeft: 14, paddingRight: 14, backgroundColor: isTeam ? '#2A3366' : '#FFFBF2' }]}>
         <Pressable onPress={onClose} accessibilityRole="button" accessibilityLabel="Back" style={{ paddingVertical: 6, paddingRight: 8 }}>
           <Text style={[styles.back, isTeam && { color: '#BFD0FF' }]}>‹ Back</Text>

@@ -106,7 +106,7 @@ export default function DailyLoginSheet({ onClose }: { onClose: () => void }) {
 const styles = StyleSheet.create({
   doubled: { fontSize: 18, fontWeight: '900', color: '#FF8A4C', textAlign: 'center' },
   backdrop: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(24,30,48,0.6)', justifyContent: 'center', alignItems: 'center', padding: space.lg, zIndex: 60 },
-  sheet: { backgroundColor: '#FFFFFF', borderRadius: 22, padding: space.lg, gap: space.sm, width: '100%', maxWidth: 420 },
+  sheet: { backgroundColor: '#FFFFFF', borderRadius: 22, padding: space.lg, gap: space.sm, width: '100%', maxWidth: 420, alignSelf: 'center' },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, justifyContent: 'space-between', marginVertical: space.xs },
   tile: { alignItems: 'center', gap: 2, paddingVertical: 8, borderRadius: 14, borderWidth: 1.5, borderColor: colors.line, backgroundColor: '#FAFCFB' },
   tileBig: { backgroundColor: '#FFF6DD', borderColor: colors.gold },

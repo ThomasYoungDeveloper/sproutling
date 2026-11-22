@@ -426,7 +426,7 @@ const styles = StyleSheet.create({
   fine: { fontSize: 12, fontWeight: '700', color: '#8A9590', textAlign: 'center' },
   err: { fontSize: 13, fontWeight: '800', color: '#C4562F' },
   backdrop: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(24,30,48,0.55)', zIndex: 120 },
-  sheet: { backgroundColor: '#FFFFFF', borderTopLeftRadius: 26, borderTopRightRadius: 26, padding: 20, paddingBottom: 36, gap: 12 },
+  sheet: { backgroundColor: '#FFFFFF', borderTopLeftRadius: 26, borderTopRightRadius: 26, padding: 20, paddingBottom: 36, gap: 12, width: '100%', maxWidth: 560, alignSelf: 'center' },
   askCard: { width: '90%', maxWidth: 400, backgroundColor: '#FFFCF5', borderRadius: 26, padding: 22, gap: 6 },
   askPets: { flexDirection: 'row', justifyContent: 'center', alignItems: 'flex-end', gap: 4, marginBottom: 4 },
   title: { fontSize: 23, fontWeight: '900', color: colors.ink },

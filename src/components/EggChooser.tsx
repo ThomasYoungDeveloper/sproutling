@@ -4,7 +4,7 @@ import { Text } from './ScaledText';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useGame } from '../state/GameContext';
 import EggSprite from './EggSprite';
-import { Button } from './ui';
+import { Button, useSidePad } from './ui';
 import { PopIn, buzz } from './fx';
 import { colors } from '../theme';
 import { RARITY_INFO } from '../game/rarity';
@@ -25,9 +25,10 @@ export default function EggChooser({ onClose }: { onClose: () => void }) {
   const incoming = A.overflowEggs(state)[0];
   const basket = A.basketEggs(state);
   const pet = A.activePet(state);
+  const side = useSidePad();
   if (!incoming) {
     return (
-      <View style={[styles.wrap, { paddingTop: insets.top + 24, paddingBottom: insets.bottom + 18 }]}>
+      <View style={[styles.wrap, { paddingTop: insets.top + 24, paddingBottom: insets.bottom + 18, paddingHorizontal: side }]}>
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12 }}>
           <Text style={styles.title}>All set!</Text>
           {note ? <Text style={styles.sub}>{note}</Text> : null}
@@ -53,7 +54,7 @@ export default function EggChooser({ onClose }: { onClose: () => void }) {
   };
   const more = A.overflowEggs(state).length - 1;
   return (
-    <View style={[styles.wrap, { paddingTop: insets.top + 16, paddingBottom: insets.bottom + 14 }]}>
+    <View style={[styles.wrap, { paddingTop: insets.top + 16, paddingBottom: insets.bottom + 14, paddingHorizontal: side }]}>
       <Text style={styles.title} accessibilityRole="header">Basket full</Text>
       <Text style={styles.sub}>
         Pick 1 egg to leave behind. The other {A.EGG_BASKET} stay.{more > 0 ? ` ${more} more waiting after this.` : ''}

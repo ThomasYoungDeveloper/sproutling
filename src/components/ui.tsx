@@ -1,6 +1,7 @@
 import { gradeInfo } from '../game/stats';
 import React, { useEffect, useRef } from 'react';
 import { Animated, Pressable, ScrollView, StyleSheet, View, type ViewStyle, type StyleProp, type LayoutChangeEvent } from 'react-native';
+import { useWindowDimensions } from 'react-native';
 import { Text } from './ScaledText';
 import { colors, radius, space, font } from '../theme';
 import type { Rarity } from '../game/types';
@@ -118,4 +119,10 @@ export function FitSheet({ onClose, center, children }: { onClose: () => void; c
       {center ? <Pressable style={{ flexGrow: 1, minHeight: 24 }} onPress={onClose} accessible={false} /> : null}
     </ScrollView>
   );
+}
+
+/** Side padding that keeps a full-screen page to a readable column on wide screens (iPad, unfolded phones). */
+export function useSidePad(max = 560, min = 16) {
+  const { width } = useWindowDimensions();
+  return Math.max(min, (width - max) / 2);
 }

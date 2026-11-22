@@ -62,6 +62,8 @@ export default function TowerScreen({ onClose }: { onClose: () => void }) {
   const { state, apply } = useGame();
   const { open, close } = useOverlay();
   const insets = useSafeAreaInsets();
+  // The header grows on narrow screens or with big text: keep the tower's top prize below it.
+  const [headH, setHeadH] = useState(0);
   const { width } = useWindowDimensions();
   const t = T.towerOf(state);
   const theme = T.themeFor(t.week);
@@ -126,7 +128,7 @@ export default function TowerScreen({ onClose }: { onClose: () => void }) {
 
   return (
     <View style={[styles.full, { backgroundColor: theme.sky[0] }]}>
-      <ScrollView contentContainerStyle={{ alignItems: 'center', paddingTop: insets.top + 160, paddingBottom: 190 }} contentOffset={{ x: 0, y: Math.max(0, yOf(nextFloor) - 260) }}>
+      <ScrollView contentContainerStyle={{ alignItems: 'center', paddingTop: Math.max(insets.top + 160, headH + 76), paddingBottom: 190 }} contentOffset={{ x: 0, y: Math.max(0, yOf(nextFloor) - 260) }}>
         <View style={{ width: W, height: towerH + 120 }}>
           <Svg width={W} height={towerH + 120} style={StyleSheet.absoluteFill}>
             <Defs>
@@ -196,11 +198,11 @@ export default function TowerScreen({ onClose }: { onClose: () => void }) {
         </View>
       </ScrollView>
 
-      <View style={[styles.header, { paddingTop: insets.top + 8, paddingLeft: 16, paddingRight: 16 }]}>
+      <View onLayout={(e) => setHeadH(e.nativeEvent.layout.height)} style={[styles.header, { paddingTop: insets.top + 8, paddingLeft: 16, paddingRight: 16 }]}>
         <Pressable onPress={onClose} style={styles.back} accessibilityRole="button" accessibilityLabel="Back"><Text style={styles.backText}>‹ Back</Text></Pressable>
         <View style={{ flex: 1 }}>
           <Text style={styles.kicker}>THIS WEEK</Text>
-          <Text style={styles.title}>{theme.name}</Text>
+          <Text style={styles.title} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>{theme.name}</Text>
           <Text style={styles.sub}>{theme.weakTo}</Text>
         </View>
         <View style={styles.timer}><Text style={styles.timerBig}>{left}</Text><Text style={styles.timerSmall}>until it crumbles</Text></View>

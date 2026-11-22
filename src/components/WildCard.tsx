@@ -134,7 +134,7 @@ export default function WildCard() {
 
 const styles = StyleSheet.create({
   backdrop: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(20,30,28,0.55)', alignItems: 'center', justifyContent: 'center', padding: space.lg },
-  sheet: { width: '100%', maxWidth: 420, borderRadius: 28, padding: space.lg, gap: 10, alignItems: 'center' },
+  sheet: { width: '100%', maxWidth: 420, alignSelf: 'center', borderRadius: 28, padding: space.lg, gap: 10, alignItems: 'center' },
   pill: { backgroundColor: '#FFFFFF', borderRadius: 999, paddingHorizontal: 12, paddingVertical: 4 },
   pillText: { fontSize: 13, fontWeight: '900', color: colors.ink },
   title: { fontSize: 26, fontWeight: '900', color: '#1F3A33', textAlign: 'center' },
