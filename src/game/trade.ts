@@ -146,3 +146,70 @@ export function canGive(s: GameState, petId: string, busy: Set<string>): OfferCh
   if (busy.has(pet.id)) return { ok: false, reason: 'That pet is already in another trade.' };
   return { ok: true };
 }
+
+/** Up to this many pets on each side of a trade. */
+export const MAX_TRADE_PETS = 3;
+
+/** Can you offer this group of pets together? Each must be offerable, and you must keep at least one pet. */
+export function canOfferGroup(s: GameState, petIds: string[], busy: Set<string>, opts: { allowActive?: string } = {}): OfferCheck {
+  if (!petIds.length) return { ok: false, reason: 'Pick at least one pet.' };
+  if (petIds.length > MAX_TRADE_PETS) return { ok: false, reason: `Up to ${MAX_TRADE_PETS} pets per trade.` };
+  if (s.pets.length - petIds.length < 1) return { ok: false, reason: 'You need to keep at least one pet.' };
+  for (const id of petIds) {
+    const c = id === opts.allowActive ? canGive(s, id, busy) : canOffer(s, id, busy);
+    if (!c.ok) return c;
+  }
+  return { ok: true };
+}
+
+/** A rough trade value for the fairness hint: rarity, then level, skin and grade. */
+const RARITY_VALUE: Record<string, number> = { common: 1, uncommon: 2, rare: 4, epic: 8, legendary: 16 };
+const SKIN_VALUE: Partial<Record<Skin, number>> = { mono: 1.2, silver: 1.4, gold: 2, rainbow: 3, galaxy: 3, ancient: 3 };
+export function tradeValue(p: TradePet): number {
+  const sp = SPECIES_BY_ID[p.speciesId];
+  if (!sp) return 0;
+  const lv = 1 + Math.sqrt(Math.max(0, p.xp) / 25) / 10;
+  const skin = p.skin ? (SKIN_VALUE[p.skin] ?? 1.5) : 1;
+  const ivSum = p.ivs ? STATS.reduce((a, k) => a + (p.ivs![k] ?? 0), 0) : 30;
+  const grade = 0.85 + (ivSum / 60) * 0.3;
+  return (RARITY_VALUE[sp.rarity] ?? 1) * lv * skin * grade * (p.shiny ? 1.5 : 1);
+}
+export const groupValue = (ps: TradePet[]) => ps.reduce((a, p) => a + tradeValue(p), 0);
+
+export interface AppliedMultiTrade {
+  state: GameState;
+  received: OwnedPet[];
+  newSpecies: string[];
+}
+
+/**
+ * Swaps every pet in a finished trade at once (all or nothing). Safe to call more than once per trade.
+ * Received pets get ids from the trade, so applying the same trade on two devices can't make copies.
+ */
+export function applyTradeMulti(s: GameState, tradeId: string, giveIds: string[], gets: TradePet[]): AppliedMultiTrade | null {
+  if (s.appliedTrades?.[tradeId]) return null;
+  if (!gets.length || gets.some((g) => !SPECIES_BY_ID[g.speciesId])) return null;
+  let next = s;
+  const received: OwnedPet[] = [];
+  const newSpecies: string[] = [];
+  gets.forEach((g, i) => {
+    // The first pet goes through applyTrade (same id as single trades); the rest are added the same way.
+    const r0 = applyTrade(next, i === 0 ? tradeId : `${tradeId}_${i}`, i === 0 ? (giveIds[0] ?? '') : '', g);
+    if (!r0) return;
+    // Ids are trimmed, so the extra pets get a suffix after trimming to stay unique.
+    let r = r0;
+    if (i > 0) {
+      const fresh = { ...r0.received, id: `tr_${tradeId.replace(/[^a-zA-Z0-9]/g, '').slice(0, 20)}_${i}` };
+      r = { ...r0, received: fresh, state: { ...r0.state, pets: [...r0.state.pets.slice(0, -1), fresh], activePetId: r0.state.activePetId } };
+    }
+    if (r.isNew) newSpecies.push(g.speciesId);
+    received.push(r.received);
+    next = r.state;
+  });
+  if (received.length !== gets.length) return null;
+  const gone = new Set(giveIds);
+  const pets = next.pets.filter((p) => !gone.has(p.id));
+  const activePetId = pets.some((p) => p.id === next.activePetId) ? next.activePetId : received[0].id;
+  const applied: Record<string, true> = { ...(s.appliedTrades ?? {}), [tradeId]: true };
+  return { state: { ...next, pets, activePetId, appliedTrades: applied }, received, newSpecies };
+}

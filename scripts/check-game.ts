@@ -1074,4 +1074,31 @@ console.log('\nEgg basket');
 }
 
 ok(A.cleanSave({ ...newGame(), items: { 'Tide Shell': 2, 'Tide Taffy': 1, 'Moon Seed': 1 } } as GameState).items['Tide Taffy'] === 3, 'old trinkets become snacks (counts carry over)');
+// Multi-pet trades
+{
+  const MT = { ...TR, pets: [...TR.pets, { id: 'm2', speciesId: 'p03', nickname: 'Two', xp: 10, shiny: false, hatchedOn: '' }, { id: 'm3', speciesId: 'p04', nickname: 'Three', xp: 10, shiny: false, hatchedOn: '' }] } as GameState;
+  const others = MT.pets.filter((p) => p.id !== MT.activePetId).map((p) => p.id);
+  ok(T.canOfferGroup(MT, others.slice(0, 3), new Set()).ok, 'can offer up to 3 pets together');
+  ok(!T.canOfferGroup(MT, [...others, MT.activePetId!].slice(0, 4), new Set()).ok, 'no more than 3 pets per trade');
+  ok(!T.canOfferGroup(MT, [MT.activePetId!], new Set()).ok, 'active pet still cannot be offered in a group');
+  const small = { ...MT, pets: MT.pets.slice(0, 2), activePetId: MT.pets[0].id } as GameState;
+  ok(!T.canOfferGroup(small, [small.pets[1].id, small.pets[0].id], new Set(), { allowActive: small.pets[0].id }).ok, 'you must keep at least one pet');
+  const gets: T.TradePet[] = [{ id: 'g1', speciesId: 'p15', nickname: 'A', xp: 100, shiny: false }, { id: 'g2', speciesId: 'p16', nickname: 'B', xp: 100, shiny: false }];
+  const give = others.slice(0, 3);
+  const m = T.applyTradeMulti(MT, 'mt1', give, gets)!;
+  ok(m.state.pets.length === MT.pets.length - 3 + 2 && give.every((id) => !m.state.pets.some((p) => p.id === id)), 'multi trade gives all your pets and gets all theirs');
+  ok(m.received.map((p) => p.id).join() === 'tr_mt1,tr_mt1_1', 'multi trade received ids come from the trade');
+  const uuid = '3f2a9c1e-7b44-4e0a-9d1c-5a6b7c8d9e0f';
+  const mu = T.applyTradeMulti(MT, uuid, give, [...gets, { ...gets[0], id: 'g3' }])!;
+  ok(new Set(mu.received.map((p) => p.id)).size === 3 && new Set(mu.state.pets.map((p) => p.id)).size === mu.state.pets.length, 'long trade ids still give each received pet its own id');
+  ok(A.cleanSave(mu.state).pets.length === mu.state.pets.length, 'duplicate cleanup keeps every pet from a multi trade');
+  ok(new Set(m.state.pets.map((p) => p.id)).size === m.state.pets.length, 'multi trade makes no duplicate ids');
+  ok(T.applyTradeMulti(m.state, 'mt1', give, gets) === null, 'a multi trade is applied only once');
+  const again = T.applyTradeMulti(MT, 'mt1', give, gets)!;
+  ok(again.received.map((p) => p.id).join() === m.received.map((p) => p.id).join(), 'the same trade on two devices gives the same ids');
+  ok(m.state.pets.some((p) => p.id === m.state.activePetId), 'active pet is still valid after a multi trade');
+  ok(T.applyTradeMulti(MT, 'mt2', give, [{ ...gets[0], speciesId: 'nope' }]) === null, 'bad species aborts the whole trade');
+  const epic = T.tradeValue({ id: 'e', speciesId: gets[0].speciesId, nickname: 'x', xp: 0, shiny: false });
+  ok(T.groupValue(gets) > epic && T.tradeValue({ id: 'e', speciesId: gets[0].speciesId, nickname: 'x', xp: 0, shiny: false, skin: 'gold' }) > epic, 'trade value grows with more pets and skins');
+}
 console.log(fails ? `${fails} FAILED` : 'ALL PASSED'); process.exit(fails ? 1 : 0);

@@ -24,43 +24,84 @@ import FriendPetSheet, { type ViewPet } from './FriendPetSheet';
 
 /* ---------- Picking a pet to trade ---------- */
 
-function TradePicker({ title, subtitle, onSend, onClose, want, confirm }: { title: string; subtitle: string; onSend: (petId: string) => Promise<{ ok: boolean; text: string }>; onClose: () => void; /** Asking for this pet: shows a You get / You give summary. */ want?: TradePet; confirm?: string }) {
+/** Pick up to 3 of your pets for a trade. Shows both sides and a rough fairness hint as you pick. */
+function TradePicker({
+  title,
+  subtitle,
+  onSend,
+  onClose,
+  get,
+  takeFrom,
+  confirm,
+  initial,
+  skipBusy,
+}: {
+  title: string;
+  subtitle: string;
+  onSend: (petIds: string[], takeIds?: string[]) => Promise<{ ok: boolean; text: string }>;
+  onClose: () => void;
+  /** The pets you'd get (a request, or the friend's offer). */
+  get?: TradePet[];
+  /** Countering a multi-pet offer: you can leave some of their pets out. */
+  takeFrom?: TradePet[];
+  confirm?: string;
+  initial?: string[];
+  /** Pets already in this trade (changing an offer) aren't "busy". */
+  skipBusy?: string[];
+}) {
   const { state } = useGame();
   const { busyPetIds } = useFriends();
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const [take, setTake] = useState<string[]>(() => (takeFrom ?? []).map((p) => p.id));
+  const busySet = skipBusy?.length ? new Set([...busyPetIds].filter((id) => !skipBusy.includes(id))) : busyPetIds;
   const pets = [...state.pets]
     .sort((a, b) => b.xp - a.xp)
     .map((p) => {
-      const c = T.canOffer(state, p.id, busyPetIds);
+      const c = T.canOffer(state, p.id, busySet);
       return { pet: p, disabled: c.ok ? undefined : c.reason };
     });
+  const getting = takeFrom ? takeFrom.filter((p) => take.includes(p.id)) : (get ?? []);
   return (
     <PetPicker
       title={title}
       subtitle={subtitle}
       pets={pets}
+      max={T.MAX_TRADE_PETS}
+      initial={initial}
       busy={busy}
       message={msg}
-      confirmLabel={() => (msg?.ok ? 'Sent!' : confirm ?? 'Offer this pet')}
-      header={
-        want
-          ? (picked) => {
-              const mine = state.pets.find((p) => p.id === picked[0]);
-              return (
-                <View style={styles.swap}>
-                  <MiniPet p={want} label="You get" top="YOU GET" />
-                  <Text style={styles.arrow}>⇄</Text>
-                  <MiniPet p={mine ? T.toTradePet(mine) : null} label="Pick below" top="YOU GIVE" />
-                </View>
-              );
-            }
-          : undefined
-      }
-      onConfirm={async ([id]) => {
+      confirmLabel={(n) => (msg?.ok ? 'Sent!' : confirm ?? (n > 1 ? `Offer these ${n} pets` : 'Offer this pet'))}
+      header={(picked) => {
+        const mine = picked.map((id) => state.pets.find((p) => p.id === id)).filter(Boolean).map((p) => T.toTradePet(p!));
+        return (
+          <View style={{ gap: 6 }}>
+            {getting.length || takeFrom ? (
+              <View style={styles.swap}>
+                <PetStack ps={mine} top="YOU GIVE" empty="Pick below" />
+                <Text style={styles.arrow}>⇄</Text>
+                {takeFrom && takeFrom.length > 1 ? (
+                  <PetStack
+                    ps={takeFrom}
+                    top="YOU GET"
+                    empty="Tap to take"
+                    off={takeFrom.filter((p) => !take.includes(p.id)).map((p) => p.id)}
+                    onToggle={(id) => setTake((l) => (l.includes(id) ? (l.length > 1 ? l.filter((x) => x !== id) : l) : [...l, id]))}
+                  />
+                ) : (
+                  <PetStack ps={getting} top="YOU GET" empty="They pick" />
+                )}
+              </View>
+            ) : null}
+            {takeFrom && takeFrom.length > 1 ? <Text style={[font.small, { textAlign: 'center' }]}>Tap their pets to leave any out.</Text> : null}
+            {mine.length && getting.length ? <FairBar give={mine} get={getting} /> : null}
+          </View>
+        );
+      }}
+      onConfirm={async (ids) => {
         if (msg?.ok) return onClose();
         setBusy(true);
-        const r = await onSend(id);
+        const r = await onSend(ids, takeFrom && take.length < takeFrom.length ? take : undefined);
         setBusy(false);
         setMsg(r);
         if (r.ok) {
@@ -73,6 +114,49 @@ function TradePicker({ title, subtitle, onSend, onClose, want, confirm }: { titl
   );
 }
 
+/** One side of a trade: one pet shows big; two or three sit side by side. */
+function PetStack({ ps, top, empty, onPress, off, onToggle }: { ps: TradePet[]; top?: string; empty: string; onPress?: (p: TradePet) => void; off?: string[]; onToggle?: (id: string) => void }) {
+  if (ps.length <= 1) return <MiniPet p={ps[0] ?? null} label={empty} top={top} onPress={ps[0] && (onToggle || onPress) ? () => (onToggle ? onToggle(ps[0].id) : onPress!(ps[0])) : undefined} />;
+  return (
+    <View style={[styles.mini, { width: 130 }]}>
+      {top ? <Text style={[styles.miniTop, { color: top === 'YOU GET' ? colors.mintDark : '#B4532A' }]}>{top}</Text> : null}
+      <View style={styles.stack}>
+        {ps.map((p) => {
+          const sp = SPECIES_BY_ID[p.speciesId];
+          const out = off?.includes(p.id);
+          const tap = onToggle ? () => onToggle(p.id) : onPress ? () => onPress(p) : undefined;
+          return (
+            <Pressable key={p.id} onPress={tap} disabled={!tap} style={[styles.stackPet, out && { opacity: 0.35 }]} accessibilityRole={tap ? 'button' : undefined} accessibilityLabel={onToggle ? `${out ? 'Take' : 'Leave out'} ${p.nickname}` : `See ${p.nickname}`}>
+              {sp ? <PetSprite species={sp} stage={stageFor(p.xp)} size={36} shiny={p.shiny} skin={p.skin} /> : null}
+              <Text style={styles.stackLv} numberOfLines={1}>Lv {levelFor(p.xp)}</Text>
+            </Pressable>
+          );
+        })}
+      </View>
+      <Text style={styles.miniName} numberOfLines={1}>{off?.length ? `${ps.length - off.length} of ${ps.length} pets` : `${ps.length} pets`}</Text>
+      <Text style={styles.miniSub} numberOfLines={1}>{ps.filter((p) => !off?.includes(p.id)).map((p) => p.nickname).join(', ')}</Text>
+    </View>
+  );
+}
+
+/** A rough "is this fair?" hint from rarity, level, skin and grade. Only a hint: the players decide. */
+function FairBar({ give, get }: { give: TradePet[]; get: TradePet[] }) {
+  const g = T.groupValue(give);
+  const r = T.groupValue(get);
+  const share = g + r > 0 ? r / (g + r) : 0.5;
+  const label = share > 0.62 ? 'You get more' : share < 0.38 ? 'You give more' : 'Looks fair';
+  const tint = share > 0.62 ? colors.mintDark : share < 0.38 ? '#C4562F' : colors.ink;
+  return (
+    <View style={{ gap: 3 }} accessibilityLabel={`Fairness hint: ${label}`}>
+      <View style={styles.fairTrack}>
+        <View style={[styles.fairFill, { width: `${Math.round(share * 100)}%` }]} />
+        <View style={styles.fairMid} />
+      </View>
+      <Text style={[font.small, { textAlign: 'center', color: tint, fontWeight: '800' }]}>{label} <Text style={{ fontWeight: '400', color: colors.ink }}>(rarity, level, skin and grade)</Text></Text>
+    </View>
+  );
+}
+
 export function useTradeOffer() {
   const { open, close } = useOverlay();
   const { offerTrade } = useFriends();
@@ -80,8 +164,8 @@ export function useTradeOffer() {
     open(
       <TradePicker
         title={`Trade with ${friend.username}`}
-        subtitle="Pick one of your pets to offer. They’ll choose a pet to offer back, then you decide if it’s a deal."
-        onSend={(petId) => offerTrade(friend.id, petId)}
+        subtitle="Pick up to 3 of your pets to offer. They’ll choose pets to offer back, then you decide if it’s a deal."
+        onSend={(ids) => offerTrade(friend.id, ids)}
         onClose={close}
       />,
     );
@@ -105,10 +189,10 @@ export function AskForPet({ friend, pet, onClose }: { friend: Friend; pet: ViewP
       <View style={[StyleSheet.absoluteFill, { zIndex: 95 }]}>
         <TradePicker
           title="Your offer"
-          subtitle={`Pick one of your pets to offer for ${want.nickname}. It’s held for this trade until ${friend.username} answers. Offers last 3 days.`}
-          want={want}
+          subtitle={`Pick up to 3 of your pets to offer for ${want.nickname}. They’re held for this trade until ${friend.username} answers. Offers last 3 days.`}
+          get={[want]}
           confirm={`Send offer to ${friend.username}`}
-          onSend={(petId) => requestTrade(friend.id, want, petId)}
+          onSend={(ids) => requestTrade(friend.id, want, ids)}
           onClose={onClose}
         />
       </View>
@@ -301,25 +385,49 @@ function MiniPet({ p, label, top, onPress }: { p: TradePet | null; label: string
 }
 
 function TradeRow({ t, onDismiss }: { t: Trade; onDismiss?: () => void }) {
-  const { counterTrade, confirmTrade, cancelTrade, acceptRequest } = useFriends();
+  const { counterTrade, confirmTrade, cancelTrade, acceptRequest, changeRequest } = useFriends();
   const { state } = useGame();
   const view = useViewTradePet();
   const { open, close } = useOverlay();
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   // On a request, the friend's side of the swap is the pet that was asked for.
-  const mine = t.fromMe ? t.offer : (t.want ?? t.counter);
-  const theirs = t.fromMe ? (t.want ?? t.counter) : t.offer;
+  const mine: TradePet[] = t.fromMe ? t.offers : t.want ? [t.want] : (t.counters ?? []);
+  const theirs: TradePet[] = t.fromMe ? (t.want ? [t.want] : (t.counters ?? [])) : t.offers;
+  const names = (ps: TradePet[]) => (ps.length <= 1 ? (ps[0]?.nickname ?? 'a pet') : ps.length === 2 ? `${ps[0].nickname} and ${ps[1].nickname}` : `${ps[0].nickname}, ${ps[1].nickname} and ${ps[2].nickname}`);
   const stillHave = !t.want || t.fromMe || state.pets.some((p) => p.id === t.want!.id);
 
   let text = '';
   let actions: React.ReactNode = null;
   if (t.want && t.status === 'offered' && t.fromMe) {
-    text = `Waiting for ${t.friendName}. Your ${t.offer.nickname} for their ${t.want.nickname}.${t.expiresAt ? ` ${leftText(t.expiresAt)}` : ''}`;
-    actions = <Button small label="Cancel" onPress={() => cancelTrade(t.id)} />;
+    text = `Waiting for ${t.friendName}. Your ${names(t.offers)} for their ${t.want.nickname}.${t.expiresAt ? ` ${leftText(t.expiresAt)}` : ''}`;
+    const want = t.want;
+    actions = (
+      <>
+        <Button small label="Cancel" onPress={() => cancelTrade(t.id)} />
+        <Button
+          small
+          label="Change it"
+          onPress={() =>
+            open(
+              <TradePicker
+                title="Change your offer"
+                subtitle={`Pick up to 3 of your pets to offer for ${want.nickname}. This replaces your current offer.`}
+                get={[want]}
+                initial={t.offers.map((p) => p.id)}
+                skipBusy={t.offers.map((p) => p.id)}
+                confirm="Update offer"
+                onSend={(ids) => changeRequest(t.id, ids)}
+                onClose={close}
+              />,
+            )
+          }
+        />
+      </>
+    );
   } else if (t.want && t.status === 'offered') {
     text = stillHave
-      ? `${t.friendName} wants your ${t.want.nickname} and offers ${t.offer.nickname}. Tap a pet to see its stats.${t.expiresAt ? ` ${leftText(t.expiresAt)}` : ''}`
+      ? `${t.friendName} wants your ${t.want.nickname} and offers ${names(t.offers)}. Tap a pet to see its stats.${t.expiresAt ? ` ${leftText(t.expiresAt)}` : ''}`
       : `${t.friendName} asked for ${t.want.nickname}, but you don’t have that pet anymore.`;
     actions = (
       <>
@@ -345,23 +453,25 @@ function TradeRow({ t, onDismiss }: { t: Trade; onDismiss?: () => void }) {
     text = t.fromMe ? `Your offer for ${t.friendName}’s ${t.want?.nickname ?? 'pet'} ran out of time.` : `${t.friendName}’s offer ran out of time.`;
     actions = <Button small primary label="OK" onPress={() => onDismiss?.()} />;
   } else if (t.status === 'offered' && t.fromMe) {
-    text = `Waiting for ${t.friendName} to pick a pet to offer back.`;
+    text = `Waiting for ${t.friendName} to pick pets to offer back.`;
     actions = <Button small label="Cancel" onPress={() => cancelTrade(t.id)} />;
   } else if (t.status === 'offered') {
-    text = `${t.friendName} wants your ${t.offer.nickname}`;
+    text = `${t.friendName} offers ${names(t.offers)}. Pick up to 3 pets to offer back.`;
     actions = (
       <>
         <Button small label="No thanks" onPress={() => cancelTrade(t.id)} />
         <Button
           small
           primary
-          label="Choose a pet"
+          label="Choose pets"
           onPress={() =>
             open(
               <TradePicker
-                title={`Offer ${t.friendName} a pet`}
-                subtitle={`For their ${t.offer.nickname} (Lv ${levelFor(t.offer.xp)}). ${t.friendName} gets the final say.`}
-                onSend={(petId) => counterTrade(t.id, petId)}
+                title={`Offer ${t.friendName} pets`}
+                subtitle={`For their ${names(t.offers)}. ${t.friendName} gets the final say.`}
+                get={t.offers}
+                takeFrom={t.offers.length > 1 ? t.offers : undefined}
+                onSend={(ids, takeIds) => counterTrade(t.id, ids, takeIds)}
                 onClose={close}
               />,
             )
@@ -370,7 +480,7 @@ function TradeRow({ t, onDismiss }: { t: Trade; onDismiss?: () => void }) {
       </>
     );
   } else if (t.status === 'countered' && t.fromMe) {
-    text = `${t.friendName} offers ${t.counter?.nickname} for ${t.offer.nickname}`;
+    text = `${t.friendName} offers ${names(t.counters ?? [])} for your ${names(t.offers)}`;
     actions = (
       <>
         <Button small label="No deal" onPress={() => cancelTrade(t.id)} />
@@ -405,10 +515,11 @@ function TradeRow({ t, onDismiss }: { t: Trade; onDismiss?: () => void }) {
     <View style={styles.trade}>
       {/* A finished trade: only the pets fade; the message and OK stay clear, side by side. */}
       <View style={[styles.swap, closed && { opacity: 0.5 }]}>
-        <MiniPet p={mine} label="Your pet" top={t.want ? 'YOU GIVE' : undefined} />
+        <PetStack ps={mine} empty="Your pet" top={t.want || mine.length > 1 || theirs.length > 1 ? 'YOU GIVE' : undefined} />
         <Text style={styles.arrow}>⇄</Text>
-        <MiniPet p={theirs} label={t.fromMe ? 'They pick' : 'You pick'} top={t.want ? 'YOU GET' : undefined} onPress={theirs && !closed ? () => view(theirs, t.friendName) : undefined} />
+        <PetStack ps={theirs} empty={t.fromMe ? 'They pick' : 'You pick'} top={t.want || mine.length > 1 || theirs.length > 1 ? 'YOU GET' : undefined} onPress={!closed ? (p) => view(p, t.friendName) : undefined} />
       </View>
+      {!closed && mine.length && theirs.length && (mine.length > 1 || theirs.length > 1) ? <FairBar give={mine} get={theirs} /> : null}
       {closed ? (
         <View style={styles.closedRow}>
           <Text style={[font.small, { color: colors.ink, flex: 1 }]}>{text}</Text>
@@ -466,6 +577,12 @@ const styles = StyleSheet.create({
   buffText: { fontWeight: '900', fontSize: 12, color: '#D6DCF5' },
   closedRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   trade: { borderTopWidth: 1, borderTopColor: colors.line, paddingTop: space.sm, gap: 6 },
+  stack: { flexDirection: 'row', gap: 4, justifyContent: 'center', backgroundColor: colors.sky, borderRadius: 18, padding: 6, minHeight: 72, alignItems: 'center' },
+  stackPet: { alignItems: 'center', width: 38 },
+  stackLv: { fontSize: 10, fontWeight: '800', color: colors.ink },
+  fairTrack: { height: 8, borderRadius: 4, backgroundColor: '#F2D9C9', overflow: 'hidden', marginHorizontal: space.md },
+  fairFill: { height: 8, backgroundColor: colors.mint },
+  fairMid: { position: 'absolute', left: '50%', top: 0, bottom: 0, width: 2, backgroundColor: colors.ink, opacity: 0.4 },
   swap: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: space.sm },
   arrow: { fontSize: 26, fontWeight: '900', color: colors.mintDark },
   mini: { alignItems: 'center', width: 110 },
