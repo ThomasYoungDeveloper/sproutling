@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { AppState } from 'react-native';
 import { useGame } from '../state/GameContext';
-import { healthProvider, isVerified, setHealthSkipped } from './health';
+import { healthProvider, isVerified, noteHealthSync, setHealthSkipped } from './health';
 import * as A from '../game/actions';
 
 /**
@@ -35,6 +35,7 @@ export function useHealthSync() {
         const today = A.todayKey(stateRef.current);
         const day = await provider.readDay(today);
         if (!day) return;
+        noteHealthSync(day.steps);
         apply((s) => {
           if (A.todayKey(s) !== today) return s;
           const d = A.today(s);

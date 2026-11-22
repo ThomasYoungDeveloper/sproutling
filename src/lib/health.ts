@@ -57,3 +57,10 @@ export function setHealthSkipped(v: boolean) {
 export const nativeHealth = (): HealthProvider | null => (Platform.OS === 'web' ? null : nativeProvider ?? null);
 
 export const isVerified = (p: HealthProvider) => p.source !== 'manual';
+
+/** When steps were last read from Apple Health this session (for the "Check Apple Health" button). */
+let lastSync: { at: number; steps: number } | null = null;
+export const noteHealthSync = (steps: number) => {
+  lastSync = { at: Date.now(), steps };
+};
+export const getLastHealthSync = () => lastSync;

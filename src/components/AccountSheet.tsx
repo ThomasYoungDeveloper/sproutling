@@ -1,5 +1,5 @@
 import * as I from '../game/intro';
-import { healthAvailable, nativeHealth } from '../lib/health';
+import { getLastHealthSync, healthAvailable, nativeHealth } from '../lib/health';
 import * as A from '../game/actions';
 import { ChatSettings, HelpRows } from './Chat';
 import React, { useEffect, useState } from 'react';
@@ -297,6 +297,7 @@ export default function AccountSheet({ onClose }: { onClose: () => void }) {
 }
 
 const styles = StyleSheet.create({
+  healthBox: { backgroundColor: '#F4F9F6', borderRadius: 14, padding: 10, gap: 6 },
   hourChip: { flex: 1, borderRadius: 12, backgroundColor: '#EEF4F1', paddingVertical: 8, alignItems: 'center' },
   hourChipOn: { backgroundColor: colors.mint },
   hourText: { fontSize: 14, fontWeight: '900', color: colors.ink },
@@ -320,6 +321,46 @@ const styles = StyleSheet.create({
   testing: { borderTopWidth: 1, borderTopColor: colors.line, paddingTop: space.sm, gap: 6, marginTop: space.sm },
   status: { backgroundColor: colors.mintSoft, borderRadius: 10, paddingVertical: 6, paddingHorizontal: 10, alignSelf: 'flex-start' },
 });
+
+/**
+ * "Check Apple Health": reads today's steps straight from Apple Health and compares them with the game.
+ * iPhone never tells apps whether reading was allowed (a "no" just looks like 0 steps), so 0 gets the settings path.
+ */
+function HealthCheck() {
+  const { state } = useGame();
+  const [busy, setBusy] = useState(false);
+  const [res, setRes] = useState<{ health: number; game: number } | null>(null);
+  const check = async () => {
+    const h = nativeHealth();
+    if (!h) return;
+    setBusy(true);
+    await h.requestAccess().catch(() => false);
+    const day = await h.readDay(A.todayKey(state)).catch(() => null);
+    setBusy(false);
+    setRes({ health: day?.steps ?? 0, game: A.today(state).steps ?? 0 });
+  };
+  const last = getLastHealthSync();
+  const ago = last ? Math.max(0, Math.round((Date.now() - last.at) / 60000)) : null;
+  return (
+    <View style={styles.healthBox}>
+      <View style={[styles.row, { alignItems: 'center', justifyContent: 'space-between' }]}>
+        <Text style={[font.body, { fontWeight: '800', flex: 1 }]}>Apple Health</Text>
+        <Button small label={busy ? 'Checking…' : 'Check it'} disabled={busy} onPress={check} />
+      </View>
+      {!res ? (
+        <Text style={font.tiny}>{ago === null ? 'Tap Check it to see if your steps are coming in.' : `Last read ${ago === 0 ? 'just now' : `${ago} min ago`}.`}</Text>
+      ) : res.health > 0 ? (
+        <Text style={[font.small, { color: colors.mintDark, fontWeight: '800' }]}>
+          Connected. Apple Health has {res.health.toLocaleString()} steps today and Sproutling has {Math.max(res.game, res.health).toLocaleString()}.
+        </Text>
+      ) : (
+        <Text style={[font.small, { color: '#B4532A', fontWeight: '800' }]}>
+          Apple Health shows 0 steps today. If you’ve walked with your phone, open the iPhone Settings app, then Health › Data Access & Devices › Sproutling, and turn on Steps.
+        </Text>
+      )}
+    </View>
+  );
+}
 
 /** Daily step goal, water units, and Apple Health for players who skipped it. */
 function GoalSettings() {
@@ -353,6 +394,7 @@ function GoalSettings() {
         </View>
       </View>
       {state.goals?.auto ? <Text style={font.tiny}>Your step goal moves with you each week: up after good weeks, down after slow ones.</Text> : null}
+      {!skipped && healthAvailable() ? <HealthCheck /> : null}
       {skipped && healthAvailable() ? (
         <Button
           small
