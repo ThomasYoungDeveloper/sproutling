@@ -440,7 +440,7 @@ export function openGifts(s: GameState, count: number, rng: Rng = defaultRng): {
   let chests = 0;
   for (let i = 0; i < count; i++) {
     if (rng() < GIFT_CHEST_CHANCE) {
-      next = grantChest(next, 'bronze', 'Surprise in a friend’s gift', rng);
+      next = grantChest(next, 'bronze', 'Bonus from a friend’s gift', rng);
       chests++;
     }
   }
