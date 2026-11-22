@@ -316,7 +316,11 @@ function ChestReveal({ r, onClose }: { r: Extract<Reveal, { kind: 'chest' }>; on
           <View style={styles.lootRow}>
             <PopIn delay={150}>
               <View style={[styles.lootCard, doubled && { borderColor: '#FF8A4C' }]}>
-                {doubled ? <PopIn from={0.3}><View style={styles.doubleTag}><Text style={styles.doubleTagText}>2× DOUBLED!</Text></View></PopIn> : null}
+                {doubled ? (
+                  <View pointerEvents="none" style={styles.doubleWrap}>
+                    <PopIn from={0.3}><View style={styles.doubleTag}><Text style={styles.doubleTagText} numberOfLines={1}>2× DOUBLED</Text></View></PopIn>
+                  </View>
+                ) : null}
                 <View style={styles.coin} />
                 <Text style={styles.lootBig}>+{coins}</Text>
                 <Text style={styles.lootSmall}>coins</Text>
@@ -422,8 +426,9 @@ function GrowReveal({ r, onClose }: { r: Extract<Reveal, { kind: 'grow' }>; onCl
 }
 
 const styles = StyleSheet.create({
-  doubleTag: { position: 'absolute', top: -34, alignSelf: 'center', backgroundColor: '#FF8A4C', borderRadius: 999, paddingHorizontal: 12, paddingVertical: 5, transform: [{ rotate: '-6deg' }] },
-  doubleTagText: { color: '#FFFFFF', fontWeight: '900', fontSize: 15, letterSpacing: 0.5 },
+  doubleWrap: { position: 'absolute', top: -16, left: -40, right: -40, alignItems: 'center', zIndex: 3 },
+  doubleTag: { backgroundColor: '#FF8A4C', borderRadius: 999, paddingHorizontal: 12, paddingVertical: 4, borderWidth: 2, borderColor: '#FFFFFF', transform: [{ rotate: '-4deg' }] },
+  doubleTagText: { color: '#FFFFFF', fontWeight: '900', fontSize: 14, letterSpacing: 0.5 },
   rainbowFlash: { fontSize: 20, fontWeight: '900', color: '#B45FE0', backgroundColor: '#FFFFFFEE', borderRadius: 14, paddingHorizontal: 14, paddingVertical: 6, overflow: 'hidden', marginBottom: 6, textAlign: 'center' },
   lucky: { backgroundColor: '#FFD84D', borderRadius: 999, paddingVertical: 6, paddingHorizontal: 14, marginTop: 6 },
   luckyText: { color: '#5A3A00', fontWeight: '900', fontSize: 14 },
