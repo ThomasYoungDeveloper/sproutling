@@ -63,7 +63,14 @@ export function AdBonusButton({ title, onReward, onDone, style }: { title: strin
     buzz('light');
     const r = await Ad.showRewarded();
     setBusy(false);
-    if (!r.ok) setErr(r.error === 'closed early' ? 'Watch to the end to get the bonus.' : `No ad ready right now. Try again in a minute. (${r.error ?? 'unknown'})`);
+    if (!r.ok)
+      setErr(
+        r.error === 'closed early'
+          ? 'Watch to the end to get the bonus.'
+          : /orientation/i.test(r.error ?? '')
+            ? 'Ads can’t play with the screen this shape yet. Turn your phone sideways (or fold it) and tap again. Fixed in the next app update.'
+            : `No ad ready right now. Try again in a minute. (${r.error ?? 'unknown'})`,
+      );
     if (r.ok) {
       buzz('success', 'coin');
       apply((s) => B.useAdBonus(s, onReward));

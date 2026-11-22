@@ -20,7 +20,13 @@
       "infoPlist": {
         "NSHealthShareUsageDescription": "Sproutling reads your steps, sleep, water, activity rings and mindful minutes so your pet can grow from your real healthy habits.",
         "NSHealthUpdateUsageDescription": "Sproutling does not save anything to Apple Health. It only reads your steps, sleep, water, activity rings and mindful minutes to help your pet grow.",
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "UISupportedInterfaceOrientations~ipad": [
+          "UIInterfaceOrientationPortrait",
+          "UIInterfaceOrientationPortraitUpsideDown",
+          "UIInterfaceOrientationLandscapeLeft",
+          "UIInterfaceOrientationLandscapeRight"
+        ]
       },
       "associatedDomains": [
         "applinks:sproutling.vercel.app"
