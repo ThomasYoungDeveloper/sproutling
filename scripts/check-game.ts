@@ -1,4 +1,5 @@
 import { newGame } from '../src/game/seed';
+import * as WATCH from '../src/game/watch';
 import * as A from '../src/game/actions';
 import { CHESTS, oddsFor } from '../src/game/loot';
 import { SPECIES, speciesOfRarity } from '../src/game/species';
@@ -1100,5 +1101,19 @@ ok(A.cleanSave({ ...newGame(), items: { 'Tide Shell': 2, 'Tide Taffy': 1, 'Moon 
   ok(T.applyTradeMulti(MT, 'mt2', give, [{ ...gets[0], speciesId: 'nope' }]) === null, 'bad species aborts the whole trade');
   const epic = T.tradeValue({ id: 'e', speciesId: gets[0].speciesId, nickname: 'x', xp: 0, shiny: false });
   ok(T.groupValue(gets) > epic && T.tradeValue({ id: 'e', speciesId: gets[0].speciesId, nickname: 'x', xp: 0, shiny: false, skin: 'gold' }) > epic, 'trade value grows with more pets and skins');
+}
+// Apple Watch snapshot and buttons
+{
+  const base = { ...TR } as GameState;
+  const snap = WATCH.watchSnapshot(base, { total: 30000, goal: 100000 });
+  ok(snap.v === 1 && !!snap.pet && snap.goal > 0, 'watch snapshot has the sprite and the step goal');
+  ok(snap.guild?.label === 'Guild Silver chest' && snap.guild.stepsLeft === 20000, 'watch shows steps to the next guild chest');
+  ok(WATCH.watchSnapshot(base, { total: 100000, goal: 100000 }).guild === null, 'no guild goal once Gold is reached');
+  ok(['good', 'hungry', 'bored', 'thirsty', 'tired'].includes(snap.status.key), 'watch status is one of the known moods');
+  const fed = WATCH.applyWatchAction(base, { id: 'a1', kind: 'feed' });
+  ok(WATCH.watchSnapshot(fed).needs.food >= snap.needs.food, 'Feed on the watch fills food');
+  const watered = WATCH.applyWatchAction(base, { id: 'a2', kind: 'water' });
+  ok(A.today(watered).water > A.today(base).water, '+1 water on the watch logs a glass');
+  ok(JSON.parse(JSON.stringify(snap)).status.text.length > 0, 'watch snapshot survives JSON');
 }
 console.log(fails ? `${fails} FAILED` : 'ALL PASSED'); process.exit(fails ? 1 : 0);

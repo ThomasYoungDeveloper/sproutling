@@ -108,7 +108,8 @@
         {
           "contactsPermission": "Sproutling uses your contacts to find friends who already play. Your contacts aren’t saved."
         }
-      ]
+      ],
+      "@bacons/apple-targets"
     ],
     "extra": {
       "eas": {
