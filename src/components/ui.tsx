@@ -61,8 +61,8 @@ export function ProgressBar({ value, color = colors.mint, height = 10 }: { value
 export function RarityBadge({ rarity }: { rarity: Rarity }) {
   const r = RARITY_INFO[rarity];
   return (
-    <View style={[styles.badge, { backgroundColor: r.soft }]}>
-      <Text style={[styles.badgeText, { color: r.color }]}>{r.label}</Text>
+    <View style={[styles.badge, { backgroundColor: r.soft, maxWidth: '100%' }]}>
+      <Text style={[styles.badgeText, { color: r.color }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6}>{r.label}</Text>
     </View>
   );
 }

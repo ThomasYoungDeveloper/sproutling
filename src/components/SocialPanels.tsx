@@ -118,8 +118,8 @@ function TradePicker({
 function PetStack({ ps, top, empty, onPress, off, onToggle }: { ps: TradePet[]; top?: string; empty: string; onPress?: (p: TradePet) => void; off?: string[]; onToggle?: (id: string) => void }) {
   if (ps.length <= 1) return <MiniPet p={ps[0] ?? null} label={empty} top={top} onPress={ps[0] && (onToggle || onPress) ? () => (onToggle ? onToggle(ps[0].id) : onPress!(ps[0])) : undefined} />;
   return (
-    <View style={[styles.mini, { width: 130 }]}>
-      {top ? <Text style={[styles.miniTop, { color: top === 'YOU GET' ? colors.mintDark : '#B4532A' }]}>{top}</Text> : null}
+    <View style={styles.mini}>
+      {top ? <Text style={[styles.miniTop, { color: top === 'YOU GET' ? colors.mintDark : '#B4532A' }]} numberOfLines={1}>{top}</Text> : null}
       <View style={styles.stack}>
         {ps.map((p) => {
           const sp = SPECIES_BY_ID[p.speciesId];
@@ -374,7 +374,7 @@ function MiniPet({ p, label, top, onPress }: { p: TradePet | null; label: string
   const sp = p ? SPECIES_BY_ID[p.speciesId] : null;
   return (
     <Pressable onPress={onPress} disabled={!onPress || !p} style={styles.mini} accessibilityRole={onPress && p ? 'button' : undefined} accessibilityLabel={onPress && p ? `See ${p.nickname}’s stats and moves` : undefined}>
-      {top ? <Text style={[styles.miniTop, { color: top === 'YOU GET' ? colors.mintDark : '#B4532A' }]}>{top}</Text> : null}
+      {top ? <Text style={[styles.miniTop, { color: top === 'YOU GET' ? colors.mintDark : '#B4532A' }]} numberOfLines={1}>{top}</Text> : null}
       <View style={styles.miniArt}>{sp && p ? <PetSprite species={sp} stage={stageFor(p.xp)} size={60} shiny={p.shiny} skin={p.skin} hat={(p as any).hat} aura={(p as any).aura} /> : <Text style={{ fontSize: 28 }}>❔</Text>}</View>
       <Text style={styles.miniName} numberOfLines={1}>{p ? p.nickname : '???'}</Text>
       <Text style={styles.miniSub} numberOfLines={1}>{p && sp ? `Lv ${levelFor(p.xp)} · ${sp.rarity[0].toUpperCase() + sp.rarity.slice(1)}` : label}</Text>
@@ -577,15 +577,15 @@ const styles = StyleSheet.create({
   buffText: { fontWeight: '900', fontSize: 12, color: '#D6DCF5' },
   closedRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   trade: { borderTopWidth: 1, borderTopColor: colors.line, paddingTop: space.sm, gap: 6 },
-  stack: { flexDirection: 'row', gap: 4, justifyContent: 'center', backgroundColor: colors.sky, borderRadius: 18, padding: 6, minHeight: 72, alignItems: 'center' },
+  stack: { flexDirection: 'row', flexWrap: 'wrap', alignSelf: 'stretch', gap: 4, justifyContent: 'center', backgroundColor: colors.sky, borderRadius: 18, padding: 6, minHeight: 72, alignItems: 'center' },
   stackPet: { alignItems: 'center', width: 38 },
   stackLv: { fontSize: 10, fontWeight: '800', color: colors.ink },
   fairTrack: { height: 8, borderRadius: 4, backgroundColor: '#F2D9C9', overflow: 'hidden', marginHorizontal: space.md },
   fairFill: { height: 8, backgroundColor: colors.mint },
   fairMid: { position: 'absolute', left: '50%', top: 0, bottom: 0, width: 2, backgroundColor: colors.ink, opacity: 0.4 },
-  swap: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: space.sm },
+  swap: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: space.xs },
   arrow: { fontSize: 26, fontWeight: '900', color: colors.mintDark },
-  mini: { alignItems: 'center', width: 110 },
+  mini: { alignItems: 'center', flex: 1, minWidth: 0, maxWidth: 160 },
   miniArt: { width: 72, height: 72, borderRadius: 18, backgroundColor: colors.sky, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
   miniName: { fontWeight: '900', fontSize: 13, color: colors.ink, marginTop: 2 },
   miniSub: { fontWeight: '700', fontSize: 12, color: colors.muted },

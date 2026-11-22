@@ -64,10 +64,11 @@ export default function PetPicker({
     <View style={styles.backdrop}>
       <Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessibilityLabel="Close" />
       <View style={styles.sheet}>
+        <ScrollView style={{ flexShrink: 1 }} contentContainerStyle={{ gap: space.sm }} showsVerticalScrollIndicator>
         <Text style={font.title}>{title}</Text>
         {subtitle ? <Text style={font.small}>{subtitle}</Text> : null}
         {header ? header(picked) : null}
-        <ScrollView style={{ maxHeight: 420 }} contentContainerStyle={styles.grid}>
+        <View style={styles.grid}>
           {pets.map((p) => {
             const sp = SPECIES_BY_ID[p.pet.speciesId];
             const on = picked.includes(p.pet.id);
@@ -75,7 +76,7 @@ export default function PetPicker({
             return (
               <Pressable key={p.pet.id} onPress={() => toggle(p)} style={[styles.tile, on && styles.on, !!p.disabled && styles.off]} accessibilityRole="checkbox" accessibilityState={{ checked: on, disabled: !!p.disabled }} accessibilityLabel={`${p.pet.nickname}, level ${levelFor(p.pet.xp)}`}>
                 <PetSprite species={sp} stage={stageFor(p.pet.xp)} size={70} shiny={p.pet.shiny} skin={p.pet.skin} hat={(p.pet as any).look?.hat ?? (p.pet as any).hat} aura={(p.pet as any).look?.aura ?? (p.pet as any).aura} />
-                <View style={styles.lv}><Text style={styles.lvText}>Lv {levelFor(p.pet.xp)} · {gradeOf(p.pet)}%</Text></View>
+                <View style={[styles.lv, on && { right: 30 }]} pointerEvents="none"><Text style={styles.lvText} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6}>Lv {levelFor(p.pet.xp)} · {gradeOf(p.pet)}%</Text></View>
                 {on && max > 1 ? <View style={styles.num}><Text style={styles.numText}>{order + 1}</Text></View> : null}
                 {on && max === 1 ? <View style={styles.num}><Text style={styles.numText}>✓</Text></View> : null}
                 <Text style={styles.name} numberOfLines={1}>{p.pet.nickname}</Text>
@@ -90,6 +91,7 @@ export default function PetPicker({
               </Pressable>
             );
           })}
+        </View>
         </ScrollView>
         {why ? <Text style={styles.why}>{why}</Text> : null}
         {message ? <Text style={[styles.why, message.ok && { color: colors.mintDark }]}>{message.text}</Text> : null}
@@ -105,13 +107,13 @@ export default function PetPicker({
 const styles = StyleSheet.create({
   hpText: { fontSize: 12, fontWeight: '900', textAlign: 'center' },
   backdrop: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(24,30,48,0.6)', justifyContent: 'center', alignItems: 'center', padding: space.lg, zIndex: 80 },
-  sheet: { backgroundColor: '#FFFFFF', borderRadius: 22, padding: space.lg, gap: space.sm, width: '100%', maxWidth: 440 },
+  sheet: { backgroundColor: '#FFFFFF', borderRadius: 22, padding: space.lg, gap: space.sm, width: '100%', maxWidth: 440, maxHeight: '96%' },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: '3.5%', rowGap: space.sm, paddingVertical: space.xs },
   tile: { width: '31%', alignItems: 'center', gap: 3, padding: space.xs, paddingTop: space.sm, borderRadius: 16, borderWidth: 2, borderColor: colors.line, backgroundColor: '#FAFCFB' },
   on: { borderColor: colors.mint, backgroundColor: colors.mintSoft },
   off: { opacity: 0.4 },
-  lv: { position: 'absolute', top: 4, left: 4, backgroundColor: colors.ink, borderRadius: 7, paddingHorizontal: 5, paddingVertical: 1 },
-  lvText: { color: '#fff', fontWeight: '900', fontSize: 12 },
+  lv: { position: 'absolute', top: 4, left: 4, right: 4, alignItems: 'flex-start' },
+  lvText: { color: '#fff', fontWeight: '900', fontSize: 12, backgroundColor: colors.ink, borderRadius: 7, overflow: 'hidden', paddingHorizontal: 5, paddingVertical: 1 },
   num: { position: 'absolute', top: 4, right: 4, width: 22, height: 22, borderRadius: 11, backgroundColor: colors.mint, alignItems: 'center', justifyContent: 'center' },
   numText: { color: '#fff', fontWeight: '900', fontSize: 12 },
   name: { fontWeight: '800', fontSize: 12, color: colors.ink },
