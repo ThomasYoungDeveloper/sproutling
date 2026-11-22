@@ -1,5 +1,5 @@
 -- A small activity log for tracking down bugs (trades applied, duplicate pets cleaned up, and so on).
--- Players can't read it; only the app's log function writes to it. Rows older than 60 days are trimmed.
+-- Players can't read it; only the app's log function writes to it (max ~30 lines a minute per player).
 create table if not exists public.game_events (
   id bigint generated always as identity primary key,
   created_at timestamptz not null default now(),

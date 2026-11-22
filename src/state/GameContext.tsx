@@ -8,6 +8,7 @@ import { newGame } from '../game/seed';
 import { supabase } from '../lib/supabase';
 import { useAuth } from './AuthContext';
 import { buildCard } from '../game/card';
+import { logEvent } from '../lib/gameLog';
 
 const keyFor = (userId: string) => `sproutling/game/v3/${userId}`;
 
@@ -183,6 +184,30 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     const t = setTimeout(() => push(user.id), 1500);
     return () => clearTimeout(t);
   }, [state, user?.id]);
+
+  // Activity log: note whenever pets join or leave the save, and any duplicates the cleanup removed.
+  const petIdsRef = useRef<Map<string, string> | null>(null);
+  const loggedDupes = useRef<Set<string> | null>(null);
+  const petKey = state.pets.map((p) => p.id).sort().join(',');
+  useEffect(() => {
+    if (!user || cloudReady.current !== user.id) {
+      petIdsRef.current = null;
+      return;
+    }
+    const now = new Map(state.pets.map((p) => [p.id, p.speciesId]));
+    const before = petIdsRef.current;
+    petIdsRef.current = now;
+    if (loggedDupes.current === null) loggedDupes.current = new Set(state.dupesRemoved ?? []);
+    const newDupes = (state.dupesRemoved ?? []).filter((id) => !loggedDupes.current!.has(id));
+    if (newDupes.length) {
+      newDupes.forEach((id) => loggedDupes.current!.add(id));
+      logEvent('dupes_removed', { ids: newDupes, count: state.pets.length });
+    }
+    if (!before) return;
+    const added = [...now].filter(([id]) => !before.has(id)).map(([id, sp]) => ({ id, sp }));
+    const removed = [...before].filter(([id]) => !now.has(id)).map(([id, sp]) => ({ id, sp }));
+    if (added.length || removed.length) logEvent('pets_changed', { added, removed, count: now.size });
+  }, [petKey, user?.id, sync === 'saved', state.dupesRemoved?.length]);
 
   // Publish the trainer card friends see, only when something on it changed.
   const cardJson = JSON.stringify(buildCard(state));

@@ -1,4 +1,5 @@
 import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
+import { logEvent } from '../lib/gameLog';
 import { supabase } from '../lib/supabase';
 import { useAuth } from './AuthContext';
 import { useGame } from './GameContext';
@@ -323,6 +324,7 @@ export function FriendsProvider({ children }: { children: React.ReactNode }) {
         if (r) {
           s = r.state;
           done.push({ gave: give, got: r, friend: t.friendName });
+          logEvent('trade_applied', { trade: t.id, gave: give.map((p) => ({ id: p.id, sp: p.speciesId })), got: r.received.map((p) => ({ id: p.id, sp: p.speciesId })), count: r.state.pets.length });
         }
       });
     if (!done.length) return;
