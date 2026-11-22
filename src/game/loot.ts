@@ -57,7 +57,10 @@ export const RAINBOW_UPGRADE_CHANCE = 1 / 40;
 /** Days of streak for each Rainbow Chest. */
 export const RAINBOW_STREAK = 30;
 
-export const COLLECTIBLES = ['Ember Sticker', 'Moon Seed', 'Tide Shell', 'Star Stamp', 'Acorn Charm', 'Starlight Seed'];
+/** Snacks: found in chests and on trips; the yard's Snack button gives your pet one a day (+10% XP). */
+export const COLLECTIBLES = ['Ember Cookie', 'Moon Mochi', 'Tide Taffy', 'Star Candy', 'Acorn Biscuit', 'Starlight Drop'];
+/** The old trinket names, moved to the snack with the same spot in the list. */
+export const OLD_SNACK_NAMES: Record<string, string> = { 'Ember Sticker': 'Ember Cookie', 'Moon Seed': 'Moon Mochi', 'Tide Shell': 'Tide Taffy', 'Star Stamp': 'Star Candy', 'Acorn Charm': 'Acorn Biscuit', 'Starlight Seed': 'Starlight Drop' };
 
 export interface ChestResult {
   coins: number;

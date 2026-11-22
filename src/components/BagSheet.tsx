@@ -1,3 +1,4 @@
+import SnackIcon from './SnackIcon';
 import React, { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Text } from './ScaledText';
@@ -38,7 +39,7 @@ export default function BagSheet({ onClose, onFeed }: { onClose: () => void; onF
         <View style={styles.grab} />
         <Text style={font.title}>Your bag</Text>
         <ScrollView style={{ flexShrink: 1 }} contentContainerStyle={{ gap: space.md }}>
-          {empty ? <Text style={font.small}>Nothing here yet. Walks, chests and trips fill your bag with food, potions and treasures.</Text> : null}
+          {empty ? <Text style={font.small}>Nothing here yet. Walks, chests and trips fill your bag with food, potions and snacks.</Text> : null}
           {dyes.length ? (
             <Section title="Dyes" hint="Gives one pet that skin for good.">
               {dyes.map((d) => (
@@ -69,9 +70,9 @@ export default function BagSheet({ onClose, onFeed }: { onClose: () => void; onF
             </Section>
           ) : null}
           {treasures.length ? (
-            <Section title="Treasures" hint="Give one to your pet as a Treat each day for +10% XP.">
+            <Section title="Snacks" hint="Tap Snack in the yard to give your pet one a day for +10% XP.">
               {treasures.map((k) => (
-                <Item key={k} icon={<View style={styles.treasure} />} name={k} count={state.items[k] ?? 0} text="A treat for your pet" />
+                <Item key={k} icon={<SnackIcon name={k} size={28} />} name={k} count={state.items[k] ?? 0} text="A snack for your pet" />
               ))}
             </Section>
           ) : null}

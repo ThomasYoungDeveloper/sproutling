@@ -7,7 +7,7 @@ import { boostedTotal } from './care';
 import { grantCosmetic, rollChestCosmetic } from './cosmetics';
 import { BRED_SKIN_BOOST, rollSkin, skinKey } from './skins';
 import { randomPersonality, rollIvs, inheritIvs } from './stats';
-import { openChest, RAINBOW_STREAK, RAINBOW_UPGRADE_CHANCE, type ChestResult } from './loot';
+import { OLD_SNACK_NAMES, openChest, RAINBOW_STREAK, RAINBOW_UPGRADE_CHANCE, type ChestResult } from './loot';
 import { addDye, rollDye } from './dyes';
 import { speciesOfRarity, SPECIES, SPECIES_BY_ID } from './species';
 import { SHINY_CHANCE, stepsToHatch, eggSteps } from './rarity';
@@ -167,6 +167,16 @@ export function cleanSave(s: GameState): GameState {
       pets: s.pets.filter((p) => !gone.has(p.id)),
       dupesRemoved: [...(s.dupesRemoved ?? []), ...dropped].slice(-50),
     } as GameState;
+    changed = true;
+  }
+  // Old trinket names became snacks.
+  if (Object.keys(s.items ?? {}).some((k) => OLD_SNACK_NAMES[k])) {
+    const items: Record<string, number> = {};
+    for (const [k, n] of Object.entries(s.items)) {
+      const to = OLD_SNACK_NAMES[k] ?? k;
+      items[to] = (items[to] ?? 0) + n;
+    }
+    s = { ...s, items };
     changed = true;
   }
   if (s.activePetId && s.pets.length && !s.pets.some((p) => p.id === s.activePetId)) {

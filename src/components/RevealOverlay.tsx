@@ -1,6 +1,7 @@
 import { AdBonusButton } from './Ads';
 import { addCoins } from '../game/adBonus';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import SnackIcon from './SnackIcon';
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import PotionIcon, { POTION_COLOR } from './PotionIcon';
 import { Animated, Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
@@ -338,9 +339,9 @@ function ChestReveal({ r, onClose }: { r: Extract<Reveal, { kind: 'chest' }>; on
             {r.result.item ? (
               <PopIn delay={r.result.eggRarity ? 850 : 500}>
                 <View style={styles.lootCard}>
-                  <Text style={{ fontSize: 30 }}>✦</Text>
+                  <SnackIcon name={r.result.item} size={40} />
                   <Text style={[styles.lootBig, { fontSize: 14, textAlign: 'center' }]}>{r.result.item}</Text>
-                  <Text style={styles.lootSmall}>collectible</Text>
+                  <Text style={styles.lootSmall}>snack</Text>
                 </View>
               </PopIn>
             ) : null}

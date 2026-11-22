@@ -96,7 +96,7 @@ ok(levelFor(0) === 1 && levelFor(49) === 1 && levelFor(50) === 2 && levelFor(300
 ok(stageFor(299) === 'baby' && stageFor(300) === 'teen' && stageFor(1050) === 'adult', 'teen at Lv4, adult at Lv7');
 const lp = levelProgress(200); ok(lp.level === 3 && lp.into === 50 && lp.need === 150, 'level progress bar math');
 // Care
-let K = { ...t, days: {}, items: { 'Moon Seed': 2 } } as GameState;
+let K = { ...t, days: {}, items: { 'Moon Mochi': 2 } } as GameState;
 K = A.addSteps(K, 5000);
 const base = A.activePet(K)!.xp;
 ok(C.moodFor(A.today(K)) === 'hungry', 'unfed pet is hungry (no penalty)');
@@ -105,7 +105,7 @@ ok(A.activePet(K)!.xp > base, 'feeding boosts XP already earned today');
 ok(Math.abs(C.careMultiplier(A.today(K)) - 1.1) < 1e-9, 'feeding gives 1.1x');
 K = C.play(C.play(K)); ok(!C.careTasks(A.today(K))[1].done, 'two plays is not enough');
 K = C.play(K); ok(C.careTasks(A.today(K))[1].done, 'three plays completes play');
-K = C.treat(K); ok(K.items['Moon Seed'] === 1 && Math.abs(C.careMultiplier(A.today(K)) - 1.3) < 1e-9, 'treat uses a trinket, 1.3x max');
+K = C.treat(K); ok(K.items['Moon Mochi'] === 1 && Math.abs(C.careMultiplier(A.today(K)) - 1.3) < 1e-9, 'treat uses a trinket, 1.3x max');
 ok(C.treat(K) === K, 'only one treat per day');
 const noBag = { ...t, days: {}, items: {} } as GameState; ok(C.treat(noBag) === noBag, 'no trinkets, no treat');
 const K2 = A.nextDay(K); ok(C.careMultiplier(A.today(K2)) === 1 && A.activePet(K2)!.xp === A.activePet(K)!.xp, 'next day care resets but XP is kept');
@@ -749,9 +749,9 @@ console.log('\nEgg basket');
 }
 {
   const Pw2 = require('../src/game/powerups');
-  const g = { ...newGame(), items: { [Pw2.CRYSTAL]: 5, 'Moon Seed': 1 } };
+  const g = { ...newGame(), items: { [Pw2.CRYSTAL]: 5, 'Moon Mochi': 1 } };
   const t = C.treat(g);
-  ok(t.items[Pw2.CRYSTAL] === 5 && t.items['Moon Seed'] === 0, 'Treat uses a trinket, never a Training Crystal');
+  ok(t.items[Pw2.CRYSTAL] === 5 && t.items['Moon Mochi'] === 0, 'Treat uses a trinket, never a Training Crystal');
   ok(C.trinketCount({ ...newGame(), items: { [Pw2.CRYSTAL]: 3 } }) === 0 && C.treat({ ...newGame(), items: { [Pw2.CRYSTAL]: 3 } }).items[Pw2.CRYSTAL] === 3, 'crystals alone do not count as treats');
 }
 {
@@ -1073,4 +1073,6 @@ console.log('\nEgg basket');
   const back = A.cleanSave(mergeSaves(dup, cl, dup));
   ok(back.pets.filter((p) => p.speciesId === 'p47').length === 1, 'a cleaned-up duplicate does not come back from another device');
 }
+
+ok(A.cleanSave({ ...newGame(), items: { 'Tide Shell': 2, 'Tide Taffy': 1, 'Moon Seed': 1 } } as GameState).items['Tide Taffy'] === 3, 'old trinkets become snacks (counts carry over)');
 console.log(fails ? `${fails} FAILED` : 'ALL PASSED'); process.exit(fails ? 1 : 0);

@@ -237,7 +237,7 @@ function PlaceSheet({ onPick, onClose }: { onPick: (place: Ex.Place) => void; on
       <View style={styles.bottomSheet}>
         <View style={styles.grab} />
         <Text style={font.title}>Expeditions</Text>
-        <Text style={font.small}>Send a pet on an adventure. They come back with coins, treasure and a story. Walking brings them home sooner.</Text>
+        <Text style={font.small}>Send a pet on an adventure. They come back with coins, snacks and a story. Walking brings them home sooner.</Text>
         <View style={styles.places}>
           {Ex.PLACES.map((pl) => {
             const locked = best < pl.minLevel;
@@ -463,7 +463,7 @@ export default function ExpeditionCard() {
       <Text style={{ fontSize: 26 }}>🧭</Text>
       <View style={{ flex: 1 }}>
         <Text style={styles.rowTitle}>Send a pet on an adventure</Text>
-        <Text style={styles.rowSub}>Coins, treasure and a story</Text>
+        <Text style={styles.rowSub}>Coins, snacks and a story</Text>
       </View>
       <Text style={styles.chev}>›</Text>
     </Pressable>

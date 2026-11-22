@@ -82,7 +82,7 @@ export const feed = (s: GameState, foodId: string = PELLETS.id, now = Date.now()
 export const play = (s: GameState, now = Date.now()) => A.bump(A.updateToday(s, (d) => ({ ...d, care: { ...d.care, played: (d.care?.played ?? 0) + 1, ...funAfterPlay(d, now) } })), 'toys');
 export const playToy = (s: GameState) => play(s);
 
-/** Trinkets are the trip collectibles (Moon Seed, Tide Shell…). Training Crystals share the item bag but aren't treats. */
+/** Trinkets are the snacks (Moon Mochi, Tide Taffy…). Training Crystals share the item bag but aren't treats. */
 const isTrinket = (name: string) => COLLECTIBLES.includes(name);
 export const trinketCount = (s: GameState) => Object.entries(s.items).reduce((a, [k, n]) => (isTrinket(k) ? a + n : a), 0);
 
