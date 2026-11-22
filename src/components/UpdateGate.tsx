@@ -94,7 +94,7 @@ export default function UpdateGate({ children }: { children: React.ReactNode }) 
           <View style={styles.card}>
             <Text style={styles.kicker}>WHAT'S NEW</Text>
             <Text style={styles.cardTitle}>{whatsNew.title}</Text>
-            <ScrollView style={{ maxHeight: 360 }} contentContainerStyle={{ gap: 8 }}>
+            <ScrollView style={{ flexShrink: 1 }} contentContainerStyle={{ gap: 10, paddingBottom: 4 }}>
               {whatsNew.notes.map((line, i) => (
                 <View key={i} style={styles.row}>
                   <Text style={styles.dot}>✦</Text>
@@ -124,7 +124,7 @@ const styles = StyleSheet.create({
   btnText: { color: '#FFFFFF', fontSize: 17, fontWeight: '900' },
   hint: { fontSize: 13, fontWeight: '700', color: colors.muted, textAlign: 'center' },
   backdrop: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(20,30,35,0.5)', alignItems: 'center', justifyContent: 'center', padding: 20, zIndex: 200 },
-  card: { width: '100%', maxWidth: 420, backgroundColor: '#FFFCF5', borderRadius: 24, padding: 20, gap: 10 },
+  card: { width: '100%', maxWidth: 420, maxHeight: '88%', backgroundColor: '#FFFCF5', borderRadius: 24, padding: 20, gap: 10 },
   kicker: { fontSize: 12, fontWeight: '900', color: colors.mintDark, letterSpacing: 1 },
   cardTitle: { fontSize: 22, fontWeight: '900', color: colors.ink },
   row: { flexDirection: 'row', gap: 8, alignItems: 'flex-start' },
