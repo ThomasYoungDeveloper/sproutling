@@ -41,6 +41,7 @@ import { onPushTap, registerPushToken } from './src/lib/pushTokens';
 import { onRemindersChange } from './src/lib/remindersState';
 import { useWalkFinds } from './src/lib/useWalkFinds';
 import YardTips from './src/components/YardTips';
+import { FindMeAsk } from './src/components/ContactFriends';
 import { InfoPop, type Tip } from './src/components/InfoTip';
 import TabBar from './src/components/TabBar';
 import { yardSkyTop } from './src/components/PetScene';
@@ -356,6 +357,8 @@ function Shell() {
       {/* Pop-ups and toasts stay inside the app's own area (never under a side camera column). */}
       <View pointerEvents="box-none" style={{ position: 'absolute', top: 0, bottom: 0, left: layerInsets.left, right: layerInsets.right, zIndex: 70 }}>
       {settled && !starter && !state.tutorialDone && tab === 'home' ? <YardTips /> : null}
+      {settled && !starter && tab === 'home' && state.tutorialDone && !showLogin ? <FindMeAsk key="ask-open" where="open" /> : null}
+      {settled && !starter && tab === 'friends' && !showLogin ? <FindMeAsk key="ask-social" where="social" /> : null}
       {streakTip ? <View style={[StyleSheet.absoluteFill, { zIndex: 300 }]}><InfoPop tip={streakTip} onClose={() => setStreakTip(null)} /></View> : null}
       {settled && !starter && state.tutorialDone && !showLogin ? <LevelUpPopup onGo={goUnlock} /> : null}
       {showAccount && <AccountSheet onClose={() => setShowAccount(false)} />}

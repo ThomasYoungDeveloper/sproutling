@@ -27,7 +27,7 @@ export { contactsSupported } from './contactsDevice';
 export type ContactMatch = { id: string; username: string; card: any; contactName?: string };
 
 /** Reads contacts (asks permission the first time), checks them, and returns the players found. */
-export async function findContactFriends(): Promise<{ matches: ContactMatch[] } | { error: string }> {
+export async function findContactFriends(): Promise<{ matches: ContactMatch[]; total: number } | { error: string }> {
   const keys = await readContactKeys();
   if ('error' in keys) return keys;
   const names = new Map<string, string>();
@@ -39,11 +39,12 @@ export async function findContactFriends(): Promise<{ matches: ContactMatch[] } 
     for (const e of c.emails) names.set(hashEmail(e), c.name);
   }
   const hashes = [...names.keys()].slice(0, 2000);
-  if (!hashes.length) return { matches: [] };
+  const total = keys.contacts.length;
+  if (!hashes.length) return { matches: [], total };
   const { data, error } = await supabase.rpc('match_contacts', { p_hashes: hashes });
   if (error) return { error: 'Couldn’t check right now. Try again in a moment.' };
   // We can't tell which contact matched from the server's answer (it never sends hashes back), so names stay off.
-  return { matches: (data ?? []) as ContactMatch[] };
+  return { matches: (data ?? []) as ContactMatch[], total };
 }
 
 export async function getContactPrefs(): Promise<{ hasPhone: boolean; findable: boolean }> {

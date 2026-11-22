@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Linking, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Text } from './ScaledText';
+import { noteWhatsNewShown } from '../lib/findMeAsk';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../lib/supabase';
 import { appBuild } from '../lib/appBuild';
@@ -45,7 +46,10 @@ export default function UpdateGate({ children }: { children: React.ReactNode }) 
             return;
           }
         }
-        if (mine.build > (Number(seenRaw) || 0)) setWhatsNew(mine);
+        if (mine.build > (Number(seenRaw) || 0)) {
+          noteWhatsNewShown();
+          setWhatsNew(mine);
+        }
       } catch {
         // Offline or not set up: never stop someone from playing.
       }
