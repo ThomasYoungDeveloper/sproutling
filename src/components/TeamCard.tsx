@@ -144,7 +144,7 @@ export default function TeamCard({ initialJoin, onUsedInitialJoin }: { initialJo
           </>
         ) : mode === 'create' ? (
           <View style={{ gap: space.sm }}>
-            <TextInput style={styles.input} value={name} onChangeText={setName} placeholder="Guild name (like Morning Walkers)" maxLength={24} accessibilityLabel="Guild name" />
+            <TextInput style={styles.input} value={name} onChangeText={setName} placeholder="Guild name (like Morning Walkers)" maxLength={16} accessibilityLabel="Guild name" />
             <View style={styles.emojis}>
               {TEAM_EMOJIS.map((e) => (
                 <Pressable key={e} onPress={() => setEmoji(e)} style={[styles.emoji, emoji === e && styles.emojiOn]} accessibilityRole="button" accessibilityLabel={`Guild badge ${e}`}>
@@ -262,7 +262,7 @@ export default function TeamCard({ initialJoin, onUsedInitialJoin }: { initialJo
           <TextInput
             value={renaming}
             onChangeText={setRenaming}
-            maxLength={24}
+            maxLength={16}
             autoFocus
             placeholder="Guild name"
             placeholderTextColor="#9AA7A2"

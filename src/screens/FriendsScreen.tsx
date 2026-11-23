@@ -26,6 +26,7 @@ import RankedCard from '../components/RankedCard';
 import TeamCard from '../components/TeamCard';
 import RanksCard from '../components/RanksCard';
 import RankTag from '../components/RankTag';
+import GuildTag from '../components/GuildTag';
 import FashionShow from '../components/FashionShow';
 import { SocialIcon } from '../components/SocialIcons';
 import { LockedCard } from '../components/Unlocks';
@@ -221,6 +222,7 @@ export default function FriendsScreen({ initialAdd, onUsedInitialAdd, initialGui
             <View style={{ flex: 1 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                 <Text style={styles.personName} numberOfLines={1}>{f.username}</Text>
+                <GuildTag userId={f.id} small />
                 <RankTag userId={f.id} small />
                 {activeToday(f) ? <View style={styles.onlineDot} /> : null}
                 {friendUnread(f.id) ? (

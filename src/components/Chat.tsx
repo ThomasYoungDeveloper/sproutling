@@ -21,6 +21,7 @@ import { SKIN_INFO } from '../game/skins';
 import type { Skin } from '../game/types';
 import { momentText, REACTIONS, useRoomReactions, type Reaction } from '../lib/moments';
 import RankTag from './RankTag';
+import GuildTag from './GuildTag';
 import { usePlaza } from '../lib/plaza';
 
 const ago = (iso: string | null) => {
@@ -277,6 +278,7 @@ function ChatRoomScreen({ room, title, otherId, onClose }: { room: string; title
               {(isTeam || isPlaza) && !mine ? (
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
                   <Text style={styles.who}>{chat.nameOf(m.sender)}</Text>
+                  {!isTeam ? <GuildTag userId={m.sender} small /> : null}
                   <RankTag userId={m.sender} small />
                 </View>
               ) : null}

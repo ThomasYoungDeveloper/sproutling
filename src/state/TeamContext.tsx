@@ -51,7 +51,10 @@ const TeamCtx = createContext<Ctx | null>(null);
 
 const MESSAGES: Record<string, string> = {
   already_in_team: 'You’re already in a guild. Leave it first to start or join another.',
-  bad_name: 'Give your guild a name (at least 2 letters).',
+  bad_name: 'Guild names are 3 to 16 characters.',
+  bad_chars: 'Guild names can only use letters, numbers and spaces.',
+  bad_word: 'That name isn’t allowed. Try another one.',
+  name_taken: 'Another guild already has that name. Try another one.',
   not_found: 'No guild with that code. Check the letters?',
   full: 'That guild is full (20 players).',
   not_yet: 'Your guild hasn’t reached that goal yet. Keep walking!',

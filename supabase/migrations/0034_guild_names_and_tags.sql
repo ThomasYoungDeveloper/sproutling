@@ -1,0 +1,5 @@
+-- Applied through the Supabase connector on 2026-11-23.
+-- guild_name_check(): 3 to 16 letters, numbers and spaces; passes the chat word filter; unique ignoring case and spaces
+-- (also enforced by unique index teams_name_key). Used by create_team() and rename_team(), which return
+-- bad_name / bad_chars / bad_word / name_taken.
+-- guild_tags(p_ids uuid[]): guild name per player for the [Guild Name] tag after names (signed-in players only).

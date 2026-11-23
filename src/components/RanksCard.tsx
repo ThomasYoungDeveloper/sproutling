@@ -4,6 +4,7 @@ import { Text } from './ScaledText';
 import { Button, Card, FitSheet } from './ui';
 import PetSprite from './PetSprite';
 import RankTag from './RankTag';
+import GuildTag from './GuildTag';
 import { useGame } from '../state/GameContext';
 import { useOverlay } from './Overlay';
 import { colors, font, space } from '../theme';
@@ -130,6 +131,7 @@ function Row({ r }: { r: Board['rows'][number] }) {
           {r.username}
           {r.me && r.username !== 'You' ? ' (you)' : ''}
         </Text>
+        {r.id !== 'me' ? <GuildTag userId={r.id} small /> : null}
         {r.id !== 'me' ? <RankTag userId={r.id} small /> : null}
       </View>
       <Text style={styles.steps}>{r.steps.toLocaleString()}</Text>
