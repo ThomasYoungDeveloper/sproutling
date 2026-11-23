@@ -33,9 +33,10 @@ export function usePlaza(): { rooms: PlazaRoom[]; band: 'teen' | 'adult' | null 
     });
   }, [band]);
   if (!band || !info) return { rooms: [], band };
-  const label = band === 'teen' ? 'Teen' : '18+';
+  // Adults see a plain room name; teens see 'Teen' so they know it's their own room.
+  const label = band === 'teen' ? ' Teen' : '';
   const rooms: PlazaRoom[] = [];
-  if (info.city) rooms.push({ room: `plaza:${band}:${cityKey(info.city)}`, title: `${info.city} Plaza · ${label}` });
-  rooms.push({ room: `plaza:${band}:everywhere`, title: `Everywhere Plaza · ${label}` });
+  if (info.city) rooms.push({ room: `plaza:${band}:${cityKey(info.city)}`, title: `${info.city}${label} Plaza` });
+  rooms.push({ room: `plaza:${band}:everywhere`, title: `Everywhere${label} Plaza` });
   return { rooms, band };
 }
