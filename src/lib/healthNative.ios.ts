@@ -6,7 +6,33 @@ import {
   queryStatisticsForQuantity,
   requestAuthorization,
 } from '@kingstinct/react-native-healthkit';
-import type { HealthDay, HealthProvider } from './health';
+import type { HealthDay, HealthLabel, HealthProvider } from './health';
+
+// Wearable apps that write steps or sleep to Apple Health, by bundle id prefix. A phone sleep app is not a wearable.
+const WEARABLES: [string, HealthLabel][] = [
+  ['com.ouraring', 'oura'],
+  ['com.garmin', 'garmin'],
+  ['com.fitbit', 'fitbit'],
+  ['com.whoop', 'wearable'],
+  ['fi.polar', 'wearable'],
+  ['com.withings', 'wearable'],
+  ['com.huami', 'wearable'],
+  ['com.zepp', 'wearable'],
+  ['com.samsung', 'wearable'],
+  ['com.suunto', 'wearable'],
+  ['com.coros', 'wearable'],
+];
+const ORDER: HealthLabel[] = ['watch', 'oura', 'garmin', 'fitbit', 'wearable'];
+
+/** One sample's wearable, if it came from one. */
+function labelOf(x: any): HealthLabel | null {
+  const model = String(x?.device?.model ?? '');
+  const product = String(x?.sourceRevision?.productType ?? '');
+  if (/watch/i.test(model) || /^Watch/.test(product)) return 'watch';
+  const id = String(x?.sourceRevision?.source?.bundleIdentifier ?? '').toLowerCase();
+  for (const [prefix, label] of WEARABLES) if (id.startsWith(prefix.toLowerCase())) return label;
+  return null;
+}
 
 /** Sleep stages that count as asleep (not "in bed" or "awake"). */
 const ASLEEP = new Set([1, 3, 4, 5]);
@@ -96,6 +122,25 @@ export const nativeProvider: HealthProvider = {
       return null;
     }
   },
+  async detectLabel(): Promise<HealthLabel> {
+    const found = new Set<HealthLabel>();
+    const range = { startDate: new Date(Date.now() - 7 * 86_400_000), endDate: new Date() };
+    try {
+      const steps = await queryQuantitySamples('HKQuantityTypeIdentifierStepCount', { filter: { date: range }, limit: 400, unit: 'count' });
+      steps.forEach((x) => {
+        const l = labelOf(x);
+        if (l) found.add(l);
+      });
+    } catch {}
+    try {
+      const sleep = await queryCategorySamples('HKCategoryTypeIdentifierSleepAnalysis', { filter: { date: range }, limit: 300 });
+      sleep.forEach((x) => {
+        const l = labelOf(x);
+        if (l) found.add(l);
+      });
+    } catch {}
+    return ORDER.find((l) => found.has(l)) ?? 'health';
+  },
   async readDay(date: string): Promise<HealthDay | null> {
     try {
       // Steps: midnight to midnight. Statistics merge iPhone and Watch without double counting.
@@ -112,7 +157,10 @@ export const nativeProvider: HealthProvider = {
       const asleep = samples
         .filter((s) => ASLEEP.has(Number(s.value)))
         .map((s) => [new Date(s.startDate).getTime(), new Date(s.endDate).getTime()] as [number, number]);
-      const sleepHours = Math.round((coveredMs(asleep) / 3_600_000) * 2) / 2;
+      // No sleep stages (no watch or sleep app)? Use the iPhone's "in bed" time from the Health bedtime schedule.
+      let sleepMs = coveredMs(asleep);
+      if (sleepMs === 0) sleepMs = coveredMs(samples.filter((s) => Number(s.value) === 0).map((s) => [new Date(s.startDate).getTime(), new Date(s.endDate).getTime()] as [number, number]));
+      const sleepHours = Math.round((sleepMs / 3_600_000) * 2) / 2;
       const extras = await readExtras(date);
       return { steps, sleepHours, ...extras };
     } catch {

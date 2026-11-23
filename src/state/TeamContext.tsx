@@ -74,7 +74,7 @@ export function TeamProvider({ children }: { children: React.ReactNode }) {
   const { state, apply, loaded } = useGame();
   const [team, setTeam] = useState<TeamInfo | null>(null);
   const [loading, setLoading] = useState(true);
-  const steps = Team.weekSteps(state);
+  const steps = Team.guildWeekSteps(state);
   // Your own Monday: steps are filed under the week they were walked in, wherever you live.
   const week = Team.weekStart(A.todayKey(state));
   const lastReported = useRef('');

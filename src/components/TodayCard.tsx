@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Animated, Pressable, StyleSheet, View } from 'react-native';
+import { Animated, Pressable, StyleSheet, View, Platform } from 'react-native';
 import { Text } from './ScaledText';
 import Svg, { Circle, Path } from 'react-native-svg';
 import { useGame } from '../state/GameContext';
@@ -10,7 +10,7 @@ import { colors, font, space } from '../theme';
 import { dailyQuests, EXERCISE_MINUTES, MINDFUL_MINUTES, RING_XP, ringsClosed, scoreDay } from '../game/scoring';
 import * as A from '../game/actions';
 import * as C from '../game/care';
-import { healthProvider, isVerified } from '../lib/health';
+import { healthAvailable, healthProvider, isVerified, nativeHealth } from '../lib/health';
 import * as I from '../game/intro';
 import { tipFor, WHY } from '../game/tips';
 import { stepsToHatch, eggSteps } from '../game/rarity';
@@ -213,9 +213,37 @@ function LogSheet({ habit, onClose }: { habit: Habit; onClose: () => void }) {
         </View>
         <Text style={[font.body, { fontWeight: '800', color: colors.muted }]}>{line}</Text>
 
-        {habit !== 'water' && isVerified(healthProvider()) ? (
+        {habit === 'steps' && isVerified(healthProvider()) ? (
           <View style={styles.goal}>
-            <Text style={styles.goalText}>Synced from Apple Health. Walk and sleep with your phone or watch and it fills in by itself.</Text>
+            <Text style={styles.goalText}>Synced from Apple Health. Walk with your phone or watch and it fills in by itself.</Text>
+          </View>
+        ) : habit === 'sleep' && isVerified(healthProvider()) && d.sleepHours > 0 ? (
+          <View style={styles.goal}>
+            <Text style={styles.goalText}>Synced from Apple Health. With no watch, set a bedtime in the Health app (Sleep) and your iPhone fills this in.</Text>
+          </View>
+        ) : habit === 'steps' && Platform.OS !== 'web' && healthAvailable() ? (
+          <View style={{ gap: space.sm }}>
+            <Text style={styles.goalText}>Steps on the iPhone come from Apple Health, so everyone’s count is real.</Text>
+            <Button
+              primary
+              label="Connect Apple Health"
+              onPress={async () => {
+                const h = nativeHealth();
+                if (!h) return;
+                buzz();
+                await h.requestAccess();
+                apply((s) => ({ ...s, onboard: { ...s.onboard, health: 'connected' } }));
+              }}
+            />
+          </View>
+        ) : habit === 'sleep' && isVerified(healthProvider()) ? (
+          <View style={{ gap: space.sm }}>
+            <View style={styles.controls}>
+              <Button label="−" onPress={() => { buzz(); apply((s) => A.setSleep(s, (A.today(s).sleepHours || 7) - 0.5)); }} style={{ flex: 1 }} />
+              <Button primary label={`Log ${d.sleepHours || 7} hours`} onPress={() => { buzz('success'); apply((s) => A.setSleep(s, A.today(s).sleepHours || 7)); }} style={{ flex: 2 }} />
+              <Button label="+" onPress={() => { buzz(); apply((s) => A.setSleep(s, (A.today(s).sleepHours || 7) + 0.5)); }} style={{ flex: 1 }} />
+            </View>
+            <Text style={styles.small}>Tip: set a bedtime in the iPhone Health app (Sleep) and Sproutling fills this in for you.</Text>
           </View>
         ) : habit === 'steps' ? (
           <View style={styles.controls}>

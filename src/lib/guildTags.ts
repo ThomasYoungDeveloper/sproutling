@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from './supabase';
 
 // Guild name and account level shown next to players' names. Ids are looked up in small batches and cached for 10 minutes.
-type Tag = { guild: string | null; level: number | null; at: number };
+type Tag = { guild: string | null; level: number | null; health: string | null; at: number };
 const cache = new Map<string, Tag>();
 const queue = new Set<string>();
 const listeners = new Set<() => void>();
@@ -16,8 +16,8 @@ function flush() {
   supabase.rpc('name_tags', { p_ids: ids }).then(({ data, error }) => {
     if (error) return;
     const now = Date.now();
-    ids.forEach((id) => cache.set(id, { guild: null, level: null, at: now }));
-    ((data as any[]) ?? []).forEach((r) => cache.set(r.user_id, { guild: r.guild ?? null, level: r.level ?? null, at: now }));
+    ids.forEach((id) => cache.set(id, { guild: null, level: null, health: null, at: now }));
+    ((data as any[]) ?? []).forEach((r) => cache.set(r.user_id, { guild: r.guild ?? null, level: r.level ?? null, health: r.health ?? null, at: now }));
     listeners.forEach((l) => l());
   });
   if (queue.size) timer = setTimeout(flush, 60);
@@ -42,6 +42,7 @@ function useTag(userId: string | null | undefined): Tag | undefined {
 }
 
 export const useGuildTag = (userId: string | null | undefined) => useTag(userId)?.guild ?? null;
+export const useHealthLabel = (userId: string | null | undefined) => useTag(userId)?.health ?? null;
 export const usePlayerLevel = (userId: string | null | undefined) => useTag(userId)?.level ?? null;
 /** Forget a cached tag (after joining or leaving a guild, or leveling up). */
 export const dropTag = (userId: string) => cache.delete(userId);

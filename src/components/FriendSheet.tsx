@@ -10,6 +10,7 @@ import PetSprite from './PetSprite';
 import { buzz, PopIn } from './fx';
 import { colors, font, space } from '../theme';
 import BadgeMedal from './BadgeMedal';
+import HealthLabel from './HealthLabel';
 import { BADGE_BY_ID, TIERS as BTIERS } from '../game/badges';
 import { SPECIES, SPECIES_BY_ID } from '../game/species';
 import { levelFor, stageFor } from '../game/scoring';
@@ -86,6 +87,7 @@ export default function FriendSheet({ friend, onClose }: { friend: Friend; onClo
         <View style={styles.sheetBody}>
           <View style={{ alignItems: 'center' }}>
             <Text style={styles.who}>{live.username}</Text>
+            <HealthLabel userId={live.id} name={live.username} />
             {active && activeSpecies ? (
               <Text style={styles.whoSub}>Lv {levelFor(active.xp)} {active.nickname} the {activeSpecies.name}</Text>
             ) : (

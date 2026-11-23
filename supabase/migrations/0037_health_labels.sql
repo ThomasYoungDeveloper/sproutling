@@ -1,0 +1,3 @@
+-- Applied through the Supabase connector on 2026-11-23.
+-- profiles.health_label ('health' | 'watch' | 'oura' | 'garmin' | 'fitbit' | 'wearable') and health_label_at;
+-- set_health_label(); name_tags() also returns the label (hidden after 10 days without a report).

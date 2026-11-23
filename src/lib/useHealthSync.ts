@@ -3,6 +3,20 @@ import { AppState } from 'react-native';
 import { useGame } from '../state/GameContext';
 import { healthProvider, isVerified, noteHealthSync, setHealthSkipped } from './health';
 import * as A from '../game/actions';
+import { supabase } from './supabase';
+
+// Tell the server once a day where Apple Health data comes from (the profile label). Typed-in players clear it.
+let labelDay = '';
+async function reportLabel(provider: ReturnType<typeof healthProvider>, day: string) {
+  if (labelDay === day) return;
+  labelDay = day;
+  try {
+    const label = isVerified(provider) && provider.detectLabel ? await provider.detectLabel() : null;
+    await supabase.rpc('set_health_label', { p_label: label });
+  } catch {
+    labelDay = '';
+  }
+}
 
 /**
  * On the phone app, pulls today's steps and last night's sleep from Apple Health
@@ -22,6 +36,7 @@ export function useHealthSync() {
 
   useEffect(() => {
     const provider = healthProvider();
+    if (loaded && !waiting && !isVerified(provider)) reportLabel(provider, A.todayKey(stateRef.current));
     if (!loaded || waiting || !isVerified(provider)) return;
     let busy = false;
     const sync = async () => {
@@ -36,6 +51,7 @@ export function useHealthSync() {
         const day = await provider.readDay(today);
         if (!day) return;
         noteHealthSync(day.steps);
+        reportLabel(provider, today);
         apply((s) => {
           if (A.todayKey(s) !== today) return s;
           const d = A.today(s);

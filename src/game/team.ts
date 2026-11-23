@@ -22,6 +22,22 @@ export function weekSteps(s: GameState): number {
     .reduce((sum, [, d]) => sum + (d.steps || 0), 0);
 }
 
+/** Typed-in steps count up to this many a day toward guild goals and the boss; Apple Health steps always count in full. */
+export const TYPED_DAILY_CAP = 10_000;
+
+/** Your steps from Monday through today for the guild: Health steps in full, typed-in steps up to 10,000 a day. */
+export function guildWeekSteps(s: GameState): number {
+  const today = A.todayKey(s);
+  const from = weekStart(today);
+  return Object.entries(s.days)
+    .filter(([k]) => k >= from && k <= today)
+    .reduce((sum, [, d]) => {
+      const steps = d.steps || 0;
+      const verified = Math.min(steps, d.healthSteps ?? 0);
+      return sum + verified + Math.min(TYPED_DAILY_CAP, steps - verified);
+    }, 0);
+}
+
 export const TEAM_EMOJIS = ['🌱', '🦊', '🐉', '⭐', '🌸', '🚀', '🐼', '🍙'];
 
 /** The weekly guild boss: a giant legendary, rotating each week. */

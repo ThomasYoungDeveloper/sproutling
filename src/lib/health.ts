@@ -11,6 +11,8 @@ import { nativeProvider } from './healthNative';
  */
 
 export type HealthSource = 'manual' | 'apple-health' | 'health-connect';
+/** The label shown next to a name: Apple Health on its own, or Health plus the wearable it came from. */
+export type HealthLabel = 'health' | 'watch' | 'oura' | 'garmin' | 'fitbit' | 'wearable';
 
 export interface HealthDay {
   steps: number;
@@ -31,6 +33,8 @@ export interface HealthProvider {
   readDay(date: string): Promise<HealthDay | null>;
   /** Average steps a day over the last few weeks, for suggesting a goal. */
   averageSteps?(days: number): Promise<number | null>;
+  /** Where the past week's steps and sleep really came from (Apple Watch, Oura, …), for the profile label. */
+  detectLabel?(): Promise<HealthLabel>;
 }
 
 const manual: HealthProvider = {

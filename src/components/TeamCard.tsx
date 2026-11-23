@@ -12,6 +12,7 @@ import FindGuilds from './FindGuilds';
 import CrestArt from './CrestArt';
 import CrestMaker from './CrestMaker';
 import { PlayerLevel } from './GuildTag';
+import { useHealthLabel } from '../lib/guildTags';
 import { useOverlay } from './Overlay';
 import { useGame } from '../state/GameContext';
 import { accountLevel } from '../game/account';
@@ -52,6 +53,18 @@ function daysLeftInWeek(): number {
   return d === 0 ? 1 : 8 - d;
 }
 
+/** A compact Health label for the guild list (no explanation line). */
+function HealthChip({ userId }: { userId: string }) {
+  const l = useHealthLabel(userId);
+  if (!l) return null;
+  const txt = l === 'health' ? 'Apple Health' : `Health + ${l === 'watch' ? 'Watch' : l === 'oura' ? 'Oura' : l === 'garmin' ? 'Garmin' : l === 'fitbit' ? 'Fitbit' : 'Wearable'}`;
+  return (
+    <View style={{ backgroundColor: l === 'health' ? '#2FB58A' : '#5A6FE0', borderRadius: 7, paddingHorizontal: 5, paddingVertical: 1 }}>
+      <Text style={{ fontSize: 10, fontWeight: '900', color: '#FFFFFF' }} numberOfLines={1}>{txt}</Text>
+    </View>
+  );
+}
+
 function MemberRow({ m, top }: { m: TeamMember; top: number }) {
   const p = m.card?.active;
   const sp = p ? SPECIES_BY_ID[p.speciesId] : undefined;
@@ -64,6 +77,7 @@ function MemberRow({ m, top }: { m: TeamMember; top: number }) {
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
           <Text style={styles.memberName} numberOfLines={1}>{m.username}{m.me ? ' (you)' : ''}</Text>
           <PlayerLevel userId={m.id} size={18} />
+          <HealthChip userId={m.id} />
           <RankTag userId={m.id} small />
           {m.role === 'leader' ? <Text style={styles.leaderTag}>Leader</Text> : null}
         </View>

@@ -1127,6 +1127,16 @@ ok(A.cleanSave({ ...newGame(), items: { 'Tide Shell': 2, 'Tide Taffy': 1, 'Moon 
   ok(JSON.parse(JSON.stringify(snap)).status.text.length > 0, 'watch snapshot survives JSON');
 }
 
+// Guild steps: Apple Health steps count in full, typed-in steps up to 10,000 a day.
+{
+  const T2 = Team;
+  const base = newGame();
+  const k = A.todayKey(base);
+  const day = (steps: number, healthSteps?: number) => ({ ...base, days: { [k]: { ...A.today(base), steps, ...(healthSteps !== undefined ? { healthSteps } : {}) } } }) as GameState;
+  ok(T2.guildWeekSteps(day(30000)) === 10000, 'typed-in steps count up to 10,000 a day for the guild');
+  ok(T2.guildWeekSteps(day(30000, 30000)) === 30000, 'Apple Health steps count in full');
+  ok(T2.guildWeekSteps(day(26000, 12000)) === 22000, 'Health steps plus up to 10,000 typed on top');
+}
 // Account level: earned from playing, never below the starting floor, rewards once per level.
 {
   const AA = A;
