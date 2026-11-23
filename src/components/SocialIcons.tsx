@@ -2,7 +2,7 @@ import React from 'react';
 import Svg, { Circle, Path } from 'react-native-svg';
 
 /** Line icons for the Social section tabs (same stroke style as the bottom tab bar). */
-export type SocialIconName = 'friends' | 'chat' | 'team' | 'battle' | 'show';
+export type SocialIconName = 'friends' | 'chat' | 'team' | 'ranks' | 'battle' | 'show';
 
 export function SocialIcon({ name, color, size = 24 }: { name: SocialIconName; color: string; size?: number }) {
   const p = { fill: 'none', stroke: color, strokeWidth: 2.2, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };
@@ -25,6 +25,12 @@ export function SocialIcon({ name, color, size = 24 }: { name: SocialIconName; c
           <Path d="M15 15l3.4 3.4M9 15l-3.4 3.4" {...p} />
           <Circle cx={19.4} cy={19.4} r={1.1} {...p} />
           <Circle cx={4.6} cy={19.4} r={1.1} {...p} />
+        </>
+      )}
+      {name === 'ranks' && (
+        <>
+          <Path d="M4 20h16" {...p} />
+          <Path d="M6 20v-6h4v6M10 20V9h4v11M14 20v-8h4v8" {...p} />
         </>
       )}
       {name === 'show' && <Path d="M12 4l2.3 4.8 5.2.7-3.8 3.6.9 5.2L12 15.9 7.4 18.3l.9-5.2L4.5 9.5l5.2-.7z" {...p} />}

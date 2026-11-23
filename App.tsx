@@ -25,6 +25,7 @@ import { FriendsProvider, useFriends } from './src/state/FriendsContext';
 import { LiveBattleProvider, useLive } from './src/state/LiveBattleContext';
 import { syncWidgets } from './src/lib/widgetSync';
 import { useWatch } from './src/lib/useWatch';
+import { useWeekStepsReport } from './src/lib/useWeekStepsReport';
 import { ChatProvider, useChat } from './src/state/ChatContext';
 import * as H from './src/game/hp';
 import { OverlayProvider, useOverlay } from './src/components/Overlay';
@@ -181,6 +182,8 @@ function Shell() {
   const settled = loaded && (sync === 'saved' || sync === 'error');
   // Apple Watch app: sends what it shows and applies its Feed and +1 water buttons.
   useWatch(settled);
+  // Leaderboards: this week's Apple Health steps.
+  useWeekStepsReport(settled);
 
   // Every 1,000 steps your pet might find a chest (or, with Apple Health, an egg).
   const [walkNote, dismissWalkNote] = useWalkFinds(settled && !starter);

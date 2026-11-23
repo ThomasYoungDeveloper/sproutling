@@ -24,6 +24,8 @@ import { ArenaCard, LiveBattlesCard, TradesCard } from '../components/SocialPane
 import { useLive } from '../state/LiveBattleContext';
 import RankedCard from '../components/RankedCard';
 import TeamCard from '../components/TeamCard';
+import RanksCard from '../components/RanksCard';
+import RankTag from '../components/RankTag';
 import FashionShow from '../components/FashionShow';
 import { SocialIcon } from '../components/SocialIcons';
 import { LockedCard } from '../components/Unlocks';
@@ -34,6 +36,7 @@ const SECTIONS = [
   { id: 'friends', label: 'Friends' },
   { id: 'chat', label: 'Chat' },
   { id: 'team', label: 'Guild' },
+  { id: 'ranks', label: 'Ranks' },
   { id: 'battle', label: 'Battle' },
   { id: 'show', label: 'Show' },
 ] as const;
@@ -54,7 +57,7 @@ export default function FriendsScreen({ initialAdd, onUsedInitialAdd, initialGui
   const overlay = useOverlay();
   const openFriend = (f: Friend) => overlay.open(<FriendSheet friend={f} onClose={overlay.close} />);
   const [inviteTop, setInviteTop] = useState(false);
-  const [section, setSection] = useState<'friends' | 'chat' | 'team' | 'battle' | 'show'>(initialGuild ? 'team' : 'friends');
+  const [section, setSection] = useState<'friends' | 'chat' | 'team' | 'ranks' | 'battle' | 'show'>(initialGuild ? 'team' : 'friends');
   // After an unlock's Try it now, jump to the section that holds it.
   const spot = useSpotlight();
   useEffect(() => {
@@ -169,6 +172,7 @@ export default function FriendsScreen({ initialAdd, onUsedInitialAdd, initialGui
       {section === 'battle' && battlesOpen && (U.unlocked(state, 'tower') ? <Glow id="tower"><TowerCard /></Glow> : <LockedCard feature="tower" compact />)}
       {section === 'battle' && battlesOpen && <ArenaCard />}
       {section === 'battle' && battlesOpen && <RankedCard />}
+      {section === 'ranks' && <RanksCard />}
       {section === 'show' && <FashionShow />}
       {section === 'friends' && (
         <>
@@ -217,6 +221,7 @@ export default function FriendsScreen({ initialAdd, onUsedInitialAdd, initialGui
             <View style={{ flex: 1 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                 <Text style={styles.personName} numberOfLines={1}>{f.username}</Text>
+                <RankTag userId={f.id} small />
                 {activeToday(f) ? <View style={styles.onlineDot} /> : null}
                 {friendUnread(f.id) ? (
                   <View style={styles.msgDot} accessibilityLabel={`${friendUnread(f.id)} new message${friendUnread(f.id) > 1 ? 's' : ''}`}>

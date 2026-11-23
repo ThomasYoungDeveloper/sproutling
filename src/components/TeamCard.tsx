@@ -7,6 +7,7 @@ import PetSprite from './PetSprite';
 import { buzz, Confetti, PopIn } from './fx';
 import { colors, font, space } from '../theme';
 import ChestIcon from './ChestIcon';
+import RankTag from './RankTag';
 import { shortNumber } from '../lib/shortNumber';
 import { SPECIES_BY_ID } from '../game/species';
 import { stageFor } from '../game/scoring';
@@ -29,6 +30,7 @@ function MemberRow({ m, top }: { m: TeamMember; top: number }) {
       <View style={{ flex: 1, gap: 3 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
           <Text style={styles.memberName} numberOfLines={1}>{m.username}{m.me ? ' (you)' : ''}</Text>
+          <RankTag userId={m.id} small />
           {m.role === 'leader' ? <Text style={styles.leader}>👑</Text> : null}
         </View>
         <ProgressBar value={top ? m.steps / top : 0} height={7} color={m.me ? colors.mint : '#8FC9F0'} />
