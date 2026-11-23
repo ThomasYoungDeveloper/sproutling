@@ -34,6 +34,8 @@ interface Ctx {
   loading: boolean;
   refresh: () => Promise<void>;
   create: (name: string, emoji: string) => Promise<{ ok: boolean; text: string }>;
+  /** Guild leader only. */
+  rename: (name: string) => Promise<{ ok: boolean; text: string }>;
   join: (code: string) => Promise<{ ok: boolean; text: string }>;
   leave: () => Promise<void>;
   claim: (tier: 'goal' | 'super') => Promise<{ ok: boolean; text: string }>;
@@ -51,6 +53,7 @@ const MESSAGES: Record<string, string> = {
   not_yet: 'Your guild hasn’t reached that goal yet. Keep walking!',
   already: 'You already opened this week’s chest.',
   signed_out: 'Sign in first.',
+  not_leader: 'Only the guild leader can rename the guild.',
 };
 
 export function TeamProvider({ children }: { children: React.ReactNode }) {
@@ -59,7 +62,9 @@ export function TeamProvider({ children }: { children: React.ReactNode }) {
   const [team, setTeam] = useState<TeamInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const steps = Team.weekSteps(state);
-  const lastReported = useRef(-1);
+  // Your own Monday: steps are filed under the week they were walked in, wherever you live.
+  const week = Team.weekStart(A.todayKey(state));
+  const lastReported = useRef('');
 
   const refresh = useCallback(async () => {
     if (!user) return;
@@ -78,14 +83,15 @@ export function TeamProvider({ children }: { children: React.ReactNode }) {
 
   // Send your weekly steps to the team when they change (and you're on a team).
   useEffect(() => {
-    if (!loaded || !team || steps === lastReported.current) return;
+    const key = `${week}:${steps}`;
+    if (!loaded || !team || key === lastReported.current) return;
     const t = setTimeout(async () => {
-      lastReported.current = steps;
-      await supabase.rpc('report_team_steps', { week_steps: steps });
+      lastReported.current = key;
+      await supabase.rpc('report_team_steps', { week_steps: steps, p_week: week });
       refresh();
     }, 2500);
     return () => clearTimeout(t);
-  }, [steps, loaded, !!team]);
+  }, [steps, week, loaded, !!team]);
 
   useEffect(() => {
     refresh();
@@ -93,12 +99,23 @@ export function TeamProvider({ children }: { children: React.ReactNode }) {
     return () => clearInterval(t);
   }, [refresh]);
 
+  const rename = useCallback(
+    async (name: string) => {
+      const { data, error } = await supabase.rpc('rename_team', { team_name: name });
+      if (error) return { ok: false, text: 'Couldn’t reach Sproutling. Try again in a moment.' };
+      if (data !== 'ok') return { ok: false, text: MESSAGES[data as string] ?? 'Something went wrong.' };
+      await refresh();
+      return { ok: true, text: 'Guild renamed!' };
+    },
+    [refresh],
+  );
+
   const create = useCallback(
     async (name: string, emoji: string) => {
       const { data, error } = await supabase.rpc('create_team', { team_name: name, team_emoji: emoji });
       if (error) return { ok: false, text: 'Couldn’t reach Sproutling. Try again in a moment.' };
       if (data !== 'ok') return { ok: false, text: MESSAGES[data as string] ?? 'Something went wrong.' };
-      lastReported.current = -1;
+      lastReported.current = '';
       await refresh();
       return { ok: true, text: 'Guild created! Share the code with friends.' };
     },
@@ -110,7 +127,7 @@ export function TeamProvider({ children }: { children: React.ReactNode }) {
       const { data, error } = await supabase.rpc('join_team', { team_code: code });
       if (error) return { ok: false, text: 'Couldn’t reach Sproutling. Try again in a moment.' };
       if (data !== 'ok') return { ok: false, text: MESSAGES[data as string] ?? 'Something went wrong.' };
-      lastReported.current = -1;
+      lastReported.current = '';
       await refresh();
       return { ok: true, text: 'Welcome to the guild!' };
     },
@@ -155,7 +172,7 @@ export function TeamProvider({ children }: { children: React.ReactNode }) {
     return { ok: true, text: 'Boss defeated! A Gold chest and 150 coins are yours.' };
   }, [refresh, apply]);
 
-  return <TeamCtx.Provider value={{ team, loading, refresh, create, join, leave, claim, raidHit, claimRaid }}>{children}</TeamCtx.Provider>;
+  return <TeamCtx.Provider value={{ team, loading, refresh, create, rename, join, leave, claim, raidHit, claimRaid }}>{children}</TeamCtx.Provider>;
 }
 
 export function useTeam(): Ctx {

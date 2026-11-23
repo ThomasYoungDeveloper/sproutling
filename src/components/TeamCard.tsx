@@ -96,7 +96,7 @@ function RaidBox({ onWin, onMsg }: { onWin: () => void; onMsg: (m: { ok: boolean
 }
 
 export default function TeamCard({ initialJoin, onUsedInitialJoin }: { initialJoin?: string | null; onUsedInitialJoin?: () => void } = {}) {
-  const { team, loading, create, join, leave, claim } = useTeam();
+  const { team, loading, create, rename, join, leave, claim } = useTeam();
   const [mode, setMode] = useState<'none' | 'create' | 'join'>('none');
   const [name, setName] = useState('');
   const [emoji, setEmoji] = useState(TEAM_EMOJIS[0]);
@@ -104,6 +104,7 @@ export default function TeamCard({ initialJoin, onUsedInitialJoin }: { initialJo
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [confirmLeave, setConfirmLeave] = useState(false);
+  const [renaming, setRenaming] = useState<string | null>(null);
   const [party, setParty] = useState(0);
 
   // Opened from a friend's guild invite link: open the join form with their code.
@@ -211,6 +212,11 @@ export default function TeamCard({ initialJoin, onUsedInitialJoin }: { initialJo
         <View style={{ flex: 1 }}>
           <Text style={[font.h2, { color: '#fff' }]} numberOfLines={1}>{team.name}</Text>
           <Text style={[font.small, { color: '#DDF4EA' }]}>{team.members.length} member{team.members.length === 1 ? '' : 's'} · {daysLeftInWeek()} day{daysLeftInWeek() === 1 ? '' : 's'} left this week</Text>
+          {team.members.find((m) => m.me)?.role === 'leader' && renaming === null ? (
+            <Pressable onPress={() => setRenaming(team.name)} hitSlop={8} accessibilityRole="button" accessibilityLabel="Rename the guild">
+              <Text style={styles.renameLink}>Rename guild</Text>
+            </Pressable>
+          ) : null}
         </View>
         <Pressable
           onPress={async () => {
@@ -225,6 +231,42 @@ export default function TeamCard({ initialJoin, onUsedInitialJoin }: { initialJo
           <Text style={styles.codeText}>{team.code}</Text>
         </Pressable>
       </View>
+
+      {renaming !== null ? (
+        <View style={styles.renameBox}>
+          <TextInput
+            value={renaming}
+            onChangeText={setRenaming}
+            maxLength={24}
+            autoFocus
+            placeholder="Guild name"
+            placeholderTextColor="#9AA7A2"
+            style={styles.renameInput}
+            accessibilityLabel="New guild name"
+            returnKeyType="done"
+          />
+          <View style={{ flexDirection: 'row', gap: space.sm }}>
+            <Button small label="Cancel" onPress={() => setRenaming(null)} style={{ flex: 1 }} />
+            <Button
+              small
+              primary
+              label={busy ? 'Saving…' : 'Save name'}
+              disabled={busy || renaming.trim().length < 2 || renaming.trim() === team.name}
+              onPress={async () => {
+                setBusy(true);
+                const r = await rename(renaming);
+                setBusy(false);
+                setMsg(r);
+                if (r.ok) {
+                  buzz('success');
+                  setRenaming(null);
+                }
+              }}
+              style={{ flex: 1 }}
+            />
+          </View>
+        </View>
+      ) : null}
 
       <Button
         label="Invite friends to the guild"
@@ -317,6 +359,9 @@ const styles = StyleSheet.create({
   avatar: { width: 44, height: 44, borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.9)', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
   memberName: { fontWeight: '900', fontSize: 14, color: '#FFFFFF', flexShrink: 1 },
   leader: { fontSize: 12 },
+  renameLink: { color: '#FFFFFF', fontSize: 13, fontWeight: '900', textDecorationLine: 'underline', marginTop: 2 },
+  renameBox: { backgroundColor: '#FFFFFF', borderRadius: 16, padding: space.sm, gap: space.sm },
+  renameInput: { height: 46, borderRadius: 12, borderWidth: 2, borderColor: '#DDE6E2', paddingHorizontal: 12, fontSize: 17, fontWeight: '800', color: colors.ink },
   memberSteps: { fontWeight: '900', fontSize: 14, color: '#FFFFFF', minWidth: 60, textAlign: 'right' },
   leave: { fontSize: 12, fontWeight: '800', color: '#BFE8D6', textAlign: 'center', textDecorationLine: 'underline', paddingTop: 4 },
 });
