@@ -550,13 +550,13 @@ export function ChatSettings() {
 
 /** The Plaza: city and Everywhere rooms, 18+ or Teen. */
 function PlazaRows() {
-  const { rooms, daysToUnlock } = usePlaza();
+  const { rooms } = usePlaza();
   const openChat = useOpenChat();
   if (!rooms.length) return null;
   return (
     <View style={[styles.card, { gap: 6 }]}>
       <Text style={font.h2}>Plaza</Text>
-      <Text style={font.tiny}>{daysToUnlock > 0 ? `Say hi to players near you. You can read now; sending unlocks in ${daysToUnlock} day${daysToUnlock === 1 ? '' : 's'}.` : 'Say hi to players near you. Be kind: messages are checked and you can report anyone.'}</Text>
+      <Text style={font.tiny}>Say hi to players near you. Be kind: messages are checked and you can report anyone.</Text>
       {rooms.map((r) => (
         <Pressable key={r.room} onPress={() => openChat(r.room, r.title)} style={styles.row} accessibilityRole="button" accessibilityLabel={`Open ${r.title}`}>
           <View style={[styles.av, { backgroundColor: '#2FB58A' }]}>

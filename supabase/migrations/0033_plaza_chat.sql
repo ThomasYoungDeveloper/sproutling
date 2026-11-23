@@ -1,6 +1,7 @@
 -- Plaza chat. Applied through the Supabase connector on 2026-11-23.
 -- profiles: age_band ('teen' | 'adult', set from the sign-up birth year), plaza_banned_until.
 -- Rooms: plaza:<teen|adult>:<city key or everywhere>; chat_can() keeps teens and adults apart and limits city rooms
--- to players who picked that city. chat_send(): typing unlocks after 3 days, slow mode 10 s, no pushes for the Plaza.
+-- to players who picked that city. chat_send(): slow mode 10 s, no pushes for the Plaza.
 -- Trigger plaza_report_check: 3 different reporters in 7 days hides that player from the Plaza for 7 days and
 -- removes their recent Plaza messages (reports keep the text for review).
+-- 2026-11-23: the 3-day typing unlock was removed at Tom's request.

@@ -62,7 +62,6 @@ const SEND_ERRORS: Record<string, string> = {
   slow_down: 'Slow down a little! Try again in a minute.',
   no_contact_info: 'Links, emails, phone numbers and other apps can’t be shared in chat.',
   not_allowed: 'You can’t send messages here.',
-  plaza_new: 'You can read the Plaza now. Sending messages unlocks after your first 3 days of playing.',
   plaza_slow: 'Slow mode: wait a few seconds between Plaza messages.',
 };
 
