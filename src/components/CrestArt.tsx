@@ -47,8 +47,10 @@ function Symbol({ id }: { id: string }) {
       return <Path d="M32 16c6 7 11 12 11 19a11 11 0 0 1-22 0c0-5 3-8 5-11 1 4 3 6 5 6-1-5 0-9 1-14z" fill={INK} />;
     case 'dragon':
       return <Path d="M18 40c4-10 10-16 18-18l-2-5 6 4 6-2-3 6c2 4 1 9-3 12l3 5-7-2c-5 2-12 2-18 0z" fill={INK} />;
-    default:
+    case 'leaf':
       return <Path d="M22 42c0-14 8-22 20-24-1 13-8 22-20 24zM22 42l12-12" stroke={INK} strokeWidth={3.5} fill="none" strokeLinecap="round" />;
+    default:
+      return null;
   }
 }
 

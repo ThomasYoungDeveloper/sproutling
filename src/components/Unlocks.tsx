@@ -108,6 +108,7 @@ function FeatureIcon({ id, color = '#E8590C', size = 32 }: { id: U.Feature; colo
     <Svg width={size} height={size} viewBox="0 0 24 24">
       {id === 'trips' ? (<><Path d="M3 7l6-3 6 3 6-3v13l-6 3-6-3-6 3z" {...p} /><Path d="M9 4v13M15 7v13" {...p} /></>) : null}
       {id === 'shop' ? (<><Path d="M4 9l1.5-5h13L20 9" {...p} /><Path d="M4 9h16v2a3 3 0 0 1-6 0 3 3 0 0 1-4 0 3 3 0 0 1-6 0z" {...p} /><Path d="M5 13v7h14v-7" {...p} /></>) : null}
+      {id === 'group' ? (<><Path d="M4 18c0-3 2.5-5 5-5s5 2 5 5M14 18c0-2.5 2-4 4-4s3 1 3 3" {...p} /><Path d="M9 10a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM18 11a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z" {...p} /></>) : null}
       {id === 'battles' ? (<><Path d="M4 4l10 10M4 4h4M4 4v4M13 13l3 3M20 4L10 14M20 4h-4M20 4v4M11 13l-3 3" {...p} /><Path d="M6 18l2 2M18 18l-2 2" {...p} /></>) : null}
       {id === 'guild' ? (<><Path d="M5 4h14v8c0 4-3.5 7-7 8-3.5-1-7-4-7-8z" {...p} /><Path d="M9 11l2 2 4-4" {...p} /></>) : null}
       {id === 'tower' ? (<><Path d="M8 21V8l4-5 4 5v13z" {...p} /><Path d="M10 12h4M10 16h4M4 14c1.5-1 3-1 4 0M16 10c1.5-1 3-1 4 0" {...p} /></>) : null}

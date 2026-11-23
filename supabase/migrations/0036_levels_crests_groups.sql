@@ -1,0 +1,11 @@
+-- Applied through the Supabase connector on 2026-11-23.
+-- content_version_gate: app_config.min_content, release_notes.content (forced live updates).
+-- account_level: profiles.account_level, set_account_level(), name_tags() (guild + level next to names).
+-- guild_crests_levels: teams.crest/vibe, guild_xp() from weekly goal/super/raid claims, guild_level(), guild_max_trim()
+--   (wooden, bronze at 3, silver at 6, gold at 10), set_team_crest(), create_team() needs account level 5,
+--   team_status()/open_teams() return crest, vibe, xp, level.
+-- groups: groups + group_members (teen/adult split, 5 per player, 500 per group), my_groups, find_groups,
+--   create_group (account level 3), join_group, leave_group, set_group_pin, group_info (weekly steps board),
+--   join_spot (cafe Spots are groups now, one per age band), spot_info. chat_can allows 'group:<id>' rooms;
+--   3 reports in a group removes that player from it.
+-- First Spot: New Leaf Tea House (code NEWLEAF, Casselberry).

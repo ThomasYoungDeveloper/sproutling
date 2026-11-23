@@ -33,8 +33,8 @@ function Dancer({ speciesId, i, size }: { speciesId: string; i: number; size: nu
 }
 
 /**
- * What a player sees after scanning a spot's QR code: the place as a postcard, its guild's sprites dancing,
- * and a button to start (new players) or join the guild (players who already play).
+ * What a player sees after scanning a spot's QR code: the place as a postcard, its members' sprites dancing,
+ * and a button to start (new players) or join the place's group (players who already play).
  */
 export default function SpotWelcome({ spot, action, onAction, onLater, note }: { spot: SpotInfo; action: string; onAction: () => void; onLater?: () => void; note?: string | null }) {
   const insets = useSafeAreaInsets();
@@ -68,13 +68,13 @@ export default function SpotWelcome({ spot, action, onAction, onLater, note }: {
           ))}
         </View>
         <Text style={styles.line}>
-          {spot.members > 1 ? `${spot.members} players walk with the ` : 'Be one of the first to walk with the '}
-          <Text style={{ fontWeight: '900' }}>{spot.guild}</Text> guild.
+          {spot.members > 1 ? `${spot.members} players chat and walk in the ` : 'Be one of the first in the '}
+          <Text style={{ fontWeight: '900' }}>{spot.name}</Text> group.
         </Text>
         {note ? <Text style={[font.small, { textAlign: 'center', color: '#C4562F' }]}>{note}</Text> : null}
         <Button primary label={action} onPress={onAction} style={{ alignSelf: 'stretch' }} />
         {onLater ? <Button label="Not now" onPress={onLater} style={{ alignSelf: 'stretch' }} /> : null}
-        <Text style={[font.tiny, { textAlign: 'center' }]}>You can leave the guild any time.</Text>
+        <Text style={[font.tiny, { textAlign: 'center' }]}>Groups don’t change your guild. You can leave any time.</Text>
       </View>
     </View>
   );

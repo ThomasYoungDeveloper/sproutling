@@ -5,15 +5,14 @@ import { supabase } from './supabase';
 
 /**
  * Sproutling Spots: a cafe or other place with its own QR code (sproutling.vercel.app/?spot=CODE).
- * The code is kept until the player has seen the place and been offered its guild.
+ * The code is kept until the player has seen the place and been offered its group.
  */
 const KEY = 'sproutling/pending-spot';
 export interface SpotInfo {
   code: string;
   name: string;
   photo: string | null;
-  guild: string;
-  guildCode: string;
+  about: string;
   city: string | null;
   members: number;
   sprites: string[];
@@ -47,7 +46,7 @@ export async function loadSpot(code: string): Promise<SpotInfo | null> {
   const { data, error } = await supabase.rpc('spot_info', { p_code: code });
   if (error || !data) return null;
   const d = data as any;
-  return { code, name: d.name, photo: d.photo ?? null, guild: d.guild, guildCode: d.code, city: d.city ?? null, members: d.members ?? 0, sprites: (d.sprites ?? []).filter(Boolean) };
+  return { code, name: d.name, photo: d.photo ?? null, about: d.about ?? '', city: d.city ?? null, members: d.members ?? 0, sprites: (d.sprites ?? []).filter(Boolean) };
 }
 
 /** The spot waiting to be shown, if the app was opened from a spot's QR code. Listens for links while open too. */
@@ -75,4 +74,13 @@ export function usePendingSpot(): [SpotInfo | null, () => void] {
     setSpot(null);
     clearSpot();
   }];
+}
+
+/** Joins the spot's group (the teen or adult one, made on first scan). Returns the group id, or an error code. */
+export async function joinSpot(code: string): Promise<{ ok: true; id: string } | { ok: false; text: string }> {
+  const { data, error } = await supabase.rpc('join_spot', { p_code: code });
+  if (error) return { ok: false, text: 'Couldn’t reach Sproutling. Try again in a moment.' };
+  const v = String(data);
+  if (/^[0-9a-f-]{36}$/.test(v)) return { ok: true, id: v };
+  return { ok: false, text: v === 'too_many' ? 'You’re in 5 groups already. Leave one in Social › Chat to join this one.' : v === 'full' ? 'This group is full right now.' : 'Couldn’t join this group.' };
 }

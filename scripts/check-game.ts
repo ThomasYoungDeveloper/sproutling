@@ -823,7 +823,7 @@ console.log('\nEgg basket');
   ok(!Un.levelMoment(fresh) && !Un.levelMoment(Un.markLevelShown(fresh)), 'no level-up pop-up until something new is reached');
   const lm = Un.levelMoment({ ...Un.markLevelShown(fresh, 1), account: lv3.account });
   ok(lm?.level === 2 && lm.unlocks.map((f) => f.id).join() === 'shop,trips', 'jumping to level 2 shows one pop-up with both missed unlocks');
-  const lv7 = { ...Un.markLevelShown(fresh, 5), onboard: { ...Un.markLevelShown(fresh, 5).onboard, seen: ['shop', 'trips', 'battles', 'guild', 'tower'] }, account: { floor: 6, rewarded: 1 } };
+  const lv7 = { ...Un.markLevelShown(fresh, 5), onboard: { ...Un.markLevelShown(fresh, 5).onboard, seen: ['shop', 'trips', 'battles', 'group', 'guild', 'tower'] }, account: { floor: 6, rewarded: 1 } };
   const m7 = Un.levelMoment(lv7);
   ok(m7?.level === 6 && !m7.unlocks.length && m7.next?.id === 'breeding', 'a plain level-up shows what is coming next');
   ok(!Un.levelMoment(Un.markLevelShown(lv7, 7)), 'each level only pops up once');

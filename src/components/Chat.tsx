@@ -23,6 +23,7 @@ import { momentText, REACTIONS, useRoomReactions, type Reaction } from '../lib/m
 import RankTag from './RankTag';
 import GuildTag from './GuildTag';
 import { usePlaza } from '../lib/plaza';
+import { YourGroups } from './Groups';
 
 const ago = (iso: string | null) => {
   if (!iso) return '';
@@ -135,6 +136,7 @@ export function ChatList() {
   return (
     <View style={{ gap: space.md }}>
       <PlazaRows />
+      <YourGroups />
       <View style={styles.card}>
         {shown.length === 0 ? <Text style={font.small}>No chats yet. Open a friend and tap Chat, or join a guild to chat with your guild.</Text> : null}
         {shown.map((r, i) => {
@@ -275,7 +277,7 @@ function ChatRoomScreen({ room, title, otherId, onClose }: { room: string; title
           const sp = m.sticker ? SPECIES_BY_ID[m.sticker.speciesId] : undefined;
           return (
             <Pressable key={m.id} onLongPress={() => setMenu(m)} delayLongPress={350} style={{ alignSelf: mine ? 'flex-end' : 'flex-start', maxWidth: '80%' }} accessibilityHint={mine ? 'Press and hold to react' : 'Press and hold to react, report or block'}>
-              {(isTeam || isPlaza) && !mine ? (
+              {(isTeam || isPlaza || room.startsWith('group:')) && !mine ? (
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
                   <Text style={styles.who}>{chat.nameOf(m.sender)}</Text>
                   {!isTeam ? <GuildTag userId={m.sender} small /> : null}

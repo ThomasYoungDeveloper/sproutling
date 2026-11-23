@@ -224,7 +224,6 @@ export default function FriendsScreen({ initialAdd, onUsedInitialAdd, initialGui
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                 <Text style={styles.personName} numberOfLines={1}>{f.username}</Text>
                 <PlayerLevel userId={f.id} />
-                <GuildTag userId={f.id} small />
                 <RankTag userId={f.id} small />
                 {activeToday(f) ? <View style={styles.onlineDot} /> : null}
                 {friendUnread(f.id) ? (
@@ -233,9 +232,12 @@ export default function FriendsScreen({ initialAdd, onUsedInitialAdd, initialGui
                   </View>
                 ) : null}
               </View>
-              <Text style={font.small} numberOfLines={1}>
-                🔥 {f.card?.streak ?? 0}-day · {lastSeen(f)}
-              </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <Text style={[font.small, { flexShrink: 1 }]} numberOfLines={1}>
+                  🔥 {f.card?.streak ?? 0}-day · {lastSeen(f)}
+                </Text>
+                <GuildTag userId={f.id} small />
+              </View>
             </View>
             <Button
               small

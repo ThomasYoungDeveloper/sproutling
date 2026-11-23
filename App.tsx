@@ -46,7 +46,7 @@ import { useWalkFinds } from './src/lib/useWalkFinds';
 import YardTips from './src/components/YardTips';
 import { FindMeAsk } from './src/components/ContactFriends';
 import SpotWelcome from './src/components/SpotWelcome';
-import { usePendingSpot } from './src/lib/spot';
+import { joinSpot, usePendingSpot } from './src/lib/spot';
 import { useTeam } from './src/state/TeamContext';
 import { InfoPop, type Tip } from './src/components/InfoTip';
 import TabBar from './src/components/TabBar';
@@ -425,30 +425,19 @@ function SpotIntro() {
 /** Signed in with a spot waiting: offer its guild once the player has a sprite. */
 function SpotOffer({ ready, onJoined }: { ready: boolean; onJoined: () => void }) {
   const [spot, done] = usePendingSpot();
-  const { team, loading, join } = useTeam();
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState<string | null>(null);
-  if (!spot || !ready || loading) return null;
-  if (team) {
-    return (
-      <SpotWelcome
-        spot={spot}
-        action="OK"
-        note={team.code === spot.guildCode ? 'You’re already in this guild!' : `You’re in ${team.name}. Leave it in Social › Guild if you’d like to join this one.`}
-        onAction={done}
-      />
-    );
-  }
+  if (!spot || !ready) return null;
   return (
     <SpotWelcome
       spot={spot}
-      action={busy ? 'Joining…' : `Join ${spot.guild}`}
+      action={busy ? 'Joining…' : `Join the ${spot.name} group`}
       note={note}
       onLater={done}
       onAction={async () => {
         if (busy) return;
         setBusy(true);
-        const r = await join(spot.guildCode);
+        const r = await joinSpot(spot.code);
         setBusy(false);
         if (!r.ok) return setNote(r.text);
         done();
