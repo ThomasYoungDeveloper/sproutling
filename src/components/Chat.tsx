@@ -240,7 +240,7 @@ function ChatRoomScreen({ room, title, otherId, onClose }: { room: string; title
         </Pressable>
         <View style={{ flex: 1 }}>
           <Text style={[styles.headTitle, isTeam && { color: '#fff' }]} numberOfLines={1}>{title}</Text>
-          <Text style={[font.tiny, isTeam && { color: '#C9D3FF' }]}>{isTeam ? 'Guild chat' : isPlaza ? 'Be kind · slow mode · hold a message to report' : 'Friend chat'}</Text>
+          <Text style={[font.tiny, isTeam && { color: '#C9D3FF' }]}>{isTeam ? 'Guild chat' : isPlaza ? 'Be kind · hold a message to report' : 'Friend chat'}</Text>
         </View>
       </View>
 
