@@ -60,7 +60,7 @@ export default function Tutorial() {
           {
             art: '🔓', tint: '#E9E3FF', title: 'More opens as you level up',
             body: 'One new thing at a time, so it never gets overwhelming.',
-            tips: ['Level 2: the shops', 'Level 3: trips', 'Level 4: battles', 'Level 5: guilds'],
+            tips: ['Level 2: shops and trips', 'Level 3: battles', 'Level 5: guilds and the Sky Tower', 'Level 7: the Nursery'],
           },
         ]),
     {

@@ -98,7 +98,7 @@ export function rollWalkFinds(s: GameState, verified: boolean, rngFor?: (mark: n
       finds.push({ kind: 'potion', at: k * FIND_EVERY });
       potions++;
     }
-    // Wild pets only show up once battles are open (level 4 for new players).
+    // Wild pets only show up once battles are open (level 3 for new players).
     if (unlocked(next, 'battles') && wild < MAX_WILD_PER_DAY && (next.wildPending ?? []).length < MAX_WILD_PER_DAY && next.pets.length && xrng() * 100 < WILD_CHANCE) {
       const w = makeWild(next, xrng, k * FIND_EVERY);
       next = { ...next, wildPending: [...(next.wildPending ?? []), w] };
