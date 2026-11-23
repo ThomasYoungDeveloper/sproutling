@@ -1,3 +1,4 @@
+import { postMoment } from '../lib/moments';
 import { AdBonusButton } from './Ads';
 import { addCoins } from '../game/adBonus';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -40,7 +41,11 @@ export const useReveal = () => useContext(Ctx);
 
 export function RevealProvider({ children }: { children: React.ReactNode }) {
   const [queue, setQueue] = useState<{ id: number; r: Reveal }[]>([]);
-  const show = (r: Reveal) => setQueue((q) => [...q, { id: Date.now() + Math.random(), r }]);
+  const show = (r: Reveal) => {
+    // Every hatch goes to your guild chat so the guild can cheer.
+    if (r.kind === 'egg') postMoment('hatch', r.pet);
+    setQueue((q) => [...q, { id: Date.now() + Math.random(), r }]);
+  };
   const current = queue[0];
   return (
     <Ctx.Provider value={show}>

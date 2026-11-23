@@ -5,14 +5,15 @@ import { useAuth } from './AuthContext';
 import { useFriends } from './FriendsContext';
 import { useTeam } from './TeamContext';
 
-export type ChatKind = 'text' | 'phrase' | 'sticker' | 'system';
+export type ChatKind = 'text' | 'phrase' | 'sticker' | 'system' | 'moment';
 export interface ChatMessage {
   id: number;
   room: string;
   sender: string | null;
   kind: ChatKind;
   body: string;
-  sticker: { speciesId: string; skin?: string; name?: string } | null;
+  /** Stickers, and for moments: { type: 'hatch' | 'catch', speciesId, rarity, skin?, shiny? }. */
+  sticker: { speciesId: string; skin?: string; name?: string; type?: 'hatch' | 'catch'; rarity?: string; shiny?: boolean } | null;
   created_at: string;
 }
 export interface ChatRoom {
@@ -32,7 +33,7 @@ interface Ctx {
   messages: (room: string) => ChatMessage[];
   open: (room: string) => Promise<void>;
   close: () => void;
-  send: (room: string, kind: Exclude<ChatKind, 'system'>, body: string, sticker?: ChatMessage['sticker']) => Promise<string | null>;
+  send: (room: string, kind: Exclude<ChatKind, 'system' | 'moment'>, body: string, sticker?: ChatMessage['sticker']) => Promise<string | null>;
   report: (id: number, reason: string) => Promise<boolean>;
   block: (userId: string) => Promise<boolean>;
   unblock: (userId: string) => Promise<void>;

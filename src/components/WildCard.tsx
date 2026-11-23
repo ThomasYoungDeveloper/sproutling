@@ -1,3 +1,5 @@
+import { postMoment } from '../lib/moments';
+import type { OwnedPet } from '../game/types';
 import React from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { Text } from './ScaledText';
@@ -35,6 +37,7 @@ export function useWild() {
           loseText: `${opp.nickname} ran off. Your pet's HP stays down until you use a potion.`,
           onEnd: (won, b, ids) => {
             let lines: ResultLine[] = [];
+            let caught: OwnedPet | null = null;
             apply((s) => {
               let next = H.saveTeamHp(s, b, ids);
               const r = W.resolveWild(next, w.id, won);
@@ -45,9 +48,11 @@ export function useWild() {
                   ...(r.reward.foodId ? [{ label: FOOD_BY_ID[r.reward.foodId]?.name ?? 'Food', value: `${RARITY_INFO[FOOD_BY_ID[r.reward.foodId]?.rarity ?? 'common'].label} food`, color: RARITY_INFO[FOOD_BY_ID[r.reward.foodId]?.rarity ?? 'common'].color }] : []),
                   ...(r.reward.joined ? [{ label: `${r.reward.joined.nickname} joined your team!`, value: 'New pet', color: '#8A4FD8' }] : []),
                 ];
+                caught = r.reward.joined;
               }
               return next;
             });
+            if (caught) postMoment('catch', caught);
             const hpLines = b.mine.map((f, i) => ({ label: `${f.nickname} HP`, value: f.hp <= 0 ? 'Knocked out' : `${Math.round((f.hp / f.maxHp) * 100)}%`, color: f.hp <= 0 ? '#C4562F' : colors.mintDark }));
             void ids;
             return [...lines, ...hpLines];

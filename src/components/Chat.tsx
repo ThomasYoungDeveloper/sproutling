@@ -19,6 +19,8 @@ import { supabase } from '../lib/supabase';
 import { appBuild } from '../lib/appBuild';
 import { SKIN_INFO } from '../game/skins';
 import type { Skin } from '../game/types';
+import { momentText, REACTIONS, useRoomReactions, type Reaction } from '../lib/moments';
+import RankTag from './RankTag';
 
 const ago = (iso: string | null) => {
   if (!iso) return '';
@@ -145,7 +147,7 @@ export function ChatList() {
               <View style={{ flex: 1, minWidth: 0 }}>
                 <Text style={styles.name} numberOfLines={1}>{title}</Text>
                 <Text style={[styles.preview, r.unread ? { color: colors.ink, fontWeight: '900' } : null]} numberOfLines={1}>
-                  {r.last ? `${r.lastFrom === 'me' ? 'You: ' : isTeam && r.lastFrom ? `${r.lastFrom}: ` : ''}${r.last}` : isTeam ? 'Say hi to your guild!' : ''}
+                  {r.last ? `${r.lastFrom === 'me' ? 'You: ' : isTeam && r.lastFrom ? `${r.lastFrom}: ` : ''}${previewText(r.last)}` : isTeam ? 'Say hi to your guild!' : ''}
                 </Text>
               </View>
               <View style={{ alignItems: 'flex-end', gap: 4 }}>
@@ -174,6 +176,7 @@ function ChatRoomScreen({ room, title, otherId, onClose }: { room: string; title
   const [stickers, setStickers] = useState(false);
   const scroll = useRef<any>(null);
   const msgs = chat.messages(room);
+  const { byMsg, toggle } = useRoomReactions(room, msgs.length);
 
   useEffect(() => {
     chat.open(room);
@@ -240,6 +243,23 @@ function ChatRoomScreen({ room, title, otherId, onClose }: { room: string; title
       <ScrollView ref={scroll} style={{ flex: 1 }} contentContainerStyle={{ padding: space.md, paddingLeft: space.md, paddingRight: space.md, gap: 8 }}>
         {msgs.length === 0 ? <Text style={[font.small, { textAlign: 'center', marginTop: 20 }]}>No messages yet. Say hi!</Text> : null}
         {msgs.map((m) => {
+          if (m.kind === 'moment' && m.sticker) {
+            const sp = SPECIES_BY_ID[m.sticker.speciesId];
+            const rare = ['rare', 'epic', 'legendary'].includes(m.sticker.rarity ?? '') || !!m.sticker.skin || !!m.sticker.shiny;
+            const who = m.sender === me ? 'You' : chat.nameOf(m.sender);
+            return (
+              <Pressable key={m.id} onLongPress={() => setMenu(m)} delayLongPress={350} style={[styles.moment, rare && styles.momentRare]} accessibilityLabel={`${who} ${momentText(m.sticker.type, m.sticker.speciesId, m.sticker.skin, m.sticker.shiny)}`}>
+                {sp ? <PetSprite species={sp} stage="baby" size={48} skin={m.sticker.skin as any} shiny={m.sticker.shiny} mood="joy" /> : null}
+                <View style={{ flex: 1, gap: 5 }}>
+                  <Text style={styles.momentText}>
+                    <Text style={{ fontWeight: '900' }}>{who}</Text> {momentText(m.sticker.type, m.sticker.speciesId, m.sticker.skin, m.sticker.shiny)}
+                    {rare ? <Text style={{ color: '#C77D00' }}> ✦</Text> : null}
+                  </Text>
+                  <Pills list={byMsg[m.id]} onToggle={(e) => toggle(m.id, e)} quick={m.sticker.type === 'catch' ? ['🎉', '👏'] : ['🎉', '❤️']} />
+                </View>
+              </Pressable>
+            );
+          }
           if (m.kind === 'system') {
             return (
               <View key={m.id} style={styles.sys}>
@@ -250,8 +270,13 @@ function ChatRoomScreen({ room, title, otherId, onClose }: { room: string; title
           const mine = m.sender === me;
           const sp = m.sticker ? SPECIES_BY_ID[m.sticker.speciesId] : undefined;
           return (
-            <Pressable key={m.id} onLongPress={() => !mine && setMenu(m)} delayLongPress={350} style={{ alignSelf: mine ? 'flex-end' : 'flex-start', maxWidth: '80%' }} accessibilityHint={mine ? undefined : 'Press and hold to report or block'}>
-              {isTeam && !mine ? <Text style={styles.who}>{chat.nameOf(m.sender)}</Text> : null}
+            <Pressable key={m.id} onLongPress={() => setMenu(m)} delayLongPress={350} style={{ alignSelf: mine ? 'flex-end' : 'flex-start', maxWidth: '80%' }} accessibilityHint={mine ? 'Press and hold to react' : 'Press and hold to react, report or block'}>
+              {isTeam && !mine ? (
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+                  <Text style={styles.who}>{chat.nameOf(m.sender)}</Text>
+                  <RankTag userId={m.sender} small />
+                </View>
+              ) : null}
               {m.kind === 'sticker' && sp ? (
                 <View style={{ alignItems: 'center' }}>
                   <PetSprite species={sp} stage="adult" size={90} skin={m.sticker?.skin as any} mood="joy" />
@@ -262,6 +287,11 @@ function ChatRoomScreen({ room, title, otherId, onClose }: { room: string; title
                   <Text style={[styles.bubbleText, mine && { color: '#fff' }]}>{m.body}</Text>
                 </View>
               )}
+              {byMsg[m.id]?.length ? (
+                <View style={{ alignSelf: mine ? 'flex-end' : 'flex-start', marginTop: 3 }}>
+                  <Pills list={byMsg[m.id]} onToggle={(e) => toggle(m.id, e)} />
+                </View>
+              ) : null}
             </Pressable>
           );
         })}
@@ -338,7 +368,26 @@ function ChatRoomScreen({ room, title, otherId, onClose }: { room: string; title
         <View style={styles.menuBack}>
           <Pressable style={StyleSheet.absoluteFill} onPress={() => setMenu(null)} accessibilityLabel="Close" />
           <View style={[styles.menu, { paddingBottom: insets.bottom + 16, paddingLeft: 16, paddingRight: 16 }]}>
-            <Text style={styles.menuQuote} numberOfLines={3}>“{menu.body}”</Text>
+            <View style={styles.reactRow}>
+              {REACTIONS.map((e) => (
+                <Pressable
+                  key={e}
+                  onPress={() => {
+                    toggle(menu.id, e);
+                    buzz('light');
+                    setMenu(null);
+                  }}
+                  style={styles.reactBtn}
+                  accessibilityRole="button"
+                  accessibilityLabel={`React with ${e}`}
+                >
+                  <Text style={{ fontSize: 24 }} maxFontSizeMultiplier={1.1}>{e}</Text>
+                </Pressable>
+              ))}
+            </View>
+            {menu.kind !== 'moment' ? <Text style={styles.menuQuote} numberOfLines={3}>“{menu.body}”</Text> : null}
+            {menu.sender !== me ? (
+            <>
             <Button
               label="Report message"
               onPress={async () => {
@@ -359,6 +408,8 @@ function ChatRoomScreen({ room, title, otherId, onClose }: { room: string; title
               />
             ) : null}
             <Text style={font.tiny}>Blocking removes them as a friend and hides you from each other in chat.</Text>
+            </>
+            ) : null}
             <Button primary label="Cancel" onPress={() => setMenu(null)} />
           </View>
         </View>
@@ -379,7 +430,7 @@ export function GuildChatRow() {
       <View style={{ flex: 1, minWidth: 0 }}>
         <Text style={styles.guildRowTitle}>Guild chat</Text>
         <Text style={styles.guildRowPrev} numberOfLines={1}>
-          {r?.last ? `${r.lastFrom === 'me' ? 'You' : r.lastFrom || 'Guild'}: ${r.last}` : 'Say hi to your guild!'}
+          {r?.last ? `${r.lastFrom === 'me' ? 'You' : r.lastFrom || 'Guild'}: ${previewText(r.last)}` : 'Say hi to your guild!'}
         </Text>
       </View>
       {r?.unread ? <View style={styles.dot}><Text style={styles.dotText}>{r.unread}</Text></View> : null}
@@ -494,7 +545,36 @@ export function ChatSettings() {
   );
 }
 
+const previewText = (t: string) => (t === 'hatch' ? 'hatched a new sprite!' : t === 'catch' ? 'caught a wild sprite!' : t);
+
+/** Emoji reaction pills. Tap one to add or take back your reaction. */
+function Pills({ list, onToggle, quick }: { list?: Reaction[]; onToggle: (emoji: string) => void; quick?: string[] }) {
+  const shown = [...(list ?? [])];
+  (quick ?? []).forEach((e) => {
+    if (!shown.some((x) => x.emoji === e)) shown.push({ emoji: e, n: 0, mine: false });
+  });
+  if (!shown.length) return null;
+  return (
+    <View style={styles.pills}>
+      {shown.map((r) => (
+        <Pressable key={r.emoji} onPress={() => { buzz('light'); onToggle(r.emoji); }} style={[styles.pill, r.mine && styles.pillMine]} accessibilityRole="button" accessibilityLabel={`${r.emoji} ${r.n}${r.mine ? ', you reacted' : ''}`}>
+          <Text style={styles.pillText}>{r.emoji}{r.n ? ` ${r.n}` : ''}</Text>
+        </Pressable>
+      ))}
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
+  moment: { flexDirection: 'row', gap: 10, alignItems: 'center', backgroundColor: '#FFF4E4', borderWidth: 2, borderColor: '#FFE0A8', borderRadius: 16, padding: 9, alignSelf: 'stretch' },
+  momentRare: { backgroundColor: '#FFF0F6', borderColor: '#FFC9DF' },
+  momentText: { fontSize: 14, fontWeight: '700', color: colors.ink },
+  pills: { flexDirection: 'row', flexWrap: 'wrap', gap: 5 },
+  pill: { backgroundColor: '#FFFFFF', borderWidth: 2, borderColor: '#DDE6E2', borderRadius: 12, paddingHorizontal: 8, paddingVertical: 2, minHeight: 28, justifyContent: 'center' },
+  pillMine: { backgroundColor: '#DDF4EA', borderColor: '#2FB58A' },
+  pillText: { fontSize: 13, fontWeight: '900', color: colors.ink },
+  reactRow: { flexDirection: 'row', justifyContent: 'space-between' },
+  reactBtn: { width: 38, height: 44, borderRadius: 19, alignItems: 'center', justifyContent: 'center' },
   tray: { backgroundColor: '#F3ECFF', borderTopWidth: 1, borderTopColor: '#E0D2FA', paddingTop: 8 },
   trayTitle: { fontSize: 13, fontWeight: '900', color: '#4E3A80' },
   trayHint: { fontSize: 12, fontWeight: '800', color: '#7A6AA0' },

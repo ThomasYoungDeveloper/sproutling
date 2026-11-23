@@ -1,0 +1,5 @@
+-- Guild chat moments (every hatch and wild catch) and emoji reactions on messages.
+-- Applied through the Supabase connector on 2026-11-23.
+-- chat_messages.kind now allows 'moment'; post_moment(type, species, rarity, skin, shiny) builds the message
+-- from data only (no typed text). chat_reactions table; toggle_reaction(message, emoji) with a fixed emoji list
+-- and at most 3 per person per message; room_reactions(room) returns counts and whether you reacted.
