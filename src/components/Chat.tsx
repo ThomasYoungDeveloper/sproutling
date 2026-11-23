@@ -255,7 +255,7 @@ function ChatRoomScreen({ room, title, otherId, onClose }: { room: string; title
             const who = m.sender === me ? 'You' : chat.nameOf(m.sender);
             return (
               <Pressable key={m.id} onLongPress={() => setMenu(m)} delayLongPress={350} style={[styles.moment, rare && styles.momentRare]} accessibilityLabel={`${who} ${momentText(m.sticker.type, m.sticker.speciesId, m.sticker.skin, m.sticker.shiny)}`}>
-                {sp ? <PetSprite species={sp} stage="baby" size={48} skin={m.sticker.skin as any} shiny={m.sticker.shiny} mood="joy" /> : null}
+                {sp ? <View style={styles.momentArt}><PetSprite species={sp} stage="baby" size={84} skin={m.sticker.skin as any} shiny={m.sticker.shiny} mood="joy" /></View> : null}
                 <View style={{ flex: 1, gap: 5 }}>
                   <Text style={styles.momentText}>
                     <Text style={{ fontWeight: '900' }}>{who}</Text> {momentText(m.sticker.type, m.sticker.speciesId, m.sticker.skin, m.sticker.shiny)}
@@ -596,6 +596,7 @@ function Pills({ list, onToggle, quick }: { list?: Reaction[]; onToggle: (emoji:
 
 const styles = StyleSheet.create({
   moment: { flexDirection: 'row', gap: 10, alignItems: 'center', backgroundColor: '#FFF4E4', borderWidth: 2, borderColor: '#FFE0A8', borderRadius: 16, padding: 9, alignSelf: 'stretch' },
+  momentArt: { width: 88, height: 88, borderRadius: 18, backgroundColor: 'rgba(255,255,255,0.7)', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
   momentRare: { backgroundColor: '#FFF0F6', borderColor: '#FFC9DF' },
   momentText: { fontSize: 14, fontWeight: '700', color: colors.ink },
   pills: { flexDirection: 'row', flexWrap: 'wrap', gap: 5 },
