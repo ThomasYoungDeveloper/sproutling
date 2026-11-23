@@ -1,13 +1,15 @@
 import React, { useEffect, useState } from 'react';
-import { Linking, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { AppState, Linking, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Text } from './ScaledText';
 import { noteWhatsNewShown } from '../lib/findMeAsk';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../lib/supabase';
 import { appBuild } from '../lib/appBuild';
 import { colors } from '../theme';
+import { CONTENT_VERSION } from '../lib/contentVersion';
+import { updateNow } from '../lib/liveUpdates';
 
-type Note = { build: number; title: string; notes: string[] };
+type Note = { build: number; title: string; notes: string[]; content?: number | null };
 const SEEN_KEY = 'sproutling/whats-new-seen';
 
 /**
@@ -16,7 +18,15 @@ const SEEN_KEY = 'sproutling/whats-new-seen';
  * "What's new" card. On the web (always up to date) only "What's new" is shown.
  */
 export default function UpdateGate({ children }: { children: React.ReactNode }) {
-  const [block, setBlock] = useState<{ url: string; notes: Note[] } | null>(null);
+  // live: the newer game code arrives as a live update (one tap); otherwise a new build from TestFlight.
+  const [block, setBlock] = useState<{ url: string; notes: Note[]; live: boolean } | null>(null);
+  const [updating, setUpdating] = useState<'idle' | 'busy' | 'notyet'>('idle');
+  const [tick, setTick] = useState(0);
+  // Check again whenever the app comes back to the front, so a long-open app also gets the update screen.
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (st) => st === 'active' && setTick((n) => n + 1));
+    return () => sub.remove();
+  }, []);
   const [whatsNew, setWhatsNew] = useState<Note | null>(null);
 
   useEffect(() => {
@@ -25,17 +35,21 @@ export default function UpdateGate({ children }: { children: React.ReactNode }) 
       try {
         const build = appBuild();
         const [{ data: cfg }, { data: rows }] = await Promise.all([
-          supabase.from('app_config').select('min_build, update_url').eq('id', 1).maybeSingle(),
-          supabase.from('release_notes').select('build, title, notes').order('build', { ascending: false }).limit(5),
+          supabase.from('app_config').select('min_build, update_url, min_content').eq('id', 1).maybeSingle(),
+          supabase.from('release_notes').select('build, title, notes, content').order('build', { ascending: false }).limit(5),
         ]);
         if (cancelled) return;
         const notes = (rows ?? []) as Note[];
         if (build !== null && cfg && build < cfg.min_build) {
-          setBlock({ url: cfg.update_url || 'itms-beta://', notes: notes.filter((n) => n.build > build) });
+          setBlock({ url: cfg.update_url || 'itms-beta://', notes: notes.filter((n) => n.build > build), live: false });
+          return;
+        }
+        if (build !== null && cfg && CONTENT_VERSION < (cfg.min_content ?? 0)) {
+          setBlock({ url: cfg.update_url || 'itms-beta://', notes: notes.filter((n) => (n.content ?? 0) > CONTENT_VERSION), live: true });
           return;
         }
         // Newest notes this install already has (the web has everything).
-        const mine = notes.find((n) => build === null || n.build <= build);
+        const mine = notes.find((n) => build === null || n.build <= build || (n.content != null && n.content <= CONTENT_VERSION));
         if (!mine) return;
         const seenRaw = await AsyncStorage.getItem(SEEN_KEY).catch(() => null);
         if (seenRaw === null) {
@@ -57,7 +71,7 @@ export default function UpdateGate({ children }: { children: React.ReactNode }) 
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [tick]);
 
   const closeWhatsNew = () => {
     if (whatsNew) AsyncStorage.setItem(SEEN_KEY, String(whatsNew.build)).catch(() => {});
@@ -69,7 +83,7 @@ export default function UpdateGate({ children }: { children: React.ReactNode }) 
       <View style={styles.full}>
         <Text style={styles.big}>🌱</Text>
         <Text style={styles.title}>Time to update!</Text>
-        <Text style={styles.body}>A new version of Sproutling is ready. Update to keep playing; your pets and progress are saved.</Text>
+        <Text style={styles.body}>A lot of new things were added to Sproutling. Update to keep playing; your pets and progress are saved.</Text>
         {block.notes.length ? (
           <ScrollView style={styles.notesBox} contentContainerStyle={{ gap: 6 }}>
             {block.notes.map((n) => (
@@ -82,10 +96,33 @@ export default function UpdateGate({ children }: { children: React.ReactNode }) 
             ))}
           </ScrollView>
         ) : null}
-        <Pressable onPress={() => Linking.openURL(block.url).catch(() => {})} style={styles.btn} accessibilityRole="button">
-          <Text style={styles.btnText}>{block.url.startsWith('itms-beta') ? 'Open TestFlight' : 'Update now'}</Text>
-        </Pressable>
-        <Text style={styles.hint}>{Platform.OS === 'ios' ? 'In TestFlight, tap Update next to Sproutling.' : 'Install the latest version, then reopen Sproutling.'}</Text>
+        {block.live ? (
+          <Pressable
+            onPress={async () => {
+              setUpdating('busy');
+              const ok = await updateNow();
+              if (!ok) setUpdating('notyet');
+            }}
+            disabled={updating === 'busy'}
+            style={[styles.btn, updating === 'busy' && { opacity: 0.6 }]}
+            accessibilityRole="button"
+          >
+            <Text style={styles.btnText}>{updating === 'busy' ? 'Updating…' : 'Update now'}</Text>
+          </Pressable>
+        ) : (
+          <Pressable onPress={() => Linking.openURL(block.url).catch(() => {})} style={styles.btn} accessibilityRole="button">
+            <Text style={styles.btnText}>{block.url.startsWith('itms-beta') ? 'Open TestFlight' : 'Update now'}</Text>
+          </Pressable>
+        )}
+        <Text style={styles.hint}>
+          {block.live
+            ? updating === 'notyet'
+              ? 'The update is still on its way. Check your connection and try again in a minute.'
+              : 'Takes a few seconds. Sproutling restarts on its own.'
+            : Platform.OS === 'ios'
+              ? 'In TestFlight, tap Update next to Sproutling.'
+              : 'Install the latest version, then reopen Sproutling.'}
+        </Text>
       </View>
     );
   }

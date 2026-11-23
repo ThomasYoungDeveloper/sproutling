@@ -35,3 +35,18 @@ export function startLiveUpdates(): () => void {
   });
   return () => sub.remove();
 }
+
+/** "Update now" on the update screen: download the newest live update and restart into it. False if none is ready. */
+export async function updateNow(): Promise<boolean> {
+  try {
+    const Updates = require('expo-updates') as typeof import('expo-updates');
+    if (__DEV__ || !Updates.isEnabled) return false;
+    const found = await Updates.checkForUpdateAsync();
+    if (!found.isAvailable) return false;
+    await Updates.fetchUpdateAsync();
+    await Updates.reloadAsync();
+    return true;
+  } catch {
+    return false;
+  }
+}
