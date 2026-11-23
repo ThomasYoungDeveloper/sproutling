@@ -8,6 +8,8 @@ import { buzz, Confetti, PopIn } from './fx';
 import { colors, font, space } from '../theme';
 import ChestIcon from './ChestIcon';
 import RankTag from './RankTag';
+import FindGuilds from './FindGuilds';
+import { supabase } from '../lib/supabase';
 import { shortNumber } from '../lib/shortNumber';
 import { SPECIES_BY_ID } from '../game/species';
 import { stageFor } from '../game/scoring';
@@ -98,7 +100,7 @@ function RaidBox({ onWin, onMsg }: { onWin: () => void; onMsg: (m: { ok: boolean
 }
 
 export default function TeamCard({ initialJoin, onUsedInitialJoin }: { initialJoin?: string | null; onUsedInitialJoin?: () => void } = {}) {
-  const { team, loading, create, rename, join, leave, claim } = useTeam();
+  const { team, loading, create, rename, join, leave, claim, refresh } = useTeam();
   const [mode, setMode] = useState<'none' | 'create' | 'join'>('none');
   const [name, setName] = useState('');
   const [emoji, setEmoji] = useState(TEAM_EMOJIS[0]);
@@ -133,10 +135,13 @@ export default function TeamCard({ initialJoin, onUsedInitialJoin }: { initialJo
           </View>
         </View>
         {mode === 'none' ? (
-          <View style={styles.row}>
-            <Button primary label="Start a guild" style={{ flex: 1 }} onPress={() => setMode('create')} />
-            <Button label="Join with a code" style={{ flex: 1 }} onPress={() => setMode('join')} />
-          </View>
+          <>
+            <View style={styles.row}>
+              <Button primary label="Start a guild" style={{ flex: 1 }} onPress={() => setMode('create')} />
+              <Button label="Join with a code" style={{ flex: 1 }} onPress={() => setMode('join')} />
+            </View>
+            <FindGuilds />
+          </>
         ) : mode === 'create' ? (
           <View style={{ gap: space.sm }}>
             <TextInput style={styles.input} value={name} onChangeText={setName} placeholder="Guild name (like Morning Walkers)" maxLength={24} accessibilityLabel="Guild name" />
@@ -215,9 +220,27 @@ export default function TeamCard({ initialJoin, onUsedInitialJoin }: { initialJo
           <Text style={[font.h2, { color: '#fff' }]} numberOfLines={1}>{team.name}</Text>
           <Text style={[font.small, { color: '#DDF4EA' }]}>{team.members.length} member{team.members.length === 1 ? '' : 's'} · {daysLeftInWeek()} day{daysLeftInWeek() === 1 ? '' : 's'} left this week</Text>
           {team.members.find((m) => m.me)?.role === 'leader' && renaming === null ? (
-            <Pressable onPress={() => setRenaming(team.name)} hitSlop={8} accessibilityRole="button" accessibilityLabel="Rename the guild">
-              <Text style={styles.renameLink}>Rename guild</Text>
-            </Pressable>
+            <View style={{ flexDirection: 'row', gap: 14 }}>
+              <Pressable onPress={() => setRenaming(team.name)} hitSlop={8} accessibilityRole="button" accessibilityLabel="Rename the guild">
+                <Text style={styles.renameLink}>Rename guild</Text>
+              </Pressable>
+              {!team.spot ? (
+                <Pressable
+                  onPress={async () => {
+                    const { data } = await supabase.rpc('set_team_open', { p_open: !team.open, p_city: null });
+                    if (data === 'ok') {
+                      setMsg({ ok: true, text: !team.open ? 'Your guild is Open: players can find it in Find a guild.' : 'Your guild is Invite only now.' });
+                      refresh();
+                    }
+                  }}
+                  hitSlop={8}
+                  accessibilityRole="switch"
+                  accessibilityState={{ checked: !!team.open }}
+                >
+                  <Text style={styles.renameLink}>{team.open ? 'Open to anyone' : 'Invite only'}</Text>
+                </Pressable>
+              ) : null}
+            </View>
           ) : null}
         </View>
         <Pressable

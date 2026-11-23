@@ -44,6 +44,9 @@ import { onRemindersChange } from './src/lib/remindersState';
 import { useWalkFinds } from './src/lib/useWalkFinds';
 import YardTips from './src/components/YardTips';
 import { FindMeAsk } from './src/components/ContactFriends';
+import SpotWelcome from './src/components/SpotWelcome';
+import { usePendingSpot } from './src/lib/spot';
+import { useTeam } from './src/state/TeamContext';
 import { InfoPop, type Tip } from './src/components/InfoTip';
 import TabBar from './src/components/TabBar';
 import { yardSkyTop } from './src/components/PetScene';
@@ -365,6 +368,7 @@ function Shell() {
       {settled && !starter && !state.tutorialDone && tab === 'home' ? <YardTips /> : null}
       {settled && !starter && tab === 'home' && state.tutorialDone && !showLogin ? <FindMeAsk key="ask-open" where="open" /> : null}
       {settled && !starter && tab === 'friends' && !showLogin ? <FindMeAsk key="ask-social" where="social" /> : null}
+      <SpotOffer ready={settled && !starter} onJoined={() => setTab('friends')} />
       {streakTip ? <View style={[StyleSheet.absoluteFill, { zIndex: 300 }]}><InfoPop tip={streakTip} onClose={() => setStreakTip(null)} /></View> : null}
       {settled && !starter && state.tutorialDone && !showLogin ? <LevelUpPopup onGo={goUnlock} /> : null}
       {showAccount && <AccountSheet onClose={() => setShowAccount(false)} />}
@@ -408,6 +412,50 @@ function Shell() {
   );
 }
 
+/** Signed out and opened from a spot's QR code: show the place first. Its guild is offered after the first hatch. */
+function SpotIntro() {
+  const [spot] = usePendingSpot();
+  const [seen, setSeen] = useState(false);
+  if (!spot || seen) return null;
+  return <SpotWelcome spot={spot} action="Start playing" onAction={() => setSeen(true)} />;
+}
+
+/** Signed in with a spot waiting: offer its guild once the player has a sprite. */
+function SpotOffer({ ready, onJoined }: { ready: boolean; onJoined: () => void }) {
+  const [spot, done] = usePendingSpot();
+  const { team, loading, join } = useTeam();
+  const [busy, setBusy] = useState(false);
+  const [note, setNote] = useState<string | null>(null);
+  if (!spot || !ready || loading) return null;
+  if (team) {
+    return (
+      <SpotWelcome
+        spot={spot}
+        action="OK"
+        note={team.code === spot.guildCode ? 'You’re already in this guild!' : `You’re in ${team.name}. Leave it in Social › Guild if you’d like to join this one.`}
+        onAction={done}
+      />
+    );
+  }
+  return (
+    <SpotWelcome
+      spot={spot}
+      action={busy ? 'Joining…' : `Join ${spot.guild}`}
+      note={note}
+      onLater={done}
+      onAction={async () => {
+        if (busy) return;
+        setBusy(true);
+        const r = await join(spot.guildCode);
+        setBusy(false);
+        if (!r.ok) return setNote(r.text);
+        done();
+        onJoined();
+      }}
+    />
+  );
+}
+
 function Gate() {
   const { user, loading, recovering } = useAuth();
   if (loading) {
@@ -422,6 +470,7 @@ function Gate() {
       <View style={styles.root}>
         <StatusBar style="dark" />
         <AuthFlow />
+        {!recovering ? <SpotIntro /> : null}
       </View>
     );
   }

@@ -1,0 +1,5 @@
+-- Open guilds and Sproutling Spots. Applied through the Supabase connector on 2026-11-23.
+-- teams: is_open, city, spot_code (unique), spot_name, spot_photo. Spot guilds hold 100 players (join_team).
+-- set_team_open(open, city) for leaders (city defaults to the leader's leaderboard city);
+-- open_teams('nearby' | 'popular'); spot_info(code) (callable before signing up); team_status now returns open, city, spot.
+-- Storage bucket 'spots' (public) holds spot photos.

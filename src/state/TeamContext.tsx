@@ -25,6 +25,10 @@ export interface TeamInfo {
   members: TeamMember[];
   claimed: ('goal' | 'super' | 'raid')[];
   raid: { hp: number; damage: number; hits_left: number };
+  /** Open guilds show up in Find a guild; spot guilds belong to a place with a QR code. */
+  open?: boolean;
+  city?: string | null;
+  spot?: string | null;
   total: number;
   goal: number;
 }
