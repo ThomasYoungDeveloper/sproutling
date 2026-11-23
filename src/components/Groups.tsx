@@ -18,7 +18,6 @@ import { colors, font } from '../theme';
 import {
   GROUP_LEVEL,
   KINDS,
-  MAX_GROUPS,
   createGroup,
   joinGroup,
   kindOf,
@@ -103,7 +102,7 @@ export function YourGroups() {
     <View style={styles.box}>
       <View style={styles.between}>
         <Text style={font.h2}>Groups</Text>
-        <Text style={styles.gmeta}>{groups ? `${groups.length} of ${MAX_GROUPS}` : ''}</Text>
+        <Text style={styles.gmeta}>{groups?.length ? `${groups.length} joined` : ''}</Text>
       </View>
       <Text style={font.tiny}>Cafes, walking clubs, coworkers, dog walkers. Chat and walk together. Groups don’t change your guild.</Text>
       {groups === null ? <ActivityIndicator color={colors.mintDark} /> : null}
@@ -135,7 +134,7 @@ export function GroupsBrowser({ onClose, onOpen }: { onClose: () => void; onOpen
           <Pressable onPress={onClose} hitSlop={10} accessibilityRole="button"><Text style={styles.back}>‹ Back</Text></Pressable>
         </View>
         <Text style={styles.big} accessibilityRole="header">Groups</Text>
-        <Text style={styles.gmeta}>Join up to {MAX_GROUPS} · chat and walk together · you’re in {mine?.length ?? 0}</Text>
+        <Text style={styles.gmeta}>Chat and walk together{mine?.length ? ` · you’re in ${mine.length}` : ''}</Text>
         <View style={styles.segs}>
           {(['nearby', 'popular'] as const).map((s) => (
             <Pressable key={s} onPress={() => setScope(s)} style={[styles.seg, scope === s && styles.segOn]} accessibilityRole="tab" accessibilityState={{ selected: scope === s }}>

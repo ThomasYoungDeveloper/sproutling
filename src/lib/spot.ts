@@ -82,5 +82,5 @@ export async function joinSpot(code: string): Promise<{ ok: true; id: string } |
   if (error) return { ok: false, text: 'Couldn’t reach Sproutling. Try again in a moment.' };
   const v = String(data);
   if (/^[0-9a-f-]{36}$/.test(v)) return { ok: true, id: v };
-  return { ok: false, text: v === 'too_many' ? 'You’re in 5 groups already. Leave one in Social › Chat to join this one.' : v === 'full' ? 'This group is full right now.' : 'Couldn’t join this group.' };
+  return { ok: false, text: v === 'full' ? 'This group is full right now.' : 'Couldn’t join this group.' };
 }

@@ -20,7 +20,6 @@ export interface Group {
 export interface GroupPage extends Group {
   board: { id: string; username: string; steps: number; card: unknown }[];
 }
-export const MAX_GROUPS = 5;
 export const GROUP_LEVEL = 3;
 export const KINDS: { id: GroupKind; label: string; color: string }[] = [
   { id: 'cafe', label: 'Cafe', color: '#C98042' },
@@ -34,7 +33,6 @@ export const kindOf = (k: GroupKind) => KINDS.find((x) => x.id === k) ?? KINDS[4
 const ERR: Record<string, string> = {
   level_low: `Starting a group opens at account level ${GROUP_LEVEL}.`,
   no_age: 'Add your birth year first (it keeps teen and adult groups apart).',
-  too_many: `You’re in ${MAX_GROUPS} groups already. Leave one to join or start another.`,
   made_enough: 'You’ve started 3 groups already.',
   bad_name: 'Group names are 3 to 24 letters, numbers and spaces.',
   bad_word: 'That name or description isn’t allowed. Try another.',
