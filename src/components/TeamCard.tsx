@@ -9,6 +9,37 @@ import { colors, font, space } from '../theme';
 import ChestIcon from './ChestIcon';
 import RankTag from './RankTag';
 import FindGuilds from './FindGuilds';
+import CrestArt from './CrestArt';
+import CrestMaker from './CrestMaker';
+import { PlayerLevel } from './GuildTag';
+import { useOverlay } from './Overlay';
+import { useGame } from '../state/GameContext';
+import { accountLevel } from '../game/account';
+import { readCrest, guildProgress, vibeLabel, TRIMS, SYMBOLS } from '../game/crest';
+
+export const GUILD_COST = 500;
+export const GUILD_LEVEL = 5;
+const NAVY = '#1E2547';
+const GOLD = '#F2C14E';
+const SOFT = '#B9C2E8';
+
+function Chip({ text, gold }: { text: string; gold?: boolean }) {
+  return (
+    <View style={[styles.chip, gold && { backgroundColor: GOLD }]}>
+      <Text style={[styles.chipText, gold && { color: '#4A3200' }]}>{text}</Text>
+    </View>
+  );
+}
+
+/** What the next guild level unlocks, for the line under the guild XP bar. */
+function nextGuildUnlock(level: number): string | null {
+  const t = TRIMS.find((x) => x.level > level);
+  const y = SYMBOLS.find((x) => x.level > level);
+  const pick = [t && { level: t.level, text: `a ${t.label.toLowerCase()} border` }, y && { level: y.level, text: `the ${y.label.toLowerCase()} symbol` }]
+    .filter(Boolean)
+    .sort((a: any, b: any) => a.level - b.level)[0] as { level: number; text: string } | undefined;
+  return pick ? `Lv ${pick.level} unlocks ${pick.text}` : null;
+}
 import { supabase } from '../lib/supabase';
 import { shortNumber } from '../lib/shortNumber';
 import { SPECIES_BY_ID } from '../game/species';
@@ -32,8 +63,9 @@ function MemberRow({ m, top }: { m: TeamMember; top: number }) {
       <View style={{ flex: 1, gap: 3 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
           <Text style={styles.memberName} numberOfLines={1}>{m.username}{m.me ? ' (you)' : ''}</Text>
+          <PlayerLevel userId={m.id} size={18} />
           <RankTag userId={m.id} small />
-          {m.role === 'leader' ? <Text style={styles.leader}>👑</Text> : null}
+          {m.role === 'leader' ? <Text style={styles.leaderTag}>Leader</Text> : null}
         </View>
         <ProgressBar value={top ? m.steps / top : 0} height={7} color={m.me ? colors.mint : '#8FC9F0'} />
       </View>
@@ -101,6 +133,9 @@ function RaidBox({ onWin, onMsg }: { onWin: () => void; onMsg: (m: { ok: boolean
 
 export default function TeamCard({ initialJoin, onUsedInitialJoin }: { initialJoin?: string | null; onUsedInitialJoin?: () => void } = {}) {
   const { team, loading, create, rename, join, leave, claim, refresh } = useTeam();
+  const { state, apply } = useGame();
+  const overlay = useOverlay();
+  const myLevel = accountLevel(state);
   const [mode, setMode] = useState<'none' | 'create' | 'join'>('none');
   const [name, setName] = useState('');
   const [emoji, setEmoji] = useState(TEAM_EMOJIS[0]);
@@ -127,44 +162,49 @@ export default function TeamCard({ initialJoin, onUsedInitialJoin }: { initialJo
   if (!team) {
     return (
       <Card style={styles.card}>
-        <View style={{ flexDirection: 'row', gap: space.sm, alignItems: 'center' }}>
-          <Text style={{ fontSize: 34 }}>🛡️</Text>
-          <View style={{ flex: 1 }}>
-            <Text style={[font.h2, { color: '#fff' }]}>Guilds</Text>
-            <Text style={[font.small, { color: '#DDF4EA' }]}>Join forces with friends toward a weekly step goal. Everyone gets a guild chest!</Text>
-          </View>
+        <View style={{ gap: 2 }}>
+          <Text style={styles.bigTitle} accessibilityRole="header">Join a guild</Text>
+          <Text style={[font.small, { color: SOFT }]}>Team up to beat bosses and earn guild chests. One guild at a time.</Text>
         </View>
         {mode === 'none' ? (
           <>
             <View style={styles.row}>
-              <Button primary label="Start a guild" style={{ flex: 1 }} onPress={() => setMode('create')} />
               <Button label="Join with a code" style={{ flex: 1 }} onPress={() => setMode('join')} />
+              <Button
+                label={myLevel < GUILD_LEVEL ? `Start a guild · Lv ${GUILD_LEVEL}` : `Start a guild · ${GUILD_COST} coins`}
+                style={{ flex: 1 }}
+                onPress={() => {
+                  if (myLevel < GUILD_LEVEL) setMsg({ ok: false, text: `Starting a guild opens at account level ${GUILD_LEVEL}. You’re level ${myLevel}. Joining one is open now.` });
+                  else if (state.coins < GUILD_COST) setMsg({ ok: false, text: `Starting a guild costs ${GUILD_COST} coins. You have ${state.coins.toLocaleString()}.` });
+                  else {
+                    setMsg(null);
+                    setMode('create');
+                  }
+                }}
+              />
             </View>
             <FindGuilds />
           </>
         ) : mode === 'create' ? (
           <View style={{ gap: space.sm }}>
             <TextInput style={styles.input} value={name} onChangeText={setName} placeholder="Guild name (like Morning Walkers)" maxLength={16} accessibilityLabel="Guild name" />
-            <View style={styles.emojis}>
-              {TEAM_EMOJIS.map((e) => (
-                <Pressable key={e} onPress={() => setEmoji(e)} style={[styles.emoji, emoji === e && styles.emojiOn]} accessibilityRole="button" accessibilityLabel={`Guild badge ${e}`}>
-                  <Text style={{ fontSize: 22 }}>{e}</Text>
-                </Pressable>
-              ))}
-            </View>
+            <Text style={[font.tiny, { color: SOFT }]}>Costs {GUILD_COST} coins. You can make your crest right after.</Text>
             <View style={styles.row}>
               <Button label="Back" onPress={() => setMode('none')} />
               <Button
                 primary
-                label={busy ? 'Creating…' : 'Create guild'}
-                disabled={busy}
+                label={busy ? 'Creating…' : `Create guild · ${GUILD_COST} coins`}
+                disabled={busy || state.coins < GUILD_COST}
                 style={{ flex: 1 }}
                 onPress={async () => {
                   setBusy(true);
                   const r = await create(name, emoji);
                   setBusy(false);
                   setMsg(r);
-                  if (r.ok) buzz('success');
+                  if (r.ok) {
+                    apply((s) => ({ ...s, coins: Math.max(0, s.coins - GUILD_COST) }));
+                    buzz('success');
+                  }
                 }}
               />
             </View>
@@ -190,7 +230,7 @@ export default function TeamCard({ initialJoin, onUsedInitialJoin }: { initialJo
             </View>
           </View>
         )}
-        {msg ? <Text style={[styles.msg, msg.ok && { color: '#DDF4EA' }]}>{msg.text}</Text> : null}
+        {msg ? <Text style={[styles.msg, msg.ok && { color: SOFT }]}>{msg.text}</Text> : null}
       </Card>
     );
   }
@@ -201,6 +241,8 @@ export default function TeamCard({ initialJoin, onUsedInitialJoin }: { initialJo
   const canGoal = reached && !team.claimed.includes('goal');
   const canSuper = superReached && !team.claimed.includes('super');
   const pct = Math.min(1, team.total / (team.goal * 2));
+  const gp = guildProgress(team.xp ?? 0);
+  const isLeader = team.members.find((m) => m.me)?.role === 'leader';
 
   const open = async (tier: 'goal' | 'super') => {
     const r = await claim(tier);
@@ -214,13 +256,35 @@ export default function TeamCard({ initialJoin, onUsedInitialJoin }: { initialJo
   return (
     <Card style={styles.card}>
       {party ? <Confetti key={party} amount={50} width={400} height={500} /> : null}
+      <View style={styles.hall}>
+        <CrestArt crest={readCrest(team.crest)} size={88} id="hall" />
+        <Text style={styles.hallName} numberOfLines={1}>{team.name}</Text>
+        <View style={styles.chips}>
+          <Chip gold text={`Lv ${gp.level} guild`} />
+          {vibeLabel(team.vibe) ? <Chip text={vibeLabel(team.vibe)!} /> : null}
+          <Chip text={team.spot ? 'Cafe Spot' : team.open ? 'Open' : 'Invite only'} />
+        </View>
+        <View style={{ alignSelf: 'stretch', gap: 4 }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+            <Text style={styles.xpLabel}>Guild XP</Text>
+            <Text style={styles.xpLabel}>{gp.into.toLocaleString()} / {gp.need.toLocaleString()}</Text>
+          </View>
+          <ProgressBar value={gp.into / Math.max(1, gp.need)} height={8} color={GOLD} />
+          <Text style={[font.tiny, { color: SOFT }]}>{nextGuildUnlock(gp.level) ?? 'Every border and symbol is unlocked.'} · XP from weekly goals and boss wins</Text>
+        </View>
+      </View>
       <View style={{ flexDirection: 'row', gap: space.sm, alignItems: 'center' }}>
-        <View style={styles.crest}><Text style={{ fontSize: 28 }}>{team.emoji}</Text></View>
         <View style={{ flex: 1 }}>
-          <Text style={[font.h2, { color: '#fff' }]} numberOfLines={1}>{team.name}</Text>
-          <Text style={[font.small, { color: '#DDF4EA' }]}>{team.members.length} member{team.members.length === 1 ? '' : 's'} · {daysLeftInWeek()} day{daysLeftInWeek() === 1 ? '' : 's'} left this week</Text>
-          {team.members.find((m) => m.me)?.role === 'leader' && renaming === null ? (
-            <View style={{ flexDirection: 'row', gap: 14 }}>
+          <Text style={[font.small, { color: SOFT }]}>{team.members.length} member{team.members.length === 1 ? '' : 's'} · {daysLeftInWeek()} day{daysLeftInWeek() === 1 ? '' : 's'} left this week</Text>
+          {isLeader && renaming === null ? (
+            <View style={{ flexDirection: 'row', gap: 14, flexWrap: 'wrap' }}>
+              <Pressable
+                onPress={() => overlay.open(<CrestMaker start={team.crest} vibe={team.vibe} guildLevel={gp.level} onClose={overlay.close} onSaved={refresh} />)}
+                hitSlop={8}
+                accessibilityRole="button"
+              >
+                <Text style={styles.renameLink}>Edit crest</Text>
+              </Pressable>
               <Pressable onPress={() => setRenaming(team.name)} hitSlop={8} accessibilityRole="button" accessibilityLabel="Rename the guild">
                 <Text style={styles.renameLink}>Rename guild</Text>
               </Pressable>
@@ -336,7 +400,7 @@ export default function TeamCard({ initialJoin, onUsedInitialJoin }: { initialJo
           <MemberRow key={m.id} m={m} top={top} />
         ))}
       </View>
-      {msg ? <Text style={[styles.msg, msg.ok && { color: '#DDF4EA' }]}>{msg.text}</Text> : null}
+      {msg ? <Text style={[styles.msg, msg.ok && { color: SOFT }]}>{msg.text}</Text> : null}
       <Pressable
         onPress={async () => {
           if (!confirmLeave) {
@@ -355,7 +419,15 @@ export default function TeamCard({ initialJoin, onUsedInitialJoin }: { initialJo
 }
 
 const styles = StyleSheet.create({
-  card: { backgroundColor: '#1E8A68', borderColor: '#1E8A68', overflow: 'hidden' },
+  card: { backgroundColor: NAVY, borderColor: NAVY, overflow: 'hidden' },
+  bigTitle: { fontSize: 26, fontWeight: '900', color: '#FFF6D8' },
+  hall: { alignItems: 'center', gap: 6, backgroundColor: '#2A2F66', borderRadius: 20, padding: space.md },
+  hallName: { fontSize: 24, fontWeight: '900', color: '#FFF6D8' },
+  chips: { flexDirection: 'row', gap: 6, flexWrap: 'wrap', justifyContent: 'center' },
+  chip: { backgroundColor: '#3D4785', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 2 },
+  chipText: { fontSize: 11, fontWeight: '900', color: '#C9D3FF' },
+  xpLabel: { fontSize: 11, fontWeight: '900', color: SOFT },
+  leaderTag: { fontSize: 10, fontWeight: '900', color: '#4A3200', backgroundColor: GOLD, borderRadius: 6, paddingHorizontal: 5, overflow: 'hidden' },
   row: { flexDirection: 'row', gap: space.sm, flexWrap: 'wrap' },
   input: { borderRadius: 12, paddingVertical: 10, paddingHorizontal: 12, fontSize: 16, color: colors.ink, backgroundColor: '#FFFFFF' },
   emojis: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
@@ -388,5 +460,5 @@ const styles = StyleSheet.create({
   renameBox: { backgroundColor: '#FFFFFF', borderRadius: 16, padding: space.sm, gap: space.sm },
   renameInput: { height: 46, borderRadius: 12, borderWidth: 2, borderColor: '#DDE6E2', paddingHorizontal: 12, fontSize: 17, fontWeight: '800', color: colors.ink },
   memberSteps: { fontWeight: '900', fontSize: 14, color: '#FFFFFF', minWidth: 60, textAlign: 'right' },
-  leave: { fontSize: 12, fontWeight: '800', color: '#BFE8D6', textAlign: 'center', textDecorationLine: 'underline', paddingTop: 4 },
+  leave: { fontSize: 12, fontWeight: '800', color: SOFT, textAlign: 'center', textDecorationLine: 'underline', paddingTop: 4 },
 });

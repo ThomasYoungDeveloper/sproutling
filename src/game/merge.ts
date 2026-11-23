@@ -101,6 +101,10 @@ export function mergeSaves(base: GameState | null, mine: GameState, theirs: Game
     scene: pick(base.scene, mine.scene, theirs.scene),
     expedition: pick(base.expedition, mine.expedition, theirs.expedition),
     dayOffset: pick(base.dayOffset, mine.dayOffset, theirs.dayOffset),
+
+    ...(mine.account || theirs.account
+      ? { account: { floor: Math.max(mine.account?.floor ?? 1, theirs.account?.floor ?? 1), rewarded: Math.max(mine.account?.rewarded ?? 1, theirs.account?.rewarded ?? 1) } }
+      : {}),
   };
   if (merged.expedition && !pets.some((p) => p.id === merged.expedition!.petId)) delete merged.expedition;
   if (merged.tutorialDone === undefined) delete merged.tutorialDone;

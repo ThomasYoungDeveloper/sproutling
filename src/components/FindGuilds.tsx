@@ -6,8 +6,10 @@ import { buzz } from './fx';
 import { colors, font, space } from '../theme';
 import { supabase } from '../lib/supabase';
 import { useTeam } from '../state/TeamContext';
+import CrestArt from './CrestArt';
+import { readCrest, vibeLabel } from '../game/crest';
 
-type OpenTeam = { id: string; name: string; emoji: string; code: string; city: string | null; spot_name: string | null; spot: boolean; members: number; active?: number; steps: number };
+type OpenTeam = { id: string; name: string; emoji: string; code: string; city: string | null; spot_name: string | null; spot: boolean; members: number; active?: number; steps: number; crest?: unknown; vibe?: string | null; level?: number };
 
 /** Open guilds near you (your leaderboard city) or the busiest ones this week. */
 export default function FindGuilds() {
@@ -22,30 +24,33 @@ export default function FindGuilds() {
   }, [scope]);
   return (
     <View style={styles.box}>
-      <Text style={[font.h2, { color: colors.ink }]}>Find a guild</Text>
       <View style={styles.segs}>
         {(['nearby', 'popular'] as const).map((s) => (
           <Pressable key={s} onPress={() => setScope(s)} style={[styles.seg, scope === s && styles.segOn]} accessibilityRole="tab" accessibilityState={{ selected: scope === s }}>
-            <Text style={[styles.segText, scope === s && { color: colors.ink }]}>{s === 'nearby' ? 'Nearby' : 'Popular'}</Text>
+            <Text style={[styles.segText, scope === s && { color: '#4A3200' }]}>{s === 'nearby' ? 'Nearby' : 'Popular'}</Text>
           </Pressable>
         ))}
       </View>
       {list === null ? (
-        <ActivityIndicator color={colors.mintDark} />
+        <ActivityIndicator color="#F2C14E" />
       ) : list.length === 0 ? (
-        <Text style={font.small}>
+        <Text style={[font.small, { color: '#B9C2E8' }]}>
           {scope === 'nearby' ? 'No open guilds in your city yet. Set your city in Social › Ranks › Settings, or start one and make it Open.' : 'No open guilds yet. Start one and make it Open!'}
         </Text>
       ) : (
         list.map((t) => (
           <View key={t.id} style={styles.row}>
-            <Text style={{ fontSize: 24 }}>{t.emoji}</Text>
-            <View style={{ flex: 1 }}>
+            <CrestArt crest={readCrest(t.crest)} size={48} id={t.id} />
+            <View style={{ flex: 1, gap: 3 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                <Text style={[font.body, { fontWeight: '900', flexShrink: 1 }]} numberOfLines={1}>{t.name}</Text>
-                {t.spot ? <View style={styles.spotTag}><Text style={styles.spotText}>Spot</Text></View> : null}
+                <Text style={styles.name} numberOfLines={1}>{t.name}</Text>
+                <View style={styles.lv}><Text style={styles.lvText}>Lv {t.level ?? 1}</Text></View>
               </View>
-              <Text style={font.tiny}>{t.members} member{t.members === 1 ? '' : 's'}{t.active ? ` · ${t.active} active this week` : ''}</Text>
+              <View style={{ flexDirection: 'row', gap: 5, flexWrap: 'wrap' }}>
+                {t.spot ? <View style={styles.spotTag}><Text style={styles.spotText}>Cafe</Text></View> : null}
+                {vibeLabel(t.vibe) ? <View style={styles.tag}><Text style={styles.tagText}>{vibeLabel(t.vibe)}</Text></View> : null}
+              </View>
+              <Text style={styles.meta}>{t.members} member{t.members === 1 ? '' : 's'}{t.active ? ` · ${t.active} active this week` : ''}</Text>
             </View>
             <Button
               small
@@ -63,18 +68,24 @@ export default function FindGuilds() {
           </View>
         ))
       )}
-      {msg ? <Text style={{ color: '#C4562F', fontWeight: '800' }}>{msg}</Text> : null}
+      {msg ? <Text style={{ color: '#FFB9A6', fontWeight: '800' }}>{msg}</Text> : null}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  box: { backgroundColor: '#FFFCF5', borderRadius: 18, padding: space.md, gap: 8 },
-  segs: { flexDirection: 'row', backgroundColor: '#E4EEEA', borderRadius: 14, padding: 3, gap: 3 },
+  box: { gap: 8 },
+  segs: { flexDirection: 'row', backgroundColor: '#2A3366', borderRadius: 14, padding: 3, gap: 3 },
   seg: { flex: 1, minHeight: 34, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
-  segOn: { backgroundColor: '#FFFFFF' },
-  segText: { fontSize: 13, fontWeight: '900', color: '#6A7A75' },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: '#F4F9F6', borderRadius: 14, padding: 10 },
+  segOn: { backgroundColor: '#F2C14E' },
+  segText: { fontSize: 13, fontWeight: '900', color: '#B9C2E8' },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: '#2A3366', borderRadius: 16, padding: 10, borderWidth: 2, borderColor: '#3D4785' },
+  name: { fontSize: 16, fontWeight: '900', color: '#FFF6D8', flexShrink: 1 },
+  lv: { backgroundColor: '#F2C14E', borderRadius: 7, paddingHorizontal: 6, paddingVertical: 1 },
+  lvText: { fontSize: 11, fontWeight: '900', color: '#4A3200' },
+  tag: { backgroundColor: '#3D4785', borderRadius: 7, paddingHorizontal: 6, paddingVertical: 1 },
+  tagText: { fontSize: 11, fontWeight: '900', color: '#C9D3FF' },
+  meta: { fontSize: 11, fontWeight: '800', color: '#B9C2E8' },
   spotTag: { backgroundColor: '#FFE3C2', borderRadius: 8, paddingHorizontal: 6, paddingVertical: 1 },
   spotText: { fontSize: 11, fontWeight: '900', color: '#8A4A10' },
 });

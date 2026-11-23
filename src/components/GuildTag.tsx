@@ -1,7 +1,8 @@
 import React from 'react';
 import { StyleSheet } from 'react-native';
 import { Text } from './ScaledText';
-import { useGuildTag } from '../lib/guildTags';
+import { useGuildTag, usePlayerLevel } from '../lib/guildTags';
+import LevelBadge from './LevelBadge';
 
 /** A quiet grey [Guild Name] after a player's name. Nothing for players without a guild. */
 export default function GuildTag({ userId, small }: { userId: string | null | undefined; small?: boolean }) {
@@ -15,3 +16,9 @@ export default function GuildTag({ userId, small }: { userId: string | null | un
 }
 
 const styles = StyleSheet.create({ tag: { fontSize: 12, fontWeight: '800', color: '#6A7A75', flexShrink: 1 } });
+
+/** The small account level badge next to another player's name. */
+export function PlayerLevel({ userId, size = 20 }: { userId: string | null | undefined; size?: number }) {
+  const lv = usePlayerLevel(userId);
+  return lv ? <LevelBadge level={lv} size={size} /> : null;
+}

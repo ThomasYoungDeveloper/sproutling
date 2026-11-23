@@ -26,7 +26,8 @@ import RankedCard from '../components/RankedCard';
 import TeamCard from '../components/TeamCard';
 import RanksCard from '../components/RanksCard';
 import RankTag from '../components/RankTag';
-import GuildTag from '../components/GuildTag';
+import { AccountLevelCard } from '../components/AccountLevel';
+import GuildTag, { PlayerLevel } from '../components/GuildTag';
 import FashionShow from '../components/FashionShow';
 import { SocialIcon } from '../components/SocialIcons';
 import { LockedCard } from '../components/Unlocks';
@@ -47,7 +48,6 @@ export default function FriendsScreen({ initialAdd, onUsedInitialAdd, initialGui
   const { state } = useGame();
   const resetIn = useResetIn();
   const battlesOpen = U.unlocked(state, 'battles');
-  const guildOpen = U.unlocked(state, 'guild');
   const { unread: chatUnread } = useChat();
   const friendUnread = useFriendUnread();
   const { myCode, friends, incoming, outgoing, loading, error, addFriend, respond, remove, gift, giftsLeft, refresh, tradesForMe } = useFriends();
@@ -166,7 +166,7 @@ export default function FriendsScreen({ initialAdd, onUsedInitialAdd, initialGui
       </View>
       {section === 'chat' && <ChatList />}
       {section === 'team' && <GuildChatRow />}
-      {section === 'team' && (guildOpen ? <Glow id="guild"><TeamCard initialJoin={initialGuild} onUsedInitialJoin={onUsedInitialGuild} /></Glow> : <LockedCard feature="guild" />)}
+      {section === 'team' && <Glow id="guild"><TeamCard initialJoin={initialGuild} onUsedInitialJoin={onUsedInitialGuild} /></Glow>}
       {section === 'battle' && !battlesOpen && <LockedCard feature="battles" />}
       {section === 'battle' && battlesOpen && <Glow id="battles"><WildCard /></Glow>}
       {section === 'battle' && battlesOpen && <LiveBattlesCard />}
@@ -177,6 +177,7 @@ export default function FriendsScreen({ initialAdd, onUsedInitialAdd, initialGui
       {section === 'show' && <FashionShow />}
       {section === 'friends' && (
         <>
+      <AccountLevelCard />
       {(friends.length === 0 || inviteTop) && invite}
       {incoming.map((r) => (
         <View key={r.id} style={styles.request}>
@@ -222,6 +223,7 @@ export default function FriendsScreen({ initialAdd, onUsedInitialAdd, initialGui
             <View style={{ flex: 1 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                 <Text style={styles.personName} numberOfLines={1}>{f.username}</Text>
+                <PlayerLevel userId={f.id} />
                 <GuildTag userId={f.id} small />
                 <RankTag userId={f.id} small />
                 {activeToday(f) ? <View style={styles.onlineDot} /> : null}

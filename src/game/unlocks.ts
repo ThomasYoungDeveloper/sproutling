@@ -1,3 +1,4 @@
+import { accountLevel, accountXp, accountXpFor } from './account';
 import type { GameState } from './types';
 import { levelFor, xpForLevel } from './scoring';
 
@@ -31,16 +32,16 @@ export const FEATURES: FeatureInfo[] = [
   { id: 'shop', level: 2, name: 'Shops', title: 'The shops are open!', text: 'Two shops just opened their doors. Go see what’s on the shelves.', tease: () => 'Two shops just opened their doors. Go see what’s on the shelves.', soon: 'Spend your coins on new looks', go: 'shop' },
   { id: 'trips', hint: 'Tap here and pick a pet to start your first trip', level: 2, name: 'Trips', title: 'Trips are open!', text: 'Send a pet into the wild. Who knows what it’ll bring home?', tease: (p) => `Send ${p} into the wild. Who knows what it’ll bring home?`, soon: 'Send your pet off exploring', go: 'home' },
   { id: 'battles', hint: 'Wild pets and friend battles live here', level: 3, name: 'Battles', title: 'Battles are open!', text: 'Something’s rustling out there. Is your pet ready?', tease: (p) => `Something’s rustling out there. Is ${p} ready?`, soon: 'Something’s rustling out there', go: 'friends' },
-  { id: 'guild', hint: 'Join a guild or start your own here', level: 5, name: 'Guilds', title: 'Guilds are open!', text: 'Team up and take on something too big to face alone.', tease: () => 'Team up and take on something too big to face alone.', soon: 'Team up with other players', go: 'friends' },
+  { id: 'guild', hint: 'Start your own guild here', level: 5, name: 'Start a guild', title: 'You can start a guild!', text: 'Make your own guild with its own crest for 500 coins.', tease: () => 'Make your own guild with its own crest for 500 coins.', soon: 'Start your own guild', go: 'friends' },
   { id: 'tower', hint: 'Climb the Sky Tower here', level: 5, name: 'Sky Tower', title: 'The Sky Tower is open!', text: 'A tower has appeared in the clouds. How high can you climb?', tease: () => 'A tower has appeared in the clouds. How high can you climb?', soon: 'Something is up in the clouds', go: 'friends' },
   { id: 'breeding', hint: 'Pick two pets to make an egg', level: 7, name: 'The Nursery', title: 'The Nursery is open!', text: 'Two pets, one egg… what will hatch?', tease: () => 'Two pets, one egg… what will hatch?', soon: 'Breed stronger pets', go: 'dex' },
 ];
 export const FEATURE_BY_ID = Object.fromEntries(FEATURES.map((f) => [f.id, f])) as Record<Feature, FeatureInfo>;
 
-/** Your highest pet's level. */
-export const topLevel = (s: GameState) => s.pets.reduce((m, p) => Math.max(m, levelFor(p.xp)), 1);
-/** XP your best pet still needs to reach a level. */
-export const xpToLevel = (s: GameState, level: number) => Math.max(0, xpForLevel(level) - s.pets.reduce((m, p) => Math.max(m, p.xp), 0));
+/** Your account level (see game/account.ts): unlocks follow it, not your pets. */
+export const topLevel = (s: GameState) => accountLevel(s);
+/** Account XP still needed to reach a level. */
+export const xpToLevel = (s: GameState, level: number) => Math.max(0, accountXpFor(level) - accountXp(s));
 
 export const allOpen = (s: GameState) => !s.onboard || !!s.onboard.legacy;
 
@@ -67,9 +68,9 @@ export const markSeen = (s: GameState, f: Feature): GameState => ({
 });
 
 /** "Opens at level 3" for locked spots. */
-export const lockedText = (f: Feature) => `Opens when a pet reaches level ${FEATURE_BY_ID[f].level}`;
+export const lockedText = (f: Feature) => `Opens at account level ${FEATURE_BY_ID[f].level}`;
 
-/** What the level-up pop-up should show: a level your best pet reached that hasn't had its pop-up yet. */
+/** What the level-up pop-up should show: an account level you reached that hasn't had its pop-up yet. */
 export interface LevelMoment {
   level: number;
   /** Everything that opened since the last pop-up (missed ones included). */

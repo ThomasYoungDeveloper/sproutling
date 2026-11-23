@@ -14,6 +14,7 @@ export interface TeamMember {
   card: PublicCard | null;
   me: boolean;
   raid: number;
+  level?: number;
 }
 
 export interface TeamInfo {
@@ -31,6 +32,10 @@ export interface TeamInfo {
   spot?: string | null;
   total: number;
   goal: number;
+  crest?: unknown;
+  vibe?: string | null;
+  xp?: number;
+  level?: number;
 }
 
 interface Ctx {
@@ -51,6 +56,7 @@ const TeamCtx = createContext<Ctx | null>(null);
 
 const MESSAGES: Record<string, string> = {
   already_in_team: 'You’re already in a guild. Leave it first to start or join another.',
+  level_low: 'Starting a guild opens at account level 5.',
   bad_name: 'Guild names are 3 to 16 characters.',
   bad_chars: 'Guild names can only use letters, numbers and spaces.',
   bad_word: 'That name isn’t allowed. Try another one.',

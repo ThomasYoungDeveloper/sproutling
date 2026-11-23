@@ -223,4 +223,6 @@ export interface GameState {
   };
   /** The daily tip already read today. */
   tipSeen?: string;
+  /** Account level: the starting floor (best pet's level when it arrived) and the highest level already rewarded. */
+  account?: { floor: number; rewarded: number };
 }

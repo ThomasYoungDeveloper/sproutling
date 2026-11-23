@@ -9,6 +9,7 @@ import ErrorBoundary from './src/components/ErrorBoundary';
 import UpdateGate from './src/components/UpdateGate';
 import { GameProvider, useGame } from './src/state/GameContext';
 import { AuthProvider, useAuth } from './src/state/AuthContext';
+import { useAccountSync } from './src/lib/useAccountSync';
 import AccountSheet from './src/components/AccountSheet';
 import AuthFlow from './src/screens/AuthFlow';
 import IntroFlow from './src/screens/IntroFlow';
@@ -185,6 +186,7 @@ function Shell() {
   const settled = loaded && (sync === 'saved' || sync === 'error');
   // Apple Watch app: sends what it shows and applies its Feed and +1 water buttons.
   useWatch(settled);
+  useAccountSync();
   // Leaderboards: this week's Apple Health steps.
   useWeekStepsReport(settled);
 

@@ -10,6 +10,9 @@ import { SPECIES_BY_ID } from '../game/species';
 import { stageFor, xpForLevel } from '../game/scoring';
 import { colors, font, space } from '../theme';
 import * as U from '../game/unlocks';
+import * as A from '../game/actions';
+import { accountProgress, accountXpFor, levelReward } from '../game/account';
+import LevelBadge from './LevelBadge';
 
 function LockIcon({ color = colors.muted, size = 22 }: { color?: string; size?: number }) {
   return (
@@ -32,7 +35,7 @@ export function LockedCard({ feature, compact }: { feature: U.Feature; compact?:
         <View style={{ flex: 1 }}>
           <Text style={styles.lockTitle}>{f.name} open at level {f.level}</Text>
           <Text style={font.small}>{f.text}</Text>
-          <Text style={styles.lockMeta}>Your best pet is level {U.topLevel(state)} · {xp.toLocaleString()} XP to go</Text>
+          <Text style={styles.lockMeta}>You’re level {U.topLevel(state)} · {xp.toLocaleString()} XP to go</Text>
         </View>
       </View>
     </Card>
@@ -114,7 +117,7 @@ function FeatureIcon({ id, color = '#E8590C', size = 32 }: { id: U.Feature; colo
 }
 
 /**
- * The level-up pop-up: shows once per new best-pet level (also after leveling up while the app was closed).
+ * The level-up pop-up: shows once per new account level (also after leveling up while the app was closed).
  * If something opened, each unlock gets a big orange banner (swipe through several), with Try it now.
  * Otherwise a purple "Coming up" teaser shows the next unlock and how close it is.
  */
@@ -134,18 +137,18 @@ export function LevelUpPopup({ onGo }: { onGo: (f: U.FeatureInfo) => void }) {
   const name = pet.nickname || sp?.name || 'Your pet';
   const bannerW = Math.min(width, 440) - 48;
   const current = m.unlocks[page];
-  const close = () => apply((s) => U.markLevelShown(s, m.level));
+  const reward = levelReward(state.account?.rewarded ?? 1, m.level);
+  const close = () => apply((s) => U.markLevelShown(A.claimLevelReward(s), m.level));
   const tryIt = () => {
     if (!current) return close();
     buzz('success');
-    apply((s) => U.markLevelShown(U.markSeen(s, current.id), m.level));
+    apply((s) => U.markLevelShown(U.markSeen(A.claimLevelReward(s), current.id), m.level));
     onGo(current);
   };
   const next = m.next;
-  const prevNeed = xpForLevel(m.level);
-  const needAt = next ? xpForLevel(next.level) : 0;
-  const best = pet.xp;
-  const pct = next ? Math.max(0, Math.min(1, (best - prevNeed) / Math.max(1, needAt - prevNeed))) : 0;
+  const prog = accountProgress(state);
+  const from = accountXpFor(m.level);
+  const pct = next ? Math.max(0, Math.min(1, (prog.xp - from) / Math.max(1, accountXpFor(next.level) - from))) : 0;
   return (
     <View style={styles.backdrop}>
       <View pointerEvents="none" style={StyleSheet.absoluteFill}><Confetti amount={60} width={width} height={700} /></View>
@@ -153,9 +156,16 @@ export function LevelUpPopup({ onGo }: { onGo: (f: U.FeatureInfo) => void }) {
         <View style={styles.lvCard} accessibilityViewIsModal>
           <Text style={styles.lvTag}>LEVEL UP</Text>
           <Text style={styles.lvBig} accessibilityRole="header">Level {m.level}!</Text>
-          <View style={styles.lvPet}>{sp ? <PetSprite species={sp} stage={stageFor(pet.xp)} size={104} shiny={pet.shiny} skin={pet.skin} hat={pet.look?.hat} aura={pet.look?.aura} noShadow /> : null}</View>
+          <LevelBadge level={m.level} size={96} />
           <Text style={styles.lvLine}>
-            {name} grew stronger. <Text style={styles.lvPoint}>+1 training point</Text> to spend.
+            {reward.coins ? (
+              <>
+                Reward: <Text style={styles.lvPoint}>{reward.coins.toLocaleString()} coins</Text>
+                {reward.silver ? <Text style={styles.lvPoint}>{` and ${reward.silver > 1 ? `${reward.silver} Silver chests` : 'a Silver chest'}`}</Text> : null}
+              </>
+            ) : (
+              'Your account level went up.'
+            )}
           </Text>
           {m.unlocks.length ? (
             <>

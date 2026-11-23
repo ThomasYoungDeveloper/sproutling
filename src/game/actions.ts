@@ -1,3 +1,4 @@
+import { accountLevel, ensureAccount, levelReward } from './account';
 import type { ChestKind, DayLog, Egg, Element, GameState, Meal, OwnedPet, Rarity, Skin } from './types';
 import { addPotions } from './hp';
 import { addCrystals, chestCrystals } from './powerups';
@@ -177,6 +178,11 @@ export function cleanSave(s: GameState): GameState {
       items[to] = (items[to] ?? 0) + n;
     }
     s = { ...s, items };
+    changed = true;
+  }
+  // Account level arrives: start at the best pet's level so nothing that was open gets locked.
+  if (!s.account && s.pets.length) {
+    s = ensureAccount(s);
     changed = true;
   }
   if (s.activePetId && s.pets.length && !s.pets.some((p) => p.id === s.activePetId)) {
@@ -460,3 +466,14 @@ export function openGifts(s: GameState, count: number, rng: Rng = defaultRng): {
 
 /** Adds to a lifetime counter (used by achievements). */
 export const bump = (s: GameState, key: keyof NonNullable<GameState['stats']>, by = 1): GameState => ({ ...s, stats: { ...s.stats, [key]: (s.stats?.[key] ?? 0) + by } });
+
+/** Pays out account level-up rewards not paid yet: 100 coins a level, a Silver chest at every 5th level. */
+export function claimLevelReward(s: GameState): GameState {
+  const acc = s.account ?? { floor: 1, rewarded: 1 };
+  const lv = accountLevel(s);
+  if (lv <= acc.rewarded) return s.account ? s : { ...s, account: acc };
+  const r = levelReward(acc.rewarded, lv);
+  let out: GameState = { ...s, coins: s.coins + r.coins, account: { ...acc, rewarded: lv } };
+  for (let i = 0; i < r.silver; i++) out = grantChest(out, 'silver', `Account level ${lv}`);
+  return out;
+}

@@ -17,6 +17,7 @@ import * as Sk from '../src/game/skins';
 import * as Br from '../src/game/breeding';
 import * as St from '../src/game/stats';
 import { levelFor, levelProgress, stageFor, scoreDay } from '../src/game/scoring';
+import * as AC from '../src/game/account';
 import type { ChestKind, Egg, GameState } from '../src/game/types';
 import { mergeSaves } from '../src/game/merge';
 import * as Pw from '../src/game/powerups';
@@ -816,13 +817,13 @@ console.log('\nEgg basket');
   // Unlocks: new players open things one at a time; older saves keep everything.
   const fresh = h.state;
   ok(!Un.unlocked(fresh, 'trips') && !Un.unlocked(fresh, 'battles') && Un.nextUnlock(fresh)?.id === 'shop', 'a new player starts with the core game; shops open next');
-  const lv3 = { ...fresh, pets: fresh.pets.map((p) => ({ ...p, xp: 60 })) }; // level 2
+  const lv3 = { ...fresh, account: { floor: 2, rewarded: 1 } }; // account level 2
   ok(Un.unlocked(lv3, 'shop') && Un.unlocked(lv3, 'trips') && !Un.unlocked(lv3, 'battles') && Un.newUnlock(lv3)?.id === 'shop', 'level 2 opens shops and trips, one card at a time');
   ok(Un.newUnlock(Un.markSeen(lv3, 'shop'))?.id === 'trips', 'after the shop card comes the trips card');
   ok(!Un.levelMoment(fresh) && !Un.levelMoment(Un.markLevelShown(fresh)), 'no level-up pop-up until something new is reached');
-  const lm = Un.levelMoment(Un.markLevelShown(fresh, 1) && { ...Un.markLevelShown(fresh, 1), pets: lv3.pets });
+  const lm = Un.levelMoment({ ...Un.markLevelShown(fresh, 1), account: lv3.account });
   ok(lm?.level === 2 && lm.unlocks.map((f) => f.id).join() === 'shop,trips', 'jumping to level 2 shows one pop-up with both missed unlocks');
-  const lv7 = { ...Un.markLevelShown(fresh, 5), onboard: { ...Un.markLevelShown(fresh, 5).onboard, seen: ['shop', 'trips', 'battles', 'guild', 'tower'] }, pets: fresh.pets.map((p) => ({ ...p, xp: 800 })) };
+  const lv7 = { ...Un.markLevelShown(fresh, 5), onboard: { ...Un.markLevelShown(fresh, 5).onboard, seen: ['shop', 'trips', 'battles', 'guild', 'tower'] }, account: { floor: 6, rewarded: 1 } };
   const m7 = Un.levelMoment(lv7);
   ok(m7?.level === 6 && !m7.unlocks.length && m7.next?.id === 'breeding', 'a plain level-up shows what is coming next');
   ok(!Un.levelMoment(Un.markLevelShown(lv7, 7)), 'each level only pops up once');
@@ -1115,5 +1116,23 @@ ok(A.cleanSave({ ...newGame(), items: { 'Tide Shell': 2, 'Tide Taffy': 1, 'Moon 
   const watered = WATCH.applyWatchAction(base, { id: 'a2', kind: 'water' });
   ok(A.today(watered).water > A.today(base).water, '+1 water on the watch logs a glass');
   ok(JSON.parse(JSON.stringify(snap)).status.text.length > 0, 'watch snapshot survives JSON');
+}
+
+// Account level: earned from playing, never below the starting floor, rewards once per level.
+{
+  const AA = A;
+  const base = newGame();
+  const day = { ...A.today(base), steps: 9000, water: 3, sleepHours: 7, stepGoal: 8000 };
+  ok(AC.dayXp(day) === 20 + 100 + 90 + 25 + 25, 'a full day earns played + goal + steps + water + sleep XP');
+  ok(AC.accountLevelFor(AC.accountXpFor(5)) === 5 && AC.accountLevelFor(AC.accountXpFor(5) - 1) === 4, 'level thresholds line up');
+  const old = { ...base, pets: base.pets.map((p) => ({ ...p, xp: 2000 })) };
+  const moved = AC.ensureAccount(old);
+  ok(AC.accountLevel(moved) >= AC.bestPetLevel(old), 'existing players start at least at their best pet level');
+  ok(AA.claimLevelReward(moved).coins === moved.coins, 'switching over pays no pile of coins');
+  const up = { ...moved, account: { floor: moved.account!.floor, rewarded: AC.accountLevel(moved) - 2 } };
+  const paid = AA.claimLevelReward(up);
+  ok(paid.coins === up.coins + 200 && AA.claimLevelReward(paid).coins === paid.coins, 'level-ups pay 100 coins each, only once');
+  const traded = { ...moved, pets: moved.pets.map((p) => ({ ...p, xp: 0 })) };
+  ok(AC.accountLevel(traded) === AC.accountLevel(moved), 'trading pets away never lowers the account level');
 }
 console.log(fails ? `${fails} FAILED` : 'ALL PASSED'); process.exit(fails ? 1 : 0);
