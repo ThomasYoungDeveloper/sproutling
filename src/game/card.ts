@@ -1,3 +1,4 @@
+import { hasRainbow, tiersEarned } from './badges';
 import type { GameState, Skin } from './types';
 import { equippedMoves, ivsOf, personalityOf, type Ivs, type Personality, type Training } from './stats';
 import * as A from './actions';
@@ -35,6 +36,10 @@ export interface PublicCard {
   day: string;
   scene?: string;
   badges?: number;
+  /** Up to 3 badges shown on the profile, with their tier (1 Wooden … 5 Rainbow). */
+  showcase?: { id: string; tier: number }[];
+  /** A Rainbow badge tier earns a rainbow frame. */
+  frame?: 'rainbow';
 }
 
 const toCardPet = (p: { id: string; speciesId: string; nickname: string; xp: number; shiny: boolean; skin?: Skin; look?: { hat?: string; aura?: string }; personality?: Personality; train?: Training; foodBoost?: Training; moves?: string[]; ivs?: Ivs }, away = false): CardPet => ({
@@ -73,7 +78,9 @@ export function buildCard(s: GameState): PublicCard {
     todayXp: scoreDay(A.today(s)).total,
     day: A.todayKey(s),
     ...(s.scene ? { scene: s.scene } : {}),
-    badges: Object.keys(s.achievements ?? {}).length,
+    badges: tiersEarned(s),
+    showcase: (s.showcase ?? []).map((id) => ({ id, tier: s.badgeTiers?.[id] ?? 0 })).filter((x) => x.tier > 0),
+    ...(hasRainbow(s) ? { frame: 'rainbow' as const } : {}),
   };
 }
 

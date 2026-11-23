@@ -18,6 +18,7 @@ import * as Br from '../src/game/breeding';
 import * as St from '../src/game/stats';
 import { levelFor, levelProgress, stageFor, scoreDay } from '../src/game/scoring';
 import * as AC from '../src/game/account';
+import * as BadgeMod from '../src/game/badges';
 import type { ChestKind, Egg, GameState } from '../src/game/types';
 import { mergeSaves } from '../src/game/merge';
 import * as Pw from '../src/game/powerups';
@@ -289,18 +290,26 @@ ok(fin.state.pets.find((p) => p.id === epet.id)!.hpPct === 70 && fin.loot.foods.
   ok(wins > 30, `a strong pet usually wins its trip fights (${wins}/40)`);
   ok(lowWins < 30, `a hurt pet on a hard trip often gets knocked out (${lowWins}/40 made it)`);
 }
-// Achievements
-let H = { ...t, achievements: {}, stats: {}, battle: undefined, wardrobe: {} } as GameState;
-ok(!Ach.claimable(H).some((x) => x.a.id === 'win1') && Ach.claim(H, 'win1') === null, 'unfinished badges cannot be claimed');
-H = B.finishBattle(H, true, false).state;
-ok(Ach.claimable(H).some((x) => x.a.id === 'win1'), 'winning a battle unlocks First Victory');
-const Hc = Ach.claim(H, 'win1')!; ok(Hc.coins === H.coins + 30 && Ach.badgeCount(Hc) === 1, 'claiming pays the reward and adds a badge');
-ok(Ach.claim(Hc, 'win1') === null, 'a badge is claimed only once');
-H = A.addSteps(Hc, 12000); ok(Ach.claimable(H).some((x) => x.a.id === 'steps10k'), 'walking unlocks step badges');
-const Hch = Ach.claim(H, 'steps10k')!; ok(Hch.coins === H.coins + 30, 'step badge reward');
-const fullDex = { ...H, dex: Object.fromEntries(SPECIES.map((x) => [x.id, true])) } as GameState;
-const Hd = Ach.claim(fullDex, 'dexall')!; ok(!!Hd && Cos.owns(Hd, 'trophy') && Hd.chests.length === fullDex.chests.length + 1, 'completing the Pet-dex gives the Champion Laurel');
-ok(Ach.ACHIEVEMENTS.length >= 25 && new Set(Ach.ACHIEVEMENTS.map((a) => a.id)).size === Ach.ACHIEVEMENTS.length, 'badge ids are unique');
+// Badges (replaced achievements)
+{
+  const BG = BadgeMod;
+  let H = { ...t, achievements: {}, stats: {}, battle: undefined, wardrobe: {}, badgeTiers: {} } as GameState;
+  const win = (st: GameState, n: number) => ({ ...st, battle: { day: '', rewarded: 0, wonToday: false, wins: n, losses: 0 } }) as GameState;
+  ok(!BG.pendingTierUp(win(H, 9)) || BG.pendingTierUp(win(H, 9))!.b.id !== 'battler', 'nine wins is not a Battler tier yet');
+  H = win(H, 10);
+  ok(BG.badgeStatus(H).find((x) => x.b.id === 'battler')!.tier === 1 && Ach.claimable(H).some((x) => x.b.id === 'battler'), '10 wins reaches Wooden Battler');
+  const Hc = BG.claimTier(H, 'battler');
+  ok(Hc.coins === H.coins + 50 && Hc.badgeTiers!.battler === 1, 'Wooden pays 50 coins');
+  ok(BG.claimTier(Hc, 'battler') === Hc, 'a tier is paid only once');
+  const H5 = win(Hc, 1000);
+  const once = BG.claimTier(H5, 'battler');
+  ok(once.badgeTiers!.battler === 2 && once.chests.length === H5.chests.length + 1, 'tiers are paid one at a time (Bronze chest next)');
+  const fresh = BG.ensureBadges({ ...win(H, 160), badgeTiers: undefined } as GameState);
+  ok(fresh.badgeTiers!.battler === 3 && !BG.pendingTierUp(fresh), 'badges arriving count past work without a pile of rewards');
+  const fullDex = { ...H, dex: Object.fromEntries(SPECIES.map((x) => [x.id, true])), badgeTiers: { collector: 4 } } as GameState;
+  ok(Cos.owns(BG.claimTier(fullDex, 'collector'), 'trophy'), 'Rainbow Collector still gives the Champion Laurel');
+  ok(new Set(BG.BADGES.map((b) => b.id)).size === BG.BADGES.length && BG.BADGES.length === 16 && BG.BADGES.every((b) => b.steps.every((v, i) => !i || v > b.steps[i - 1])), '16 unique badges, each tier needs more');
+}
 // Skins
 let n0 = 0; const counts: Record<string, number> = {}; let sd = 99; const srng = () => ((sd = (sd * 16807) % 2147483647) / 2147483647);
 for (let i = 0; i < 100000; i++) { const k = Sk.rollSkin(srng) ?? 'none'; counts[k] = (counts[k] ?? 0) + 1; }

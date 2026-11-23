@@ -122,7 +122,7 @@ export function reminders(s: GameState): Reminder[] {
     out.push({ id: 'event', icon: ev.emoji, text: `${ev.name} reward ready! Claim it below` });
   }
   const badges = claimable(s).length;
-  if (badges) out.push({ id: 'badges', icon: '🏅', text: badges === 1 ? 'You earned a new badge! Claim your reward' : `You earned ${badges} new badges! Claim your rewards`, action: 'badges' });
+  if (badges) out.push({ id: 'badges', icon: '🏅', text: badges === 1 ? 'A badge just upgraded! Tap to see it' : `${badges} badges just upgraded! Tap to see them`, action: 'badges' });
   if (ex?.done) out.push({ id: 'expedition', icon: '🎒', text: `Your pet is back from ${ex.place.name}!` });
   if (ready) out.push({ id: 'ready', icon: '🥚', text: ready === 1 ? 'An egg is ready to hatch!' : `${ready} eggs are ready to hatch!`, action: 'eggs' });
   if (!c.fed) out.push({ id: 'feed', icon: '🍙', text: `Feed ${name} for +10% XP today`, action: 'feed' });

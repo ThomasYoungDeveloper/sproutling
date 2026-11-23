@@ -276,11 +276,14 @@ export default function FriendsScreen({ initialAdd, onUsedInitialAdd, initialGui
   );
 }
 
+/** Earned with any Rainbow badge tier. */
+const RAINBOW_RING = { borderWidth: 3, borderTopColor: '#FF6B9A', borderRightColor: '#FFC53D', borderBottomColor: '#4CD7A0', borderLeftColor: '#A06BFF' } as const;
+
 function Avatar({ t }: { t: Trainer }) {
   const p = t.card?.active;
   const sp = p ? SPECIES_BY_ID[p.speciesId] : undefined;
   return (
-    <View style={styles.avatar}>
+    <View style={[styles.avatar, t.card?.frame === 'rainbow' && RAINBOW_RING]}>
       {sp && p ? <PetSprite species={sp} stage={stageFor(p.xp)} size={48} shiny={p.shiny} skin={p.skin} hat={(p as any).hat} aura={(p as any).aura} /> : <Text style={{ fontSize: 24 }}>🥚</Text>}
       {sp && p ? <View style={styles.lv}><Text style={styles.lvText}>{levelFor(p.xp)}</Text></View> : null}
     </View>

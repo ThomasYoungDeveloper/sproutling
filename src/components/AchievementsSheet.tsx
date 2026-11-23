@@ -1,101 +1,117 @@
 import React, { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Text } from './ScaledText';
 import { useGame } from '../state/GameContext';
 import { Button, ProgressBar } from './ui';
-import { buzz, Confetti, PopIn } from './fx';
-import { colors, font, space } from '../theme';
-import * as Ach from '../game/achievements';
+import BadgeMedal from './BadgeMedal';
+import { colors, font } from '../theme';
+import { BADGE_BY_ID, TIERS, TIER_REWARD, badgeStatus, fmt, setShowcase, tiersEarned, type BadgeStatus } from '../game/badges';
 
+const TIER_COLOR = ['#9AA7A2', '#8A6A3A', '#A0521E', '#5E6A78', '#9A6A00', '#6C4FD8'];
+const rewardLabel = (i: number) => {
+  const r = TIER_REWARD[i];
+  return r.coins ? `${r.coins} coins` : `${r.chest![0].toUpperCase()}${r.chest!.slice(1)} chest${i === 4 ? ' and a rainbow frame' : ''}`;
+};
+
+/** Badges: every badge with its tier; tap one for its tier ladder; pick 3 to show on your profile. */
 export default function AchievementsSheet({ onClose }: { onClose: () => void }) {
   const { state, apply } = useGame();
-  const { width, height } = useWindowDimensions();
-  const [party, setParty] = useState(0);
-  const [msg, setMsg] = useState<string | null>(null);
-  const all = Ach.statusAll(state);
-  const groups: string[] = [...new Set(all.map((x) => x.a.group as string))];
-  const earned = all.filter((x) => x.claimed).length;
-  const ready = all.filter((x) => x.done && !x.claimed);
-
-  const claim = (id: string) => {
-    const next = Ach.claim(state, id);
-    if (!next) return;
-    const a = Ach.ACHIEVEMENT_BY_ID[id];
-    buzz('success', 'levelup');
-    apply(() => next);
-    setParty((p) => p + 1);
-    setMsg(`${a.emoji} ${a.name.replace(/!$/, '')} unlocked! You got ${Ach.rewardText(a.reward, true)}.`);
-  };
-
+  const [open, setOpen] = useState<string | null>(null);
+  const [picking, setPicking] = useState(false);
+  const all = badgeStatus(state);
+  const show = state.showcase ?? [];
+  const x = open ? all.find((y) => y.b.id === open)! : null;
   return (
     <View style={styles.backdrop}>
       <Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessibilityLabel="Close" />
-      {party ? <Confetti key={party} amount={50} width={width} height={height} /> : null}
       <View style={styles.sheet}>
-        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <View style={{ flex: 1 }}>
-            <Text style={font.title}>Badges</Text>
-            <Text style={font.small}>{earned} of {all.length} earned{ready.length ? ` · ${ready.length} ready to claim!` : ''}</Text>
-          </View>
-        </View>
-        {msg ? (
-          <PopIn key={msg}>
-            <Text style={styles.msg}>{msg}</Text>
-          </PopIn>
-        ) : null}
-        <ScrollView style={{ maxHeight: 560 }} contentContainerStyle={{ gap: space.sm, paddingBottom: space.sm }}>
-          {[...(ready.length ? ['Ready to claim'] : []), ...groups].map((g) => (
-            <View key={g} style={{ gap: 6 }}>
-              <Text style={styles.group}>{g === 'Ready to claim' ? 'Ready to claim' : g}</Text>
-              {all
-                .filter((x) => (g === 'Ready to claim' ? x.done && !x.claimed : x.a.group === g && !(x.done && !x.claimed)))
-                .sort((x, y) => Number(y.done && !y.claimed) - Number(x.done && !x.claimed))
-                .map(({ a, value, done, claimed }) => (
-                  <View key={a.id} style={[styles.row, claimed && styles.rowClaimed, done && !claimed && styles.rowReady]}>
-                    <View style={[styles.badge, !claimed && !done && { opacity: 0.35 }]}>
-                      <Text style={{ fontSize: 24 }}>{a.emoji}</Text>
-                    </View>
-                    <View style={{ flex: 1, gap: 3 }}>
-                      <Text style={styles.name}>{a.name}</Text>
-                      <Text style={styles.desc}>{a.desc}</Text>
-                      {!claimed && !done ? (
-                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                          <View style={{ flex: 1 }}>
-                            <ProgressBar value={value / a.goal} height={6} />
-                          </View>
-                          <Text style={styles.prog}>{value.toLocaleString()} / {a.goal.toLocaleString()}</Text>
-                        </View>
-                      ) : (
-                        <Text style={styles.reward}>{claimed ? '✓ Earned' : `Reward: ${Ach.rewardText(a.reward)}`}</Text>
-                      )}
-                    </View>
-                    {done && !claimed ? (
-                      <PopIn>
-                        <Button small primary label="Claim!" onPress={() => claim(a.id)} />
-                      </PopIn>
-                    ) : null}
-                  </View>
-                ))}
+        {x ? (
+          <Ladder x={x} onBack={() => setOpen(null)} />
+        ) : (
+          <>
+            <Text style={font.title} accessibilityRole="header">Badges</Text>
+            <Text style={font.small}>{tiersEarned(state)} tiers earned · {picking ? 'tap up to 3 to show on your profile' : 'tap a badge'}</Text>
+            <ScrollView style={{ flexShrink: 1 }} contentContainerStyle={styles.grid}>
+              {all.map((y) => {
+                const on = show.includes(y.b.id);
+                return (
+                  <Pressable
+                    key={y.b.id}
+                    onPress={() => {
+                      if (!picking) return setOpen(y.b.id);
+                      if (!y.tier) return;
+                      apply((s) => setShowcase(s, on ? show.filter((id) => id !== y.b.id) : [...show, y.b.id].slice(-3)));
+                    }}
+                    style={[styles.cell, picking && on && styles.cellOn]}
+                    accessibilityRole="button"
+                    accessibilityLabel={`${y.b.name}, ${y.tier ? TIERS[y.tier - 1].label : 'not earned yet'}`}
+                  >
+                    <BadgeMedal icon={y.b.icon} tier={y.tier} size={58} id={y.b.id} />
+                    <Text style={styles.name} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.75}>{y.b.name}</Text>
+                    <Text style={[styles.tier, { color: TIER_COLOR[y.tier] }]}>{y.tier ? TIERS[y.tier - 1].label : 'Not yet'}</Text>
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
+            <View style={{ flexDirection: 'row', gap: 8 }}>
+              <Button label={picking ? 'Done' : 'Pick profile badges'} onPress={() => setPicking((p) => !p)} style={{ flex: 1 }} />
+              <Button primary label="Close" onPress={onClose} style={{ flex: 1 }} />
             </View>
-          ))}
-        </ScrollView>
-        <Button primary label="Done" onPress={onClose} />
+          </>
+        )}
       </View>
     </View>
   );
 }
 
+function Ladder({ x, onBack }: { x: BadgeStatus; onBack: () => void }) {
+  const b = BADGE_BY_ID[x.b.id];
+  const prev = x.tier ? b.steps[x.tier - 1] : 0;
+  const pct = x.next ? (x.value - prev) / Math.max(1, x.next - prev) : 1;
+  return (
+    <ScrollView style={{ flexShrink: 1 }} contentContainerStyle={{ gap: 10 }}>
+      <Pressable onPress={onBack} hitSlop={10} accessibilityRole="button"><Text style={styles.back}>‹ All badges</Text></Pressable>
+      <View style={{ alignItems: 'center', gap: 4 }}>
+        <BadgeMedal icon={b.icon} tier={x.tier} size={110} id={`big-${b.id}`} />
+        <Text style={font.h2}>{b.name}</Text>
+        <Text style={font.small}>{x.tier ? TIERS[x.tier - 1].label : 'Not earned yet'} · {fmt(b, x.value)} {b.what.toLowerCase()}</Text>
+      </View>
+      {x.next ? (
+        <View style={{ gap: 4 }}>
+          <ProgressBar value={pct} height={10} color={colors.gold} />
+          <Text style={[font.tiny, { textAlign: 'center' }]}>{fmt(b, x.next - x.value)} more to {TIERS[x.tier].label}</Text>
+        </View>
+      ) : (
+        <Text style={[font.small, { textAlign: 'center', color: '#6C4FD8', fontWeight: '900' }]}>Every tier earned!</Text>
+      )}
+      {TIERS.map((t, i) => {
+        const done = x.tier > i;
+        const now = x.tier === i;
+        return (
+          <View key={t.id} style={[styles.row, !done && !now && { opacity: 0.6 }]}>
+            <BadgeMedal icon={b.icon} tier={i + 1} size={40} id={`t-${b.id}-${i}`} />
+            <View style={{ flex: 1 }}>
+              <Text style={styles.rowTitle}>{t.label} · {fmt(b, b.steps[i])}</Text>
+              <Text style={font.tiny}>{rewardLabel(i)}</Text>
+            </View>
+            <Text style={[styles.rowState, { color: done ? colors.mintDark : '#A0521E' }]}>{done ? 'Earned' : now ? 'Next' : ''}</Text>
+          </View>
+        );
+      })}
+    </ScrollView>
+  );
+}
+
 const styles = StyleSheet.create({
-  backdrop: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(24,30,48,0.6)', justifyContent: 'center', alignItems: 'center', padding: space.md, zIndex: 80 },
-  sheet: { backgroundColor: '#FFFFFF', borderRadius: 22, padding: space.lg, gap: space.sm, width: '100%', maxWidth: 460, maxHeight: '96%' },
-  group: { fontWeight: '900', fontSize: 15, color: colors.ink, marginTop: 4 },
-  row: { flexDirection: 'row', alignItems: 'center', gap: space.sm, padding: 8, borderRadius: 14, borderWidth: 1.5, borderColor: colors.line, backgroundColor: '#FAFCFB' },
-  rowReady: { borderColor: colors.gold, backgroundColor: '#FFF8E2' },
-  rowClaimed: { backgroundColor: colors.mintSoft, borderColor: '#BFE8D6' },
-  badge: { width: 46, height: 46, borderRadius: 23, backgroundColor: '#FFFFFF', borderWidth: 2, borderColor: colors.gold, alignItems: 'center', justifyContent: 'center' },
-  name: { fontWeight: '900', fontSize: 14, color: colors.ink },
-  desc: { fontWeight: '600', fontSize: 12, color: colors.muted },
-  prog: { fontWeight: '800', fontSize: 12, color: colors.muted },
-  reward: { fontWeight: '800', fontSize: 12, color: colors.mintDark },
-  msg: { fontSize: 14, fontWeight: '900', color: '#9A6A00', textAlign: 'center', backgroundColor: '#FFF6DD', borderRadius: 12, padding: 8 },
+  backdrop: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(20,30,35,0.5)', justifyContent: 'flex-end' },
+  sheet: { backgroundColor: '#FFFCF5', borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 20, gap: 10, maxHeight: '92%', width: '100%', maxWidth: 560, alignSelf: 'center' },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 8, paddingVertical: 6 },
+  cell: { width: 80, alignItems: 'center', gap: 2, padding: 4, borderRadius: 16, borderWidth: 2, borderColor: 'transparent' },
+  cellOn: { borderColor: colors.gold, backgroundColor: '#FFF6DD' },
+  name: { fontSize: 11, fontWeight: '900', color: colors.ink, textAlign: 'center' },
+  tier: { fontSize: 10, fontWeight: '900' },
+  back: { fontSize: 15, fontWeight: '900', color: colors.mintDark },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  rowTitle: { fontSize: 14, fontWeight: '900', color: colors.ink },
+  rowState: { fontSize: 11, fontWeight: '900' },
 });

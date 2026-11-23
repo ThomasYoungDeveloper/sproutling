@@ -1,4 +1,6 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useGame } from '../state/GameContext';
+import * as A from '../game/actions';
+import { useRef, useCallback, useEffect, useState } from 'react';
 import { supabase } from './supabase';
 import type { OwnedPet } from '../game/types';
 import { SPECIES_BY_ID } from '../game/species';
@@ -40,6 +42,8 @@ export function useRoomReactions(room: string, bump: number) {
     Object.values(out).forEach((l) => l.sort((a, b) => REACTIONS.indexOf(a.emoji as any) - REACTIONS.indexOf(b.emoji as any)));
     setByMsg(out);
   }, [room]);
+  const byMsgRef = useRef(byMsg);
+  byMsgRef.current = byMsg;
   useEffect(() => {
     load();
   }, [load, bump]);
@@ -47,8 +51,11 @@ export function useRoomReactions(room: string, bump: number) {
     const t = setInterval(load, 15000);
     return () => clearInterval(t);
   }, [load]);
+  const { apply } = useGame();
   const toggle = useCallback(
     async (messageId: number, emoji: string) => {
+      // Counts toward the Cheerleader badge when you add a reaction (not when you take one back).
+      if (!(byMsgRef.current[messageId] ?? []).some((x) => x.emoji === emoji && x.mine)) apply((s) => A.bumpStat(s, 'reactions'));
       // Show it right away, then check with the server.
       setByMsg((b) => {
         const list = [...(b[messageId] ?? [])];

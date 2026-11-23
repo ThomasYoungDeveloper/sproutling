@@ -17,6 +17,7 @@ import * as Ach from '../game/achievements';
 import { SKINS, SKIN_INFO, skinDexCount, skinKey } from '../game/skins';
 import { useOverlay } from '../components/Overlay';
 import AchievementsSheet from '../components/AchievementsSheet';
+import BadgeMedal from '../components/BadgeMedal';
 import NurseryCard from '../components/NurseryCard';
 import PetSheet from '../components/PetSheet';
 import PetZoom from '../components/PetZoom';
@@ -31,13 +32,13 @@ function BadgeBanner() {
   const earned = Ach.badgeCount(state);
   return (
     <Pressable onPress={() => overlay.open(<AchievementsSheet onClose={overlay.close} />)} style={({ pressed }) => [badgeStyles.banner, ready > 0 && badgeStyles.ready, pressed && { transform: [{ scale: 0.98 }] }]} accessibilityRole="button" accessibilityLabel="Badges">
-      <Text style={{ fontSize: 28 }}>🏅</Text>
+      <BadgeMedal icon="star" tier={4} size={38} id="banner" />
       <View style={{ flex: 1 }}>
         <Text style={badgeStyles.title}>Badges</Text>
-        <Text style={badgeStyles.sub}>{earned} of {Ach.ACHIEVEMENTS.length} earned</Text>
+        <Text style={badgeStyles.sub}>{earned} of 80 tiers earned · 16 badges</Text>
       </View>
       {ready > 0 ? (
-        <View style={badgeStyles.pill}><Text style={badgeStyles.pillText}>{ready} to claim!</Text></View>
+        <View style={badgeStyles.pill}><Text style={badgeStyles.pillText}>{ready} new!</Text></View>
       ) : (
         <Text style={badgeStyles.go}>See all ›</Text>
       )}

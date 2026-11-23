@@ -9,6 +9,8 @@ import { Button, RarityBadge } from './ui';
 import PetSprite from './PetSprite';
 import { buzz, PopIn } from './fx';
 import { colors, font, space } from '../theme';
+import BadgeMedal from './BadgeMedal';
+import { BADGE_BY_ID, TIERS as BTIERS } from '../game/badges';
 import { SPECIES, SPECIES_BY_ID } from '../game/species';
 import { levelFor, stageFor } from '../game/scoring';
 import { gradeOf } from '../game/stats';
@@ -91,11 +93,26 @@ export default function FriendSheet({ friend, onClose }: { friend: Friend; onClo
             )}
           </View>
 
+          {card?.showcase?.length ? (
+            <View style={styles.showcase} accessibilityLabel="Badges">
+              {card.showcase.slice(0, 3).map((x) => {
+                const b = BADGE_BY_ID[x.id];
+                return b ? (
+                  <View key={x.id} style={{ alignItems: 'center', gap: 2, width: 84 }}>
+                    <BadgeMedal icon={b.icon} tier={Math.min(5, x.tier)} size={52} id={`f-${x.id}`} />
+                    <Text style={styles.showName} numberOfLines={1}>{b.name}</Text>
+                    <Text style={styles.showTier}>{BTIERS[Math.min(5, x.tier) - 1]?.label}</Text>
+                  </View>
+                ) : null;
+              })}
+            </View>
+          ) : null}
+
           <View style={styles.stats}>
             <Stat label="Streak" value={`${card?.streak ?? 0}`} bg="#FFE7DA" ink="#B4532A" />
             <Stat label="Pets" value={`${card?.pets ?? 0}`} bg="#DCEBFB" ink="#245C94" />
             <Stat label="Pet-dex" value={`${card?.dex ?? 0}/${SPECIES.length}`} bg="#E8E1FA" ink="#4F3A9E" />
-            <Stat label="Badges" value={`${card?.badges ?? 0}`} bg="#FFF4CC" ink="#7A5900" />
+            <Stat label="Badge tiers" value={`${card?.badges ?? 0}`} bg="#FFF4CC" ink="#7A5900" />
           </View>
 
           <View style={styles.actions}>
@@ -283,6 +300,9 @@ function Stat({ label, value, bg, ink }: { label: string; value: string; bg: str
 }
 
 const styles = StyleSheet.create({
+  showcase: { flexDirection: 'row', justifyContent: 'center', gap: 6 },
+  showName: { fontSize: 11, fontWeight: '900', color: colors.ink },
+  showTier: { fontSize: 10, fontWeight: '800', color: colors.muted },
   chatBtn: { borderRadius: 16, paddingVertical: 12, alignItems: 'center', backgroundColor: '#FFFFFF', borderWidth: 2, borderColor: '#CFE6DA' },
   chatBtnText: { fontWeight: '900', fontSize: 15, color: colors.ink },
   choose: { flexDirection: 'row', gap: space.sm },

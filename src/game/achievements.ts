@@ -1,3 +1,4 @@
+import { badgeStatus, tiersEarned } from './badges';
 import type { ChestKind, GameState } from './types';
 import { SPECIES, SPECIES_BY_ID } from './species';
 import { levelFor } from './scoring';
@@ -91,8 +92,9 @@ export function statusAll(s: GameState): AchievementStatus[] {
   });
 }
 
-export const claimable = (s: GameState) => statusAll(s).filter((x) => x.done && !x.claimed);
-export const badgeCount = (s: GameState) => Object.keys(s.achievements ?? {}).length;
+/** Badges replaced achievements: tier-ups waiting count as "claimable", and the count is tiers earned. */
+export const claimable = (s: GameState) => badgeStatus(s).filter((x) => x.tier > x.claimed);
+export const badgeCount = (s: GameState) => tiersEarned(s);
 
 export function claim(s: GameState, id: string): GameState | null {
   const a = ACHIEVEMENT_BY_ID[id];

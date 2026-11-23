@@ -13,6 +13,8 @@ import * as U from '../game/unlocks';
 import * as A from '../game/actions';
 import { accountProgress, accountXpFor, levelReward } from '../game/account';
 import LevelBadge from './LevelBadge';
+import BadgeMedal from './BadgeMedal';
+import { TIERS as BTIERS, TIER_REWARD, claimTier, fmt, pendingTierUp } from '../game/badges';
 
 function LockIcon({ color = colors.muted, size = 22 }: { color?: string; size?: number }) {
   return (
@@ -294,6 +296,7 @@ export function LevelUpPopup({ onGo }: { onGo: (f: U.FeatureInfo) => void }) {
 }
 
 const styles = StyleSheet.create({
+  tuTitle: { fontSize: 28, fontWeight: '900', color: colors.ink, textAlign: 'center' },
   lvCard: { backgroundColor: '#FFFCF5', borderRadius: 28, paddingTop: 20, paddingBottom: 14, paddingHorizontal: 12, alignItems: 'center', gap: 6, width: '100%', maxWidth: 440, alignSelf: 'center' },
   lvTag: { fontSize: 13, fontWeight: '900', color: '#B06A00', letterSpacing: 1.5 },
   lvBig: { fontSize: 44, fontWeight: '900', color: colors.ink, lineHeight: 48 },
@@ -335,3 +338,48 @@ const styles = StyleSheet.create({
   next: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   nextText: { flex: 1, fontSize: 12, fontWeight: '800', color: '#5C6F69' },
 });
+
+/** A badge tier-up: rays, the old medal turns into the new one, confetti and the reward. One tier at a time. */
+export function BadgeTierUp() {
+  const { state, apply } = useGame();
+  const { width } = useWindowDimensions();
+  const p = pendingTierUp(state);
+  const pop = useRef(new Animated.Value(0)).current;
+  const key = p ? `${p.b.id}:${p.claimed + 1}` : '';
+  useEffect(() => {
+    if (!p) return;
+    pop.setValue(0);
+    buzz('success', 'levelup');
+    Animated.sequence([Animated.delay(450), Animated.spring(pop, { toValue: 1, friction: 4, tension: 140, useNativeDriver: true })]).start(() => buzz('heavy', 'chime'));
+  }, [key]);
+  if (!p) return null;
+  const next = p.claimed + 1;
+  const reward = TIER_REWARD[next - 1];
+  const close = () => apply((s) => claimTier(s, p.b.id));
+  return (
+    <View style={styles.backdrop}>
+      <View pointerEvents="none" style={StyleSheet.absoluteFill}><Confetti key={key} amount={80} width={width} height={760} colors={next === 5 ? ['#FF6B9A', '#FFC53D', '#4CD7A0', '#4FA3FF', '#A06BFF'] : undefined} /></View>
+      <PopIn>
+        <View style={styles.lvCard} accessibilityViewIsModal>
+          <Text style={[styles.lvTag, { zIndex: 2 }]}>BADGE UPGRADED</Text>
+          <View style={{ width: 220, height: 170, alignItems: 'center', justifyContent: 'center' }}>
+            <Rays color={next === 5 ? '#B89CFF' : '#FFD84D'} size={210} count={14} />
+            <Animated.View style={{ position: 'absolute', opacity: pop.interpolate({ inputRange: [0, 1], outputRange: [1, 0] }), transform: [{ scale: pop.interpolate({ inputRange: [0, 1], outputRange: [1, 0.4] }) }] }}>
+              <BadgeMedal icon={p.b.icon} tier={next - 1} size={120} id="tu-old" />
+            </Animated.View>
+            <Animated.View style={{ opacity: pop, transform: [{ scale: pop.interpolate({ inputRange: [0, 1], outputRange: [0.3, 1] }) }, { rotate: pop.interpolate({ inputRange: [0, 1], outputRange: ['-30deg', '0deg'] }) }] }}>
+              <BadgeMedal icon={p.b.icon} tier={next} size={130} id="tu-new" />
+            </Animated.View>
+          </View>
+          <Text style={styles.tuTitle} accessibilityRole="header">{p.b.name}: {BTIERS[next - 1].label}!</Text>
+          <Text style={styles.lvLine}>{p.b.what}: {fmt(p.b, p.b.steps[next - 1])}</Text>
+          <Text style={styles.lvLine}>
+            Reward: <Text style={styles.lvPoint}>{reward.coins ? `+${reward.coins} coins` : `${reward.chest![0].toUpperCase()}${reward.chest!.slice(1)} chest`}</Text>
+            {next === 5 ? <Text style={styles.lvPoint}> and a rainbow frame</Text> : null}
+          </Text>
+          <Button label="Nice!" primary onPress={close} style={{ alignSelf: 'stretch', marginTop: 6 }} />
+        </View>
+      </PopIn>
+    </View>
+  );
+}

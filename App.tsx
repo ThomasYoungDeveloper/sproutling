@@ -30,7 +30,7 @@ import { useWeekStepsReport } from './src/lib/useWeekStepsReport';
 import { ChatProvider, useChat } from './src/state/ChatContext';
 import * as H from './src/game/hp';
 import { OverlayProvider, useOverlay } from './src/components/Overlay';
-import { LevelUpPopup } from './src/components/Unlocks';
+import { BadgeTierUp, LevelUpPopup } from './src/components/Unlocks';
 import { spotlight } from './src/components/Spotlight';
 import { ShopSheet, WardrobeSheet } from './src/components/ShopSheets';
 import * as U from './src/game/unlocks';
@@ -373,6 +373,7 @@ function Shell() {
       <SpotOffer ready={settled && !starter} onJoined={() => setTab('friends')} />
       {streakTip ? <View style={[StyleSheet.absoluteFill, { zIndex: 300 }]}><InfoPop tip={streakTip} onClose={() => setStreakTip(null)} /></View> : null}
       {settled && !starter && state.tutorialDone && !showLogin ? <LevelUpPopup onGo={goUnlock} /> : null}
+      {settled && !starter && state.tutorialDone && !showLogin && !U.levelMoment(state) ? <BadgeTierUp /> : null}
       {showAccount && <AccountSheet onClose={() => setShowAccount(false)} />}
       {showLogin && !starter && <DailyLoginSheet onClose={() => setShowLogin(false)} />}
       {walkNote && !notice ? (

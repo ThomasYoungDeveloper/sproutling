@@ -297,8 +297,9 @@ export function FriendsProvider({ children }: { children: React.ReactNode }) {
       await refresh();
       return err ? 'error' : (data as string);
     }
+    apply((st) => A.bumpStat(st, 'gifts'));
     return data as string;
-  }, [refresh]);
+  }, [refresh, apply]);
 
   // While a trade is open, check more often so the other player's move shows up quickly.
   const openTrades = trades.some((t) => t.status === 'offered' || t.status === 'countered');

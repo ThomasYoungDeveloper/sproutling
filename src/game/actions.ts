@@ -1,4 +1,5 @@
 import { accountLevel, ensureAccount, levelReward } from './account';
+import { ensureBadges } from './badges';
 import type { ChestKind, DayLog, Egg, Element, GameState, Meal, OwnedPet, Rarity, Skin } from './types';
 import { addPotions } from './hp';
 import { addCrystals, chestCrystals } from './powerups';
@@ -183,6 +184,10 @@ export function cleanSave(s: GameState): GameState {
   // Account level arrives: start at the best pet's level so nothing that was open gets locked.
   if (!s.account && s.pets.length) {
     s = ensureAccount(s);
+    changed = true;
+  }
+  if (!s.badgeTiers && s.pets.length) {
+    s = ensureBadges(s);
     changed = true;
   }
   if (s.activePetId && s.pets.length && !s.pets.some((p) => p.id === s.activePetId)) {
@@ -382,7 +387,7 @@ export function hatch(s: GameState, eggId: string, rng: Rng = defaultRng): Hatch
       pets: [...s.pets, pet],
       dex: { ...s.dex, [species.id]: true },
       activePetId: s.activePetId ?? pet.id,
-      stats: { ...s.stats, hatched: (s.stats?.hatched ?? 0) + 1 },
+      stats: { ...s.stats, hatched: (s.stats?.hatched ?? 0) + 1, ...(pet.shiny ? { shinies: (s.stats?.shinies ?? 0) + 1 } : {}) },
       ...(skin ? { skinDex: { ...s.skinDex, [skinKey(species.id, skin)]: true as const } } : {}),
     },
   };
@@ -477,3 +482,6 @@ export function claimLevelReward(s: GameState): GameState {
   for (let i = 0; i < r.silver; i++) out = grantChest(out, 'silver', `Account level ${lv}`);
   return out;
 }
+
+/** Adds to a lifetime counter (gifts sent, reactions, bosses beaten) used by badges. */
+export const bumpStat = (s: GameState, k: 'gifts' | 'reactions' | 'bosses', n = 1): GameState => ({ ...s, stats: { ...s.stats, [k]: (s.stats?.[k] ?? 0) + n } });

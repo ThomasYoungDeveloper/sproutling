@@ -180,7 +180,7 @@ export function TeamProvider({ children }: { children: React.ReactNode }) {
     const { data, error } = await supabase.rpc('claim_raid_chest');
     if (error) return { ok: false, text: 'Couldn’t reach Sproutling. Try again in a moment.' };
     if (data !== 'ok') return { ok: false, text: data === 'already' ? 'You already opened this week’s raid chest.' : MESSAGES[data as string] ?? 'Something went wrong.' };
-    apply((s) => { const n = A.grantChest(s, 'gold', 'Guild boss raid'); return { ...n, coins: n.coins + 150 }; });
+    apply((s) => { const n = A.bumpStat(A.grantChest(s, 'gold', 'Guild boss raid'), 'bosses'); return { ...n, coins: n.coins + 150 }; });
     await refresh();
     return { ok: true, text: 'Boss defeated! A Gold chest and 150 coins are yours.' };
   }, [refresh, apply]);

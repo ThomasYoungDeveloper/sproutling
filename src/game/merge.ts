@@ -34,7 +34,7 @@ export function mergeSaves(base: GameState | null, mine: GameState, theirs: Game
   }
 
   const stats: NonNullable<GameState['stats']> = {};
-  for (const k of ['hatched', 'chests', 'expeditions', 'toys', 'bred'] as const) {
+  for (const k of ['hatched', 'chests', 'expeditions', 'toys', 'bred', 'gifts', 'reactions', 'bosses', 'shinies'] as const) {
     const v = counter(base.stats?.[k], mine.stats?.[k], theirs.stats?.[k]);
     if (v) stats[k] = v;
   }
@@ -102,6 +102,8 @@ export function mergeSaves(base: GameState | null, mine: GameState, theirs: Game
     expedition: pick(base.expedition, mine.expedition, theirs.expedition),
     dayOffset: pick(base.dayOffset, mine.dayOffset, theirs.dayOffset),
 
+    ...(mine.badgeTiers || theirs.badgeTiers ? { badgeTiers: maxMap(mine.badgeTiers, theirs.badgeTiers) } : {}),
+    ...(mine.showcase ? { showcase: mine.showcase } : theirs.showcase ? { showcase: theirs.showcase } : {}),
     ...(mine.account || theirs.account
       ? { account: { floor: Math.max(mine.account?.floor ?? 1, theirs.account?.floor ?? 1), rewarded: Math.max(mine.account?.rewarded ?? 1, theirs.account?.rewarded ?? 1) } }
       : {}),
@@ -225,3 +227,9 @@ function newerBattle(m: GameState['battle'], t: GameState['battle']) {
 
 /** True when two saves hold the same data (cheap enough for our save sizes). */
 export const sameSave = (a: GameState, b: GameState) => JSON.stringify(a) === JSON.stringify(b);
+
+function maxMap(a: Record<string, number> = {}, b: Record<string, number> = {}): Record<string, number> {
+  const out: Record<string, number> = { ...b };
+  for (const [k, v] of Object.entries(a)) out[k] = Math.max(v, out[k] ?? 0);
+  return out;
+}

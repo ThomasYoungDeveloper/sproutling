@@ -145,7 +145,7 @@ export interface GameState {
   /** The last day a shield was earned (one per 7-day streak). */
   shieldEarnedOn?: string;
   /** Lifetime counters for achievements. */
-  stats?: { hatched?: number; chests?: number; expeditions?: number; toys?: number; bred?: number };
+  stats?: { hatched?: number; chests?: number; expeditions?: number; toys?: number; bred?: number; gifts?: number; reactions?: number; bosses?: number; shinies?: number };
   /** Every pet-and-skin combination you've ever owned, keyed "p15:gold". */
   skinDex?: Record<string, true>;
   /** Today's pet wishes: where each one started counting, and which were granted. */
@@ -225,4 +225,7 @@ export interface GameState {
   tipSeen?: string;
   /** Account level: the starting floor (best pet's level when it arrived) and the highest level already rewarded. */
   account?: { floor: number; rewarded: number };
+  /** Badges: highest tier earned per badge (1 Wooden … 5 Rainbow), and the 3 shown on your profile. */
+  badgeTiers?: Record<string, number>;
+  showcase?: string[];
 }
