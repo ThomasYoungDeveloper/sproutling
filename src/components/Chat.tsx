@@ -21,6 +21,7 @@ import { SKIN_INFO } from '../game/skins';
 import type { Skin } from '../game/types';
 import { momentText, REACTIONS, useRoomReactions, type Reaction } from '../lib/moments';
 import RankTag from './RankTag';
+import { usePlaza } from '../lib/plaza';
 
 const ago = (iso: string | null) => {
   if (!iso) return '';
@@ -132,6 +133,7 @@ export function ChatList() {
   }
   return (
     <View style={{ gap: space.md }}>
+      <PlazaRows />
       <View style={styles.card}>
         {shown.length === 0 ? <Text style={font.small}>No chats yet. Open a friend and tap Chat, or join a guild to chat with your guild.</Text> : null}
         {shown.map((r, i) => {
@@ -169,6 +171,7 @@ function ChatRoomScreen({ room, title, otherId, onClose }: { room: string; title
   const { user } = useAuth();
   const me = user?.id ?? '';
   const isTeam = room.startsWith('team:');
+  const isPlaza = room.startsWith('plaza:');
   const [text, setText] = useState('');
   const [err, setErr] = useState<string | null>(null);
   const [menu, setMenu] = useState<ChatMessage | null>(null);
@@ -236,7 +239,7 @@ function ChatRoomScreen({ room, title, otherId, onClose }: { room: string; title
         </Pressable>
         <View style={{ flex: 1 }}>
           <Text style={[styles.headTitle, isTeam && { color: '#fff' }]} numberOfLines={1}>{title}</Text>
-          <Text style={[font.tiny, isTeam && { color: '#C9D3FF' }]}>{isTeam ? 'Guild chat' : 'Friend chat'}</Text>
+          <Text style={[font.tiny, isTeam && { color: '#C9D3FF' }]}>{isTeam ? 'Guild chat' : isPlaza ? 'Be kind · slow mode · hold a message to report' : 'Friend chat'}</Text>
         </View>
       </View>
 
@@ -271,7 +274,7 @@ function ChatRoomScreen({ room, title, otherId, onClose }: { room: string; title
           const sp = m.sticker ? SPECIES_BY_ID[m.sticker.speciesId] : undefined;
           return (
             <Pressable key={m.id} onLongPress={() => setMenu(m)} delayLongPress={350} style={{ alignSelf: mine ? 'flex-end' : 'flex-start', maxWidth: '80%' }} accessibilityHint={mine ? 'Press and hold to react' : 'Press and hold to react, report or block'}>
-              {isTeam && !mine ? (
+              {(isTeam || isPlaza) && !mine ? (
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
                   <Text style={styles.who}>{chat.nameOf(m.sender)}</Text>
                   <RankTag userId={m.sender} small />
@@ -540,6 +543,28 @@ export function ChatSettings() {
           <Text style={font.small}>{b.name}</Text>
           <Button small label="Unblock" onPress={async () => { await chat.unblock(b.id); setList(await chat.blocked()); }} />
         </View>
+      ))}
+    </View>
+  );
+}
+
+/** The Plaza: city and Everywhere rooms, 18+ or Teen. */
+function PlazaRows() {
+  const { rooms, daysToUnlock } = usePlaza();
+  const openChat = useOpenChat();
+  if (!rooms.length) return null;
+  return (
+    <View style={[styles.card, { gap: 6 }]}>
+      <Text style={font.h2}>Plaza</Text>
+      <Text style={font.tiny}>{daysToUnlock > 0 ? `Say hi to players near you. You can read now; sending unlocks in ${daysToUnlock} day${daysToUnlock === 1 ? '' : 's'}.` : 'Say hi to players near you. Be kind: messages are checked and you can report anyone.'}</Text>
+      {rooms.map((r) => (
+        <Pressable key={r.room} onPress={() => openChat(r.room, r.title)} style={styles.row} accessibilityRole="button" accessibilityLabel={`Open ${r.title}`}>
+          <View style={[styles.av, { backgroundColor: '#2FB58A' }]}>
+            <Text style={styles.avText}>{r.room.endsWith(':everywhere') ? 'ALL' : 'CITY'}</Text>
+          </View>
+          <Text style={[styles.name, { flex: 1 }]} numberOfLines={1}>{r.title}</Text>
+          <Text style={{ fontSize: 22, color: '#9AA7A2' }}>›</Text>
+        </Pressable>
       ))}
     </View>
   );

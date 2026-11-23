@@ -62,6 +62,8 @@ const SEND_ERRORS: Record<string, string> = {
   slow_down: 'Slow down a little! Try again in a minute.',
   no_contact_info: 'Links, emails, phone numbers and other apps can’t be shared in chat.',
   not_allowed: 'You can’t send messages here.',
+  plaza_new: 'You can read the Plaza now. Sending messages unlocks after your first 3 days of playing.',
+  plaza_slow: 'Slow mode: wait a few seconds between Plaza messages.',
 };
 
 export function ChatProvider({ children }: { children: React.ReactNode }) {
@@ -171,12 +173,25 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     const [a, b] = [me, friendId].sort();
     return `dm:${a}:${b}`;
   };
+  // Plaza players you don't know yet: look their trainer names up once.
+  const [extra, setExtra] = useState<Record<string, string>>({});
   const names = useMemo(() => {
-    const m = new Map<string, string>();
+    const m = new Map<string, string>(Object.entries(extra));
     friends.forEach((f) => m.set(f.id, f.username));
     team?.members?.forEach((x: any) => x?.id && m.set(x.id, x.username ?? x.name ?? 'Trainer'));
     return m;
-  }, [friends, team]);
+  }, [friends, team, extra]);
+  useEffect(() => {
+    const unknown = [...new Set(Object.values(byRoom).flat().map((x) => x.sender).filter((id): id is string => !!id && id !== me && !names.has(id)))].slice(0, 100);
+    if (!unknown.length) return;
+    supabase
+      .from('profiles')
+      .select('id, username')
+      .in('id', unknown)
+      .then(({ data }) => {
+        if (data?.length) setExtra((e) => ({ ...e, ...Object.fromEntries((data as any[]).map((p) => [p.id, p.username ?? 'Trainer'])) }));
+      });
+  }, [byRoom]);
   const nameOf = (id: string | null) => (!id ? '' : id === me ? 'You' : names.get(id) ?? 'Trainer');
 
   const unread = rooms.reduce((a, r) => a + (r.unread || 0), 0);
