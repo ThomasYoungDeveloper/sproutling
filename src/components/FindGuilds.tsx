@@ -7,7 +7,7 @@ import { colors, font, space } from '../theme';
 import { supabase } from '../lib/supabase';
 import { useTeam } from '../state/TeamContext';
 
-type OpenTeam = { id: string; name: string; emoji: string; code: string; city: string | null; spot_name: string | null; spot: boolean; members: number; steps: number };
+type OpenTeam = { id: string; name: string; emoji: string; code: string; city: string | null; spot_name: string | null; spot: boolean; members: number; active?: number; steps: number };
 
 /** Open guilds near you (your leaderboard city) or the busiest ones this week. */
 export default function FindGuilds() {
@@ -45,7 +45,7 @@ export default function FindGuilds() {
                 <Text style={[font.body, { fontWeight: '900', flexShrink: 1 }]} numberOfLines={1}>{t.name}</Text>
                 {t.spot ? <View style={styles.spotTag}><Text style={styles.spotText}>Spot</Text></View> : null}
               </View>
-              <Text style={font.tiny}>{t.members} member{t.members === 1 ? '' : 's'} · {Math.round(t.steps / 1000)}K steps this week</Text>
+              <Text style={font.tiny}>{t.members} member{t.members === 1 ? '' : 's'}{t.active ? ` · ${t.active} active this week` : ''}</Text>
             </View>
             <Button
               small

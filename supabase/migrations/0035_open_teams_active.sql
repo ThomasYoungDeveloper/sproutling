@@ -1,0 +1,3 @@
+-- Applied through the Supabase connector on 2026-11-23.
+-- open_teams(): adds "active" (members who walked in the last 7 days, rolling) and sorts by it.
+-- The guild list shows "23 members · 18 active this week" instead of weekly step totals.
