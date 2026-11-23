@@ -10,6 +10,7 @@ export interface Group {
   city: string | null;
   spot: boolean;
   photo?: string | null;
+  logo?: string | null;
   pinned: string | null;
   members: number;
   live: number;

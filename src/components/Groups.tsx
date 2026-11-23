@@ -65,10 +65,11 @@ function KindIcon({ kind, size = 26 }: { kind: GroupKind; size?: number }) {
   );
 }
 
-function Bubble({ kind, size = 46 }: { kind: GroupKind; size?: number }) {
+/** A group's round picture: the place's own logo when it has one, otherwise an icon for its kind. */
+function Bubble({ kind, size = 46, logo }: { kind: GroupKind; size?: number; logo?: string | null }) {
   return (
-    <View style={[styles.bubble, { width: size, height: size, borderRadius: size / 2, backgroundColor: kindOf(kind).color }]}>
-      <KindIcon kind={kind} size={size * 0.62} />
+    <View style={[styles.bubble, { width: size, height: size, borderRadius: size / 2, backgroundColor: logo ? '#FFFFFF' : kindOf(kind).color, overflow: 'hidden' }]}>
+      {logo ? <Image source={{ uri: logo }} style={{ width: size - 4, height: size - 4, borderRadius: size / 2 }} resizeMode="contain" accessibilityIgnoresInvertColors /> : <KindIcon kind={kind} size={size * 0.62} />}
     </View>
   );
 }
@@ -78,7 +79,7 @@ function GroupRow({ g, onOpen, right }: { g: Group; onOpen: () => void; right?: 
     <Pressable onPress={onOpen} style={styles.gcard} accessibilityRole="button" accessibilityLabel={`${g.name}, ${g.members} members`}>
       <View style={[styles.cover, { backgroundColor: kindOf(g.kind).color }]} />
       <View style={styles.gbody}>
-        <View style={{ marginTop: -20 }}><Bubble kind={g.kind} /></View>
+        <View style={{ marginTop: -20 }}><Bubble kind={g.kind} logo={g.logo} /></View>
         <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
           <Text style={styles.gname} numberOfLines={1}>{g.name}</Text>
           <Text style={styles.gmeta} numberOfLines={1}>
@@ -273,7 +274,7 @@ export function GroupScreen({ id, onClose }: { id: string; onClose: () => void }
           {g.photo ? <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(20,20,20,0.38)' }]} /> : null}
           <Pressable onPress={onClose} hitSlop={10} accessibilityRole="button"><Text style={[styles.back, { color: '#FFFFFF' }]}>‹ Groups</Text></Pressable>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: g.photo ? 110 : 18 }}>
-            <Bubble kind={g.kind} size={56} />
+            <Bubble kind={g.kind} size={56} logo={g.logo} />
             <View style={{ flex: 1 }}>
               <Text style={styles.heroName} accessibilityRole="header">{g.name}</Text>
               <Text style={styles.heroMeta}>{g.spot ? 'Cafe spot' : kindOf(g.kind).label}{g.city ? ` · ${g.city}` : ''} · {g.members} member{g.members === 1 ? '' : 's'}</Text>
