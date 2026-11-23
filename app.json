@@ -30,7 +30,8 @@
       },
       "associatedDomains": [
         "applinks:sproutling.vercel.app"
-      ]
+      ],
+      "appleTeamId": "S8N2T57J86"
     },
     "android": {
       "adaptiveIcon": {
