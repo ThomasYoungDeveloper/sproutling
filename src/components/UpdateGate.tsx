@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppState, Linking, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Text } from './ScaledText';
 import { noteWhatsNewShown } from '../lib/findMeAsk';
@@ -28,6 +29,7 @@ export default function UpdateGate({ children }: { children: React.ReactNode }) 
     return () => sub.remove();
   }, []);
   const [whatsNew, setWhatsNew] = useState<Note | null>(null);
+  const insets = useSafeAreaInsets();
 
   useEffect(() => {
     let cancelled = false;
@@ -80,7 +82,7 @@ export default function UpdateGate({ children }: { children: React.ReactNode }) 
 
   if (block) {
     return (
-      <View style={styles.full}>
+      <View style={[styles.full, { paddingTop: insets.top + 28, paddingBottom: insets.bottom + 28 }]}>
         <Text style={styles.big}>🌱</Text>
         <Text style={styles.title}>Time to update!</Text>
         <Text style={styles.body}>A lot of new things were added to Sproutling. Update to keep playing; your pets and progress are saved.</Text>
@@ -131,7 +133,7 @@ export default function UpdateGate({ children }: { children: React.ReactNode }) 
     <>
       {children}
       {whatsNew ? (
-        <View style={styles.backdrop}>
+        <View style={[styles.backdrop, { paddingTop: insets.top + 12, paddingBottom: insets.bottom + 12 }]}>
           <View style={styles.card}>
             <Text style={styles.kicker}>WHAT'S NEW</Text>
             <Text style={styles.cardTitle}>{whatsNew.title}</Text>

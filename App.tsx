@@ -487,16 +487,31 @@ function Gate() {
   );
 }
 
+/**
+ * Keeps the whole app (pop-ups included) clear of anything the phone puts on the left or right edge:
+ * camera cut-outs, side status icons, rounded corners on wide or folding phones.
+ */
+function SideSafe({ children }: { children: React.ReactNode }) {
+  const insets = useSafeAreaInsets();
+  return (
+    <View style={{ flex: 1, backgroundColor: colors.bg }}>
+      <View style={{ flex: 1, marginLeft: insets.left, marginRight: insets.right }}>{children}</View>
+    </View>
+  );
+}
+
 export default function App() {
   if (Platform.OS === 'web' && typeof window !== 'undefined' && window.location.search.includes('lab=hats')) return <LabScreen />;
   return (
     <ErrorBoundary>
     <SafeAreaProvider>
+      <SideSafe>
       <UpdateGate>
         <AuthProvider>
           <Gate />
         </AuthProvider>
       </UpdateGate>
+      </SideSafe>
     </SafeAreaProvider>
     </ErrorBoundary>
   );
