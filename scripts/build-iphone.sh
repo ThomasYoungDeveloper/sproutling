@@ -49,7 +49,8 @@ cd "$APP_DIR"
 echo "Code is in $APP_DIR ✓"
 
 step "Installing packages (this can take a few minutes the first time)"
-npm install --no-audit --no-fund --loglevel=error
+# Install exactly what the lock file lists, so the cloud build sees the same packages.
+npm ci --no-audit --no-fund --loglevel=error || npm install --no-audit --no-fund --loglevel=error
 
 # 3. Expo account
 step "Signing in to Expo"
