@@ -1,5 +1,7 @@
 import React from 'react';
-import Svg, { Path, Text as SvgText } from 'react-native-svg';
+import { View } from 'react-native';
+import Svg, { Path } from 'react-native-svg';
+import { Text } from './ScaledText';
 import { badgeTier } from '../game/account';
 
 const TIERS = {
@@ -13,12 +15,14 @@ const TIERS = {
 export default function LevelBadge({ level, size = 28 }: { level: number; size?: number }) {
   const t = TIERS[badgeTier(level)];
   return (
-    <Svg width={size} height={size} viewBox="0 0 48 48" accessibilityLabel={`Level ${level}`}>
-      <Path d="M24 2l19 11v22L24 46 5 35V13z" fill={t.fill} stroke={t.edge} strokeWidth={2.5} />
-      <Path d="M24 7l15 8.7v16.6L24 41 9 32.3V15.7z" fill={t.inner} opacity={0.5} />
-      <SvgText x={24} y={30.5} textAnchor="middle" fontSize={level >= 100 ? 13 : 17} fontWeight="900" fill="#FFFFFF">
-        {String(level)}
-      </SvgText>
-    </Svg>
+    <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }} accessibilityLabel={`Level ${level}`}>
+      <Svg width={size} height={size} viewBox="0 0 48 48" style={{ position: 'absolute' }}>
+        <Path d="M24 2l19 11v22L24 46 5 35V13z" fill={t.fill} stroke={t.edge} strokeWidth={2.5} />
+        <Path d="M24 7l15 8.7v16.6L24 41 9 32.3V15.7z" fill={t.inner} opacity={0.5} />
+      </Svg>
+      <Text allowFontScaling={false} style={{ color: '#FFFFFF', fontWeight: '900', fontSize: size * (level >= 100 ? 0.27 : 0.36), lineHeight: size * 0.46 }}>
+        {level}
+      </Text>
+    </View>
   );
 }

@@ -1,10 +1,10 @@
-import React, { useEffect, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { Animated, Easing, Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { Text } from './ScaledText';
 import Svg, { Path, Rect } from 'react-native-svg';
 import { useGame } from '../state/GameContext';
 import { FitSheet, Button, Card } from './ui';
-import { buzz, Confetti, PopIn } from './fx';
+import { buzz, Confetti, PopIn, Rays } from './fx';
 import PetSprite from './PetSprite';
 import { SPECIES_BY_ID } from '../game/species';
 import { stageFor, xpForLevel } from '../game/scoring';
@@ -117,6 +117,69 @@ function FeatureIcon({ id, color = '#E8590C', size = 32 }: { id: U.Feature; colo
   );
 }
 
+/** The level-up moment: rays, the badge slams in and pulses, the number ticks up from your old level. */
+function LevelBurst({ from, to }: { from: number; to: number }) {
+  const pop = useRef(new Animated.Value(0)).current;
+  const pulse = useRef(new Animated.Value(0)).current;
+  const [shown, setShown] = useState(Math.max(1, Math.min(from, to - 1)));
+  useEffect(() => {
+    Animated.sequence([
+      Animated.delay(150),
+      Animated.spring(pop, { toValue: 1, friction: 4, tension: 140, useNativeDriver: true }),
+    ]).start();
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulse, { toValue: 1, duration: 700, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
+        Animated.timing(pulse, { toValue: 0, duration: 700, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
+      ]),
+    );
+    const t = setTimeout(() => loop.start(), 900);
+    // Count up through each level gained, with a tap on every step.
+    let n = Math.max(1, Math.min(from, to - 1));
+    const tick = setInterval(() => {
+      n += 1;
+      setShown(Math.min(n, to));
+      buzz(n >= to ? 'heavy' : 'light', n >= to ? 'levelup' : 'none');
+      if (n >= to) clearInterval(tick);
+    }, Math.max(120, 600 / Math.max(1, to - from)));
+    return () => {
+      clearTimeout(t);
+      clearInterval(tick);
+      loop.stop();
+    };
+  }, [to]);
+  return (
+    <View style={{ width: 200, height: 170, alignItems: 'center', justifyContent: 'center', zIndex: 0 }}>
+      <Rays color="#FFD84D" size={210} count={14} />
+      <Animated.View
+        style={{
+          transform: [
+            { scale: Animated.multiply(pop.interpolate({ inputRange: [0, 1], outputRange: [0.2, 1] }), pulse.interpolate({ inputRange: [0, 1], outputRange: [1, 1.08] })) },
+            { rotate: pop.interpolate({ inputRange: [0, 1], outputRange: ['-25deg', '0deg'] }) },
+          ],
+        }}
+      >
+        <LevelBadge level={shown} size={120} />
+      </Animated.View>
+    </View>
+  );
+}
+
+/** Coins that roll up from 0 to the reward. */
+function CountUp({ to }: { to: number }) {
+  const [n, setN] = useState(0);
+  useEffect(() => {
+    const start = Date.now();
+    const id = setInterval(() => {
+      const k = Math.min(1, (Date.now() - start) / 1100);
+      setN(Math.round(to * (1 - Math.pow(1 - k, 3))));
+      if (k >= 1) clearInterval(id);
+    }, 40);
+    return () => clearInterval(id);
+  }, [to]);
+  return <>{n.toLocaleString()}</>;
+}
+
 /**
  * The level-up pop-up: shows once per new account level (also after leveling up while the app was closed).
  * If something opened, each unlock gets a big orange banner (swipe through several), with Try it now.
@@ -128,9 +191,13 @@ export function LevelUpPopup({ onGo }: { onGo: (f: U.FeatureInfo) => void }) {
   const { width } = useWindowDimensions();
   const [page, setPage] = useState(0);
   const level = m?.level;
+  const [burst2, setBurst2] = useState(0);
   useEffect(() => {
     if (level) buzz('success', 'levelup');
     setPage(0);
+    // A second confetti burst once the badge lands.
+    const t = setTimeout(() => setBurst2((n) => n + 1), 700);
+    return () => clearTimeout(t);
   }, [level]);
   if (!m) return null;
   const pet = state.pets.reduce((b, p) => (p.xp > b.xp ? p : b), state.pets[0]);
@@ -152,16 +219,16 @@ export function LevelUpPopup({ onGo }: { onGo: (f: U.FeatureInfo) => void }) {
   const pct = next ? Math.max(0, Math.min(1, (prog.xp - from) / Math.max(1, accountXpFor(next.level) - from))) : 0;
   return (
     <View style={styles.backdrop}>
-      <View pointerEvents="none" style={StyleSheet.absoluteFill}><Confetti amount={60} width={width} height={700} /></View>
+      <View pointerEvents="none" style={StyleSheet.absoluteFill}><Confetti amount={70} width={width} height={700} />{burst2 ? <Confetti key={burst2} amount={90} width={width} height={800} colors={['#FFD84D', '#F2C14E', '#FFFFFF', '#2FB58A', '#FF8FB1']} /> : null}</View>
       <PopIn>
         <View style={styles.lvCard} accessibilityViewIsModal>
           <Text style={styles.lvTag}>LEVEL UP</Text>
-          <Text style={styles.lvBig} accessibilityRole="header">Level {m.level}!</Text>
-          <LevelBadge level={m.level} size={96} />
+          <Text style={[styles.lvBig, { zIndex: 2 }]} accessibilityRole="header">Level {m.level}!</Text>
+          <LevelBurst from={state.onboard?.levelShown ?? m.level - 1} to={m.level} />
           <Text style={styles.lvLine}>
             {reward.coins ? (
               <>
-                Reward: <Text style={styles.lvPoint}>{reward.coins.toLocaleString()} coins</Text>
+                Reward: <Text style={styles.lvPoint}>+<CountUp to={reward.coins} /> coins</Text>
                 {reward.silver ? <Text style={styles.lvPoint}>{` and ${reward.silver > 1 ? `${reward.silver} Silver chests` : 'a Silver chest'}`}</Text> : null}
               </>
             ) : (
