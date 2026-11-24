@@ -11,6 +11,7 @@ import { buzz, PopIn } from './fx';
 import { colors, font, space } from '../theme';
 import BadgeMedal from './BadgeMedal';
 import HealthLabel from './HealthLabel';
+import GuildTag, { PlayerLevel } from './GuildTag';
 import { BADGE_BY_ID, TIERS as BTIERS } from '../game/badges';
 import { SPECIES, SPECIES_BY_ID } from '../game/species';
 import { levelFor, stageFor } from '../game/scoring';
@@ -87,9 +88,13 @@ export default function FriendSheet({ friend, onClose }: { friend: Friend; onClo
         <View style={styles.sheetBody}>
           <View style={{ alignItems: 'center' }}>
             <Text style={styles.who}>{live.username}</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap', justifyContent: 'center' }}>
+              <PlayerLevel userId={live.id} size={22} />
+              <GuildTag userId={live.id} />
+            </View>
             <HealthLabel userId={live.id} name={live.username} />
             {active && activeSpecies ? (
-              <Text style={styles.whoSub}>Lv {levelFor(active.xp)} {active.nickname} the {activeSpecies.name}</Text>
+              <Text style={styles.whoSub}>Lv {levelFor(active.xp)} {active.nickname}{active.nickname !== activeSpecies.name ? ` the ${activeSpecies.name}` : ''}</Text>
             ) : (
               <Text style={styles.whoSub}>Hasn’t hatched a pet yet</Text>
             )}
