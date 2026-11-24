@@ -61,8 +61,8 @@ function HealthChip({ userId }: { userId: string }) {
   if (!l) return null;
   const txt = l === 'health' ? 'Apple Health' : `Health + ${l === 'watch' ? 'Watch' : l === 'oura' ? 'Oura' : l === 'garmin' ? 'Garmin' : l === 'fitbit' ? 'Fitbit' : 'Wearable'}`;
   return (
-    <View style={{ backgroundColor: l === 'health' ? '#2FB58A' : '#5A6FE0', borderRadius: 7, paddingHorizontal: 5, paddingVertical: 1 }}>
-      <Text style={{ fontSize: 10, fontWeight: '600', color: '#FFFFFF' }} numberOfLines={1}>{txt}</Text>
+    <View style={{ backgroundColor: l === 'health' ? '#2FB58A' : '#5A6FE0', borderRadius: 7, paddingHorizontal: 6, paddingVertical: 1 }}>
+      <Text style={{ fontSize: 11, fontWeight: '600', color: '#FFFFFF' }} numberOfLines={1}>{txt}</Text>
     </View>
   );
 }
@@ -75,17 +75,20 @@ function MemberRow({ m, top }: { m: TeamMember; top: number }) {
       <View style={styles.avatar}>
         {sp && p ? <PetSprite species={sp} stage={stageFor(p.xp)} size={40} shiny={p.shiny} skin={p.skin} hat={p.hat} aura={p.aura} /> : <Icon name="egg" size={20} color={colors.muted} />}
       </View>
-      <View style={{ flex: 1, gap: 3 }}>
+      <View style={{ flex: 1, minWidth: 0, gap: 5 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
           <Text style={styles.memberName} numberOfLines={1}>{m.username}{m.me ? ' (you)' : ''}</Text>
           <PlayerLevel userId={m.id} size={18} />
+          <View style={{ flex: 1 }} />
+          <Text style={styles.memberSteps} accessibilityLabel={`${m.steps.toLocaleString()} steps this week`}>{m.steps.toLocaleString()}</Text>
+        </View>
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 5 }}>
+          {m.role === 'leader' ? <Text style={styles.leaderTag}>Leader</Text> : null}
           <HealthChip userId={m.id} />
           <RankTag userId={m.id} small />
-          {m.role === 'leader' ? <Text style={styles.leaderTag}>Leader</Text> : null}
         </View>
-        <ProgressBar value={top ? m.steps / top : 0} height={7} color={m.me ? colors.mint : '#8FC9F0'} />
+        <ProgressBar value={top ? m.steps / top : 0} height={6} color={m.me ? colors.mint : '#8FC9F0'} />
       </View>
-      <Text style={styles.memberSteps}>{m.steps.toLocaleString()}</Text>
     </View>
   );
 }
@@ -445,7 +448,7 @@ const styles = StyleSheet.create({
   chip: { backgroundColor: '#3D4785', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 2 },
   chipText: { fontSize: 11, fontWeight: '600', color: '#C9D3FF' },
   xpLabel: { fontSize: 11, fontWeight: '600', color: SOFT },
-  leaderTag: { fontSize: 10, fontWeight: '600', color: '#4A3200', backgroundColor: GOLD, borderRadius: 6, paddingHorizontal: 5, overflow: 'hidden' },
+  leaderTag: { fontSize: 11, fontWeight: '700', color: '#4A3200', backgroundColor: GOLD, borderRadius: 7, paddingHorizontal: 6, paddingVertical: 1, overflow: 'hidden' },
   row: { flexDirection: 'row', gap: space.sm, flexWrap: 'wrap' },
   input: { borderRadius: 12, paddingVertical: 10, paddingHorizontal: 12, fontSize: 16, color: colors.ink, backgroundColor: '#FFFFFF' },
   emojis: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
@@ -470,13 +473,13 @@ const styles = StyleSheet.create({
   goalNum: { fontWeight: '600', fontSize: 13, color: colors.muted },
   marker: { position: 'absolute', top: -6, marginLeft: -12 },
   markerText: { fontSize: 18 },
-  member: { flexDirection: 'row', alignItems: 'center', gap: space.sm, backgroundColor: 'rgba(255,255,255,0.12)', borderRadius: 14, padding: 6 },
+  member: { flexDirection: 'row', alignItems: 'center', gap: space.md, backgroundColor: 'rgba(255,255,255,0.10)', borderRadius: 16, paddingVertical: 10, paddingLeft: 10, paddingRight: 14 },
   avatar: { width: 44, height: 44, borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.9)', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
-  memberName: { fontWeight: '700', fontSize: 14, color: '#FFFFFF', flexShrink: 1 },
+  memberName: { fontWeight: '700', fontSize: 15, color: '#FFFFFF', flexShrink: 1 },
   leader: { fontSize: 12 },
   renameLink: { color: '#FFFFFF', fontSize: 13, fontWeight: '600', textDecorationLine: 'underline', marginTop: 2 },
   renameBox: { backgroundColor: '#FFFFFF', borderRadius: 16, padding: space.sm, gap: space.sm },
   renameInput: { height: 46, borderRadius: 12, borderWidth: 2, borderColor: '#DDE6E2', paddingHorizontal: 12, fontSize: 17, fontWeight: '800', color: colors.ink },
-  memberSteps: { fontWeight: '700', fontSize: 14, color: '#FFFFFF', minWidth: 60, textAlign: 'right' },
+  memberSteps: { fontWeight: '700', fontSize: 15, color: '#FFFFFF', fontVariant: ['tabular-nums'] },
   leave: { fontSize: 12, fontWeight: '600', color: SOFT, textAlign: 'center', textDecorationLine: 'underline', paddingTop: 4 },
 });
