@@ -252,6 +252,7 @@ export function GroupScreen({ id, onClose }: { id: string; onClose: () => void }
   const [pin, setPinText] = useState<string | null>(null);
   const [confirmLeave, setConfirmLeave] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [joinErr, setJoinErr] = useState<string | null>(null);
   const load = () => loadGroup(id).then(setG);
   useEffect(() => {
     load();
@@ -291,13 +292,16 @@ export function GroupScreen({ id, onClose }: { id: string; onClose: () => void }
               disabled={busy}
               onPress={async () => {
                 setBusy(true);
-                await joinGroup(g.id);
+                const r = await joinGroup(g.id);
                 setBusy(false);
+                if (!r.ok) return setJoinErr(r.text);
+                setJoinErr(null);
                 buzz('success');
                 load();
               }}
             />
           )}
+          {joinErr ? <Text style={styles.err}>{joinErr}</Text> : null}
           <View style={styles.segs}>
             {(['steps', 'about'] as const).map((t) => (
               <Pressable key={t} onPress={() => setTab(t)} style={[styles.seg, tab === t && styles.segOn]} accessibilityRole="tab" accessibilityState={{ selected: tab === t }}>
