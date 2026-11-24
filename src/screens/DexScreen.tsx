@@ -18,6 +18,7 @@ import { SKINS, SKIN_INFO, skinDexCount, skinKey } from '../game/skins';
 import { useOverlay } from '../components/Overlay';
 import AchievementsSheet from '../components/AchievementsSheet';
 import BadgeMedal from '../components/BadgeMedal';
+import { markSeenNew, useIsNew } from '../lib/newDots';
 import NurseryCard from '../components/NurseryCard';
 import PetSheet from '../components/PetSheet';
 import PetZoom from '../components/PetZoom';
@@ -30,8 +31,9 @@ function BadgeBanner() {
   const overlay = useOverlay();
   const ready = Ach.claimable(state).length;
   const earned = Ach.badgeCount(state);
+  const isNew = useIsNew('badges');
   return (
-    <Pressable onPress={() => overlay.open(<AchievementsSheet onClose={overlay.close} />)} style={({ pressed }) => [badgeStyles.banner, ready > 0 && badgeStyles.ready, pressed && { transform: [{ scale: 0.98 }] }]} accessibilityRole="button" accessibilityLabel="Badges">
+    <Pressable onPress={() => { markSeenNew('badges'); overlay.open(<AchievementsSheet onClose={overlay.close} />); }} style={({ pressed }) => [badgeStyles.banner, ready > 0 && badgeStyles.ready, pressed && { transform: [{ scale: 0.98 }] }]} accessibilityRole="button" accessibilityLabel="Badges">
       <BadgeMedal icon="star" tier={4} size={38} id="banner" />
       <View style={{ flex: 1 }}>
         <Text style={badgeStyles.title}>Badges</Text>
@@ -39,6 +41,8 @@ function BadgeBanner() {
       </View>
       {ready > 0 ? (
         <View style={badgeStyles.pill}><Text style={badgeStyles.pillText}>{ready} new!</Text></View>
+      ) : isNew ? (
+        <View style={[badgeStyles.pill, { backgroundColor: '#FF8A5C' }]}><Text style={[badgeStyles.pillText, { color: '#FFFFFF' }]}>NEW</Text></View>
       ) : (
         <Text style={badgeStyles.go}>See all ›</Text>
       )}
@@ -96,7 +100,7 @@ export default function DexScreen() {
         ))}
       </View>
       {section === 'nursery' ? (U.unlocked(state, 'breeding') ? <Glow id="breeding"><NurseryCard /></Glow> : <LockedCard feature="breeding" compact />) : null}
-      {section === 'team' ? <BadgeBanner /> : null}
+      {section === 'team' ? <Glow id="badges"><BadgeBanner /></Glow> : null}
       {section === 'team' ? (
       <Card>
         <SectionHead title="Your team" meta={`${state.pets.length} pets`} />

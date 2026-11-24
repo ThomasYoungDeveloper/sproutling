@@ -10,6 +10,7 @@ import GuildTag from './GuildTag';
 import { accountProgress, XP_FOR } from '../game/account';
 import { FEATURES } from '../game/unlocks';
 import { colors, font } from '../theme';
+import { markSeenNew, useIsNew } from '../lib/newDots';
 
 const ROAD: { level: number; text: string }[] = [
   ...FEATURES.reduce<{ level: number; text: string }[]>((out, f) => {
@@ -48,8 +49,9 @@ export function AccountLevelCard() {
   const { username, user } = useAuth();
   const overlay = useOverlay();
   const p = accountProgress(state);
+  const isNew = useIsNew('level');
   return (
-    <Pressable onPress={() => overlay.open(<AccountLevelSheet onClose={overlay.close} />)} style={styles.card} accessibilityRole="button" accessibilityLabel={`Level ${p.level}. Open your level`}>
+    <Pressable onPress={() => { markSeenNew('level'); overlay.open(<AccountLevelSheet onClose={overlay.close} />); }} style={styles.card} accessibilityRole="button" accessibilityLabel={`Level ${p.level}. Open your level`}>
       <View style={styles.row}>
         <LevelBadge level={p.level} size={56} />
         <View style={{ flex: 1, minWidth: 0 }}>
@@ -59,7 +61,7 @@ export function AccountLevelCard() {
             <GuildTag userId={user?.id} small />
           </View>
         </View>
-        <Text style={styles.chev}>›</Text>
+        {isNew ? <View style={styles.newTag}><Text style={styles.newTagText}>NEW</Text></View> : <Text style={styles.chev}>›</Text>}
       </View>
       <Bar pct={p.into / p.need} />
       <View style={styles.between}>
@@ -115,6 +117,8 @@ const styles = StyleSheet.create({
   card: { backgroundColor: '#FFFCF5', borderRadius: 24, padding: 16, gap: 8 },
   row: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   name: { fontSize: 20, fontWeight: '900', color: colors.ink },
+  newTag: { backgroundColor: '#FF8A5C', borderRadius: 8, paddingHorizontal: 7, paddingVertical: 2 },
+  newTagText: { color: '#FFFFFF', fontSize: 11, fontWeight: '900' },
   chev: { fontSize: 26, color: '#9AA7A2' },
   track: { height: 10, borderRadius: 10, backgroundColor: '#E4EEEA', overflow: 'hidden' },
   fill: { height: '100%', borderRadius: 10, backgroundColor: colors.mint },

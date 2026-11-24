@@ -12,6 +12,7 @@ import { isMuted, onMuteChange, play, setMuted } from '../lib/sound';
 import { useOverlay } from './Overlay';
 import PremiumSheet from './PremiumSheet';
 import { colors, font, space } from '../theme';
+import { ReportsScreen, SpotsScreen, useAdmin } from './Admin';
 import { useTeam } from '../state/TeamContext';
 import { guildReminderOpts, planReminders } from '../game/reminders';
 import { getRemindersOn, onRemindersChange, remindersSupported, setRemindersOn } from '../lib/remindersState';
@@ -152,7 +153,9 @@ const appVersion = () => {
   return `1.0${b ? ` (build ${b})` : ''}`;
 };
 
-export default function AccountSheet({ onClose }: { onClose: () => void }) {
+export default function AccountSheet({ onClose, onTour }: { onClose: () => void; onTour?: () => void }) {
+  const adm = useAdmin();
+  const [adminPage, setAdminPage] = useState<'reports' | 'spots' | null>(null);
   const { user, username, signOut, saveUsername, deleteAccount } = useAuth();
   const [askDelete, setAskDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -245,6 +248,20 @@ export default function AccountSheet({ onClose }: { onClose: () => void }) {
               <Pressable onPress={() => setTestMode(false)} hitSlop={8} accessibilityRole="button"><Text style={styles.link}>Hide testing tools</Text></Pressable>
             </View>
             ) : null}
+            {adm.admin ? (
+              <View style={{ gap: 8, marginTop: space.md }}>
+                <Pressable onPress={() => setAdminPage('reports')} style={styles.adminRow} accessibilityRole="button" accessibilityLabel={`Reports, ${adm.reports} new`}>
+                  <Text style={styles.adminTitle}>Reports</Text>
+                  {adm.reports ? <View style={styles.adminCount}><Text style={styles.adminCountText}>{adm.reports} new</Text></View> : <Text style={styles.adminChev}>›</Text>}
+                </Pressable>
+                <Pressable onPress={() => setAdminPage('spots')} style={styles.adminRow} accessibilityRole="button" accessibilityLabel={`Spots, ${adm.spots} requests`}>
+                  <Text style={styles.adminTitle}>Spots</Text>
+                  {adm.spots ? <View style={styles.adminCount}><Text style={styles.adminCountText}>{adm.spots} new</Text></View> : <Text style={styles.adminChev}>›</Text>}
+                </Pressable>
+                <Text style={font.tiny}>Only you see Reports and Spots.</Text>
+              </View>
+            ) : null}
+            {onTour ? <Button small label="See what’s new" onPress={onTour} style={{ marginTop: space.md, alignSelf: 'flex-start' }} /> : null}
             <View style={[styles.row, { marginTop: space.md }]}>
               <Button label="Sign out" onPress={signOut} />
               <Button primary label="Done" onPress={onClose} style={{ flex: 1 }} />
@@ -292,11 +309,18 @@ export default function AccountSheet({ onClose }: { onClose: () => void }) {
         ) : null}
         </ScrollView>
       </View>
+    {adminPage === 'reports' ? <ReportsScreen onClose={() => setAdminPage(null)} onChange={adm.reload} /> : null}
+      {adminPage === 'spots' ? <SpotsScreen onClose={() => setAdminPage(null)} onChange={adm.reload} /> : null}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  adminRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F4F9F6', borderRadius: 14, paddingHorizontal: 14, paddingVertical: 12 },
+  adminTitle: { flex: 1, fontSize: 15, fontWeight: '900', color: colors.ink },
+  adminCount: { backgroundColor: '#E0567A', borderRadius: 9, paddingHorizontal: 8, paddingVertical: 1 },
+  adminCountText: { color: '#FFFFFF', fontSize: 12, fontWeight: '900' },
+  adminChev: { fontSize: 20, color: '#9AA7A2' },
   healthBox: { backgroundColor: '#F4F9F6', borderRadius: 14, padding: 10, gap: 6 },
   hourChip: { flex: 1, borderRadius: 12, backgroundColor: '#EEF4F1', paddingVertical: 8, alignItems: 'center' },
   hourChipOn: { backgroundColor: colors.mint },

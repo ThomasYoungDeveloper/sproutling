@@ -1,0 +1,5 @@
+-- Applied through the Supabase connector on 2026-11-24.
+-- chat_rooms() includes group rooms (unread counts). is_admin(); admin_reports(), admin_report_action() (remove,
+-- hide30, unhide, dismiss); admin_counts(). spot_requests + suggest_spot(); admin_spots(), admin_decline_spot(),
+-- admin_make_spot() (makes the adult cafe group with a code, tells the players who suggested it). Storage policies
+-- let the admin upload to the public 'spots' bucket.

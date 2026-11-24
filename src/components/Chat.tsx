@@ -24,6 +24,8 @@ import RankTag from './RankTag';
 import GuildTag from './GuildTag';
 import { usePlaza } from '../lib/plaza';
 import { YourGroups } from './Groups';
+import { useSpotlight } from './Spotlight';
+import { markSeenNew, useIsNew } from '../lib/newDots';
 
 const ago = (iso: string | null) => {
   if (!iso) return '';
@@ -102,8 +104,18 @@ export function ChatRules({ onAgree, onClose }: { onAgree?: () => void; onClose:
 }
 
 /** Social › Chat: your guild chat and friend chats, newest first. */
+type ChatTab = 'chats' | 'groups' | 'plaza';
+
 export function ChatList() {
   const { rooms, mode, refresh, rulesOk, acceptRules } = useChat();
+  const [tab, setTab] = useState<ChatTab>('chats');
+  const spot = useSpotlight();
+  useEffect(() => {
+    if (spot?.id === 'groups' || spot?.id === 'plaza') {
+      setTab(spot.id);
+      markSeenNew(spot.id);
+    }
+  }, [spot?.id]);
   const overlay = useOverlay();
   const { friends } = useFriends();
   const { team } = useTeam();
@@ -133,10 +145,15 @@ export function ChatList() {
       </View>
     );
   }
+  const groupRooms = rooms.filter((r) => r.room.startsWith('group:'));
+  const groupUnread = groupRooms.reduce((n, r) => n + (r.unread || 0), 0);
+  const chatUnread = shown.reduce((n, r) => n + (r.unread || 0), 0);
   return (
     <View style={{ gap: space.md }}>
-      <PlazaRows />
-      <YourGroups />
+      <ChatSegs tab={tab} onTab={(t) => { setTab(t); markSeenNew(t); }} counts={{ chats: chatUnread, groups: groupUnread, plaza: 0 }} />
+      {tab === 'groups' ? <YourGroups unread={Object.fromEntries(groupRooms.map((r) => [r.room.slice(6), r.unread || 0]))} /> : null}
+      {tab === 'plaza' ? <PlazaRows /> : null}
+      {tab === 'chats' ? (
       <View style={styles.card}>
         {shown.length === 0 ? <Text style={font.small}>No chats yet. Open a friend and tap Chat, or join a guild to chat with your guild.</Text> : null}
         {shown.map((r, i) => {
@@ -163,6 +180,32 @@ export function ChatList() {
           );
         })}
       </View>
+      ) : null}
+    </View>
+  );
+}
+
+/** Chats · Groups · Plaza, with unread counts and a dot on the ones you haven't opened yet. */
+function ChatSegs({ tab, onTab, counts }: { tab: ChatTab; onTab: (t: ChatTab) => void; counts: Record<ChatTab, number> }) {
+  const newGroups = useIsNew('groups');
+  const newPlaza = useIsNew('plaza');
+  const items: { id: ChatTab; label: string; dot: boolean }[] = [
+    { id: 'chats', label: 'Chats', dot: false },
+    { id: 'groups', label: 'Groups', dot: newGroups },
+    { id: 'plaza', label: 'Plaza', dot: newPlaza },
+  ];
+  return (
+    <View style={styles.csegs} accessibilityRole="tablist">
+      {items.map((it) => (
+        <Pressable key={it.id} onPress={() => onTab(it.id)} style={[styles.cseg, tab === it.id && styles.csegOn]} accessibilityRole="tab" accessibilityState={{ selected: tab === it.id }} accessibilityLabel={`${it.label}${counts[it.id] ? `, ${counts[it.id]} unread` : ''}`}>
+          <Text style={[styles.csegText, tab === it.id && styles.csegTextOn]}>{it.label}</Text>
+          {counts[it.id] ? (
+            <View style={styles.segCount}><Text style={styles.segCountText}>{counts[it.id] > 99 ? '99+' : counts[it.id]}</Text></View>
+          ) : it.dot ? (
+            <View style={styles.newDot} />
+          ) : null}
+        </Pressable>
+      ))}
     </View>
   );
 }
@@ -560,7 +603,7 @@ function PlazaRows() {
   return (
     <View style={[styles.card, { gap: 6 }]}>
       <Text style={font.h2}>Plaza</Text>
-      <Text style={font.tiny}>Say hi to players near you. Be kind: messages are checked and you can report anyone.</Text>
+      <Text style={font.tiny}>Open chat with every player in your city, or everyone in Global Chat. Like a town square. Be kind: messages are checked and you can report anyone.</Text>
       {rooms.map((r) => (
         <Pressable key={r.room} onPress={() => openChat(r.room, r.title)} style={styles.row} accessibilityRole="button" accessibilityLabel={`Open ${r.title}`}>
           <View style={[styles.av, { backgroundColor: '#2FB58A' }]}>
@@ -595,6 +638,14 @@ function Pills({ list, onToggle, quick }: { list?: Reaction[]; onToggle: (emoji:
 }
 
 const styles = StyleSheet.create({
+  csegs: { flexDirection: 'row', backgroundColor: '#E4EEEA', borderRadius: 14, padding: 3, gap: 3 },
+  cseg: { flex: 1, minHeight: 38, borderRadius: 11, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 6 },
+  csegOn: { backgroundColor: '#FFFFFF' },
+  csegText: { fontSize: 14, fontWeight: '900', color: '#6A7A75' },
+  csegTextOn: { color: colors.ink },
+  segCount: { backgroundColor: '#E0567A', borderRadius: 9, minWidth: 18, paddingHorizontal: 5, alignItems: 'center' },
+  segCountText: { color: '#FFFFFF', fontSize: 11, fontWeight: '900' },
+  newDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#FF8A5C' },
   moment: { flexDirection: 'row', gap: 10, alignItems: 'center', backgroundColor: '#FFF4E4', borderWidth: 2, borderColor: '#FFE0A8', borderRadius: 16, padding: 9, alignSelf: 'stretch' },
   momentArt: { width: 88, height: 88, borderRadius: 18, backgroundColor: 'rgba(255,255,255,0.7)', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
   momentRare: { backgroundColor: '#FFF0F6', borderColor: '#FFC9DF' },

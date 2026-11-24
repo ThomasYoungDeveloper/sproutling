@@ -27,6 +27,7 @@ import TeamCard from '../components/TeamCard';
 import RanksCard from '../components/RanksCard';
 import RankTag from '../components/RankTag';
 import { AccountLevelCard } from '../components/AccountLevel';
+import { markSeenNew, useIsNew } from '../lib/newDots';
 import GuildTag, { PlayerLevel } from '../components/GuildTag';
 import FashionShow from '../components/FashionShow';
 import { SocialIcon } from '../components/SocialIcons';
@@ -58,11 +59,17 @@ export default function FriendsScreen({ initialAdd, onUsedInitialAdd, initialGui
   const overlay = useOverlay();
   const openFriend = (f: Friend) => overlay.open(<FriendSheet friend={f} onClose={overlay.close} />);
   const [inviteTop, setInviteTop] = useState(false);
+  const newChat = useIsNew('groups', 'plaza');
+  const newGuild = useIsNew('guild');
+  const newRanks = useIsNew('ranks');
   const [section, setSection] = useState<'friends' | 'chat' | 'team' | 'ranks' | 'battle' | 'show'>(initialGuild ? 'team' : 'friends');
   // After an unlock's Try it now, jump to the section that holds it.
   const spot = useSpotlight();
   useEffect(() => {
     if (spot?.id === 'guild') setSection('team');
+    else if (spot?.id === 'groups' || spot?.id === 'plaza') setSection('chat');
+    else if (spot?.id === 'level') setSection('friends');
+    else if (spot?.id === 'ranks') setSection('ranks');
     else if (spot?.id === 'battles' || spot?.id === 'tower') setSection('battle');
   }, [spot?.id]);
 
@@ -155,12 +162,13 @@ export default function FriendsScreen({ initialAdd, onUsedInitialAdd, initialGui
     <View style={{ gap: space.md }}>
       <View style={styles.segs}>
         {SECTIONS.map((sec) => (
-          <Pressable key={sec.id} onPress={() => setSection(sec.id)} style={[styles.seg, section === sec.id && styles.segOn]} accessibilityRole="tab" accessibilityState={{ selected: section === sec.id }} accessibilityLabel={sec.label}>
+          <Pressable key={sec.id} onPress={() => { setSection(sec.id); if (sec.id === 'team') markSeenNew('guild'); if (sec.id === 'ranks') markSeenNew('ranks'); }} style={[styles.seg, section === sec.id && styles.segOn]} accessibilityRole="tab" accessibilityState={{ selected: section === sec.id }} accessibilityLabel={sec.label}>
             <SocialIcon name={sec.id} color={section === sec.id ? '#FFFFFF' : '#2E5E50'} />
             <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8} style={[styles.segText, section === sec.id && { color: '#fff' }]}>{sec.label}</Text>
             {sec.id === 'friends' && incoming.length + tradesForMe + liveWaiting > 0 ? <View style={styles.segDot} /> : null}
             {sec.id === 'battle' && liveWaiting > 0 ? <View style={styles.segDot} /> : null}
             {sec.id === 'chat' && chatUnread > 0 ? <View style={styles.segDot} /> : null}
+            {(sec.id === 'chat' && !chatUnread && newChat) || (sec.id === 'team' && newGuild) || (sec.id === 'ranks' && newRanks) ? <View style={[styles.segDot, { backgroundColor: '#FF8A5C' }]} /> : null}
           </Pressable>
         ))}
       </View>
@@ -177,7 +185,7 @@ export default function FriendsScreen({ initialAdd, onUsedInitialAdd, initialGui
       {section === 'show' && <FashionShow />}
       {section === 'friends' && (
         <>
-      <AccountLevelCard />
+      <Glow id="level"><AccountLevelCard /></Glow>
       {(friends.length === 0 || inviteTop) && invite}
       {incoming.map((r) => (
         <View key={r.id} style={styles.request}>

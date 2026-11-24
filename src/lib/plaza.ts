@@ -37,6 +37,6 @@ export function usePlaza(): { rooms: PlazaRoom[]; band: 'teen' | 'adult' | null 
   const label = band === 'teen' ? ' Teen' : '';
   const rooms: PlazaRoom[] = [];
   if (info.city) rooms.push({ room: `plaza:${band}:${cityKey(info.city)}`, title: `${info.city}${label} Plaza` });
-  rooms.push({ room: `plaza:${band}:everywhere`, title: `Everywhere${label} Plaza` });
+  rooms.push({ room: `plaza:${band}:everywhere`, title: `Global${label} Chat` });
   return { rooms, band };
 }

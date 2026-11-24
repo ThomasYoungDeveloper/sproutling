@@ -10,6 +10,7 @@ import { buzz } from './fx';
 import PetSprite from './PetSprite';
 import { PlayerLevel } from './GuildTag';
 import { useGame } from '../state/GameContext';
+import { supabase } from '../lib/supabase';
 import { accountLevel } from '../game/account';
 import { readCard } from '../game/card';
 import { SPECIES_BY_ID } from '../game/species';
@@ -94,7 +95,7 @@ function GroupRow({ g, onOpen, right }: { g: Group; onOpen: () => void; right?: 
 }
 
 /** Social › Chat: your groups, with Find and Start buttons. */
-export function YourGroups() {
+export function YourGroups({ unread = {} }: { unread?: Record<string, number> }) {
   const groups = useMyGroups();
   const overlay = useOverlay();
   const openGroup = (id: string) => overlay.open(<GroupScreen id={id} onClose={overlay.close} />);
@@ -107,7 +108,7 @@ export function YourGroups() {
       <Text style={font.tiny}>Cafes, walking clubs, coworkers, dog walkers. Chat and walk together. Groups don’t change your guild.</Text>
       {groups === null ? <ActivityIndicator color={colors.mintDark} /> : null}
       {groups?.map((g) => (
-        <GroupRow key={g.id} g={g} onOpen={() => openGroup(g.id)} />
+        <GroupRow key={g.id} g={g} onOpen={() => openGroup(g.id)} right={unread[g.id] ? <View style={styles.unread}><Text style={styles.unreadText}>{unread[g.id]}</Text></View> : undefined} />
       ))}
       <Button primary label="Find groups" onPress={() => overlay.open(<GroupsBrowser onClose={overlay.close} onOpen={openGroup} />)} />
     </View>
@@ -182,6 +183,7 @@ export function GroupsBrowser({ onClose, onOpen }: { onClose: () => void; onOpen
           />
         ))}
         {msg ? <Text style={styles.err}>{msg}</Text> : null}
+        <SuggestSpot />
         <View style={styles.box}>
           <Text style={font.h2}>Start a group</Text>
           <Text style={font.tiny}>{lv >= GROUP_LEVEL ? 'For your walking club, coworkers, neighbors or dog park crew.' : `Opens at account level ${GROUP_LEVEL}. You’re level ${lv}. Joining is open now.`}</Text>
@@ -198,6 +200,62 @@ export function GroupsBrowser({ onClose, onOpen }: { onClose: () => void; onOpen
           )}
         </View>
       </ScrollView>
+    </View>
+  );
+}
+
+/** Know a cafe or shop that should have a Sproutling group? Players suggest it; Tom reviews it. */
+function SuggestSpot() {
+  const [open, setOpen] = useState(false);
+  const [name, setName] = useState('');
+  const [city, setCity] = useState('');
+  const [why, setWhy] = useState('');
+  const [owner, setOwner] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [done, setDone] = useState(false);
+  const [msg, setMsg] = useState<string | null>(null);
+  if (done)
+    return (
+      <View style={styles.box}>
+        <Text style={font.h2}>Thanks for the suggestion!</Text>
+        <Text style={font.small}>We’ll ask the place first. If they say yes, you’ll get a message when its group is live.</Text>
+      </View>
+    );
+  return (
+    <View style={styles.box}>
+      <Text style={font.h2}>Suggest a Spot</Text>
+      <Text style={font.tiny}>Know a cafe or shop that should have a Sproutling group with its own QR code?</Text>
+      {!open ? (
+        <Button label="Suggest a place" onPress={() => setOpen(true)} />
+      ) : (
+        <View style={{ gap: 8 }}>
+          <TextInput style={styles.input} value={name} onChangeText={setName} placeholder="Place name" maxLength={60} accessibilityLabel="Place name" />
+          <TextInput style={styles.input} value={city} onChangeText={setCity} placeholder="City" maxLength={60} accessibilityLabel="City" />
+          <TextInput style={[styles.input, { minHeight: 64 }]} value={why} onChangeText={setWhy} placeholder="Why it’s a good spot (optional)" maxLength={300} multiline accessibilityLabel="Why it's a good spot" />
+          <Text style={styles.gmeta}>Are you the owner or staff?</Text>
+          <View style={{ flexDirection: 'row', gap: 6 }}>
+            {[false, true].map((v) => (
+              <Pressable key={String(v)} onPress={() => setOwner(v)} style={[styles.pill, owner === v && styles.pillOn]} accessibilityRole="button" accessibilityState={{ selected: owner === v }}>
+                <Text style={[styles.pillText, owner === v && { color: '#FFFFFF' }]}>{v ? 'Yes' : 'No, I’m a regular'}</Text>
+              </Pressable>
+            ))}
+          </View>
+          {msg ? <Text style={styles.err}>{msg}</Text> : null}
+          <Button
+            primary
+            label={busy ? 'Sending…' : 'Send suggestion'}
+            disabled={busy || name.trim().length < 2 || city.trim().length < 2}
+            onPress={async () => {
+              setBusy(true);
+              const { data, error } = await supabase.rpc('suggest_spot', { p_name: name, p_city: city, p_why: why, p_owner: owner });
+              setBusy(false);
+              if (error || data !== 'ok') return setMsg(data === 'slow_down' ? 'That’s a lot of suggestions today. Try again tomorrow.' : 'Couldn’t send that. Try again.');
+              buzz('success');
+              setDone(true);
+            }}
+          />
+        </View>
+      )}
     </View>
   );
 }
@@ -397,6 +455,8 @@ const styles = StyleSheet.create({
   gname: { fontSize: 15, fontWeight: '900', color: colors.ink, marginTop: 4 },
   gmeta: { fontSize: 12, fontWeight: '800', color: colors.muted },
   gabout: { fontSize: 12, fontWeight: '700', color: '#4A5A55' },
+  unread: { backgroundColor: colors.mint, borderRadius: 10, minWidth: 20, paddingHorizontal: 6, alignItems: 'center', marginTop: 10 },
+  unreadText: { color: '#FFFFFF', fontSize: 12, fontWeight: '900' },
   joined: { borderWidth: 2, borderColor: colors.mint, borderRadius: 12, paddingHorizontal: 10, paddingVertical: 5, marginTop: 8 },
   joinedText: { fontSize: 12, fontWeight: '900', color: colors.mintDark },
   err: { fontSize: 13, fontWeight: '800', color: '#C4562F' },

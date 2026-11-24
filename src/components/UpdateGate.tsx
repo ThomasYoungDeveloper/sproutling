@@ -62,6 +62,8 @@ export default function UpdateGate({ children }: { children: React.ReactNode }) 
             return;
           }
         }
+        // Updates with a What's new tour in the game show the tour instead of this list.
+        if (mine.content != null && mine.content >= 16) return;
         if (mine.build > (Number(seenRaw) || 0)) {
           noteWhatsNewShown();
           setWhatsNew(mine);

@@ -22,6 +22,7 @@ import DexScreen from './src/screens/DexScreen';
 import StarterScreen from './src/screens/StarterScreen';
 import FriendsScreen from './src/screens/FriendsScreen';
 import DailyLoginSheet from './src/components/DailyLoginSheet';
+import WhatsNewTour, { shouldShowTour, type TourGo } from './src/components/WhatsNewTour';
 import { FriendsProvider, useFriends } from './src/state/FriendsContext';
 import { LiveBattleProvider, useLive } from './src/state/LiveBattleContext';
 import { syncWidgets } from './src/lib/widgetSync';
@@ -109,6 +110,8 @@ function Shell() {
   const [invite, setInvite] = useState<string | null>(null);
   const [guildInvite, setGuildInvite] = useState<string | null>(null);
   const [showLogin, setShowLogin] = useState(false);
+  const [showTour, setShowTour] = useState(false);
+  const tourChecked = useRef(false);
   const loginShownFor = useRef<string | null>(null);
   const { user, username } = useAuth();
   const [showAccount, setShowAccount] = useState(false);
@@ -262,6 +265,19 @@ function Shell() {
     const t = setInterval(tick, 60_000);
     return () => clearInterval(t);
   }, [settled, starter, state]);
+  // What's new tour: once per update, for players who already played, after the daily reward and any level-up.
+  useEffect(() => {
+    if (tourChecked.current || !settled || starter || !state.tutorialDone || showLogin || U.levelMoment(state)) return;
+    tourChecked.current = true;
+    const played = !!state.onboard?.legacy || (state.login?.count ?? 0) > 1;
+    shouldShowTour(played).then((v) => v && setShowTour(true));
+  }, [settled, starter, state.tutorialDone, showLogin]);
+  const goTour = (g: TourGo) => {
+    setShowTour(false);
+    setTab(g.tab);
+    if (g.spot && g.hint) setTimeout(() => spotlight(g.spot!, g.hint!), 350);
+  };
+
   const goUnlock = (f: U.FeatureInfo) => {
     if (f.go === 'shop') {
       setTab('home');
@@ -373,7 +389,8 @@ function Shell() {
       {streakTip ? <View style={[StyleSheet.absoluteFill, { zIndex: 300 }]}><InfoPop tip={streakTip} onClose={() => setStreakTip(null)} /></View> : null}
       {settled && !starter && state.tutorialDone && !showLogin ? <LevelUpPopup onGo={goUnlock} /> : null}
       {settled && !starter && state.tutorialDone && !showLogin && !U.levelMoment(state) ? <BadgeTierUp /> : null}
-      {showAccount && <AccountSheet onClose={() => setShowAccount(false)} />}
+      {showAccount && <AccountSheet onClose={() => setShowAccount(false)} onTour={() => { setShowAccount(false); setShowTour(true); }} />}
+      {showTour ? <WhatsNewTour onGo={goTour} onClose={() => setShowTour(false)} /> : null}
       {showLogin && !starter && <DailyLoginSheet onClose={() => setShowLogin(false)} />}
       {walkNote && !notice ? (
         <View style={styles.toastWrap} pointerEvents="box-none">
