@@ -25,6 +25,13 @@ export function weekSteps(s: GameState): number {
 /** Typed-in steps count up to this many a day toward guild goals and the boss; Apple Health steps always count in full. */
 export const TYPED_DAILY_CAP = 10_000;
 
+/** One day's steps for the guild: Health steps in full, typed-in steps up to 10,000. */
+export function guildDaySteps(d: { steps?: number; healthSteps?: number }): number {
+  const steps = d.steps || 0;
+  const verified = Math.min(steps, d.healthSteps ?? 0);
+  return verified + Math.min(TYPED_DAILY_CAP, steps - verified);
+}
+
 /** Your steps from Monday through today for the guild: Health steps in full, typed-in steps up to 10,000 a day. */
 export function guildWeekSteps(s: GameState): number {
   const today = A.todayKey(s);

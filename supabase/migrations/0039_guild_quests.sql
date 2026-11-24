@@ -1,0 +1,6 @@
+-- Applied through the Supabase connector on 2026-11-24.
+-- team_day_stats (each member's day: guild steps, water, 7+ h sleep, lifetime hatches/trips, steps before 9am, level),
+-- team_power_pings (300+ new steps in an hour), report_team_day() (posts "Power hour!" in guild chat),
+-- guild_week_quests() (2 together + 1 teamwork per guild per week), guild_quest_progress(), guild_quests(),
+-- claim_guild_quest() (bronze/silver chest weekly, gold monthly; first claim posts in guild chat).
+-- guild_xp() counts quests: +250 weekly, +500 monthly. team_claims tier allows q:* and m:*.

@@ -11,6 +11,7 @@ import RankTag from './RankTag';
 import FindGuilds from './FindGuilds';
 import CrestArt from './CrestArt';
 import CrestMaker from './CrestMaker';
+import GuildQuests from './GuildQuests';
 import { PlayerLevel } from './GuildTag';
 import { useHealthLabel } from '../lib/guildTags';
 import { useOverlay } from './Overlay';
@@ -408,6 +409,8 @@ export default function TeamCard({ initialJoin, onUsedInitialJoin }: { initialJo
       </View>
 
       <RaidBox onWin={() => setParty((p) => p + 1)} onMsg={setMsg} />
+
+      <GuildQuests />
 
       <View style={{ gap: 6 }}>
         {team.members.map((m) => (

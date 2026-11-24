@@ -5,6 +5,7 @@ import { useGame } from './GameContext';
 import { readCard, type PublicCard } from '../game/card';
 import * as A from '../game/actions';
 import * as Team from '../game/team';
+import { accountLevel } from '../game/account';
 
 export interface TeamMember {
   id: string;
@@ -93,6 +94,35 @@ export function TeamProvider({ children }: { children: React.ReactNode }) {
     const total = members.reduce((a, m) => a + (m.steps || 0), 0);
     setTeam({ ...raw, members, total, goal: Team.teamGoal(members.length), claimed: raw.claimed ?? [], raid: raw.raid ?? { hp: 5000, damage: 0, hits_left: 5 } });
   }, [user?.id]);
+
+  // Today's numbers for guild quests: guild steps (typed-in capped), water, 7+ hours of sleep, lifetime hatches and trips,
+  // steps before 9am, and your account level. Sent when they change.
+  const today = A.today(state);
+  const todayGuildSteps = Team.guildDaySteps(today);
+  const dayKey = A.todayKey(state);
+  const morning = new Date().getHours() < 9 ? todayGuildSteps : 0;
+  const level = accountLevel(state);
+  const dayReport = `${dayKey}:${todayGuildSteps}:${today.water}:${today.sleepHours >= 7}:${state.stats?.hatched ?? 0}:${state.stats?.expeditions ?? 0}:${morning}:${level}`;
+  const lastDay = useRef('');
+  useEffect(() => {
+    if (!loaded || !team || dayReport === lastDay.current) return;
+    const t = setTimeout(() => {
+      lastDay.current = dayReport;
+      supabase
+        .rpc('report_team_day', {
+          p_day: dayKey,
+          p_steps: todayGuildSteps,
+          p_water: today.water,
+          p_slept7: today.sleepHours >= 7,
+          p_hatched: state.stats?.hatched ?? 0,
+          p_trips: state.stats?.expeditions ?? 0,
+          p_morning: morning,
+          p_level: level,
+        })
+        .then(() => {});
+    }, 3000);
+    return () => clearTimeout(t);
+  }, [loaded, !!team, dayReport]);
 
   // Send your weekly steps to the team when they change (and you're on a team).
   useEffect(() => {
