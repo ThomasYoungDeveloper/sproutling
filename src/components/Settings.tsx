@@ -12,7 +12,10 @@ export function Group({ label, note, children }: { label?: string; note?: string
       {label ? <Text style={styles.label}>{label}</Text> : null}
       <View style={styles.card}>
         {rows.map((r, i) => (
-          <View key={i} style={i > 0 && styles.divider}>{r}</View>
+          <View key={i}>
+            {i > 0 ? <View style={styles.divider} /> : null}
+            {r}
+          </View>
         ))}
       </View>
       {note ? <Text style={styles.note}>{note}</Text> : null}
@@ -92,7 +95,7 @@ const styles = StyleSheet.create({
   label: { fontSize: 12, fontWeight: '600', color: colors.muted, letterSpacing: 0.4, textTransform: 'uppercase', paddingHorizontal: space.lg },
   note: { fontSize: 12, fontWeight: '500', color: colors.muted, paddingHorizontal: space.lg },
   card: { backgroundColor: '#FFFFFF', borderRadius: 16, overflow: 'hidden' },
-  divider: { borderTopWidth: StyleSheet.hairlineWidth * 2, borderTopColor: colors.line, marginLeft: space.lg },
+  divider: { height: 1, backgroundColor: colors.line, marginLeft: 58 },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: TAP + 4, paddingVertical: 10, paddingHorizontal: space.lg },
   iconTile: { width: 30, height: 30, borderRadius: 9, alignItems: 'center', justifyContent: 'center' },
   title: { fontSize: 15, fontWeight: '600', color: colors.ink },
