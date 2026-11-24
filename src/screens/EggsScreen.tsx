@@ -2,6 +2,7 @@ import { CoinText } from '../components/Coin';
 import React, { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { Text } from '../components/ScaledText';
+import { Icon } from '../components/Icon';
 import Svg, { Path, Rect } from 'react-native-svg';
 import { useGame } from '../state/GameContext';
 import { Card, SectionHead, Button, ProgressBar, RarityBadge } from '../components/ui';
@@ -98,7 +99,7 @@ export default function EggsScreen() {
               if (i === MAX_INCUBATORS) {
                 return (
                   <Pressable key="premium" onPress={() => overlay.open(<PremiumSheet onClose={overlay.close} />)} style={[styles.slot, styles.slotPremium]} accessibilityRole="button" accessibilityLabel="Premium incubator: comes with Premium">
-                    <Text style={{ fontSize: 18 }}>⭐</Text>
+                    <Icon name="star" size={18} color="#6A51C2" filled />
                     <Text style={[styles.slotText, { color: '#6A51C2' }]}>Premium</Text>
                   </Pressable>
                 );
@@ -152,7 +153,7 @@ export default function EggsScreen() {
           <View key={e.id} style={styles.eggRow}>
             <EggSprite rarity={e.rarity} size={46} spots={e.skin === 'harvest' ? HARVEST_SPOTS : e.bred ? NURSERY_SPOTS : undefined} color={e.skin === 'harvest' ? HARVEST_EGG : undefined} />
             <View style={{ flex: 1, gap: 2 }}>
-              <Text style={[font.body, { fontWeight: '900' }]}>{RARITY_INFO[e.rarity].label} egg{e.bred ? (e.bred.lucky ? ' ✨ Lucky' : ' 💞') : ''}</Text>
+              <Text style={[font.body, { fontWeight: '800' }]}>{RARITY_INFO[e.rarity].label} egg{e.bred ? (e.bred.lucky ? ' · Lucky' : ' · Bred') : ''}</Text>
               <Text style={font.tiny}>{+(eggSteps(e) / STEPS_PER_KM).toFixed(1)} km to hatch{e.bred ? ' (nursery eggs: half the walk)' : ''}</Text>
             </View>
             {free > 0 ? (
@@ -160,7 +161,7 @@ export default function EggsScreen() {
             ) : state.incubatorSlots < MAX_INCUBATORS ? (
               <Button small label="Get an incubator" onPress={openShop} />
             ) : (
-              <Text style={[font.tiny, { fontWeight: '900' }]}>All full</Text>
+              <Text style={[font.tiny, { fontWeight: '800' }]}>All full</Text>
             )}
           </View>
         ))}
@@ -180,20 +181,20 @@ function walkedText(walked: number, need: number): string {
 
 const styles = StyleSheet.create({
   waitCard: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: '#F4ECFF', borderWidth: 3, borderColor: '#9C5FD8', borderRadius: 22, padding: 14 },
-  waitTitle: { fontSize: 17, fontWeight: '900', color: colors.ink },
-  waitSub: { fontSize: 13, fontWeight: '800', color: '#6A5A8A' },
+  waitTitle: { fontSize: 17, fontWeight: '800', color: colors.ink },
+  waitSub: { fontSize: 13, fontWeight: '600', color: '#6A5A8A' },
   waitBtn: { backgroundColor: '#9C5FD8', borderRadius: 12, paddingHorizontal: 12, paddingVertical: 8 },
-  waitBtnText: { color: '#FFFFFF', fontWeight: '900', fontSize: 15 },
+  waitBtnText: { color: '#FFFFFF', fontWeight: '700', fontSize: 15 },
   meter: { height: 10, borderRadius: 5, backgroundColor: '#F0E9DD', overflow: 'hidden' },
   meterFill: { height: '100%', borderRadius: 5 },
-  card: { backgroundColor: colors.card, borderRadius: 22, overflow: 'hidden' },
+  card: { backgroundColor: colors.card, borderRadius: 20, overflow: 'hidden' , borderWidth: 1, borderColor: colors.line},
   hero: { backgroundColor: '#FFE9C7', padding: space.md, paddingBottom: space.lg, alignItems: 'center', gap: 6 },
   heroHead: { flexDirection: 'row', alignSelf: 'stretch', justifyContent: 'space-between', alignItems: 'center' },
-  heroTitle: { fontSize: 20, fontWeight: '900', color: colors.ink },
+  heroTitle: { fontSize: 20, fontWeight: '800', color: colors.ink },
   usePill: { backgroundColor: '#FFFFFF', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4 },
-  useText: { fontSize: 12, fontWeight: '900', color: '#9A5B12' },
-  heroSub: { fontSize: 14, fontWeight: '800', color: '#8A5A1E', textAlign: 'center' },
-  label: { fontSize: 12, fontWeight: '900', color: colors.muted, letterSpacing: 0.5 },
+  useText: { fontSize: 12, fontWeight: '600', color: '#9A5B12' },
+  heroSub: { fontSize: 14, fontWeight: '700', color: '#8A5A1E', textAlign: 'center' },
+  label: { fontSize: 12, fontWeight: '600', color: colors.muted, letterSpacing: 0.5 },
   slots: { flexDirection: 'row', gap: 6 },
   slot: { flex: 1, height: 76, borderRadius: 16, borderWidth: 2, borderColor: colors.line, alignItems: 'center', justifyContent: 'center', gap: 2, backgroundColor: '#FFFFFF' },
   slotOn: { borderColor: '#F28C38', borderWidth: 3, backgroundColor: '#FFF6E6' },
@@ -201,7 +202,7 @@ const styles = StyleSheet.create({
   slotEmpty: { borderStyle: 'dashed' },
   slotLocked: { backgroundColor: '#EEF1F0', opacity: 0.8 },
   slotPremium: { backgroundColor: '#EFE9FC', borderColor: '#CDBEF2' },
-  slotText: { fontSize: 12, fontWeight: '900', color: colors.muted },
-  nursery: { fontWeight: '900', fontSize: 12, color: '#C2185B' },
+  slotText: { fontSize: 12, fontWeight: '600', color: colors.muted },
+  nursery: { fontWeight: '600', fontSize: 12, color: '#C2185B' },
   eggRow: { flexDirection: 'row', alignItems: 'center', gap: space.md, borderTopWidth: 1, borderTopColor: colors.line, paddingTop: space.sm },
 });

@@ -94,7 +94,7 @@ export default function RanksCard() {
           ))}
           {!meInTop && mine ? (
             <>
-              <Text style={{ textAlign: 'center', color: '#8A9590', fontWeight: '900' }}>· · ·</Text>
+              <Text style={{ textAlign: 'center', color: '#8A9590', fontWeight: '800' }}>· · ·</Text>
               <Row r={{ id: 'me', place: mine.place, steps: mine.steps, username: 'You', card: null, me: true }} />
             </>
           ) : null}
@@ -127,7 +127,7 @@ function Row({ r }: { r: Board['rows'][number] }) {
       )}
       {sp && pet ? <PetSprite species={sp} stage={stageFor(pet.xp)} size={36} shiny={pet.shiny} skin={pet.skin} /> : <View style={{ width: 36 }} />}
       <View style={{ flex: 1, gap: 2 }}>
-        <Text style={[font.body, { fontWeight: '900' }]} numberOfLines={1}>
+        <Text style={[font.body, { fontWeight: '800' }]} numberOfLines={1}>
           {r.username}
           {r.me && r.username !== 'You' ? ' (you)' : ''}
         </Text>
@@ -179,7 +179,7 @@ function RankSettings({ onClose, onSaved }: { onClose: () => void; onSaved: () =
       <FitSheet onClose={onClose}>
         <View style={styles.sheet}>
           <Text style={font.title}>Leaderboard settings</Text>
-          <Text style={[font.small, { fontWeight: '900' }]}>Your city</Text>
+          <Text style={[font.small, { fontWeight: '800' }]}>Your city</Text>
           <TextInput value={city} onChangeText={setCity} placeholder="e.g. Orlando" placeholderTextColor="#9AA7A2" style={styles.input} autoCapitalize="words" maxLength={40} accessibilityLabel="Your city" />
           {suggest.filter((c) => c.toLowerCase() !== city.trim().toLowerCase()).length ? (
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
@@ -195,7 +195,7 @@ function RankSettings({ onClose, onSaved }: { onClose: () => void; onSaved: () =
           <Text style={font.tiny}>Only the city name is used, never your location.</Text>
           <Pressable onPress={() => setHidden((h) => !h)} style={styles.switchRow} accessibilityRole="switch" accessibilityState={{ checked: hidden }}>
             <View style={{ flex: 1 }}>
-              <Text style={[font.body, { fontWeight: '900' }]}>Hide me from City and Everyone</Text>
+              <Text style={[font.body, { fontWeight: '800' }]}>Hide me from City and Everyone</Text>
               <Text style={font.tiny}>Friends and your guild can still see your steps.</Text>
             </View>
             <View style={[styles.switch, hidden && styles.switchOn]}>
@@ -211,23 +211,23 @@ function RankSettings({ onClose, onSaved }: { onClose: () => void; onSaved: () =
 }
 
 const styles = StyleSheet.create({
-  link: { fontSize: 14, fontWeight: '900', color: colors.mintDark },
+  link: { fontSize: 14, fontWeight: '700', color: colors.mintDark },
   segs: { flexDirection: 'row', backgroundColor: '#E4EEEA', borderRadius: 14, padding: 3, gap: 3 },
   seg: { flex: 1, minHeight: 36, borderRadius: 11, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4 },
   segOn: { backgroundColor: '#FFFFFF' },
-  segText: { fontSize: 13, fontWeight: '900', color: '#6A7A75' },
+  segText: { fontSize: 13, fontWeight: '600', color: '#6A7A75' },
   note: { backgroundColor: '#F4F9F6', borderRadius: 14, padding: 12, gap: 8 },
   row: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: '#F4F9F6', borderRadius: 16, paddingHorizontal: 10, paddingVertical: 8 },
   medal: { width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center' },
-  medalText: { fontWeight: '900', fontSize: 15 },
-  place: { width: 30, textAlign: 'center', fontWeight: '900', color: '#6A7A75' },
-  steps: { fontSize: 15, fontWeight: '900', color: colors.ink },
-  next: { fontSize: 13, fontWeight: '900', color: colors.mintDark },
+  medalText: { fontWeight: '700', fontSize: 15 },
+  place: { width: 30, textAlign: 'center', fontWeight: '800', color: '#6A7A75' },
+  steps: { fontSize: 15, fontWeight: '700', color: colors.ink },
+  next: { fontSize: 13, fontWeight: '600', color: colors.mintDark },
   backdrop: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(24,30,48,0.55)', zIndex: 120 },
   sheet: { backgroundColor: '#FFFFFF', borderTopLeftRadius: 26, borderTopRightRadius: 26, padding: 20, paddingBottom: 36, gap: 10, width: '100%', maxWidth: 560, alignSelf: 'center' },
   input: { height: 50, borderRadius: 14, borderWidth: 2, borderColor: '#DDE6E2', paddingHorizontal: 14, fontSize: 17, fontWeight: '800', color: colors.ink },
   chip: { backgroundColor: '#E3F5EC', borderRadius: 12, paddingHorizontal: 10, paddingVertical: 6 },
-  chipText: { fontSize: 13, fontWeight: '900', color: colors.mintDark },
+  chipText: { fontSize: 13, fontWeight: '600', color: colors.mintDark },
   switchRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 6 },
   switch: { width: 50, height: 30, borderRadius: 15, backgroundColor: '#D5DEDA', padding: 3 },
   switchOn: { backgroundColor: '#2FB58A' },

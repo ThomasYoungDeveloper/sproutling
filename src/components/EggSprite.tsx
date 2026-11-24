@@ -9,7 +9,7 @@ export default function EggSprite({ rarity, size = 80, cracked = false, color, s
   return (
     <Svg width={size} height={size} viewBox="0 0 100 100">
       <Ellipse cx={50} cy={92} rx={24} ry={4} fill="rgba(36,50,58,0.12)" />
-      <Ellipse cx={50} cy={56} rx={28} ry={36} fill="#FFF8EC" stroke="#24323A" strokeWidth={2.5} />
+      <Ellipse cx={50} cy={56} rx={28} ry={36} fill="#FFF8EC" stroke="#1F2A2E" strokeWidth={2.5} />
       {spots && spots.length ? (
         <>
           <Circle cx={39} cy={42} r={6.5} fill={spots[0]} opacity={0.85} />
@@ -25,7 +25,7 @@ export default function EggSprite({ rarity, size = 80, cracked = false, color, s
         </>
       )}
       {rarity === 'legendary' && <Path d="M50 26 l3 6 6.5 .8 -4.8 4.5 1.2 6.4 -5.9 -3.2 -5.9 3.2 1.2 -6.4 -4.8 -4.5 6.5 -.8z" fill="#FFD84D" />}
-      {cracked && <Path d="M26 54 l8 -6 6 7 7 -8 7 8 6 -7 8 6" stroke="#24323A" strokeWidth={2.5} fill="none" strokeLinejoin="round" />}
+      {cracked && <Path d="M26 54 l8 -6 6 7 7 -8 7 8 6 -7 8 6" stroke="#1F2A2E" strokeWidth={2.5} fill="none" strokeLinejoin="round" />}
     </Svg>
   );
 }

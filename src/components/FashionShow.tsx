@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { StyleSheet, View, useWindowDimensions } from 'react-native';
 import { Text } from './ScaledText';
+import { Icon } from './Icon';
 import { supabase } from '../lib/supabase';
 import { useGame } from '../state/GameContext';
 import { useOverlay } from './Overlay';
@@ -158,7 +159,7 @@ export default function FashionShow() {
     <Card style={styles.card}>
       {party ? <Confetti key={party} amount={60} width={width} height={height} /> : null}
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.sm }}>
-        <Text style={{ fontSize: 32 }}>🎀</Text>
+        <Icon name="sparkle" size={32} color="#E0567A" />
         <View style={{ flex: 1 }}>
           <Text style={[font.h2, { color: '#7A2E58' }]}>Pet Fashion Show</Text>
           <Text style={[font.small, { color: '#9C4C77' }]}>This week: {theme.emoji} {theme.name}. {theme.hint}</Text>
@@ -186,7 +187,7 @@ export default function FashionShow() {
         </View>
       ) : null}
 
-      <Text style={styles.sub}>Runway · ❤️ {board.votesLeft} heart{board.votesLeft === 1 ? '' : 's'} left to give (+5 coins each)</Text>
+      <Text style={styles.sub}>Runway · {board.votesLeft} heart{board.votesLeft === 1 ? '' : 's'} left to give (+5 coins each)</Text>
       {board.entries.length === 0 ? <Text style={font.small}>No one has entered yet. Be the first!</Text> : null}
       <View style={styles.grid}>
         {board.entries.map((e, i) => (
@@ -196,9 +197,9 @@ export default function FashionShow() {
             <Text style={styles.entryName} numberOfLines={1}>{e.pet.nickname}</Text>
             <Text style={styles.entryOwner} numberOfLines={1}>{e.mine ? 'You' : e.username}</Text>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-              <Text style={styles.hearts}>❤️ {e.votes}</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}><Icon name="heart" size={14} color="#E0567A" filled /><Text style={styles.hearts}>{e.votes}</Text></View>
               {!e.mine ? (
-                <Button small primary={!e.voted && board.votesLeft > 0} label={e.voted ? 'Loved ✓' : 'Heart'} disabled={e.voted || board.votesLeft === 0} onPress={() => vote(e)} />
+                <Button small primary={!e.voted && board.votesLeft > 0} label={e.voted ? 'Loved' : 'Heart'} disabled={e.voted || board.votesLeft === 0} onPress={() => vote(e)} />
               ) : (
                 <Button small label="Update" onPress={enter} />
               )}
@@ -215,17 +216,17 @@ export default function FashionShow() {
 const styles = StyleSheet.create({
   card: { backgroundColor: '#FFF0F6', borderColor: '#F9C9DD' },
   prize: { backgroundColor: '#FFFFFF', borderRadius: 14, padding: space.sm, gap: 8, borderWidth: 2, borderColor: colors.gold },
-  prizeText: { fontWeight: '800', fontSize: 14, color: colors.ink },
+  prizeText: { fontWeight: '700', fontSize: 14, color: colors.ink },
   enterRow: { flexDirection: 'row', gap: space.sm, alignItems: 'center', backgroundColor: '#FFFFFF', borderRadius: 16, padding: space.sm },
-  enterTitle: { fontWeight: '900', fontSize: 15, color: colors.ink },
+  enterTitle: { fontWeight: '700', fontSize: 15, color: colors.ink },
   stage: { aspectRatio: 1, borderRadius: 14, overflow: 'hidden', alignItems: 'center', justifyContent: 'flex-end' },
-  sub: { fontWeight: '900', fontSize: 14, color: '#7A2E58' },
+  sub: { fontWeight: '700', fontSize: 14, color: '#7A2E58' },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: '3%', rowGap: space.sm },
   entry: { width: '48.5%', backgroundColor: '#FFFFFF', borderRadius: 16, padding: 8, gap: 3, alignItems: 'center', borderWidth: 1.5, borderColor: '#F9C9DD' },
   entryMine: { borderColor: '#E26AA0', borderWidth: 2 },
-  leader: { position: 'absolute', top: 12, left: 12, zIndex: 3, backgroundColor: colors.gold, color: '#5A3E00', fontWeight: '900', fontSize: 12, borderRadius: 999, paddingHorizontal: 8, paddingVertical: 2, overflow: 'hidden' },
-  entryName: { fontWeight: '900', fontSize: 14, color: colors.ink },
-  entryOwner: { fontWeight: '700', fontSize: 12, color: colors.muted },
-  hearts: { fontWeight: '900', fontSize: 14, color: '#C2185B' },
-  msg: { fontWeight: '800', fontSize: 13, color: '#9C4C77' },
+  leader: { position: 'absolute', top: 12, left: 12, zIndex: 3, backgroundColor: colors.gold, color: '#5A3E00', fontWeight: '600', fontSize: 12, borderRadius: 999, paddingHorizontal: 8, paddingVertical: 2, overflow: 'hidden' },
+  entryName: { fontWeight: '700', fontSize: 14, color: colors.ink },
+  entryOwner: { fontWeight: '600', fontSize: 12, color: colors.muted },
+  hearts: { fontWeight: '700', fontSize: 14, color: '#C2185B' },
+  msg: { fontWeight: '600', fontSize: 13, color: '#9C4C77' },
 });

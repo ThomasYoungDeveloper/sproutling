@@ -15,7 +15,7 @@ export default function GuildTag({ userId, small }: { userId: string | null | un
   );
 }
 
-const styles = StyleSheet.create({ tag: { fontSize: 12, fontWeight: '800', color: '#6A7A75', flexShrink: 1 } });
+const styles = StyleSheet.create({ tag: { fontSize: 12, fontWeight: '600', color: '#6A7A75', flexShrink: 1 } });
 
 /** The small account level badge next to another player's name. */
 export function PlayerLevel({ userId, size = 20 }: { userId: string | null | undefined; size?: number }) {

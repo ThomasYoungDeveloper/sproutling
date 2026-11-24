@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Animated, Easing, Image, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { Text } from '../components/ScaledText';
+import { Icon } from '../components/Icon';
 import { useAuth } from '../state/AuthContext';
 import { Button } from '../components/ui';
 import { PET_IMAGES } from '../components/petImages';
@@ -297,11 +298,11 @@ export default function AuthFlow() {
 
         {step === 'check' && (
           <Card>
-            <Text style={styles.emoji}>📬</Text>
+            <View style={{ alignSelf: 'center' }}><Icon name="mail" size={48} color={colors.mintDark} strokeWidth={1.6} /></View>
             <Text style={[styles.title, { textAlign: 'center' }]}>Check your email</Text>
             <Text style={[styles.sub, { textAlign: 'center' }]}>
               We sent a confirmation link to{'\n'}
-              <Text style={{ fontWeight: '900', color: colors.ink }}>{email.trim()}</Text>
+              <Text style={{ fontWeight: '800', color: colors.ink }}>{email.trim()}</Text>
             </Text>
             <Text style={[styles.sub, { textAlign: 'center' }]}>{pending ? `Tap the link and you’ll come right back, signed in with ${petName}.` : 'Tap the link and you’ll come right back here, signed in and ready to pick your egg.'}</Text>
             {notice ? <Text style={styles.noticeBox}>{notice}</Text> : null}
@@ -342,7 +343,7 @@ export default function AuthFlow() {
 
         {step === 'resetSent' && (
           <Card>
-            <Text style={styles.emoji}>🔑</Text>
+            <View style={{ alignSelf: 'center' }}><Icon name="key" size={48} color={colors.mintDark} strokeWidth={1.6} /></View>
             <Text style={[styles.title, { textAlign: 'center' }]}>Link sent!</Text>
             <Text style={[styles.sub, { textAlign: 'center' }]}>If {email.trim()} has an account, a reset link is on its way. Open it on this device to choose a new password.</Text>
             <Link label="Back to sign in" onPress={() => go('signin')} />
@@ -377,32 +378,32 @@ export default function AuthFlow() {
 const styles = StyleSheet.create({
   scroll: { flexGrow: 1, justifyContent: 'center', padding: space.lg, maxWidth: 460, width: '100%', alignSelf: 'center' },
   welcome: { alignItems: 'center', gap: space.md },
-  brand: { fontSize: 40, fontWeight: '900', color: colors.ink },
+  brand: { fontSize: 40, fontWeight: '800', color: colors.ink },
   parade: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'center', flexWrap: 'nowrap', height: 120 },
   tagline: { fontSize: 20, fontWeight: '800', color: colors.ink, textAlign: 'center', maxWidth: 320 },
   points: { gap: 8, alignSelf: 'stretch', backgroundColor: '#FFFFFF', borderRadius: 18, borderWidth: 1, borderColor: colors.line, padding: space.md },
   point: { fontSize: 15, fontWeight: '700', color: colors.ink },
   big: { alignSelf: 'stretch', paddingVertical: 14 },
   card: { backgroundColor: '#FFFFFF', borderRadius: 24, borderWidth: 1, borderColor: colors.line, padding: space.lg, gap: space.md },
-  title: { fontSize: 24, fontWeight: '900', color: colors.ink },
+  title: { fontSize: 24, fontWeight: '800', color: colors.ink },
   sub: { fontSize: 15, color: colors.muted, fontWeight: '600' },
-  label: { fontSize: 14, fontWeight: '800', color: colors.ink },
+  label: { fontSize: 14, fontWeight: '700', color: colors.ink },
   inputWrap: { flexDirection: 'row', alignItems: 'center', borderWidth: 1.5, borderColor: colors.line, borderRadius: 14, backgroundColor: '#FAFCFB' },
   inputErr: { borderColor: '#E8735A' },
   inputOk: { borderColor: colors.mint },
   input: { flex: 1, paddingVertical: 12, paddingHorizontal: 14, fontSize: 16, color: colors.ink },
   eye: { paddingHorizontal: 14, paddingVertical: 10 },
-  eyeText: { fontWeight: '800', color: colors.mintDark, fontSize: 13 },
+  eyeText: { fontWeight: '600', color: colors.mintDark, fontSize: 13 },
   help: { fontSize: 12, color: colors.muted, fontWeight: '600' },
-  err: { fontSize: 12, color: '#C4562F', fontWeight: '700' },
-  ok: { fontSize: 12, color: colors.mintDark, fontWeight: '700' },
+  err: { fontSize: 12, color: '#C4562F', fontWeight: '600' },
+  ok: { fontSize: 12, color: colors.mintDark, fontWeight: '600' },
   errBox: { fontSize: 14, color: '#A8452A', fontWeight: '700', backgroundColor: '#FFE7DD', borderRadius: 12, padding: 10 },
   noticeBox: { fontSize: 14, color: colors.mintDark, fontWeight: '700', backgroundColor: colors.mintSoft, borderRadius: 12, padding: 10 },
   checkRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 4 },
   box: { width: 24, height: 24, borderRadius: 7, borderWidth: 2, borderColor: '#BFD3CB', alignItems: 'center', justifyContent: 'center' },
   boxOn: { backgroundColor: colors.mint, borderColor: colors.mint },
-  tick: { color: '#fff', fontWeight: '900' },
+  tick: { color: '#fff', fontWeight: '800' },
   checkText: { fontSize: 15, fontWeight: '700', color: colors.ink },
-  link: { fontSize: 14, fontWeight: '800', color: colors.mintDark },
+  link: { fontSize: 14, fontWeight: '700', color: colors.mintDark },
   emoji: { fontSize: 48, textAlign: 'center' },
 });

@@ -73,5 +73,5 @@ const styles = StyleSheet.create({
   tipWrap: { alignItems: 'center', marginTop: 10 },
   arrow: { width: 0, height: 0, borderLeftWidth: 8, borderRightWidth: 8, borderBottomWidth: 8, borderLeftColor: 'transparent', borderRightColor: 'transparent', borderBottomColor: colors.ink },
   tip: { backgroundColor: colors.ink, borderRadius: 14, paddingHorizontal: 14, paddingVertical: 9 },
-  tipText: { color: '#FFFFFF', fontSize: 14, fontWeight: '800', textAlign: 'center' },
+  tipText: { color: '#FFFFFF', fontSize: 14, fontWeight: '700', textAlign: 'center' },
 });

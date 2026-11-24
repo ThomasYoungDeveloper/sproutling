@@ -75,15 +75,15 @@ export default function WhatsNewTour({ onGo, onClose }: { onGo: (g: TourGo) => v
 
 const styles = StyleSheet.create({
   backdrop: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(20,30,35,0.55)', alignItems: 'center', justifyContent: 'center', padding: 20, zIndex: 250 },
-  card: { width: '100%', maxWidth: 400, backgroundColor: '#FFFCF5', borderRadius: 28, padding: 22, alignItems: 'center', gap: 10 },
-  kicker: { fontSize: 12, fontWeight: '900', letterSpacing: 1.5, color: colors.mintDark },
+  card: { width: '100%', maxWidth: 400, backgroundColor: '#FFFFFF', borderRadius: 28, padding: 22, alignItems: 'center', gap: 10 },
+  kicker: { fontSize: 12, fontWeight: '600', letterSpacing: 1.5, color: colors.mintDark },
   art: { width: 128, height: 128, borderRadius: 32, backgroundColor: '#EEF5F2', alignItems: 'center', justifyContent: 'center' },
   bubble: { width: 84, height: 84, borderRadius: 42, borderWidth: 4, borderColor: '#FFFFFF' },
-  title: { fontSize: 22, fontWeight: '900', color: colors.ink, textAlign: 'center' },
+  title: { fontSize: 22, fontWeight: '800', color: colors.ink, textAlign: 'center' },
   text: { fontSize: 15, fontWeight: '700', color: colors.muted, textAlign: 'center', lineHeight: 21 },
   dots: { flexDirection: 'row', gap: 6, marginVertical: 2 },
   dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#D5E3DD' },
   dotOn: { width: 20, backgroundColor: colors.mint },
   row: { flexDirection: 'row', gap: 8, alignSelf: 'stretch' },
-  skip: { fontSize: 13, fontWeight: '900', color: colors.muted, paddingTop: 2 },
+  skip: { fontSize: 13, fontWeight: '600', color: colors.muted, paddingTop: 2 },
 });

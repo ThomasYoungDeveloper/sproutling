@@ -3,6 +3,7 @@ import { useWindowDimensions } from 'react-native';
 import { Rays } from './fx';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { Text } from './ScaledText';
+import { Icon } from './Icon';
 import { useGame } from '../state/GameContext';
 import { useOverlay } from './Overlay';
 import PetPicker from './PetPicker';
@@ -135,7 +136,7 @@ export default function NurseryCard() {
         <>
           <View style={styles.parents}>
             <Slot petId={a} label="Parent 1" onPress={() => pick('a')} />
-            <Text style={styles.heart}>💞</Text>
+            <Icon name="heart" size={24} color="#E0567A" filled />
             <Slot petId={b} label="Parent 2" onPress={() => pick('b')} />
           </View>
           {pa && pb ? (
@@ -211,42 +212,42 @@ function GradePreview({ a, b }: { a: { nickname: string } & Parameters<typeof iv
 const styles = StyleSheet.create({
   nest: { height: 150, alignItems: 'center', justifyContent: 'flex-end' },
   nestBowl: { position: 'absolute', bottom: 6, width: 170, height: 56, borderRadius: 85, backgroundColor: '#C99A6B', borderWidth: 5, borderColor: '#A87A4E' },
-  nestTitle: { fontSize: 20, fontWeight: '900', color: colors.ink, textAlign: 'center' },
+  nestTitle: { fontSize: 20, fontWeight: '800', color: colors.ink, textAlign: 'center' },
   nestBar: { height: 12, borderRadius: 6, backgroundColor: '#FBD9E6', overflow: 'hidden' },
   nestFill: { height: '100%', borderRadius: 6, backgroundColor: '#FF8FB1' },
   reveal: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: '#2A1F3D', zIndex: 150 },
   rarBanner: { borderRadius: 18, paddingHorizontal: 24, paddingVertical: 10, transform: [{ rotate: '-4deg' }], alignItems: 'center', maxWidth: '92%' },
-  luckyTop: { color: '#FFF6C9', fontSize: 16, fontWeight: '900', letterSpacing: 2 },
-  rarBannerText: { color: '#FFFFFF', fontSize: 32, fontWeight: '900', letterSpacing: 0.5 },
-  revealSub: { color: '#FFE9A8', fontSize: 16, fontWeight: '900', textAlign: 'center', paddingHorizontal: 30 },
+  luckyTop: { color: '#FFF6C9', fontSize: 16, fontWeight: '700', letterSpacing: 2 },
+  rarBannerText: { color: '#FFFFFF', fontSize: 32, fontWeight: '800', letterSpacing: 0.5 },
+  revealSub: { color: '#FFE9A8', fontSize: 16, fontWeight: '700', textAlign: 'center', paddingHorizontal: 30 },
   revealCard: { margin: 16, marginBottom: 34, backgroundColor: '#FFFFFF', borderRadius: 24, padding: 18, gap: 12 },
-  revealCardText: { fontSize: 15, fontWeight: '800', color: colors.ink, textAlign: 'center' },
-  babyLine: { fontSize: 15, fontWeight: '900', color: colors.ink },
-  detailsLink: { fontSize: 14, fontWeight: '900', color: '#9C4C77', textDecorationLine: 'underline' },
+  revealCardText: { fontSize: 15, fontWeight: '700', color: colors.ink, textAlign: 'center' },
+  babyLine: { fontSize: 15, fontWeight: '700', color: colors.ink },
+  detailsLink: { fontSize: 14, fontWeight: '700', color: '#9C4C77', textDecorationLine: 'underline' },
   preview: { marginTop: 6, gap: 4 },
   statRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  statName: { width: 64, fontSize: 12, fontWeight: '800', color: colors.ink },
-  statHead: { flex: 1, fontSize: 12, fontWeight: '900', color: colors.muted },
-  statVal: { flex: 1, fontSize: 13, fontWeight: '700', color: colors.ink },
-  better: { fontWeight: '900', color: '#C9662A' },
-  small: { fontSize: 12, fontWeight: '700', color: colors.muted },
+  statName: { width: 64, fontSize: 12, fontWeight: '600', color: colors.ink },
+  statHead: { flex: 1, fontSize: 12, fontWeight: '600', color: colors.muted },
+  statVal: { flex: 1, fontSize: 13, fontWeight: '600', color: colors.ink },
+  better: { fontWeight: '800', color: '#C9662A' },
+  small: { fontSize: 12, fontWeight: '600', color: colors.muted },
   chips: { flexDirection: 'row', gap: 8, marginTop: 4 },
   chip: { flex: 1, borderRadius: 12, padding: 8 },
-  chipLabel: { fontSize: 12, fontWeight: '900' },
-  chipValue: { fontSize: 17, fontWeight: '900' },
-  luckyNote: { fontSize: 13, fontWeight: '800', color: '#9A6A00', textAlign: 'center' },
+  chipLabel: { fontSize: 12, fontWeight: '600' },
+  chipValue: { fontSize: 17, fontWeight: '800' },
+  luckyNote: { fontSize: 13, fontWeight: '600', color: '#9A6A00', textAlign: 'center' },
   parents: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: space.sm },
   slot: { width: 120, minHeight: 140, alignItems: 'center', justifyContent: 'center', gap: 2, borderRadius: 18, borderWidth: 2, borderStyle: 'dashed', borderColor: '#F2A7C6', backgroundColor: '#FFFFFF', padding: 6 },
   slotFull: { borderStyle: 'solid', borderColor: '#E26AA0' },
   plus: { fontSize: 40, fontWeight: '300', color: '#E26AA0' },
-  slotName: { fontWeight: '900', fontSize: 13, color: colors.ink },
-  slotSub: { fontWeight: '700', fontSize: 12, color: colors.muted },
+  slotName: { fontWeight: '600', fontSize: 13, color: colors.ink },
+  slotSub: { fontWeight: '600', fontSize: 12, color: colors.muted },
   heart: { fontSize: 30 },
   odds: { backgroundColor: '#FFFFFF', borderRadius: 14, padding: space.sm, gap: 2 },
-  oddsTitle: { fontWeight: '900', fontSize: 13, color: colors.ink },
-  msg: { fontWeight: '800', fontSize: 13, color: '#C4562F' },
+  oddsTitle: { fontWeight: '600', fontSize: 13, color: colors.ink },
+  msg: { fontWeight: '600', fontSize: 13, color: '#C4562F' },
   made: { alignItems: 'center', gap: 6, paddingVertical: space.sm },
-  madeTitle: { fontWeight: '900', fontSize: 17, color: '#7A2E58' },
+  madeTitle: { fontWeight: '800', fontSize: 17, color: '#7A2E58' },
 });
 
 const NEST_SPOTS = ['#FF8FB1', '#FFD6E5', '#FF8FB1', '#B18CFF'];

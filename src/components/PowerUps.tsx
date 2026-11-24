@@ -154,10 +154,10 @@ function CombinePreview({ keep, spare, onCancel, onConfirm }: { keep: OwnedPet; 
         <Text style={[styles.cell, styles.head]}>After</Text>
         {St.STATS.map((k) => (
           <React.Fragment key={k}>
-            <Text style={[styles.cell, { fontWeight: '900' }]}>{St.STAT_INFO[k].short}</Text>
+            <Text style={[styles.cell, { fontWeight: '800' }]}>{St.STAT_INFO[k].short}</Text>
             <Text style={styles.cell}>{p.before[k]}</Text>
             <Text style={styles.cell}>{s[k]}</Text>
-            <Text style={[styles.cell, { fontWeight: '900', color: p.after[k] > p.before[k] ? colors.mintDark : colors.ink }]}>
+            <Text style={[styles.cell, { fontWeight: '800', color: p.after[k] > p.before[k] ? colors.mintDark : colors.ink }]}>
               {p.after[k]}{p.bonus === k ? ' ✨' : p.after[k] > p.before[k] ? ' ▲' : ''}
             </Text>
           </React.Fragment>
@@ -183,23 +183,23 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', gap: 8 },
   tab: { flex: 1, height: 40, borderRadius: 12, borderWidth: 2, borderColor: colors.line, backgroundColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center' },
   tabOn: { borderColor: '#4A8FE0', backgroundColor: '#E9F4FF' },
-  tabText: { fontSize: 13, fontWeight: '900', color: colors.ink },
+  tabText: { fontSize: 13, fontWeight: '600', color: colors.ink },
   tabTextOn: { color: '#1F5E99' },
   panel: { backgroundColor: '#FFFFFF', borderRadius: 14, padding: space.sm, gap: 8, borderWidth: 1, borderColor: colors.line },
   statGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   statBtn: { width: '47%', borderRadius: 12, backgroundColor: '#E9F4FF', paddingVertical: 8, paddingHorizontal: 10, gap: 2 },
-  statName: { fontSize: 12, fontWeight: '900', color: colors.ink },
-  statVal: { fontSize: 15, fontWeight: '900', color: '#1F5E99' },
+  statName: { fontSize: 12, fontWeight: '600', color: colors.ink },
+  statVal: { fontSize: 15, fontWeight: '700', color: '#1F5E99' },
   spareRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   spare: { width: 92, alignItems: 'center', borderRadius: 12, backgroundColor: '#F6FAF8', padding: 6 },
-  spareName: { fontSize: 12, fontWeight: '900', color: colors.ink },
-  spareSub: { fontSize: 12, fontWeight: '800', color: colors.muted },
+  spareName: { fontSize: 12, fontWeight: '600', color: colors.ink },
+  spareSub: { fontSize: 12, fontWeight: '600', color: colors.muted },
   table: { flexDirection: 'row', flexWrap: 'wrap', backgroundColor: '#F6FAF8', borderRadius: 12, padding: 8 },
-  cell: { width: '25%', fontSize: 13, fontWeight: '700', color: colors.ink, paddingVertical: 2 },
-  head: { fontSize: 12, fontWeight: '900', color: colors.muted },
-  gradeLine: { fontSize: 20, fontWeight: '900', color: '#E5484D', textAlign: 'center' },
-  warn: { fontSize: 12, fontWeight: '800', color: '#C4562F' },
-  note: { fontSize: 13, fontWeight: '800', color: colors.mintDark },
+  cell: { width: '25%', fontSize: 13, fontWeight: '600', color: colors.ink, paddingVertical: 2 },
+  head: { fontSize: 12, fontWeight: '600', color: colors.muted },
+  gradeLine: { fontSize: 20, fontWeight: '800', color: '#E5484D', textAlign: 'center' },
+  warn: { fontSize: 12, fontWeight: '600', color: '#C4562F' },
+  note: { fontSize: 13, fontWeight: '600', color: colors.mintDark },
   btn: { height: 46, borderRadius: 14, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 16 },
-  btnText: { fontSize: 15, fontWeight: '900', color: '#FFFFFF' },
+  btnText: { fontSize: 15, fontWeight: '700', color: '#FFFFFF' },
 });

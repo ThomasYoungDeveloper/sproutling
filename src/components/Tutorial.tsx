@@ -2,6 +2,7 @@ import * as U from '../game/unlocks';
 import React, { useState } from 'react';
 import { Image, Pressable, StyleSheet, View } from 'react-native';
 import { Text } from './ScaledText';
+import { Icon, type IconName } from './Icon';
 import { useGame } from '../state/GameContext';
 import * as A from '../game/actions';
 import { PET_IMAGES } from './petImages';
@@ -29,42 +30,42 @@ export default function Tutorial() {
   const steps: Step[] = [
     { art: 'pet', tint: colors.sky, title: `Meet ${name}!`, body: `${name} grows when you take care of yourself. Here's how it works. It only takes a minute.` },
     {
-      art: '🍎', tint: '#FFE7DC', title: `Look after ${name}`,
+      art: 'bowl', tint: '#FFE7DC', title: `Look after ${name}`,
       body: 'Use the buttons under your pet to feed, play, give treats and dress them up.',
-      tips: ['🧸 Open Toys and drag one into the scene to play together', '😊 Feed, play and treat each day for up to +30% XP'],
+      tips: ['Open Toys and drag one into the scene to play together', 'Feed, play and treat each day for up to +30% XP'],
     },
     {
-      art: '👟', tint: colors.mintSoft, title: 'Your habits become XP',
+      art: 'steps', tint: colors.mintSoft, title: 'Your habits become XP',
       body: 'Walking, drinking water and sleeping well all earn XP for your pet.',
-      tips: ['✅ Finish all 3 each day for a free chest', '🔥 Keep your streak going for bigger rewards', '❤️ On iPhone, Apple Health fills these in for you'],
+      tips: ['Finish all 3 each day for a free chest', 'Keep your streak going for bigger rewards', 'On iPhone, Apple Health fills these in for you'],
     },
     ...(U.allOpen(state)
       ? [
           {
-            art: '🥚', tint: '#FFF4CC', title: 'Hatch and collect',
+            art: 'egg', tint: '#FFF4CC', title: 'Hatch and collect',
             body: 'Eggs come from chests and adventures, and they hatch as you walk.',
-            tips: ['🎒 Send pets on expeditions to find loot', '✨ Hunt for rare skins, shinies and perfect grades'],
+            tips: ['Send pets on expeditions to find loot', 'Hunt for rare skins, shinies and perfect grades'],
           },
           {
-            art: '⚔️', tint: '#E9E3FF', title: 'Battle and team up',
+            art: 'swords', tint: '#E9E3FF', title: 'Battle and team up',
             body: 'Battle wild pets and friends from the Social tab. Your healthy habits power up your pet in battle.',
-            tips: ['🏆 Climb the ranked season', '🛡️ Join a guild and beat the weekly raid boss together'],
+            tips: ['Climb the ranked season', 'Join a guild and beat the weekly raid boss together'],
           },
         ]
       : [
           {
-            art: '🥚', tint: '#FFF4CC', title: 'Hatch and collect',
+            art: 'egg', tint: '#FFF4CC', title: 'Hatch and collect',
             body: 'Eggs come from chests, and they hatch as you walk. Put your first one in the incubator on the Eggs tab.',
             tips: ['Add friends from the Social tab to send gifts and trade pets', 'Hunt for rare skins, shinies and perfect grades'],
           },
           {
-            art: '🔓', tint: '#E9E3FF', title: 'More opens as you level up',
+            art: 'lock', tint: '#E9E3FF', title: 'More opens as you level up',
             body: 'One new thing at a time, so it never gets overwhelming.',
             tips: ['Level 2: shops and trips', 'Level 3: battles and starting a group', 'Level 5: the Sky Tower and starting a guild', 'Level 7: the Nursery'],
           },
         ]),
     {
-      art: '🔔', tint: '#FFE9F0', title: 'Want a nudge?',
+      art: 'bell', tint: '#FFE9F0', title: 'Want a nudge?',
       body: remindersSupported
         ? `We'll remind you to keep your streak, when an egg is ready to hatch, and when ${name} is home from an adventure. Never more than one habit reminder a day.`
         : `In the iPhone app we can remind you to keep your streak, when an egg is ready to hatch, and when ${name} is home from an adventure.`,
@@ -92,7 +93,7 @@ export default function Tutorial() {
               {step.art === 'pet' && pet && PET_IMAGES[pet.speciesId] ? (
                 <Image source={PET_IMAGES[pet.speciesId]} style={{ width: 120, height: 120 }} resizeMode="contain" />
               ) : (
-                <Text style={{ fontSize: 64 }}>{step.art === 'pet' ? '🌱' : step.art}</Text>
+                <Icon name={(step.art === 'pet' ? 'sprout' : step.art) as IconName} size={64} color={colors.ink} strokeWidth={1.6} />
               )}
             </View>
             <Text style={styles.title}>{step.title}</Text>
@@ -100,7 +101,7 @@ export default function Tutorial() {
             {step.tips ? (
               <View style={styles.tips}>
                 {step.tips.map((t) => (
-                  <Text key={t} style={styles.tip}>{t}</Text>
+                  <View key={t} style={{ flexDirection: 'row', gap: 8, alignItems: 'flex-start' }}><View style={{ marginTop: 2 }}><Icon name="check" size={15} color={colors.mintDark} strokeWidth={2.6} /></View><Text style={[styles.tip, { flex: 1 }]}>{t}</Text></View>
                 ))}
               </View>
             ) : null}
@@ -135,12 +136,12 @@ const styles = StyleSheet.create({
   backdrop: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(24,30,48,0.6)', justifyContent: 'center', alignItems: 'center', padding: space.md, zIndex: 90 },
   card: { backgroundColor: '#FFFFFF', borderRadius: 26, padding: space.lg, paddingTop: space.xl, width: '100%', maxWidth: 420, gap: space.md },
   skip: { position: 'absolute', top: 12, right: 14, padding: 6, zIndex: 2 },
-  skipText: { fontWeight: '900', color: colors.muted, fontSize: 14 },
+  skipText: { fontWeight: '700', color: colors.muted, fontSize: 14 },
   art: { width: 150, height: 150, borderRadius: 75, alignItems: 'center', justifyContent: 'center' },
-  title: { ...font.title, fontSize: 24, fontWeight: '900', textAlign: 'center' },
+  title: { ...font.title, fontSize: 24, fontWeight: '800', textAlign: 'center' },
   body: { ...font.body, textAlign: 'center', color: colors.muted, fontWeight: '700', lineHeight: 21 },
   tips: { alignSelf: 'stretch', backgroundColor: '#F6FAF8', borderRadius: 14, padding: 12, gap: 6 },
-  tip: { fontSize: 14, fontWeight: '800', color: colors.ink },
+  tip: { fontSize: 14, fontWeight: '700', color: colors.ink },
   dots: { flexDirection: 'row', justifyContent: 'center', gap: 6 },
   dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.line },
   dotOn: { width: 22, backgroundColor: colors.mint },

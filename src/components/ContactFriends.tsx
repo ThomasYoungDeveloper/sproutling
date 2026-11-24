@@ -160,7 +160,7 @@ export function ContactFriendsCard() {
               <View key={m.id} style={styles.match}>
                 {sp && pet ? <PetSprite species={sp} stage={stageFor(pet.xp)} size={44} shiny={pet.shiny} /> : <View style={{ width: 44 }} />}
                 <View style={{ flex: 1 }}>
-                  <Text style={[font.body, { fontWeight: '900' }]}>{m.username}</Text>
+                  <Text style={[font.body, { fontWeight: '800' }]}>{m.username}</Text>
                   {pet && sp ? <Text style={font.tiny}>Lv {levelFor(pet.xp)} {pet.nickname}</Text> : null}
                   {sent[m.id] && sent[m.id] !== 'Request sent' ? <Text style={[font.tiny, { color: OFF_INK }]}>{sent[m.id]}</Text> : null}
                 </View>
@@ -258,7 +258,7 @@ function TurnOnBody({ onDone, onNotNow, ask }: { onDone: () => void; onNotNow: (
           ? 'Add your number and friends who have it in their contacts can send you a friend request. Your number is never shown to anyone.'
           : 'Friends who have your number in their contacts will see your trainer name. Your number is never shown to anyone.'}
       </Text>
-      {!ask ? <Text style={[font.small, { fontWeight: '900' }]}>Your phone number</Text> : null}
+      {!ask ? <Text style={[font.small, { fontWeight: '800' }]}>Your phone number</Text> : null}
       <TextInput
         value={phone}
         onChangeText={(t) => {
@@ -333,7 +333,7 @@ function ManageSheet({ onClose, onChanged, onChangeNumber }: { onClose: () => vo
           <Text style={styles.title}>Let friends find you</Text>
           <Text style={styles.body}>{findMe.last2 ? `Your number ending in ${findMe.last2} is saved.` : 'Your number is saved.'} It’s never shown to anyone.</Text>
           <Pressable onPress={toggle} disabled={busy || !findMe.loaded} style={styles.switchRow} accessibilityRole="switch" accessibilityState={{ checked: findMe.findable }} accessibilityLabel="Let friends find you">
-            <Text style={[font.body, { fontWeight: '900', flex: 1 }]}>Let friends find you</Text>
+            <Text style={[font.body, { fontWeight: '800', flex: 1 }]}>Let friends find you</Text>
             <View style={[styles.switch, findMe.findable && styles.switchOn]}>
               <View style={[styles.knob, findMe.findable && { alignSelf: 'flex-end' }]} />
             </View>
@@ -403,38 +403,38 @@ export function FindMeAsk({ where }: { where: 'open' | 'social' }) {
 }
 
 const styles = StyleSheet.create({
-  cardTitle: { fontSize: 20, fontWeight: '900', color: colors.ink },
+  cardTitle: { fontSize: 20, fontWeight: '800', color: colors.ink },
   step: { flexDirection: 'row', gap: 12, alignItems: 'flex-start', backgroundColor: '#F4F9F6', borderRadius: 18, padding: 12 },
   num: { width: 34, height: 34, borderRadius: 17, backgroundColor: '#DDF1E7', alignItems: 'center', justifyContent: 'center' },
-  numText: { fontSize: 17, fontWeight: '900', color: MINT_INK },
-  stepTitle: { fontSize: 17, fontWeight: '900', color: colors.ink },
-  stepSub: { fontSize: 13, fontWeight: '700', color: GREY_INK, lineHeight: 18 },
+  numText: { fontSize: 17, fontWeight: '800', color: MINT_INK },
+  stepTitle: { fontSize: 17, fontWeight: '800', color: colors.ink },
+  stepSub: { fontSize: 13, fontWeight: '600', color: GREY_INK, lineHeight: 18 },
   pillRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, alignItems: 'center' },
   pill: { minHeight: 36, paddingHorizontal: 14, borderRadius: 12, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
   pillPrimary: { backgroundColor: colors.mint, borderColor: colors.mint },
   pillPlain: { backgroundColor: '#FFFFFF', borderColor: '#DDE6E2' },
-  pillText: { fontSize: 14, fontWeight: '900', color: colors.ink },
+  pillText: { fontSize: 14, fontWeight: '700', color: colors.ink },
   banner: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: MINT_BG, borderRadius: 16, padding: 12 },
-  bannerTitle: { fontSize: 16, fontWeight: '900', color: colors.ink },
-  bannerSub: { fontSize: 12, fontWeight: '800', color: '#3D6B58' },
+  bannerTitle: { fontSize: 16, fontWeight: '700', color: colors.ink },
+  bannerSub: { fontSize: 12, fontWeight: '600', color: '#3D6B58' },
   tick: { width: 30, height: 30, borderRadius: 15, backgroundColor: colors.mint, alignItems: 'center', justifyContent: 'center' },
-  tickText: { color: '#FFFFFF', fontWeight: '900', fontSize: 16 },
+  tickText: { color: '#FFFFFF', fontWeight: '700', fontSize: 16 },
   match: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: '#F4F9F6', borderRadius: 16, padding: 10 },
-  sentText: { fontSize: 14, fontWeight: '900', color: MINT_INK },
+  sentText: { fontSize: 14, fontWeight: '700', color: MINT_INK },
   linkRow: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 2 },
-  link: { fontSize: 14, fontWeight: '900', color: MINT_INK },
-  fine: { fontSize: 12, fontWeight: '700', color: '#8A9590', textAlign: 'center' },
-  err: { fontSize: 13, fontWeight: '800', color: '#C4562F' },
+  link: { fontSize: 14, fontWeight: '700', color: MINT_INK },
+  fine: { fontSize: 12, fontWeight: '600', color: '#8A9590', textAlign: 'center' },
+  err: { fontSize: 13, fontWeight: '600', color: '#C4562F' },
   backdrop: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(24,30,48,0.55)', zIndex: 120 },
   sheet: { backgroundColor: '#FFFFFF', borderTopLeftRadius: 26, borderTopRightRadius: 26, padding: 20, paddingBottom: 36, gap: 12, width: '100%', maxWidth: 560, alignSelf: 'center' },
-  askCard: { width: '90%', maxWidth: 400, backgroundColor: '#FFFCF5', borderRadius: 26, padding: 22, gap: 6 },
+  askCard: { width: '90%', maxWidth: 400, backgroundColor: '#FFFFFF', borderRadius: 24, padding: 22, gap: 6 },
   askPets: { flexDirection: 'row', justifyContent: 'center', alignItems: 'flex-end', gap: 4, marginBottom: 4 },
-  title: { fontSize: 23, fontWeight: '900', color: colors.ink },
+  title: { fontSize: 23, fontWeight: '800', color: colors.ink },
   body: { fontSize: 15, fontWeight: '700', color: GREY_INK, lineHeight: 21 },
   input: { height: 52, borderRadius: 14, borderWidth: 2, borderColor: '#DDE6E2', backgroundColor: '#FFFFFF', paddingHorizontal: 14, fontSize: 18, fontWeight: '800', color: colors.ink },
-  notNow: { fontSize: 15, fontWeight: '900', color: GREY_INK, textAlign: 'center', paddingVertical: 4 },
+  notNow: { fontSize: 15, fontWeight: '700', color: GREY_INK, textAlign: 'center', paddingVertical: 4 },
   bigTick: { width: 84, height: 84, borderRadius: 42, backgroundColor: colors.mint, alignItems: 'center', justifyContent: 'center', borderWidth: 10, borderColor: '#DDF1E7', marginTop: 6 },
-  bigTickText: { color: '#FFFFFF', fontSize: 38, fontWeight: '900' },
+  bigTickText: { color: '#FFFFFF', fontSize: 38, fontWeight: '800' },
   switchRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 6 },
   switch: { width: 50, height: 30, borderRadius: 15, backgroundColor: '#D5DEDA', padding: 3 },
   switchOn: { backgroundColor: colors.mint },

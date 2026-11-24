@@ -78,5 +78,5 @@ export default function PowerGlow({ count, size }: { count: number; size: number
 
 const styles = StyleSheet.create({
   wrap: { position: 'absolute', left: '50%', top: '50%' },
-  spark: { position: 'absolute', top: 0, fontWeight: '900' },
+  spark: { position: 'absolute', top: 0, fontWeight: '800' },
 });

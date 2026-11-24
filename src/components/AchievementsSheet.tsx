@@ -82,7 +82,7 @@ function Ladder({ x, onBack }: { x: BadgeStatus; onBack: () => void }) {
           <Text style={[font.tiny, { textAlign: 'center' }]}>{fmt(b, x.next - x.value)} more to {TIERS[x.tier].label}</Text>
         </View>
       ) : (
-        <Text style={[font.small, { textAlign: 'center', color: '#6C4FD8', fontWeight: '900' }]}>Every tier earned!</Text>
+        <Text style={[font.small, { textAlign: 'center', color: '#6C4FD8', fontWeight: '800' }]}>Every tier earned!</Text>
       )}
       {TIERS.map((t, i) => {
         const done = x.tier > i;
@@ -104,14 +104,14 @@ function Ladder({ x, onBack }: { x: BadgeStatus; onBack: () => void }) {
 
 const styles = StyleSheet.create({
   backdrop: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(20,30,35,0.5)', justifyContent: 'flex-end' },
-  sheet: { backgroundColor: '#FFFCF5', borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 20, gap: 10, maxHeight: '92%', width: '100%', maxWidth: 560, alignSelf: 'center' },
+  sheet: { backgroundColor: '#FFFFFF', borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 20, gap: 10, maxHeight: '92%', width: '100%', maxWidth: 560, alignSelf: 'center' },
   grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 8, paddingVertical: 6 },
   cell: { width: 80, alignItems: 'center', gap: 2, padding: 4, borderRadius: 16, borderWidth: 2, borderColor: 'transparent' },
   cellOn: { borderColor: colors.gold, backgroundColor: '#FFF6DD' },
-  name: { fontSize: 11, fontWeight: '900', color: colors.ink, textAlign: 'center' },
-  tier: { fontSize: 10, fontWeight: '900' },
-  back: { fontSize: 15, fontWeight: '900', color: colors.mintDark },
+  name: { fontSize: 11, fontWeight: '600', color: colors.ink, textAlign: 'center' },
+  tier: { fontSize: 10, fontWeight: '600' },
+  back: { fontSize: 15, fontWeight: '700', color: colors.mintDark },
   row: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  rowTitle: { fontSize: 14, fontWeight: '900', color: colors.ink },
-  rowState: { fontSize: 11, fontWeight: '900' },
+  rowTitle: { fontSize: 14, fontWeight: '700', color: colors.ink },
+  rowState: { fontSize: 11, fontWeight: '600' },
 });

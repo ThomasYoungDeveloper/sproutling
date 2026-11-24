@@ -3,6 +3,7 @@ import Coin from './src/components/Coin';
 import React, { useEffect, useRef, useState } from 'react';
 import { Image, Linking, Platform, Pressable, SafeAreaView, ScrollView, StyleSheet, View } from 'react-native';
 import { Text } from './src/components/ScaledText';
+import { Icon } from './src/components/Icon';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import ErrorBoundary from './src/components/ErrorBoundary';
@@ -216,7 +217,7 @@ function Shell() {
     const r = A.applyShields(state);
     if (r.used) {
       apply(() => r.state);
-      setShieldNote(`🛡️ A streak shield saved your ${r.saved}-day streak!`);
+      setShieldNote(`A streak shield saved your ${r.saved}-day streak!`);
       setTimeout(() => setShieldNote(null), 6000);
     }
   }, [settled, today]);
@@ -325,9 +326,11 @@ function Shell() {
               accessibilityRole="button"
               accessibilityLabel={`${A.streak(state)}-day streak${state.shields ? `, ${state.shields} streak shield${state.shields === 1 ? '' : 's'}` : ''}. What's this?`}
             >
-              <Text style={styles.pillText} maxFontSizeMultiplier={1.15}>🔥 {A.streak(state)}{state.shields ? ` 🛡️${state.shields}` : ''}</Text>
+              <Icon name="flame" size={16} color="#F07A2B" filled />
+              <Text style={styles.pillText} maxFontSizeMultiplier={1.15}>{A.streak(state)}</Text>
+              {state.shields ? <><Icon name="shield" size={15} color="#3D8FD6" filled /><Text style={styles.pillText} maxFontSizeMultiplier={1.15}>{state.shields}</Text></> : null}
             </Pressable>
-            <View style={[styles.pill, { flexDirection: 'row', alignItems: 'center', gap: 5 }]}><Image source={COIN_PILE} style={{ width: 26, height: 26 }} resizeMode="contain" /><RollingNumber value={state.coins} prefix="" short style={styles.pillText} /></View>
+            <View style={styles.pill} accessible accessibilityLabel={`${state.coins} coins`}><Image source={COIN_PILE} style={{ width: 22, height: 22 }} resizeMode="contain" /><RollingNumber value={state.coins} prefix="" short style={styles.pillText} /></View>
             <Pressable onPress={() => setShowAccount(true)} style={[styles.avatar, (!user || sync === 'error') && { backgroundColor: '#E8590C' }]} accessibilityRole="button" accessibilityLabel={user ? `Account: ${username ?? 'you'}${sync === 'error' ? ', offline' : ''}` : 'Sign in to save your pets'}>
               <Text style={styles.avatarText}>{!user || sync === 'error' ? '!' : (username ?? 'T')[0].toUpperCase()}</Text>
             </Pressable>
@@ -341,7 +344,7 @@ function Shell() {
             <View style={{ gap: space.md }}>
         {tab === 'home' && login.canClaim && false && (
           <Pressable onPress={() => setShowLogin(true)} style={[styles.daily, login.canClaim && styles.dailyReady]} accessibilityRole="button" accessibilityLabel="Daily rewards">
-            <Text style={{ fontSize: 22 }}>{login.canClaim ? '🎁' : '✅'}</Text>
+            <View style={styles.dailyIcon}><Icon name={login.canClaim ? 'gift' : 'check'} size={22} color="#B86E00" /></View>
             <View style={{ flex: 1 }}>
               <Text style={styles.dailyTitle}>{login.canClaim ? `Day ${login.index + 1} reward is ready!` : `Day ${login.index + 1} reward collected`}</Text>
               <Text style={font.small}>{login.canClaim ? 'Tap to collect' : 'Come back tomorrow for the next one'}</Text>
@@ -353,7 +356,7 @@ function Shell() {
             onNavigate={setTab}
             banner={login.canClaim ? (
               <Pressable onPress={() => setShowLogin(true)} style={[styles.daily, styles.dailyReady]} accessibilityRole="button" accessibilityLabel="Daily rewards">
-                <Text style={{ fontSize: 22 }}>🎁</Text>
+                <View style={styles.dailyIcon}><Icon name="gift" size={22} color="#B86E00" /></View>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.dailyTitle}>Day {login.index + 1} reward is ready!</Text>
                   <Text style={font.small}>Tap to collect</Text>
@@ -535,36 +538,37 @@ export default function App() {
 
 const styles = StyleSheet.create({
   findsToast: { alignItems: 'stretch', gap: 4, minWidth: 220 },
-  findsTitle: { color: '#CFE3DA', fontSize: 12, fontWeight: '900', letterSpacing: 0.5, textTransform: 'uppercase', marginBottom: 2 },
+  findsTitle: { color: '#CFE3DA', fontSize: 12, fontWeight: '600', letterSpacing: 0.5, textTransform: 'uppercase', marginBottom: 2 },
   findRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   findIcon: { fontSize: 18, width: 24, textAlign: 'center' },
-  findLabel: { flex: 1, fontSize: 15, fontWeight: '900' },
-  findCount: { color: '#FFFFFF', fontSize: 15, fontWeight: '900' },
+  findLabel: { flex: 1, fontSize: 15, fontWeight: '700' },
+  findCount: { color: '#FFFFFF', fontSize: 15, fontWeight: '700' },
   root: { flex: 1, backgroundColor: colors.bg },
   skyCap: { position: 'absolute', top: 0, left: 0, right: 0, height: '45%' },
-  top: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: space.sm, paddingHorizontal: space.lg, paddingTop: space.lg, paddingBottom: space.sm, maxWidth: 520, width: '100%', alignSelf: 'center' },
-  pageTitle: { fontSize: 30, fontWeight: '900', color: '#1F3A33' },
-  pageSub: { fontSize: 13, fontWeight: '800', color: '#3E6B5E' },
-  avatar: { width: 32, height: 32, borderRadius: 16, backgroundColor: colors.mint, borderWidth: 2, borderColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center' },
-  avatarText: { color: '#FFFFFF', fontWeight: '900', fontSize: 13 },
+  top: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.sm, paddingHorizontal: space.lg, paddingTop: space.md, paddingBottom: space.md, maxWidth: 560, width: '100%', alignSelf: 'center' },
+  pageTitle: { fontSize: 28, fontWeight: '800', color: colors.ink, letterSpacing: -0.3 },
+  pageSub: { fontSize: 13, fontWeight: '600', color: '#3E6B5E' },
+  avatar: { width: 36, height: 36, borderRadius: 18, backgroundColor: colors.mint, alignItems: 'center', justifyContent: 'center' },
+  avatarText: { color: '#FFFFFF', fontWeight: '800', fontSize: 15 },
+  dailyIcon: { width: 40, height: 40, borderRadius: 13, backgroundColor: '#FFF1C9', alignItems: 'center', justifyContent: 'center' },
   scrollHome: { paddingHorizontal: 0, paddingTop: 0, maxWidth: undefined },
-  brand: { fontSize: 24, fontWeight: '900', color: colors.ink },
-  pills: { flexDirection: 'row', gap: 6 },
-  pill: { backgroundColor: colors.card, borderRadius: 999, paddingHorizontal: 12, height: 40, flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
-  pillText: { fontWeight: '800', fontSize: 13, color: colors.ink },
+  brand: { fontSize: 24, fontWeight: '800', color: colors.ink },
+  pills: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  pill: { backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: colors.line, borderRadius: 999, paddingHorizontal: 10, height: 36, minWidth: 44, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4 },
+  pillText: { fontWeight: '700', fontSize: 14, color: colors.ink, fontVariant: ['tabular-nums'] },
   signIn: { backgroundColor: colors.mint, borderColor: colors.mint },
-  scroll: { padding: space.lg, paddingTop: space.sm, paddingBottom: 40, gap: space.md, maxWidth: 520, width: '100%', alignSelf: 'center' },
+  scroll: { padding: space.lg, paddingTop: space.xs, paddingBottom: 48, gap: space.lg, maxWidth: 560, width: '100%', alignSelf: 'center' },
   demo: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: space.sm, marginTop: space.md },
   nav: { flexDirection: 'row', borderTopWidth: 1, borderTopColor: colors.line, backgroundColor: '#fff', paddingHorizontal: space.sm, paddingVertical: 6 },
   navBtn: { flex: 1, alignItems: 'center', paddingVertical: 10, borderRadius: 12, flexDirection: 'row', justifyContent: 'center', gap: 6 },
   navActive: { backgroundColor: colors.mintSoft },
-  navText: { fontWeight: '800', color: colors.muted, fontSize: 14 },
+  navText: { fontWeight: '700', color: colors.muted, fontSize: 14 },
   dot: { backgroundColor: colors.peach, borderRadius: 999, minWidth: 18, height: 18, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 5 },
-  dotText: { color: '#fff', fontWeight: '900', fontSize: 12 },
+  dotText: { color: '#fff', fontWeight: '600', fontSize: 12 },
   daily: { flexDirection: 'row', alignItems: 'center', gap: space.md, backgroundColor: '#fff', borderRadius: 18, borderWidth: 1, borderColor: colors.line, paddingVertical: space.sm, paddingHorizontal: space.md },
   dailyReady: { backgroundColor: '#FFF6DD', borderColor: colors.gold },
-  dailyTitle: { fontWeight: '900', fontSize: 15, color: colors.ink },
+  dailyTitle: { fontWeight: '700', fontSize: 15, color: colors.ink },
   toastWrap: { position: 'absolute', top: 64, left: 0, right: 0, alignItems: 'center', paddingHorizontal: space.lg, zIndex: 70 },
   toast: { backgroundColor: colors.ink, borderRadius: 16, paddingVertical: 12, paddingHorizontal: 16, maxWidth: 420 },
-  toastText: { color: '#fff', fontWeight: '800', fontSize: 14, textAlign: 'center' },
+  toastText: { color: '#fff', fontWeight: '700', fontSize: 14, textAlign: 'center' },
 });

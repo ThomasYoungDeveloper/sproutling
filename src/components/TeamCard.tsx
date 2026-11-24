@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { Text } from './ScaledText';
+import { Icon } from './Icon';
 import { useTeam, type TeamMember } from '../state/TeamContext';
 import { Button, Card, ProgressBar } from './ui';
 import PetSprite from './PetSprite';
@@ -61,7 +62,7 @@ function HealthChip({ userId }: { userId: string }) {
   const txt = l === 'health' ? 'Apple Health' : `Health + ${l === 'watch' ? 'Watch' : l === 'oura' ? 'Oura' : l === 'garmin' ? 'Garmin' : l === 'fitbit' ? 'Fitbit' : 'Wearable'}`;
   return (
     <View style={{ backgroundColor: l === 'health' ? '#2FB58A' : '#5A6FE0', borderRadius: 7, paddingHorizontal: 5, paddingVertical: 1 }}>
-      <Text style={{ fontSize: 10, fontWeight: '900', color: '#FFFFFF' }} numberOfLines={1}>{txt}</Text>
+      <Text style={{ fontSize: 10, fontWeight: '600', color: '#FFFFFF' }} numberOfLines={1}>{txt}</Text>
     </View>
   );
 }
@@ -72,7 +73,7 @@ function MemberRow({ m, top }: { m: TeamMember; top: number }) {
   return (
     <View style={styles.member}>
       <View style={styles.avatar}>
-        {sp && p ? <PetSprite species={sp} stage={stageFor(p.xp)} size={40} shiny={p.shiny} skin={p.skin} hat={p.hat} aura={p.aura} /> : <Text style={{ fontSize: 20 }}>🥚</Text>}
+        {sp && p ? <PetSprite species={sp} stage={stageFor(p.xp)} size={40} shiny={p.shiny} skin={p.skin} hat={p.hat} aura={p.aura} /> : <Icon name="egg" size={20} color={colors.muted} />}
       </View>
       <View style={{ flex: 1, gap: 3 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
@@ -437,45 +438,45 @@ export default function TeamCard({ initialJoin, onUsedInitialJoin }: { initialJo
 
 const styles = StyleSheet.create({
   card: { backgroundColor: NAVY, borderColor: NAVY, overflow: 'hidden' },
-  bigTitle: { fontSize: 26, fontWeight: '900', color: '#FFF6D8' },
+  bigTitle: { fontSize: 26, fontWeight: '800', color: '#FFF6D8' },
   hall: { alignItems: 'center', gap: 6, backgroundColor: '#2A2F66', borderRadius: 20, padding: space.md },
-  hallName: { fontSize: 24, fontWeight: '900', color: '#FFF6D8' },
+  hallName: { fontSize: 24, fontWeight: '800', color: '#FFF6D8' },
   chips: { flexDirection: 'row', gap: 6, flexWrap: 'wrap', justifyContent: 'center' },
   chip: { backgroundColor: '#3D4785', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 2 },
-  chipText: { fontSize: 11, fontWeight: '900', color: '#C9D3FF' },
-  xpLabel: { fontSize: 11, fontWeight: '900', color: SOFT },
-  leaderTag: { fontSize: 10, fontWeight: '900', color: '#4A3200', backgroundColor: GOLD, borderRadius: 6, paddingHorizontal: 5, overflow: 'hidden' },
+  chipText: { fontSize: 11, fontWeight: '600', color: '#C9D3FF' },
+  xpLabel: { fontSize: 11, fontWeight: '600', color: SOFT },
+  leaderTag: { fontSize: 10, fontWeight: '600', color: '#4A3200', backgroundColor: GOLD, borderRadius: 6, paddingHorizontal: 5, overflow: 'hidden' },
   row: { flexDirection: 'row', gap: space.sm, flexWrap: 'wrap' },
   input: { borderRadius: 12, paddingVertical: 10, paddingHorizontal: 12, fontSize: 16, color: colors.ink, backgroundColor: '#FFFFFF' },
   emojis: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   emoji: { width: 42, height: 42, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.2)' },
   emojiOn: { backgroundColor: '#FFFFFF' },
-  msg: { fontSize: 13, fontWeight: '800', color: '#FFE0D1' },
+  msg: { fontSize: 13, fontWeight: '600', color: '#FFE0D1' },
   crest: { width: 52, height: 52, borderRadius: 16, backgroundColor: 'rgba(255,255,255,0.22)', alignItems: 'center', justifyContent: 'center' },
   code: { backgroundColor: '#FFFFFF', borderRadius: 12, paddingHorizontal: 10, paddingVertical: 4, alignItems: 'center' },
-  codeLabel: { fontSize: 9, fontWeight: '900', color: colors.muted, letterSpacing: 1 },
-  codeText: { fontSize: 16, fontWeight: '900', color: colors.mintDark, letterSpacing: 1.5 },
+  codeLabel: { fontSize: 9, fontWeight: '600', color: colors.muted, letterSpacing: 1 },
+  codeText: { fontSize: 16, fontWeight: '700', color: colors.mintDark, letterSpacing: 1.5 },
   raidBox: { backgroundColor: '#2A1E3D', borderRadius: 16, padding: space.md, gap: 8 },
   bossArt: { width: 86, height: 86, borderRadius: 18, backgroundColor: '#463066', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
   bossKo: { position: 'absolute', fontSize: 26, fontWeight: '900', color: '#FFD84D', transform: [{ rotate: '-12deg' }] },
-  raidLabel: { fontSize: 12, fontWeight: '900', color: '#C9B4F2', letterSpacing: 1 },
-  bossName: { fontSize: 19, fontWeight: '900', color: '#FFFFFF' },
-  bossTitle: { fontSize: 13, fontWeight: '700', color: '#C9B4F2' },
-  raidHp: { fontSize: 13, fontWeight: '900', color: '#FFFFFF' },
-  raidMine: { fontSize: 12, fontWeight: '800', color: '#C9B4F2' },
-  raidHelp: { fontSize: 12, fontWeight: '700', color: '#DCD0F2' },
+  raidLabel: { fontSize: 12, fontWeight: '600', color: '#C9B4F2', letterSpacing: 1 },
+  bossName: { fontSize: 19, fontWeight: '800', color: '#FFFFFF' },
+  bossTitle: { fontSize: 13, fontWeight: '600', color: '#C9B4F2' },
+  raidHp: { fontSize: 13, fontWeight: '600', color: '#FFFFFF' },
+  raidMine: { fontSize: 12, fontWeight: '600', color: '#C9B4F2' },
+  raidHelp: { fontSize: 12, fontWeight: '600', color: '#DCD0F2' },
   goalBox: { backgroundColor: '#FFFFFF', borderRadius: 16, padding: space.md, gap: 8 },
-  goalTitle: { fontWeight: '900', fontSize: 15, color: colors.ink },
-  goalNum: { fontWeight: '800', fontSize: 13, color: colors.muted },
+  goalTitle: { fontWeight: '700', fontSize: 15, color: colors.ink },
+  goalNum: { fontWeight: '600', fontSize: 13, color: colors.muted },
   marker: { position: 'absolute', top: -6, marginLeft: -12 },
   markerText: { fontSize: 18 },
   member: { flexDirection: 'row', alignItems: 'center', gap: space.sm, backgroundColor: 'rgba(255,255,255,0.12)', borderRadius: 14, padding: 6 },
   avatar: { width: 44, height: 44, borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.9)', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
-  memberName: { fontWeight: '900', fontSize: 14, color: '#FFFFFF', flexShrink: 1 },
+  memberName: { fontWeight: '700', fontSize: 14, color: '#FFFFFF', flexShrink: 1 },
   leader: { fontSize: 12 },
-  renameLink: { color: '#FFFFFF', fontSize: 13, fontWeight: '900', textDecorationLine: 'underline', marginTop: 2 },
+  renameLink: { color: '#FFFFFF', fontSize: 13, fontWeight: '600', textDecorationLine: 'underline', marginTop: 2 },
   renameBox: { backgroundColor: '#FFFFFF', borderRadius: 16, padding: space.sm, gap: space.sm },
   renameInput: { height: 46, borderRadius: 12, borderWidth: 2, borderColor: '#DDE6E2', paddingHorizontal: 12, fontSize: 17, fontWeight: '800', color: colors.ink },
-  memberSteps: { fontWeight: '900', fontSize: 14, color: '#FFFFFF', minWidth: 60, textAlign: 'right' },
-  leave: { fontSize: 12, fontWeight: '800', color: SOFT, textAlign: 'center', textDecorationLine: 'underline', paddingTop: 4 },
+  memberSteps: { fontWeight: '700', fontSize: 14, color: '#FFFFFF', minWidth: 60, textAlign: 'right' },
+  leave: { fontSize: 12, fontWeight: '600', color: SOFT, textAlign: 'center', textDecorationLine: 'underline', paddingTop: 4 },
 });

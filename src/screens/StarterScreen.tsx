@@ -59,14 +59,14 @@ export default function StarterScreen() {
 
 const styles = StyleSheet.create({
   hero: { alignItems: 'center', gap: 6, paddingVertical: space.md },
-  title: { fontSize: 26, fontWeight: '900', color: colors.ink, textAlign: 'center' },
+  title: { fontSize: 26, fontWeight: '800', color: colors.ink, textAlign: 'center' },
   sub: { fontSize: 15, color: colors.muted, textAlign: 'center', fontWeight: '600', maxWidth: 340 },
   card: { alignSelf: 'center', width: '100%', maxWidth: 360, backgroundColor: '#FFFFFF', borderRadius: 24, borderWidth: 2, borderColor: colors.mint, padding: space.lg, alignItems: 'center', gap: space.sm },
-  label: { fontSize: 20, fontWeight: '900', color: colors.ink },
+  label: { fontSize: 20, fontWeight: '800', color: colors.ink },
   els: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 6 },
   el: { flexDirection: 'row', alignItems: 'center', gap: 5, borderRadius: 999, paddingHorizontal: 9, paddingVertical: 3 },
   dot: { width: 8, height: 8, borderRadius: 4 },
-  elText: { fontSize: 12, fontWeight: '800' },
+  elText: { fontSize: 12, fontWeight: '600' },
   cta: { backgroundColor: colors.mint, borderRadius: 999, paddingHorizontal: 22, paddingVertical: 10, marginTop: space.xs },
-  ctaText: { color: '#fff', fontWeight: '900', fontSize: 16 },
+  ctaText: { color: '#fff', fontWeight: '700', fontSize: 16 },
 });

@@ -4,6 +4,7 @@ import * as H from '../game/hp';
 import PotionIcon, { POTION_COLOR } from './PotionIcon';
 import { Animated, AppState, Easing, Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { Text } from './ScaledText';
+import { Icon } from './Icon';
 import { supabase } from '../lib/supabase';
 import { useGame } from '../state/GameContext';
 import { useTeam } from '../state/TeamContext';
@@ -493,7 +494,7 @@ export default function BattleScreen({ opponent, onClose, onResult, live, specia
                   <Text style={styles.energyLabel}>Energy</Text>
                   {Array.from({ length: B.MAX_ENERGY }, (_, i) => (
                     <View key={i} style={[styles.pip, i < me.energy && styles.pipOn]}>
-                      <Text style={styles.pipText}>⚡</Text>
+                      <Icon name="bolt" size={11} color="#FFFFFF" filled strokeWidth={1.5} />
                     </View>
                   ))}
                   <Text style={styles.energyHint}>+1 each turn</Text>
@@ -623,7 +624,7 @@ function MoveButton({ m, foe, energy, disabled, onPress }: { m: MoveDef; foe: B.
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
           <Text style={[styles.moveHint, { flexShrink: 1 }]} numberOfLines={1}>
-            <Text style={{ color: m.signature ? '#B07D00' : moveColor(m), fontWeight: '900' }}>{m.signature ? 'Signature' : typeName}</Text> · {hint}
+            <Text style={{ color: m.signature ? '#B07D00' : moveColor(m), fontWeight: '800' }}>{m.signature ? 'Signature' : typeName}</Text> · {hint}
           </Text>
           <Text style={[styles.cost, { backgroundColor: m.cost ? '#FFF1C9' : '#EAF7F1' }]}>{m.signature ? 'Once' : m.cost ? `${m.cost}⚡` : 'Free'}</Text>
         </View>
@@ -853,26 +854,26 @@ function DamagePop({ side, text, color, onDone }: { side: B.Side; text: string; 
 
 const styles = StyleSheet.create({
   effTag: { borderRadius: 999, paddingHorizontal: 7, paddingVertical: 2 },
-  effTagText: { color: '#FFFFFF', fontWeight: '900', fontSize: 12 },
+  effTagText: { color: '#FFFFFF', fontWeight: '600', fontSize: 12 },
   stTag: { borderRadius: 999, paddingHorizontal: 7, paddingVertical: 1 },
-  stText: { color: '#FFFFFF', fontWeight: '900', fontSize: 12 },
+  stText: { color: '#FFFFFF', fontWeight: '600', fontSize: 12 },
   cutin: { backgroundColor: 'rgba(20,14,0,0.55)', justifyContent: 'center', alignItems: 'center', zIndex: 50 },
   cutBand: { width: '130%', paddingVertical: 18, alignItems: 'center', borderTopWidth: 4, borderBottomWidth: 4, borderColor: '#FFD84D' },
-  cutSmall: { color: '#FFF6D6', fontWeight: '900', fontSize: 13, letterSpacing: 1.5 },
+  cutSmall: { color: '#FFF6D6', fontWeight: '600', fontSize: 13, letterSpacing: 1.5 },
   cutBig: { color: '#FFFFFF', fontWeight: '900', fontSize: 34, textShadowColor: 'rgba(0,0,0,0.35)', textShadowRadius: 6, textShadowOffset: { width: 0, height: 2 } },
-  swGo: { fontWeight: '900', fontSize: 14, color: colors.mintDark },
+  swGo: { fontWeight: '700', fontSize: 14, color: colors.mintDark },
   potionRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   potionBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, borderWidth: 2, borderRadius: 12, paddingHorizontal: 8, paddingVertical: 3, backgroundColor: '#FFFBF2' },
-  potionText: { fontWeight: '900', fontSize: 13, color: colors.ink },
-  potionHint: { fontSize: 12, fontWeight: '700', color: colors.muted, marginLeft: 'auto' },
+  potionText: { fontWeight: '600', fontSize: 13, color: colors.ink },
+  potionHint: { fontSize: 12, fontWeight: '600', color: colors.muted, marginLeft: 'auto' },
   lines: { alignSelf: 'stretch', backgroundColor: '#F6F1E7', borderRadius: 14, padding: 12, gap: 6, minWidth: 260 },
   lineRow: { flexDirection: 'row', justifyContent: 'space-between', gap: 10 },
-  lineLabel: { fontSize: 15, fontWeight: '800', color: colors.ink, flexShrink: 1 },
-  lineValue: { fontSize: 15, fontWeight: '900', color: colors.ink },
+  lineLabel: { fontSize: 15, fontWeight: '700', color: colors.ink, flexShrink: 1 },
+  lineValue: { fontSize: 15, fontWeight: '700', color: colors.ink },
   bubble: { position: 'absolute', backgroundColor: '#fff', borderRadius: 18, paddingHorizontal: 10, paddingVertical: 4, shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 6, shadowOffset: { width: 0, height: 2 }, elevation: 4 },
   bubbleText: { fontSize: 30 },
   liveTag: { position: 'absolute', top: 10, left: 12, backgroundColor: 'rgba(214,40,57,0.9)', borderRadius: 10, paddingHorizontal: 8, paddingVertical: 3 },
-  liveTagText: { color: '#fff', fontSize: 12, fontWeight: '800', letterSpacing: 0.5 },
+  liveTagText: { color: '#fff', fontSize: 12, fontWeight: '600', letterSpacing: 0.5 },
   reactRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 4 },
   reactBtn: { width: 44, height: 40, borderRadius: 12, backgroundColor: '#F4F1EA', alignItems: 'center', justifyContent: 'center' },
   full: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: '#1B2240', zIndex: 90 },
@@ -880,54 +881,54 @@ const styles = StyleSheet.create({
   flash: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: '#FFFFFF' },
   callout: { position: 'absolute', top: '42%', left: 0, right: 0, textAlign: 'center', fontSize: 30, fontWeight: '900', letterSpacing: 0.5, textShadowColor: 'rgba(0,0,0,0.45)', textShadowOffset: { width: 0, height: 3 }, textShadowRadius: 6 },
   panel: { backgroundColor: '#FFFFFF', borderTopLeftRadius: 26, borderTopRightRadius: 26, padding: space.md, gap: 8, marginTop: -20 },
-  line: { fontSize: 15, fontWeight: '800', color: colors.ink, minHeight: 40, textAlign: 'center' },
+  line: { fontSize: 15, fontWeight: '700', color: colors.ink, minHeight: 40, textAlign: 'center' },
   energyRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  energyLabel: { fontWeight: '900', fontSize: 12, color: colors.ink, marginRight: 4 },
+  energyLabel: { fontWeight: '600', fontSize: 12, color: colors.ink, marginRight: 4 },
   pip: { width: 24, height: 24, borderRadius: 7, backgroundColor: '#EEF1F0', alignItems: 'center', justifyContent: 'center' },
   pipOn: { backgroundColor: '#FFE27A' },
   pipText: { fontSize: 12 },
-  energyHint: { fontSize: 12, fontWeight: '700', color: colors.muted, marginLeft: 'auto' },
+  energyHint: { fontSize: 12, fontWeight: '600', color: colors.muted, marginLeft: 'auto' },
   moves: { flexDirection: 'row', flexWrap: 'wrap', gap: '3%', rowGap: 8 },
   move: { padding: 9, borderRadius: 14, borderWidth: 2, backgroundColor: '#FAFCFB', gap: 3, minHeight: 66 },
-  moveName: { fontWeight: '900', fontSize: 14, color: colors.ink, flexShrink: 1 },
-  moveHint: { fontWeight: '700', fontSize: 12.5, color: colors.muted, flexShrink: 1 },
-  cost: { fontWeight: '900', fontSize: 12, color: '#5A3E00', borderRadius: 999, paddingHorizontal: 6, paddingVertical: 1, overflow: 'hidden', flexShrink: 0, marginLeft: 4 },
-  eff: { fontWeight: '900', fontSize: 12.5 },
+  moveName: { fontWeight: '700', fontSize: 14, color: colors.ink, flexShrink: 1 },
+  moveHint: { fontWeight: '600', fontSize: 12.5, color: colors.muted, flexShrink: 1 },
+  cost: { fontWeight: '600', fontSize: 12, color: '#5A3E00', borderRadius: 999, paddingHorizontal: 6, paddingVertical: 1, overflow: 'hidden', flexShrink: 0, marginLeft: 4 },
+  eff: { fontWeight: '600', fontSize: 12.5 },
   switchRow: { flexDirection: 'row', gap: 8, justifyContent: 'center' },
   swCard: { backgroundColor: '#fff', borderRadius: 16, padding: 10, borderWidth: 2, borderColor: colors.line },
   swHead: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  swLv: { fontWeight: '800', fontSize: 12, color: colors.muted },
+  swLv: { fontWeight: '600', fontSize: 12, color: colors.muted },
   swTags: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   swBar: { height: 5, borderRadius: 3, backgroundColor: '#E3ECE7', overflow: 'hidden' },
   swFill: { height: '100%', borderRadius: 3 },
-  swChevron: { fontSize: 18, fontWeight: '900', color: colors.muted, paddingHorizontal: 4 },
+  swChevron: { fontSize: 18, fontWeight: '800', color: colors.muted, paddingHorizontal: 4 },
   swMove: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 6, borderTopWidth: 1, borderTopColor: '#EEF2F0' },
   swMoveBar: { width: 5, alignSelf: 'stretch', borderRadius: 3 },
-  swMoveName: { fontSize: 13, fontWeight: '900', color: colors.ink },
-  swMoveDesc: { fontSize: 12, fontWeight: '700', color: colors.muted },
-  swCost: { fontSize: 12, fontWeight: '900', color: '#C98A12' },
+  swMoveName: { fontSize: 13, fontWeight: '600', color: colors.ink },
+  swMoveDesc: { fontSize: 12, fontWeight: '600', color: colors.muted },
+  swCost: { fontSize: 12, fontWeight: '600', color: '#C98A12' },
   switchPet: { alignItems: 'center', width: 96, padding: 6, borderRadius: 14, borderWidth: 1.5, borderColor: colors.line, backgroundColor: '#FAFCFB' },
-  switchName: { fontWeight: '900', fontSize: 14, color: colors.ink },
-  switchHp: { fontWeight: '800', fontSize: 12, color: colors.muted },
-  tip: { fontSize: 12, fontWeight: '700', color: colors.muted, textAlign: 'center' },
-  link: { fontSize: 13, fontWeight: '900', color: colors.mintDark, paddingVertical: 4 },
-  run: { fontSize: 13, fontWeight: '800', color: colors.muted, paddingVertical: 4, textDecorationLine: 'underline' },
+  switchName: { fontWeight: '700', fontSize: 14, color: colors.ink },
+  switchHp: { fontWeight: '600', fontSize: 12, color: colors.muted },
+  tip: { fontSize: 12, fontWeight: '600', color: colors.muted, textAlign: 'center' },
+  link: { fontSize: 13, fontWeight: '600', color: colors.mintDark, paddingVertical: 4 },
+  run: { fontSize: 13, fontWeight: '600', color: colors.muted, paddingVertical: 4, textDecorationLine: 'underline' },
   fcard: { position: 'absolute', backgroundColor: 'rgba(255,255,255,0.94)', borderRadius: 16, padding: 10, width: 196, gap: 4, shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 8, elevation: 3, zIndex: 4 },
-  fname: { fontWeight: '900', fontSize: 15, color: colors.ink, flexShrink: 1 },
-  flv: { fontWeight: '900', fontSize: 12, color: '#5A3E00', backgroundColor: colors.gold, borderRadius: 7, paddingHorizontal: 6, paddingVertical: 1, overflow: 'hidden' },
-  flabel: { fontWeight: '700', fontSize: 12, color: colors.muted, flexShrink: 1 },
+  fname: { fontWeight: '700', fontSize: 15, color: colors.ink, flexShrink: 1 },
+  flv: { fontWeight: '600', fontSize: 12, color: '#5A3E00', backgroundColor: colors.gold, borderRadius: 7, paddingHorizontal: 6, paddingVertical: 1, overflow: 'hidden' },
+  flabel: { fontWeight: '600', fontSize: 12, color: colors.muted, flexShrink: 1 },
   el: { borderRadius: 999, paddingHorizontal: 7, paddingVertical: 1 },
-  elText: { color: '#fff', fontWeight: '900', fontSize: 12 },
+  elText: { color: '#fff', fontWeight: '600', fontSize: 12 },
   hpTrack: { height: 10, borderRadius: 999, backgroundColor: '#E7EEEA', overflow: 'hidden' },
-  hpText: { fontWeight: '800', fontSize: 12, color: colors.muted },
+  hpText: { fontWeight: '600', fontSize: 12, color: colors.muted },
   dots: { position: 'absolute', flexDirection: 'row', gap: 5, zIndex: 4 },
   ball: { width: 14, height: 14, borderRadius: 7, backgroundColor: '#FFFFFF', borderWidth: 2, borderColor: colors.ink },
   ballOn: { backgroundColor: colors.gold },
   ballOut: { backgroundColor: '#9AA6A8', opacity: 0.6 },
   pop: { position: 'absolute', fontSize: 30, fontWeight: '900', textShadowColor: 'rgba(0,0,0,0.5)', textShadowRadius: 6, textShadowOffset: { width: 0, height: 2 }, zIndex: 6 },
-  result: { fontSize: 34, fontWeight: '900' },
+  result: { fontSize: 34, fontWeight: '800' },
   resultSub: { fontSize: 15, fontWeight: '700', color: colors.muted, textAlign: 'center' },
   rewardRow: { flexDirection: 'row', gap: 8 },
   reward: { backgroundColor: '#FFF6DD', borderRadius: 999, paddingHorizontal: 14, paddingVertical: 6, borderWidth: 1.5, borderColor: colors.gold },
-  rewardText: { fontWeight: '900', fontSize: 15, color: '#5A3E00' },
+  rewardText: { fontWeight: '700', fontSize: 15, color: '#5A3E00' },
 });

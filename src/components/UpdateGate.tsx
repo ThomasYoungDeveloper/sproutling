@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppState, Linking, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Text } from './ScaledText';
+import { Icon } from './Icon';
 import { noteWhatsNewShown } from '../lib/findMeAsk';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../lib/supabase';
@@ -85,7 +86,7 @@ export default function UpdateGate({ children }: { children: React.ReactNode }) 
   if (block) {
     return (
       <View style={[styles.full, { paddingTop: insets.top + 28, paddingBottom: insets.bottom + 28 }]}>
-        <Text style={styles.big}>🌱</Text>
+        <Icon name="sprout" size={64} color={colors.mint} strokeWidth={1.6} />
         <Text style={styles.title}>Time to update!</Text>
         <Text style={styles.body}>A lot of new things were added to Sproutling. Update to keep playing; your pets and progress are saved.</Text>
         {block.notes.length ? (
@@ -160,18 +161,18 @@ export default function UpdateGate({ children }: { children: React.ReactNode }) 
 const styles = StyleSheet.create({
   full: { flex: 1, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center', padding: 28, gap: 12 },
   big: { fontSize: 64 },
-  title: { fontSize: 28, fontWeight: '900', color: colors.ink },
+  title: { fontSize: 28, fontWeight: '800', color: colors.ink },
   body: { fontSize: 16, fontWeight: '700', color: colors.muted, textAlign: 'center' },
-  notesBox: { maxHeight: 280, alignSelf: 'stretch', backgroundColor: '#FFFCF5', borderRadius: 18, padding: 14 },
-  noteTitle: { fontSize: 15, fontWeight: '900', color: colors.ink },
+  notesBox: { maxHeight: 280, alignSelf: 'stretch', backgroundColor: '#FFFFFF', borderRadius: 18, padding: 14 },
+  noteTitle: { fontSize: 15, fontWeight: '700', color: colors.ink },
   note: { flex: 1, fontSize: 14, fontWeight: '700', color: '#3D4F55', lineHeight: 20 },
   btn: { alignSelf: 'stretch', height: 54, borderRadius: 16, backgroundColor: colors.mint, alignItems: 'center', justifyContent: 'center', marginTop: 6 },
-  btnText: { color: '#FFFFFF', fontSize: 17, fontWeight: '900' },
-  hint: { fontSize: 13, fontWeight: '700', color: colors.muted, textAlign: 'center' },
+  btnText: { color: '#FFFFFF', fontSize: 17, fontWeight: '800' },
+  hint: { fontSize: 13, fontWeight: '600', color: colors.muted, textAlign: 'center' },
   backdrop: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(20,30,35,0.5)', alignItems: 'center', justifyContent: 'center', padding: 20, zIndex: 200 },
-  card: { width: '100%', maxWidth: 420, maxHeight: '88%', backgroundColor: '#FFFCF5', borderRadius: 24, padding: 20, gap: 10 },
-  kicker: { fontSize: 12, fontWeight: '900', color: colors.mintDark, letterSpacing: 1 },
-  cardTitle: { fontSize: 22, fontWeight: '900', color: colors.ink },
+  card: { width: '100%', maxWidth: 420, maxHeight: '88%', backgroundColor: '#FFFFFF', borderRadius: 24, padding: 20, gap: 10 },
+  kicker: { fontSize: 12, fontWeight: '600', color: colors.mintDark, letterSpacing: 1 },
+  cardTitle: { fontSize: 22, fontWeight: '800', color: colors.ink },
   row: { flexDirection: 'row', gap: 8, alignItems: 'flex-start' },
   dot: { fontSize: 14, color: colors.mint, marginTop: 2 },
 });

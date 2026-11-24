@@ -53,11 +53,11 @@ function BadgeBanner() {
 const badgeStyles = StyleSheet.create({
   banner: { flexDirection: 'row', alignItems: 'center', gap: space.md, backgroundColor: '#FFFFFF', borderRadius: 18, borderWidth: 1, borderColor: colors.line, paddingVertical: space.sm, paddingHorizontal: space.md },
   ready: { backgroundColor: '#FFF6DD', borderColor: colors.gold },
-  title: { fontWeight: '900', fontSize: 16, color: colors.ink },
-  sub: { fontWeight: '700', fontSize: 12, color: colors.muted },
+  title: { fontWeight: '700', fontSize: 16, color: colors.ink },
+  sub: { fontWeight: '600', fontSize: 12, color: colors.muted },
   pill: { backgroundColor: colors.gold, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4 },
-  pillText: { fontWeight: '900', fontSize: 12, color: '#5A3E00' },
-  go: { fontWeight: '900', fontSize: 13, color: colors.mintDark },
+  pillText: { fontWeight: '600', fontSize: 12, color: '#5A3E00' },
+  go: { fontWeight: '600', fontSize: 13, color: colors.mintDark },
 });
 
 type DexFilter = 'all' | Skin | 'shiny';
@@ -157,7 +157,7 @@ export default function DexScreen() {
         {filter === 'all' ? (
           <>
             <ProgressBar value={found / SPECIES.length} color={colors.mint} />
-            {skinDexCount(state) > 0 ? <Text style={[font.tiny, { fontWeight: '900' }]}>Skins collected: {skinDexCount(state)}</Text> : null}
+            {skinDexCount(state) > 0 ? <Text style={[font.tiny, { fontWeight: '800' }]}>Skins collected: {skinDexCount(state)}</Text> : null}
             {RARITIES.map((r) => (
               <View key={r} style={{ gap: 6 }}>
                 <Text style={[styles.tier, { color: RARITY_INFO[r].color }]}>{RARITY_INFO[r].label}</Text>
@@ -203,7 +203,7 @@ export default function DexScreen() {
               </View>
             ) : (
               <View style={styles.empty}>
-                <Text style={[font.body, { fontWeight: '900' }]}>No {FILTER_LABEL[filter]} pets yet</Text>
+                <Text style={[font.body, { fontWeight: '800' }]}>No {FILTER_LABEL[filter]} pets yet</Text>
                 <Text style={[font.small, { textAlign: 'center' }]}>{FILTER_HINT[filter]}</Text>
               </View>
             )}
@@ -221,18 +221,18 @@ const styles = StyleSheet.create({
   tabs: { flexDirection: 'row', backgroundColor: '#E2F0EA', borderRadius: 14, padding: 4 },
   tab: { flex: 1, alignItems: 'center', paddingVertical: 10, borderRadius: 11 },
   tabOn: { backgroundColor: '#FFFFFF' },
-  tabText: { fontSize: 15, fontWeight: '900', color: '#6F8A82' },
+  tabText: { fontSize: 15, fontWeight: '700', color: '#6F8A82' },
   dexGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   dexTile: { width: '23%', flexGrow: 0, alignItems: 'center', justifyContent: 'center', gap: 2, paddingVertical: 8, borderRadius: 14, minHeight: 76 },
-  dexName: { fontWeight: '800', fontSize: 12, color: colors.ink },
+  dexName: { fontWeight: '600', fontSize: 12, color: colors.ink },
   tile: { width: '30%', minWidth: 96, flexGrow: 1, maxWidth: 140, alignItems: 'center', gap: 4, padding: space.sm, borderRadius: 16, borderWidth: 1, borderColor: colors.line, backgroundColor: '#FAFCFB' },
   active: { borderColor: colors.mint, backgroundColor: colors.mintSoft },
-  name: { fontWeight: '800', fontSize: 13, color: colors.ink },
+  name: { fontWeight: '600', fontSize: 13, color: colors.ink },
   lv: { position: 'absolute', top: 6, left: 6, backgroundColor: colors.ink, borderRadius: 8, paddingHorizontal: 6, paddingVertical: 2 },
   pts: { position: 'absolute', bottom: 58, right: 8, backgroundColor: colors.gold, borderRadius: 999, paddingHorizontal: 7, paddingVertical: 1 },
-  ptsText: { fontWeight: '900', fontSize: 12, color: '#5A3E00' },
-  skinBadge: { position: 'absolute', top: 4, right: 6, fontSize: 9, fontWeight: '900', backgroundColor: '#FFFFFFDD', borderRadius: 6, paddingHorizontal: 4, overflow: 'hidden' },
-  lvText: { color: '#fff', fontWeight: '900', fontSize: 12 },
+  ptsText: { fontWeight: '600', fontSize: 12, color: '#5A3E00' },
+  skinBadge: { position: 'absolute', top: 4, right: 6, fontSize: 9, fontWeight: '600', backgroundColor: '#FFFFFFDD', borderRadius: 6, paddingHorizontal: 4, overflow: 'hidden' },
+  lvText: { color: '#fff', fontWeight: '600', fontSize: 12 },
   skinRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, alignItems: 'center' },
   skinLegend: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   skinDot: { width: 9, height: 9, borderRadius: 5 },
@@ -241,9 +241,9 @@ const styles = StyleSheet.create({
   chip: { flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 40, paddingHorizontal: 12, borderRadius: 999, borderWidth: 2, borderColor: colors.line, backgroundColor: '#FFFFFF' },
   chipOn: { backgroundColor: colors.ink, borderColor: colors.ink },
   chipDot: { width: 12, height: 12, borderRadius: 6 },
-  chipText: { fontSize: 13, fontWeight: '900', color: colors.ink },
+  chipText: { fontSize: 13, fontWeight: '600', color: colors.ink },
   styleTag: { borderRadius: 999, paddingHorizontal: 8, paddingVertical: 2 },
-  styleTagText: { color: '#fff', fontWeight: '900', fontSize: 12 },
+  styleTagText: { color: '#fff', fontWeight: '600', fontSize: 12 },
   empty: { borderWidth: 2, borderStyle: 'dashed', borderColor: colors.line, borderRadius: 16, padding: space.lg, alignItems: 'center', gap: 4 },
-  tier: { fontSize: 12, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.8, marginTop: space.sm },
+  tier: { fontSize: 12, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.8, marginTop: space.sm },
 });

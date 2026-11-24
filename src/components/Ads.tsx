@@ -95,10 +95,10 @@ export function AdBonusButton({ title, onReward, onDone, style }: { title: strin
 const styles = StyleSheet.create({
   wrap: { marginTop: 18, gap: 6, alignItems: 'center' },
   rule: { alignSelf: 'stretch', borderTopWidth: 2, borderStyle: 'dashed', borderColor: '#B9D6CA' },
-  label: { alignSelf: 'flex-start', fontSize: 12, fontWeight: '900', color: '#8A9A95', letterSpacing: 1 },
+  label: { alignSelf: 'flex-start', fontSize: 12, fontWeight: '600', color: '#8A9A95', letterSpacing: 1 },
   banner: { alignItems: 'center', borderRadius: 12, overflow: 'hidden' },
   bonus: { flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 56, paddingVertical: 8, borderRadius: 16, paddingHorizontal: 14, backgroundColor: '#FF8A4C', alignSelf: 'stretch' },
-  bonusTitle: { fontSize: 16, fontWeight: '900', color: '#FFFFFF' },
-  err: { fontSize: 12, fontWeight: '800', color: '#C2410C', textAlign: 'center' },
-  bonusSub: { fontSize: 12, fontWeight: '800', color: '#FFF3E0' },
+  bonusTitle: { fontSize: 16, fontWeight: '700', color: '#FFFFFF' },
+  err: { fontSize: 12, fontWeight: '600', color: '#C2410C', textAlign: 'center' },
+  bonusSub: { fontSize: 12, fontWeight: '600', color: '#FFF3E0' },
 });

@@ -20,7 +20,7 @@ export default function LevelBadge({ level, size = 28 }: { level: number; size?:
         <Path d="M24 2l19 11v22L24 46 5 35V13z" fill={t.fill} stroke={t.edge} strokeWidth={2.5} />
         <Path d="M24 7l15 8.7v16.6L24 41 9 32.3V15.7z" fill={t.inner} opacity={0.5} />
       </Svg>
-      <Text allowFontScaling={false} style={{ color: '#FFFFFF', fontWeight: '900', fontSize: size * (level >= 100 ? 0.27 : 0.36), lineHeight: size * 0.46 }}>
+      <Text allowFontScaling={false} style={{ color: '#FFFFFF', fontWeight: '800', fontSize: size * (level >= 100 ? 0.27 : 0.36), lineHeight: size * 0.46 }}>
         {level}
       </Text>
     </View>

@@ -114,20 +114,20 @@ export function AccountLevelSheet({ onClose }: { onClose: () => void }) {
 }
 
 const styles = StyleSheet.create({
-  card: { backgroundColor: '#FFFCF5', borderRadius: 24, padding: 16, gap: 8 },
+  card: { backgroundColor: colors.card, borderRadius: 20, padding: 16, gap: 8 , borderWidth: 1, borderColor: colors.line},
   row: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  name: { fontSize: 20, fontWeight: '900', color: colors.ink },
+  name: { fontSize: 20, fontWeight: '800', color: colors.ink },
   newTag: { backgroundColor: '#FF8A5C', borderRadius: 8, paddingHorizontal: 7, paddingVertical: 2 },
-  newTagText: { color: '#FFFFFF', fontSize: 11, fontWeight: '900' },
+  newTagText: { color: '#FFFFFF', fontSize: 11, fontWeight: '600' },
   chev: { fontSize: 26, color: '#9AA7A2' },
   track: { height: 10, borderRadius: 10, backgroundColor: '#E4EEEA', overflow: 'hidden' },
   fill: { height: '100%', borderRadius: 10, backgroundColor: colors.mint },
   between: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 8 },
-  meta: { fontSize: 12, fontWeight: '900', color: colors.muted },
+  meta: { fontSize: 12, fontWeight: '600', color: colors.muted },
   backdrop: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(20,30,35,0.5)' },
-  sheet: { backgroundColor: '#FFFCF5', borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 20, gap: 9, width: '100%', maxWidth: 560, alignSelf: 'center' },
-  head: { fontSize: 16, fontWeight: '900', color: colors.ink, marginTop: 6 },
-  line: { fontSize: 14, fontWeight: '800', color: colors.ink },
-  xp: { fontSize: 14, fontWeight: '900', color: colors.mintDark },
+  sheet: { backgroundColor: '#FFFFFF', borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 20, gap: 9, width: '100%', maxWidth: 560, alignSelf: 'center' },
+  head: { fontSize: 16, fontWeight: '700', color: colors.ink, marginTop: 6 },
+  line: { fontSize: 14, fontWeight: '700', color: colors.ink },
+  xp: { fontSize: 14, fontWeight: '700', color: colors.mintDark },
   road: { flexDirection: 'row', alignItems: 'center', gap: 10 },
 });

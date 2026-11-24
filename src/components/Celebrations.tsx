@@ -89,9 +89,9 @@ export function QuestBanner({ banner, onDone }: { banner: Banner; onDone: () => 
 function BigChest() {
   return (
     <Svg width={130} height={120} viewBox="0 0 64 60">
-      <Rect x={8} y={26} width={48} height={30} rx={5} fill="#C98A54" stroke="#24323A" strokeWidth={2.5} />
-      <Path d="M8 28 Q8 12 32 12 Q56 12 56 28 Z" fill="#A86B3A" stroke="#24323A" strokeWidth={2.5} strokeLinejoin="round" />
-      <Rect x={27} y={24} width={10} height={12} rx={2} fill="#FFE27A" stroke="#24323A" strokeWidth={2} />
+      <Rect x={8} y={26} width={48} height={30} rx={5} fill="#C98A54" stroke="#1F2A2E" strokeWidth={2.5} />
+      <Path d="M8 28 Q8 12 32 12 Q56 12 56 28 Z" fill="#A86B3A" stroke="#1F2A2E" strokeWidth={2.5} strokeLinejoin="round" />
+      <Rect x={27} y={24} width={10} height={12} rx={2} fill="#FFE27A" stroke="#1F2A2E" strokeWidth={2} />
     </Svg>
   );
 }
@@ -125,7 +125,7 @@ export function DayComplete({ onClose, onChests }: { onClose: () => void; onChes
           </Animated.View>
         </View>
         <Text style={styles.bigLine}>Bronze chest earned</Text>
-        <Text style={styles.bigLine}>🔥 {streak}-day streak{streak > 0 && streak % 7 === 0 ? ' · Silver chest too!' : ''}</Text>
+        <Text style={styles.bigLine}>{streak}-day streak{streak > 0 && streak % 7 === 0 ? ' · Silver chest too!' : ''}</Text>
         <View style={{ alignSelf: 'stretch', gap: space.sm, marginTop: space.sm }}>
           <Button primary label="Open my chest" onPress={() => { onClose(); onChests(); }} />
           <Button label="Woohoo!" onPress={onClose} />
@@ -139,12 +139,12 @@ const styles = StyleSheet.create({
   bannerWrap: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 95, paddingTop: 48, paddingHorizontal: space.md },
   banner: { flexDirection: 'row', alignItems: 'center', gap: space.sm, backgroundColor: '#FFFFFF', borderRadius: 20, borderWidth: 3, padding: 10, width: '100%', maxWidth: 440, shadowColor: '#000', shadowOpacity: 0.18, shadowRadius: 14, shadowOffset: { width: 0, height: 6 }, elevation: 6 },
   bannerIcon: { width: 46, height: 46, borderRadius: 23, alignItems: 'center', justifyContent: 'center' },
-  bannerTitle: { fontSize: 18, fontWeight: '900' },
-  bannerSub: { fontSize: 13, fontWeight: '800', color: colors.muted },
+  bannerTitle: { fontSize: 18, fontWeight: '800' },
+  bannerSub: { fontSize: 13, fontWeight: '600', color: colors.muted },
   bigBack: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(24,30,48,0.72)', justifyContent: 'center', alignItems: 'center', padding: space.md, zIndex: 110 },
-  bigCard: { backgroundColor: '#FFFFFF', borderRadius: 28, padding: space.lg, width: '100%', maxWidth: 380, alignItems: 'center', gap: 4 },
-  bigKicker: { fontSize: 12, fontWeight: '900', letterSpacing: 1.2, color: '#C99212' },
-  bigTitle: { fontSize: 28, fontWeight: '900', color: colors.ink, textAlign: 'center' },
+  bigCard: { backgroundColor: '#FFFFFF', borderRadius: 24, padding: space.lg, width: '100%', maxWidth: 380, alignItems: 'center', gap: 4 },
+  bigKicker: { fontSize: 12, fontWeight: '600', letterSpacing: 1.2, color: '#C99212' },
+  bigTitle: { fontSize: 28, fontWeight: '800', color: colors.ink, textAlign: 'center' },
   bigStage: { width: 260, height: 190, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
-  bigLine: { fontSize: 16, fontWeight: '900', color: colors.ink },
+  bigLine: { fontSize: 16, fontWeight: '700', color: colors.ink },
 });

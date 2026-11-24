@@ -71,12 +71,12 @@ export default function TabBar<T extends string>({ tabs, active, badges, onPick 
 }
 
 const styles = StyleSheet.create({
-  wrap: { backgroundColor: '#24323A', paddingTop: 6 },
+  wrap: { backgroundColor: '#1F2A2E', paddingTop: 6 },
   bar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-around', paddingHorizontal: 2, height: 60, maxWidth: 520, width: '100%', alignSelf: 'center' },
   btn: { width: 64, height: 54, borderRadius: 18, alignItems: 'center', justifyContent: 'center', gap: 2 },
   on: { backgroundColor: '#2FB58A' },
-  label: { fontSize: 11, fontWeight: '900' },
+  label: { fontSize: 11, fontWeight: '600' },
   badge: { position: 'absolute', top: 3, right: 7, minWidth: 17, height: 17, borderRadius: 9, paddingHorizontal: 4, backgroundColor: '#FF6B5B', alignItems: 'center', justifyContent: 'center' },
   dot: { position: 'absolute', top: 6, right: 14, width: 10, height: 10, borderRadius: 5, backgroundColor: '#FF6B5B' },
-  badgeText: { color: '#FFFFFF', fontSize: 10, fontWeight: '900' },
+  badgeText: { color: '#FFFFFF', fontSize: 10, fontWeight: '600' },
 });

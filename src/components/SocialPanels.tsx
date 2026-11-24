@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { Text } from './ScaledText';
+import { Icon } from './Icon';
 import { useLive, type LiveBattle } from '../state/LiveBattleContext';
 import { useGame } from '../state/GameContext';
 import { useFriends, type Friend, type Trade } from '../state/FriendsContext';
@@ -320,7 +321,7 @@ export function ArenaCard() {
   return (
     <Card style={styles.arena}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.sm }}>
-        <Text style={{ fontSize: 34 }}>⚔️</Text>
+        <Icon name="swords" size={34} color={colors.ink} strokeWidth={1.6} />
         <View style={{ flex: 1 }}>
           <Text style={[font.h2, { color: '#FFFFFF' }]}>Battle arena</Text>
           <Text style={[font.small, { color: '#D6DCF5' }]}>
@@ -574,26 +575,26 @@ const styles = StyleSheet.create({
   buffs: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   buff: { flexDirection: 'row', alignItems: 'center', gap: 4, borderRadius: 999, paddingHorizontal: 9, paddingVertical: 4, backgroundColor: 'rgba(255,255,255,0.12)' },
   buffOn: { backgroundColor: colors.gold },
-  buffText: { fontWeight: '900', fontSize: 12, color: '#D6DCF5' },
+  buffText: { fontWeight: '600', fontSize: 12, color: '#D6DCF5' },
   closedRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   trade: { borderTopWidth: 1, borderTopColor: colors.line, paddingTop: space.sm, gap: 6 },
   stack: { flexDirection: 'row', flexWrap: 'wrap', alignSelf: 'stretch', gap: 4, justifyContent: 'center', backgroundColor: colors.sky, borderRadius: 18, padding: 6, minHeight: 72, alignItems: 'center' },
   stackPet: { alignItems: 'center', width: 38 },
-  stackLv: { fontSize: 10, fontWeight: '800', color: colors.ink },
+  stackLv: { fontSize: 10, fontWeight: '600', color: colors.ink },
   fairTrack: { height: 8, borderRadius: 4, backgroundColor: '#F2D9C9', overflow: 'hidden', marginHorizontal: space.md },
   fairFill: { height: 8, backgroundColor: colors.mint },
   fairMid: { position: 'absolute', left: '50%', top: 0, bottom: 0, width: 2, backgroundColor: colors.ink, opacity: 0.4 },
   swap: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: space.xs },
-  arrow: { fontSize: 26, fontWeight: '900', color: colors.mintDark },
+  arrow: { fontSize: 26, fontWeight: '800', color: colors.mintDark },
   mini: { alignItems: 'center', flex: 1, minWidth: 0, maxWidth: 160 },
   miniArt: { width: 72, height: 72, borderRadius: 18, backgroundColor: colors.sky, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
-  miniName: { fontWeight: '900', fontSize: 13, color: colors.ink, marginTop: 2 },
-  miniSub: { fontWeight: '700', fontSize: 12, color: colors.muted },
-  miniTop: { fontWeight: '900', fontSize: 12, letterSpacing: 0.5, marginBottom: 2 },
-  miniLink: { fontWeight: '900', fontSize: 12, color: colors.mintDark },
+  miniName: { fontWeight: '600', fontSize: 13, color: colors.ink, marginTop: 2 },
+  miniSub: { fontWeight: '600', fontSize: 12, color: colors.muted },
+  miniTop: { fontWeight: '600', fontSize: 12, letterSpacing: 0.5, marginBottom: 2 },
+  miniLink: { fontWeight: '600', fontSize: 12, color: colors.mintDark },
   actions: { flexDirection: 'row', gap: space.sm, justifyContent: 'flex-end' },
   liveRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm, borderTopWidth: 1, borderTopColor: colors.line, paddingTop: space.sm },
   liveDot: { width: 10, height: 10, borderRadius: 5 },
-  liveName: { fontWeight: '900', fontSize: 15, color: colors.ink },
-  liveGo: { fontWeight: '900', fontSize: 14, color: '#C2365C' },
+  liveName: { fontWeight: '700', fontSize: 15, color: colors.ink },
+  liveGo: { fontWeight: '700', fontSize: 14, color: '#C2365C' },
 });

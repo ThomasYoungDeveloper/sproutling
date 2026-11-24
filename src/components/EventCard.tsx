@@ -90,7 +90,7 @@ export default function EventCard() {
     return (
       <Card style={styles.off}>
         <Text style={styles.offText}>
-          {nx.event.emoji} Next event: <Text style={{ fontWeight: '900' }}>{nx.event.name}</Text> starts in {days} day{days === 1 ? '' : 's'}. Limited items await!
+          {nx.event.emoji} Next event: <Text style={{ fontWeight: '800' }}>{nx.event.name}</Text> starts in {days} day{days === 1 ? '' : 's'}. Limited items await!
         </Text>
       </Card>
     );
@@ -156,7 +156,7 @@ export default function EventCard() {
         </View>
         <View style={styles.nextRow}>
           <Text style={styles.nextText} numberOfLines={2}>
-            {next ? <>Next: <Text style={{ fontWeight: '900' }}>{Ev.milestoneLabel(next)}</Text> in {next.tokens - tokens} {tokenName}. Today: {todayTokens} of {Ev.TOKENS_PER_DAY}.</> : 'You’ve unlocked everything. Amazing!'}
+            {next ? <>Next: <Text style={{ fontWeight: '800' }}>{Ev.milestoneLabel(next)}</Text> in {next.tokens - tokens} {tokenName}. Today: {todayTokens} of {Ev.TOKENS_PER_DAY}.</> : 'You’ve unlocked everything. Amazing!'}
           </Text>
           {ready ? (
             <Pulse><View style={styles.claim}><Text style={styles.claimText}>Claim {ready}</Text></View></Pulse>
@@ -254,10 +254,10 @@ export default function EventCard() {
 const styles = StyleSheet.create({
   banner: { borderRadius: 24, overflow: 'hidden', padding: 14, paddingBottom: 12, gap: 10, shadowColor: '#7A3418', shadowOpacity: 0.3, shadowRadius: 0, shadowOffset: { width: 0, height: 5 }, elevation: 3 },
   badgeBox: { width: 46, height: 46, borderRadius: 16, backgroundColor: 'rgba(255,255,255,0.22)', alignItems: 'center', justifyContent: 'center' },
-  bannerKicker: { fontSize: 12, fontWeight: '900', letterSpacing: 1, color: '#FFE9C9' },
-  bannerTitle: { fontSize: 20, fontWeight: '900', color: '#FFFFFF' },
+  bannerKicker: { fontSize: 12, fontWeight: '600', letterSpacing: 1, color: '#FFE9C9' },
+  bannerTitle: { fontSize: 20, fontWeight: '800', color: '#FFFFFF' },
   countPill: { backgroundColor: '#FFFFFF', borderRadius: 999, paddingHorizontal: 12, paddingVertical: 6 },
-  countPillText: { fontSize: 15, fontWeight: '900', color: '#8A3E15' },
+  countPillText: { fontSize: 15, fontWeight: '700', color: '#8A3E15' },
   track: { height: 56, marginTop: 16, marginHorizontal: 18 },
   trackLine: { position: 'absolute', left: 0, right: 0, top: 0, height: 8, borderRadius: 999, backgroundColor: 'rgba(59,32,10,0.35)' },
   trackFill: { position: 'absolute', left: 0, top: 0, height: 8, borderRadius: 999, backgroundColor: '#FFE27A' },
@@ -266,40 +266,40 @@ const styles = StyleSheet.create({
   stopHave: { backgroundColor: '#FFE27A', borderColor: '#FFFFFF' },
   stopCan: { backgroundColor: '#FFFFFF', borderColor: '#FFE27A' },
   stopCheck: { position: 'absolute', right: -5, top: -5, width: 16, height: 16, borderRadius: 8, backgroundColor: colors.mint, alignItems: 'center', justifyContent: 'center' },
-  stopCheckText: { color: '#FFFFFF', fontSize: 12, fontWeight: '900' },
-  stopNum: { fontSize: 12, fontWeight: '900', color: '#FFF3E0' },
+  stopCheckText: { color: '#FFFFFF', fontSize: 12, fontWeight: '600' },
+  stopNum: { fontSize: 12, fontWeight: '600', color: '#FFF3E0' },
   nextRow: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: 'rgba(255,255,255,0.16)', borderRadius: 16, paddingVertical: 8, paddingHorizontal: 10 },
-  nextText: { flex: 1, fontSize: 13, fontWeight: '800', color: '#FFFFFF' },
+  nextText: { flex: 1, fontSize: 13, fontWeight: '600', color: '#FFFFFF' },
   claim: { backgroundColor: '#FFE27A', borderRadius: 12, paddingHorizontal: 12, paddingVertical: 8 },
-  claimText: { fontSize: 14, fontWeight: '900', color: '#5A2A0A' },
+  claimText: { fontSize: 14, fontWeight: '700', color: '#5A2A0A' },
   row: { flexDirection: 'row', alignItems: 'center', gap: 10, borderRadius: 18, paddingVertical: 12, paddingHorizontal: 14 },
-  rowTitle: { fontSize: 16, fontWeight: '900', color: '#FFFFFF' },
-  rowSub: { fontSize: 12, fontWeight: '800', color: '#FFE9C9' },
+  rowTitle: { fontSize: 16, fontWeight: '700', color: '#FFFFFF' },
+  rowSub: { fontSize: 12, fontWeight: '600', color: '#FFE9C9' },
   claimPill: { backgroundColor: '#FFFFFF', borderRadius: 12, paddingHorizontal: 12, paddingVertical: 7 },
-  claimPillText: { color: '#8A3E15', fontSize: 14, fontWeight: '900' },
+  claimPillText: { color: '#8A3E15', fontSize: 14, fontWeight: '700' },
   collapse: { width: 34, height: 34, borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.2)', alignItems: 'center', justifyContent: 'center' },
-  collapseText: { color: '#FFFFFF', fontSize: 18, fontWeight: '900', marginTop: 4 },
+  collapseText: { color: '#FFFFFF', fontSize: 18, fontWeight: '800', marginTop: 4 },
   card: { overflow: 'hidden', gap: space.sm },
   off: { backgroundColor: '#FFF8EC', borderColor: '#F2E2C2' },
   offText: { fontSize: 14, fontWeight: '700', color: colors.ink },
-  label: { flex: 1, fontSize: 12, fontWeight: '900', color: '#FFE9C9', letterSpacing: 1 },
-  title: { flex: 1, fontSize: 24, fontWeight: '900', color: '#FFFFFF' },
+  label: { flex: 1, fontSize: 12, fontWeight: '600', color: '#FFE9C9', letterSpacing: 1 },
+  title: { flex: 1, fontSize: 24, fontWeight: '800', color: '#FFFFFF' },
   count: { backgroundColor: 'rgba(255,255,255,0.95)', borderRadius: 14, paddingHorizontal: 10, paddingVertical: 6 },
-  countText: { fontSize: 18, fontWeight: '900', color: colors.ink },
-  blurb: { fontSize: 13, fontWeight: '700', color: '#FFF3E0' },
-  small: { fontSize: 12, fontWeight: '800', color: '#FFE9C9' },
+  countText: { fontSize: 18, fontWeight: '800', color: colors.ink },
+  blurb: { fontSize: 13, fontWeight: '600', color: '#FFF3E0' },
+  small: { fontSize: 12, fontWeight: '600', color: '#FFE9C9' },
   tile: { width: 104, backgroundColor: 'rgba(255,255,255,0.92)', borderRadius: 16, padding: 8, alignItems: 'center', gap: 4 },
   tileReady: { backgroundColor: '#FFFFFF', borderWidth: 3, borderColor: '#FFE27A' },
   icon: { height: 52, alignItems: 'center', justifyContent: 'center' },
-  tileName: { fontSize: 12, fontWeight: '900', color: colors.ink, textAlign: 'center', minHeight: 30 },
-  tileState: { fontSize: 13, fontWeight: '900', color: colors.muted },
-  msg: { fontSize: 13, fontWeight: '800', color: '#FFFFFF' },
+  tileName: { fontSize: 12, fontWeight: '600', color: colors.ink, textAlign: 'center', minHeight: 30 },
+  tileState: { fontSize: 13, fontWeight: '600', color: colors.muted },
+  msg: { fontSize: 13, fontWeight: '600', color: '#FFFFFF' },
   list: { backgroundColor: 'rgba(0,0,0,0.18)', borderRadius: 16, padding: 10, gap: 7 },
-  listHead: { fontSize: 12, fontWeight: '900', color: '#FFE3B8', letterSpacing: 1 },
+  listHead: { fontSize: 12, fontWeight: '600', color: '#FFE3B8', letterSpacing: 1 },
   listRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   tick: { width: 18, height: 18, borderRadius: 9, borderWidth: 2, borderColor: '#FFE3B8', alignItems: 'center', justifyContent: 'center' },
   tickOn: { backgroundColor: '#FFE3B8' },
-  tickText: { fontSize: 12, fontWeight: '900', color: '#7A3F1D' },
-  listText: { flex: 1, fontSize: 13, fontWeight: '800', color: '#FFF3E0' },
-  listMeta: { fontSize: 13, fontWeight: '900', color: '#FFFFFF' },
+  tickText: { fontSize: 12, fontWeight: '600', color: '#7A3F1D' },
+  listText: { flex: 1, fontSize: 13, fontWeight: '600', color: '#FFF3E0' },
+  listMeta: { fontSize: 13, fontWeight: '600', color: '#FFFFFF' },
 });

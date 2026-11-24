@@ -80,7 +80,7 @@ export default function DailyLoginSheet({ onClose }: { onClose: () => void }) {
               <RewardLabel r={got.reward} big />
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                 <PotionIcon kind="small" size={26} />
-                <Text style={[font.small, { fontWeight: '900' }]}>Plus your daily Small Potion</Text>
+                <Text style={[font.small, { fontWeight: '800' }]}>Plus your daily Small Potion</Text>
               </View>
               {got.reward.chest ? <Text style={font.small}>Open it on the Chests tab.</Text> : null}
               {got.reward.coins && !doubled ? <AdBonusButton title={`Double today’s coins: ${got.reward.coins * 2}`} onReward={addCoins(got.reward.coins)} onDone={() => setDoubled(true)} /> : null}
@@ -104,18 +104,18 @@ export default function DailyLoginSheet({ onClose }: { onClose: () => void }) {
 }
 
 const styles = StyleSheet.create({
-  doubled: { fontSize: 18, fontWeight: '900', color: '#FF8A4C', textAlign: 'center' },
+  doubled: { fontSize: 18, fontWeight: '800', color: '#FF8A4C', textAlign: 'center' },
   backdrop: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(24,30,48,0.6)', justifyContent: 'center', alignItems: 'center', padding: space.lg, zIndex: 60 },
-  sheet: { backgroundColor: '#FFFFFF', borderRadius: 22, padding: space.lg, gap: space.sm, width: '100%', maxWidth: 420, alignSelf: 'center' },
+  sheet: { backgroundColor: '#FFFFFF', borderRadius: 24, padding: space.lg, gap: space.sm, width: '100%', maxWidth: 420, alignSelf: 'center' },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, justifyContent: 'space-between', marginVertical: space.xs },
   tile: { alignItems: 'center', gap: 2, paddingVertical: 8, borderRadius: 14, borderWidth: 1.5, borderColor: colors.line, backgroundColor: '#FAFCFB' },
   tileBig: { backgroundColor: '#FFF6DD', borderColor: colors.gold },
   tileToday: { borderColor: colors.mint, borderWidth: 2.5, backgroundColor: colors.mintSoft },
   tileDone: { opacity: 0.55 },
-  day: { fontSize: 12, fontWeight: '900', color: colors.muted, textTransform: 'uppercase', letterSpacing: 0.5 },
-  tileText: { fontSize: 13, fontWeight: '900', color: colors.ink },
-  bigText: { fontSize: 22, fontWeight: '900', color: colors.ink },
+  day: { fontSize: 12, fontWeight: '600', color: colors.muted, textTransform: 'uppercase', letterSpacing: 0.5 },
+  tileText: { fontSize: 13, fontWeight: '600', color: colors.ink },
+  bigText: { fontSize: 22, fontWeight: '800', color: colors.ink },
   check: { position: 'absolute', top: 4, right: 4, width: 18, height: 18, borderRadius: 9, backgroundColor: colors.mint, alignItems: 'center', justifyContent: 'center' },
-  checkText: { color: '#fff', fontSize: 12, fontWeight: '900' },
+  checkText: { color: '#fff', fontSize: 12, fontWeight: '600' },
   got: { alignItems: 'center', gap: 4, paddingVertical: space.sm, backgroundColor: '#FFF6DD', borderRadius: 16 },
 });

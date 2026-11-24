@@ -4,6 +4,7 @@ import { useOpenChat } from './Chat';
 import { useChat } from '../state/ChatContext';
 import { Animated, Easing, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Text } from './ScaledText';
+import { Icon } from './Icon';
 import { useFriends, type Friend } from '../state/FriendsContext';
 import { Button, RarityBadge } from './ui';
 import PetSprite from './PetSprite';
@@ -69,7 +70,7 @@ export default function FriendSheet({ friend, onClose }: { friend: Friend; onClo
               <PetSprite species={activeSpecies} stage={stageFor(active.xp)} size={170} shiny={active.shiny} skin={active.skin} hat={active.hat} aura={active.aura} />
             </FriendPet>
           ) : (
-            <Text style={{ position: 'absolute', alignSelf: 'center', top: 220, fontSize: 64 }}>🥚</Text>
+            <View style={{ position: 'absolute', alignSelf: 'center', top: 220 }}><Icon name="egg" size={64} color="#C9B98F" strokeWidth={1.5} /></View>
           )}
           <View style={[styles.yardTop, { top: 14 + insets.top }]}>
             <Pressable onPress={onClose} style={styles.backPill} accessibilityRole="button" accessibilityLabel="Back">
@@ -124,7 +125,7 @@ export default function FriendSheet({ friend, onClose }: { friend: Friend; onClo
 
           <View style={styles.actions}>
             <Pressable onPress={doGift} disabled={live.giftedToday || giftsLeft === 0} style={[styles.action, { backgroundColor: colors.gold }, (live.giftedToday || giftsLeft === 0) && { opacity: 0.55 }]} accessibilityRole="button" accessibilityLabel={live.giftedToday ? 'Gift sent today' : 'Send a gift'}>
-              <Text style={styles.actionIcon}>🎁</Text>
+              <Icon name="gift" size={18} color="#5A3A00" />
               <Text style={[styles.actionText, { color: '#5A3A00' }]}>{live.giftedToday ? 'Sent' : giftsLeft === 0 ? resetIn : 'Gift'}</Text>
             </Pressable>
             <Pressable
@@ -143,7 +144,7 @@ export default function FriendSheet({ friend, onClose }: { friend: Friend; onClo
               accessibilityRole="button"
               accessibilityLabel="Battle"
             >
-              <Text style={styles.actionIcon}>⚔️</Text>
+              <Icon name="swords" size={18} color="#FFFFFF" />
               <Text style={styles.actionText}>{battles.some((b) => b.friendId === live.id && b.myTurn) ? 'Your move!' : 'Battle'}</Text>
             </Pressable>
             <Pressable
@@ -308,52 +309,52 @@ function Stat({ label, value, bg, ink }: { label: string; value: string; bg: str
 
 const styles = StyleSheet.create({
   showcase: { flexDirection: 'row', justifyContent: 'center', gap: 6 },
-  showName: { fontSize: 11, fontWeight: '900', color: colors.ink },
-  showTier: { fontSize: 10, fontWeight: '800', color: colors.muted },
+  showName: { fontSize: 11, fontWeight: '600', color: colors.ink },
+  showTier: { fontSize: 10, fontWeight: '600', color: colors.muted },
   chatBtn: { borderRadius: 16, paddingVertical: 12, alignItems: 'center', backgroundColor: '#FFFFFF', borderWidth: 2, borderColor: '#CFE6DA' },
-  chatBtnText: { fontWeight: '900', fontSize: 15, color: colors.ink },
+  chatBtnText: { fontWeight: '700', fontSize: 15, color: colors.ink },
   choose: { flexDirection: 'row', gap: space.sm },
   chooseBtn: { flex: 1, borderRadius: 16, padding: 12, gap: 2 },
-  chooseTitle: { color: '#fff', fontWeight: '900', fontSize: 15 },
-  chooseSub: { color: 'rgba(255,255,255,0.85)', fontWeight: '700', fontSize: 12 },
+  chooseTitle: { color: '#fff', fontWeight: '700', fontSize: 15 },
+  chooseSub: { color: 'rgba(255,255,255,0.85)', fontWeight: '600', fontSize: 12 },
   screen: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: colors.bg, zIndex: 50 },
   yard: { height: 460, overflow: 'hidden' },
   yardTop: { position: 'absolute', top: 14, left: 14, right: 14, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   backPill: { backgroundColor: 'rgba(255,255,255,0.92)', borderRadius: 999, paddingHorizontal: 14, paddingVertical: 8 },
   seenPill: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: 'rgba(255,255,255,0.92)', borderRadius: 999, paddingHorizontal: 12, paddingVertical: 8 },
   dot: { width: 10, height: 10, borderRadius: 5, backgroundColor: colors.mint },
-  seenText: { fontSize: 13, fontWeight: '900', color: colors.ink },
+  seenText: { fontSize: 13, fontWeight: '600', color: colors.ink },
   hello: { position: 'absolute', top: 104, left: 0, right: 0, alignItems: 'center' },
-  helloText: { backgroundColor: '#FFFFFF', borderRadius: 16, paddingHorizontal: 14, paddingVertical: 7, fontSize: 14, fontWeight: '900', color: colors.ink, overflow: 'hidden' },
+  helloText: { backgroundColor: '#FFFFFF', borderRadius: 16, paddingHorizontal: 14, paddingVertical: 7, fontSize: 14, fontWeight: '700', color: colors.ink, overflow: 'hidden' },
   sheetBody: { marginTop: -26, borderTopLeftRadius: 28, borderTopRightRadius: 28, backgroundColor: colors.bg, padding: space.lg, gap: space.md, width: '100%', maxWidth: 520, alignSelf: 'center' },
-  who: { fontSize: 26, fontWeight: '900', color: '#1F3A33' },
-  whoSub: { fontSize: 13, fontWeight: '800', color: '#3E6B5E' },
-  statLabel: { fontSize: 12, fontWeight: '900' },
+  who: { fontSize: 26, fontWeight: '800', color: '#1F2A2E' },
+  whoSub: { fontSize: 13, fontWeight: '600', color: '#3E6B5E' },
+  statLabel: { fontSize: 12, fontWeight: '600' },
   actions: { flexDirection: 'row', gap: space.sm },
   action: { flex: 1, height: 48, borderRadius: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 },
-  actionIcon: { fontSize: 18, color: '#FFFFFF', fontWeight: '900' },
-  actionText: { fontSize: 15, fontWeight: '900', color: '#FFFFFF' },
-  teamCard: { backgroundColor: colors.card, borderRadius: 22, padding: space.md, gap: space.sm },
-  teamTitle: { fontSize: 18, fontWeight: '900', color: colors.ink },
-  hint: { fontSize: 13, fontWeight: '800', color: '#3E6B5E', backgroundColor: '#E4F2EC', borderRadius: 12, paddingHorizontal: 10, paddingVertical: 8, overflow: 'hidden' },
+  actionIcon: { fontSize: 18, color: '#FFFFFF', fontWeight: '800' },
+  actionText: { fontSize: 15, fontWeight: '700', color: '#FFFFFF' },
+  teamCard: { backgroundColor: colors.card, borderRadius: 20, padding: space.md, gap: space.sm , borderWidth: 1, borderColor: colors.line},
+  teamTitle: { fontSize: 18, fontWeight: '800', color: colors.ink },
+  hint: { fontSize: 13, fontWeight: '600', color: '#3E6B5E', backgroundColor: '#E4F2EC', borderRadius: 12, paddingHorizontal: 10, paddingVertical: 8, overflow: 'hidden' },
   away: { position: 'absolute', bottom: 40, zIndex: 2, backgroundColor: '#E8590C', borderRadius: 999, paddingHorizontal: 7, paddingVertical: 1 },
-  awayText: { color: '#FFFFFF', fontSize: 12, fontWeight: '900' },
+  awayText: { color: '#FFFFFF', fontSize: 12, fontWeight: '600' },
   remove: { alignSelf: 'center', padding: 10 },
-  removeText: { fontSize: 13, fontWeight: '800', color: colors.muted },
+  removeText: { fontSize: 13, fontWeight: '600', color: colors.muted },
   back: { alignSelf: 'flex-start', minHeight: 40, paddingHorizontal: 10, marginLeft: -8, marginTop: -6, marginBottom: 4, justifyContent: 'center' },
-  backText: { fontSize: 16, fontWeight: '900', color: colors.mintDark },
+  backText: { fontSize: 16, fontWeight: '700', color: colors.mintDark },
   backdrop: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(24,30,48,0.55)', justifyContent: 'center', alignItems: 'center', padding: space.lg, zIndex: 50 },
-  sheet: { backgroundColor: '#FFFFFF', borderRadius: 22, padding: space.lg, width: '100%', maxWidth: 420, maxHeight: '92%' },
+  sheet: { backgroundColor: '#FFFFFF', borderRadius: 24, padding: space.lg, width: '100%', maxWidth: 420, maxHeight: '92%' },
   hero: { alignItems: 'center', gap: 2 },
   stage: { alignSelf: 'stretch', height: 200, borderRadius: 18, overflow: 'hidden', alignItems: 'center', justifyContent: 'flex-end', paddingBottom: 8, backgroundColor: colors.sky },
   stats: { flexDirection: 'row', gap: space.sm },
   stat: { flex: 1, alignItems: 'center', borderRadius: 16, paddingVertical: space.sm },
-  statValue: { fontSize: 18, fontWeight: '900', color: colors.ink },
+  statValue: { fontSize: 18, fontWeight: '800', color: colors.ink },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: '3.5%', rowGap: space.sm },
   tile: { width: '31%', alignItems: 'center', gap: 3, padding: space.xs, borderRadius: 14, borderWidth: 1, borderColor: colors.line, backgroundColor: '#FAFCFB' },
-  name: { fontWeight: '800', fontSize: 12, color: colors.ink },
+  name: { fontWeight: '600', fontSize: 12, color: colors.ink },
   lv: { position: 'absolute', top: 4, left: 4, backgroundColor: colors.ink, borderRadius: 7, paddingHorizontal: 5, paddingVertical: 1 },
-  lvText: { color: '#fff', fontWeight: '900', fontSize: 12 },
+  lvText: { color: '#fff', fontWeight: '600', fontSize: 12 },
   row2: { flexDirection: 'row', gap: space.sm, marginTop: space.xs },
   soon: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, justifyContent: 'center', marginTop: space.xs },
   row: { flexDirection: 'row', gap: space.sm, alignItems: 'center', marginTop: space.md },

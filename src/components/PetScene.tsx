@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useYardTip } from './YardTips';
 import { Animated, Easing, Image, PanResponder, Platform, Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { Text } from './ScaledText';
+import { Icon } from './Icon';
 import Svg, { Circle, Defs, Ellipse, LinearGradient, Path, Rect, Stop } from 'react-native-svg';
 import { useGame } from '../state/GameContext';
 import PetSprite from './PetSprite';
@@ -819,7 +820,9 @@ export default function PetScene({ onTrinketsEmpty, onDressUp, onShop, onAccount
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
           <View style={styles.stat} accessibilityLabel={`${streak}-day streak${state.shields ? `, ${state.shields} shields` : ''}`}>
-            <Text style={styles.statText}>🔥 {streak}{state.shields ? ` 🛡️${state.shields}` : ''}</Text>
+            <Icon name="flame" size={15} color="#F07A2B" filled />
+            <Text style={styles.statText}>{streak}</Text>
+            {state.shields ? <><Icon name="shield" size={14} color="#3D8FD6" filled /><Text style={styles.statText}>{state.shields}</Text></> : null}
           </View>
           <Pressable style={styles.stat} hitSlop={8} onPress={() => onShop?.()} accessibilityRole="button" accessibilityLabel={`${state.coins} coins, open shop`}>
             <Image source={COIN_PILE} style={{ width: 24, height: 24 }} resizeMode="contain" />
@@ -970,31 +973,31 @@ const styles = StyleSheet.create({
   moodDot: { width: 8, height: 8, borderRadius: 4 },
   namePill: { flex: 1, maxWidth: 230, backgroundColor: 'rgba(255,255,255,0.9)', borderRadius: 18, paddingVertical: 7, paddingHorizontal: 10, gap: 4 },
   plus: { width: 16, height: 16, borderRadius: 8, backgroundColor: colors.mint, alignItems: 'center', justifyContent: 'center', marginLeft: 4 },
-  plusText: { color: '#FFFFFF', fontSize: 12, fontWeight: '900', marginTop: -1 },
+  plusText: { color: '#FFFFFF', fontSize: 12, fontWeight: '600', marginTop: -1 },
   side: { position: 'absolute', right: 10, top: 112, alignItems: 'center', gap: 2, zIndex: 20 },
   sideBtn: { width: 48, height: 48, borderRadius: 24, backgroundColor: '#FFFFFF', borderWidth: 3, borderColor: '#9B5BD6', alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 4, shadowOffset: { width: 0, height: 3 }, elevation: 3 },
-  sideLabel: { fontSize: 12, fontWeight: '900', color: colors.ink, backgroundColor: 'rgba(255,255,255,0.85)', borderRadius: 999, paddingHorizontal: 6, overflow: 'hidden' },
+  sideLabel: { fontSize: 12, fontWeight: '600', color: colors.ink, backgroundColor: 'rgba(255,255,255,0.85)', borderRadius: 999, paddingHorizontal: 6, overflow: 'hidden' },
   care: { position: 'absolute', left: 0, right: 0, bottom: 34, flexDirection: 'row', justifyContent: 'center', gap: 10, zIndex: 20 },
   careBtn: { width: 60, height: 60, borderRadius: 30, borderWidth: 3, borderColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOpacity: 0.16, shadowRadius: 4, shadowOffset: { width: 0, height: 4 }, elevation: 4 },
   careCheck: { position: 'absolute', top: -4, right: -4, width: 22, height: 22, borderRadius: 11, backgroundColor: colors.mint, borderWidth: 2, borderColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center' },
-  careCheckText: { color: '#FFFFFF', fontSize: 12, fontWeight: '900' },
+  careCheckText: { color: '#FFFFFF', fontSize: 12, fontWeight: '600' },
   tray: { position: 'absolute', left: 10, right: 10, bottom: 10, flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: 'rgba(255,255,255,0.88)', borderRadius: 20, padding: 6, zIndex: 10 },
   trayDivider: { width: 1, height: 36, backgroundColor: colors.line },
   trayDone: { borderColor: colors.mint, backgroundColor: colors.mintSoft },
   trayOn: { borderColor: '#3D8FD6', backgroundColor: '#EAF3FC' },
   trayBadge: { position: 'absolute', top: -6, right: -4, minWidth: 20, height: 20, paddingHorizontal: 5, borderRadius: 999, backgroundColor: '#9C5FD8', alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: '#FFFFFF' },
-  trayBadgeText: { color: '#FFFFFF', fontSize: 12, fontWeight: '900' },
+  trayBadgeText: { color: '#FFFFFF', fontSize: 12, fontWeight: '600' },
   toyShelf: { position: 'absolute', left: 10, right: 10, bottom: 126, flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 6, backgroundColor: 'rgba(255,255,255,0.92)', borderRadius: 18, padding: 6, zIndex: 11 },
-  shelfEmpty: { fontSize: 12, fontWeight: '800', color: colors.muted, padding: 6, textAlign: 'center' },
-  stat: { height: 30, paddingHorizontal: 8, borderRadius: 999, backgroundColor: 'rgba(255,255,255,0.9)', alignItems: 'center', justifyContent: 'center', flexDirection: 'row' },
-  statText: { fontSize: 12, fontWeight: '900', color: colors.ink },
+  shelfEmpty: { fontSize: 12, fontWeight: '600', color: colors.muted, padding: 6, textAlign: 'center' },
+  stat: { height: 30, paddingHorizontal: 8, borderRadius: 999, backgroundColor: 'rgba(255,255,255,0.9)', alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 3 },
+  statText: { fontSize: 12, fontWeight: '600', color: colors.ink },
   avatar: { width: 32, height: 32, borderRadius: 16, backgroundColor: colors.mint, borderWidth: 2, borderColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center' },
-  avatarText: { color: '#FFFFFF', fontSize: 12, fontWeight: '900' },
+  avatarText: { color: '#FFFFFF', fontSize: 12, fontWeight: '600' },
   xpTrack: { height: 6, borderRadius: 999, backgroundColor: '#E3EBE8', overflow: 'hidden' },
   xpFill: { height: '100%', borderRadius: 999, backgroundColor: colors.mint },
   trayBtn: { height: 54, borderRadius: 14, borderWidth: 1, borderColor: colors.line, backgroundColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center', gap: 1 },
   trayIcon: { fontSize: 22 },
-  trayLabel: { fontSize: 12, fontWeight: '900', color: colors.ink },
+  trayLabel: { fontSize: 12, fontWeight: '600', color: colors.ink },
   toys: { flex: 1, flexDirection: 'row', justifyContent: 'center', gap: 5 },
   toy: { width: 42, height: 42, borderRadius: 14, backgroundColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: colors.line },
   toyEmoji: { fontSize: 24 },
@@ -1003,32 +1006,32 @@ const styles = StyleSheet.create({
   placedShadow: { position: 'absolute', bottom: -4, width: 30, height: 7, borderRadius: 4, backgroundColor: 'rgba(0,0,0,0.15)' },
   head: { gap: 4, paddingTop: 12, paddingRight: 12, paddingLeft: 16 },
   level: { backgroundColor: colors.gold, borderRadius: 999, paddingHorizontal: 8, paddingVertical: 2 },
-  levelText: { color: '#5A3E00', fontWeight: '900', fontSize: 12 },
-  name: { fontSize: 17, fontWeight: '900', padding: 0, flexShrink: 1, minWidth: 60, color: colors.ink },
-  sub: { fontSize: 12, fontWeight: '800', color: '#4F5F63' },
+  levelText: { color: '#5A3E00', fontWeight: '600', fontSize: 12 },
+  name: { fontSize: 17, fontWeight: '800', padding: 0, flexShrink: 1, minWidth: 60, color: colors.ink },
+  sub: { fontSize: 12, fontWeight: '600', color: '#4F5F63' },
   mood: { backgroundColor: 'rgba(255,255,255,0.92)', borderRadius: 999, borderWidth: 1.5, paddingHorizontal: 9, paddingVertical: 3 },
-  moodText: { fontSize: 12, fontWeight: '900' },
+  moodText: { fontSize: 12, fontWeight: '600' },
   stage: { flex: 1, alignItems: 'center', justifyContent: 'flex-end', paddingBottom: 86, paddingTop: 30 },
   bubbleWrap: { position: 'absolute', top: 104, left: 60, right: 60, alignItems: 'center', zIndex: 15 },
   bubble: { backgroundColor: '#FFFFFF', borderRadius: 16, paddingVertical: 7, paddingHorizontal: 12, maxWidth: 230, shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 6, elevation: 2 },
-  bubbleText: { fontSize: 13, fontWeight: '800', color: colors.ink, textAlign: 'center' },
+  bubbleText: { fontSize: 13, fontWeight: '600', color: colors.ink, textAlign: 'center' },
   xpFloat: { position: 'absolute', top: 160, alignSelf: 'center', backgroundColor: colors.gold, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 4, zIndex: 5 },
-  xpFloatText: { fontWeight: '900', color: '#5A3E00', fontSize: 15 },
+  xpFloatText: { fontWeight: '700', color: '#5A3E00', fontSize: 15 },
   levelUpWrap: { position: 'absolute', top: 150, left: 0, right: 0, alignItems: 'center', zIndex: 25 },
   levelUp: { backgroundColor: colors.ink, borderRadius: 999, paddingHorizontal: 18, paddingVertical: 8, borderWidth: 3, borderColor: colors.gold },
-  levelUpSub: { color: '#FFFFFF', fontWeight: '800', fontSize: 12, textAlign: 'center' },
-  levelUpText: { color: colors.gold, fontWeight: '900', fontSize: 18, letterSpacing: 1 },
+  levelUpSub: { color: '#FFFFFF', fontWeight: '600', fontSize: 12, textAlign: 'center' },
+  levelUpText: { color: colors.gold, fontWeight: '800', fontSize: 18, letterSpacing: 1 },
   footer: { padding: space.lg, paddingTop: space.md, gap: 6 },
   xpRow: { flexDirection: 'row', justifyContent: 'space-between' },
-  xpLabel: { fontWeight: '900', fontSize: 13, color: colors.ink },
-  xpNum: { fontWeight: '800', fontSize: 13, color: colors.muted },
+  xpLabel: { fontWeight: '600', fontSize: 13, color: colors.ink },
+  xpNum: { fontWeight: '600', fontSize: 13, color: colors.muted },
   careHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: space.sm },
-  careTitle: { fontWeight: '900', fontSize: 15, color: colors.ink },
+  careTitle: { fontWeight: '700', fontSize: 15, color: colors.ink },
   boost: { borderRadius: 999, paddingHorizontal: 10, paddingVertical: 3, backgroundColor: '#F0F3F2' },
   boostOn: { backgroundColor: '#FFF1C9' },
-  boostText: { fontWeight: '900', fontSize: 12, color: colors.muted },
+  boostText: { fontWeight: '600', fontSize: 12, color: colors.muted },
   careRow: { flexDirection: 'row', gap: space.sm },
   careDone: { borderColor: colors.mint, backgroundColor: colors.mintSoft },
   careLabel: { fontWeight: '900', fontSize: 12, color: '#FFFFFF', textShadowColor: 'rgba(0,0,0,0.45)', textShadowRadius: 3, textShadowOffset: { width: 0, height: 1 } },
-  hint: { fontSize: 12, fontWeight: '700', color: colors.muted },
+  hint: { fontSize: 12, fontWeight: '600', color: colors.muted },
 });

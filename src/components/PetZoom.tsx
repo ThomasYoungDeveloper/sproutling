@@ -69,7 +69,7 @@ const styles = StyleSheet.create({
   card: { backgroundColor: '#FFFFFF', borderRadius: 26, overflow: 'hidden' },
   stage: { alignItems: 'center', justifyContent: 'flex-end', paddingBottom: 10, overflow: 'hidden' },
   info: { padding: space.md, alignItems: 'center', gap: 6 },
-  name: { fontSize: 26, fontWeight: '900', color: '#24323A' },
-  sub: { fontSize: 14, fontWeight: '800', color: '#5B6B70' },
-  hint: { fontSize: 12, fontWeight: '800', color: '#8A979A' },
+  name: { fontSize: 26, fontWeight: '800', color: '#1F2A2E' },
+  sub: { fontSize: 14, fontWeight: '700', color: '#5B6B70' },
+  hint: { fontSize: 12, fontWeight: '600', color: '#8A979A' },
 });

@@ -7,6 +7,7 @@ import * as H from '../game/hp';
 import { FOOD_BY_ID } from '../game/food';
 import { Animated, Easing, Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { Text } from './ScaledText';
+import { Icon } from './Icon';
 import Svg, { Circle, Defs, LinearGradient, Path, Rect, Stop } from 'react-native-svg';
 import { useGame } from '../state/GameContext';
 import { useOverlay } from './Overlay';
@@ -196,7 +197,7 @@ function ReturnSheet({ loot, onClose }: { loot: Ex.ExpeditionLoot; onClose: () =
         ) : null}
         <View style={styles.lootRow}>
           {loot.coins > 0 ? <PopIn delay={400}><View style={styles.loot}><CoinText size={22} style={styles.lootBig}>+{loot.coins}</CoinText></View></PopIn> : null}
-          {loot.xp > 0 ? <PopIn delay={500}><View style={styles.loot}><Text style={styles.lootBig}>⭐ +{loot.xp} XP</Text></View></PopIn> : null}
+          {loot.xp > 0 ? <PopIn delay={500}><View style={styles.loot}><Text style={styles.lootBig}>+{loot.xp} XP</Text></View></PopIn> : null}
           {loot.chest ? <PopIn delay={600}><View style={styles.loot}><View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}><ChestIcon kind={loot.chest} size={28} /><Text style={styles.lootBig}>{loot.chest[0].toUpperCase() + loot.chest.slice(1)} chest</Text></View></View></PopIn> : null}
           {loot.egg ? (
             <PopIn delay={700}>
@@ -255,7 +256,7 @@ function PlaceSheet({ onPick, onClose }: { onPick: (place: Ex.Place) => void; on
                 accessibilityRole="button"
                 accessibilityLabel={`${pl.name}${locked ? `, unlocks at level ${pl.minLevel}` : ''}`}
               >
-                <Text style={{ fontSize: 28 }}>{locked ? '🔒' : pl.emoji}</Text>
+                {locked ? <Icon name="lock" size={26} color={colors.muted} /> : <Text style={{ fontSize: 28 }}>{pl.emoji}</Text>}
                 <Text style={styles.placeName}>{pl.name}</Text>
                 <Text style={styles.placeSub}>{sub}</Text>
                 {who ? <Text style={[styles.placeWho, canGo === 0 && { color: '#C4562F' }]}>{who}</Text> : null}
@@ -339,7 +340,7 @@ function TripSheet({ onClose }: { onClose: () => void }) {
                   })}
                 </View>
               ) : null}
-              {msg ? <Text style={[font.small, { color: colors.mintDark, fontWeight: '900' }]}>{msg}</Text> : null}
+              {msg ? <Text style={[font.small, { color: colors.mintDark, fontWeight: '800' }]}>{msg}</Text> : null}
             </View>
           );
         })()}
@@ -460,7 +461,7 @@ export default function ExpeditionCard() {
   return (
     <Glow id="trips">
     <Pressable onPress={() => open(<PlaceSheet onPick={pickPet} onClose={close} />)} style={({ pressed }) => [styles.row, pressed && { transform: [{ scale: 0.98 }] }]} accessibilityRole="button" accessibilityLabel="Send a pet on an expedition">
-      <Text style={{ fontSize: 26 }}>🧭</Text>
+      <Icon name="compass" size={26} color={colors.mintDark} />
       <View style={{ flex: 1 }}>
         <Text style={styles.rowTitle}>Send a pet on an adventure</Text>
         <Text style={styles.rowSub}>Coins, snacks and a story</Text>
@@ -473,56 +474,56 @@ export default function ExpeditionCard() {
 
 const styles = StyleSheet.create({
   tripPotion: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#FFFFFF', borderRadius: 12, padding: 8, borderWidth: 1.5, borderColor: colors.line },
-  tripPotionName: { fontSize: 13, fontWeight: '900', color: colors.ink },
-  tripPotionSub: { fontSize: 12, fontWeight: '800', color: colors.muted },
+  tripPotionName: { fontSize: 13, fontWeight: '600', color: colors.ink },
+  tripPotionSub: { fontSize: 12, fontWeight: '600', color: colors.muted },
   tripStats: { backgroundColor: '#F4F8F6', borderRadius: 16, padding: 12, gap: 8 },
-  tripLv: { fontSize: 15, fontWeight: '900', color: colors.ink },
+  tripLv: { fontSize: 15, fontWeight: '700', color: colors.ink },
   tripEl: { borderRadius: 8, paddingHorizontal: 8, paddingVertical: 2 },
-  tripElText: { color: '#FFFFFF', fontSize: 12, fontWeight: '900' },
-  tripHpText: { fontSize: 15, fontWeight: '900' },
+  tripElText: { color: '#FFFFFF', fontSize: 12, fontWeight: '600' },
+  tripHpText: { fontSize: 15, fontWeight: '700' },
   tripHpBar: { height: 10, borderRadius: 6, backgroundColor: '#E3ECE7', overflow: 'hidden' },
   tripStat: { alignItems: 'center', minWidth: 56 },
-  tripStatK: { fontSize: 12, fontWeight: '900', color: colors.muted },
-  tripStatV: { fontSize: 16, fontWeight: '900', color: colors.ink },
+  tripStatK: { fontSize: 12, fontWeight: '600', color: colors.muted },
+  tripStatV: { fontSize: 16, fontWeight: '700', color: colors.ink },
   scene: { height: 150, borderRadius: 22, overflow: 'hidden', shadowColor: '#000', shadowOpacity: 0.15, shadowRadius: 0, shadowOffset: { width: 0, height: 4 }, elevation: 3 },
   sceneHead: { position: 'absolute', left: 14, right: 14, top: 12, flexDirection: 'row', alignItems: 'flex-start', gap: 8 },
-  sceneKicker: { fontSize: 12, fontWeight: '900', letterSpacing: 1.2 },
-  sceneTitle: { fontSize: 19, fontWeight: '900' },
+  sceneKicker: { fontSize: 12, fontWeight: '600', letterSpacing: 1.2 },
+  sceneTitle: { fontSize: 19, fontWeight: '800' },
   scenePill: { backgroundColor: 'rgba(0,0,0,0.28)', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4 },
-  scenePillText: { fontSize: 13, fontWeight: '900', color: '#FFFFFF' },
-  sceneFoot: { position: 'absolute', left: 14, bottom: 10, right: 14, fontSize: 12, fontWeight: '800' },
+  scenePillText: { fontSize: 13, fontWeight: '600', color: '#FFFFFF' },
+  sceneFoot: { position: 'absolute', left: 14, bottom: 10, right: 14, fontSize: 12, fontWeight: '600' },
   row: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: colors.line, borderRadius: 18, paddingVertical: 10, paddingHorizontal: 14 },
   rowDone: { backgroundColor: '#FFF6DD', borderColor: colors.gold, borderWidth: 2 },
-  rowTitle: { fontSize: 15, fontWeight: '900', color: colors.ink },
-  rowSub: { fontSize: 12, fontWeight: '800', color: colors.muted },
+  rowTitle: { fontSize: 15, fontWeight: '700', color: colors.ink },
+  rowSub: { fontSize: 12, fontWeight: '600', color: colors.muted },
   bar: { height: 6, borderRadius: 999, backgroundColor: '#E8EEEC', overflow: 'hidden' },
   barFill: { height: '100%', borderRadius: 999, backgroundColor: '#3D8FD6' },
-  left: { fontSize: 13, fontWeight: '900', color: colors.muted },
-  chev: { fontSize: 24, fontWeight: '900', color: colors.muted, marginTop: -2 },
+  left: { fontSize: 13, fontWeight: '600', color: colors.muted },
+  chev: { fontSize: 24, fontWeight: '800', color: colors.muted, marginTop: -2 },
   openBtn: { backgroundColor: '#E8590C', borderRadius: 12, paddingHorizontal: 14, paddingVertical: 8 },
-  openText: { color: '#FFFFFF', fontWeight: '900', fontSize: 14 },
+  openText: { color: '#FFFFFF', fontWeight: '700', fontSize: 14 },
   dim: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(24,30,48,0.5)', justifyContent: 'flex-end', alignItems: 'center', zIndex: 50 },
   bottomSheet: { backgroundColor: '#FFFFFF', borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: space.lg, paddingTop: 10, gap: space.sm, width: '100%', maxWidth: 520, alignSelf: 'center' },
   grab: { width: 44, height: 5, borderRadius: 999, backgroundColor: colors.line, alignSelf: 'center', marginBottom: 4 },
   trail: { height: 76, justifyContent: 'flex-end' },
   path: { position: 'absolute', left: 0, right: 0, bottom: 8, height: 8, borderRadius: 4, backgroundColor: '#E7EEEA' },
   pathDone: { position: 'absolute', left: 0, bottom: 8, height: 8, borderRadius: 4, backgroundColor: '#BDE5CF' },
-  recall: { fontSize: 12, fontWeight: '800', color: colors.muted, textDecorationLine: 'underline' },
+  recall: { fontSize: 12, fontWeight: '600', color: colors.muted, textDecorationLine: 'underline' },
   places: { flexDirection: 'row', flexWrap: 'wrap', gap: '3%', rowGap: space.sm },
   place: { width: '48.5%', alignItems: 'center', gap: 2, padding: space.sm, borderRadius: 16, borderWidth: 1.5, borderColor: colors.line, backgroundColor: '#FAFCFB' },
-  placeName: { fontWeight: '900', fontSize: 14, color: colors.ink },
-  placeWho: { fontSize: 12, fontWeight: '800', color: '#1E8A68', marginTop: 2 },
-  placeSub: { fontWeight: '700', fontSize: 12, color: colors.muted },
+  placeName: { fontWeight: '700', fontSize: 14, color: colors.ink },
+  placeWho: { fontSize: 12, fontWeight: '600', color: '#1E8A68', marginTop: 2 },
+  placeSub: { fontWeight: '600', fontSize: 12, color: colors.muted },
   backdrop: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(22,28,46,0.92)', justifyContent: 'center', alignItems: 'center', padding: space.lg },
   sheet: { backgroundColor: '#FFFFFF', borderRadius: 24, padding: space.lg, gap: space.sm, width: '100%', maxWidth: 420, alignSelf: 'center' },
   placeHead: { alignSelf: 'stretch', height: 170, borderRadius: 18, overflow: 'hidden' },
   fights: { alignSelf: 'stretch', backgroundColor: '#F6F1E7', borderRadius: 14, padding: 10, gap: 6 },
-  fightsHead: { fontSize: 12, fontWeight: '900', letterSpacing: 0.6, color: colors.muted },
+  fightsHead: { fontSize: 12, fontWeight: '600', letterSpacing: 0.6, color: colors.muted },
   fightRow: { flexDirection: 'row', justifyContent: 'space-between', gap: 8 },
-  fightName: { fontSize: 14, fontWeight: '800', color: colors.ink, flexShrink: 1 },
-  fightRes: { fontSize: 13, fontWeight: '900' },
+  fightName: { fontSize: 14, fontWeight: '700', color: colors.ink, flexShrink: 1 },
+  fightRes: { fontSize: 13, fontWeight: '600' },
   story: { fontSize: 16, fontWeight: '700', color: colors.ink, textAlign: 'center', lineHeight: 22 },
   lootRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, justifyContent: 'center', marginVertical: space.xs },
   loot: { backgroundColor: '#FFF6DD', borderRadius: 999, paddingHorizontal: 12, paddingVertical: 6, borderWidth: 1.5, borderColor: colors.gold },
-  lootBig: { fontWeight: '900', fontSize: 14, color: '#5A3E00' },
+  lootBig: { fontWeight: '700', fontSize: 14, color: '#5A3E00' },
 });

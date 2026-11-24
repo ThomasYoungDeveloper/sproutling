@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Animated, Pressable, StyleSheet, View, Platform } from 'react-native';
 import { Text } from './ScaledText';
+import { Icon, type IconName } from './Icon';
 import Svg, { Circle, Path } from 'react-native-svg';
 import { useGame } from '../state/GameContext';
 import { useOverlay } from './Overlay';
@@ -22,10 +23,10 @@ import { InfoDot, InfoPop } from './InfoTip';
 
 type Habit = 'steps' | 'water' | 'sleep';
 
-const INFO: Record<Habit, { icon: string; label: string; color: string; goal: number }> = {
-  steps: { icon: '👟', label: 'steps', color: '#2FB58A', goal: 8000 },
-  water: { icon: '💧', label: 'glasses', color: '#3D8FD6', goal: 6 },
-  sleep: { icon: '🌙', label: 'sleep', color: '#7F77DD', goal: 7 },
+const INFO: Record<Habit, { icon: IconName; label: string; color: string; goal: number }> = {
+  steps: { icon: 'steps', label: 'steps', color: '#2FB58A', goal: 8000 },
+  water: { icon: 'drop', label: 'glasses', color: '#3D8FD6', goal: 6 },
+  sleep: { icon: 'moon', label: 'sleep', color: '#7F77DD', goal: 7 },
 };
 
 /** Each habit tile is softly tinted in its ring color. */
@@ -140,7 +141,7 @@ function ActivityRow({ d }: { d: ReturnType<typeof A.today> }) {
             <View style={[styles.mindful, { backgroundColor: '#E3F6D8' }]}><Text style={[styles.mindfulText, { color: '#3E7A1E' }]}>Trained</Text></View>
           ) : null}
           <View style={[styles.mindful, mindful >= MINDFUL_MINUTES && styles.mindfulOn]}>
-            <Text style={[styles.mindfulText, mindful >= MINDFUL_MINUTES && { color: '#5B3FA8' }]}>🧘 {mindful} mindful min{mindful >= MINDFUL_MINUTES ? ' · Calm' : ''}</Text>
+            <Text style={[styles.mindfulText, mindful >= MINDFUL_MINUTES && { color: '#5B3FA8' }]}>{mindful} mindful min{mindful >= MINDFUL_MINUTES ? ' · Calm' : ''}</Text>
           </View>
         </View>
       </View>
@@ -160,7 +161,7 @@ function MiniRing({ frac, color, size = 24 }: { frac: number; color: string; siz
   );
 }
 
-function Ring({ frac, color, done, icon }: { frac: number; color: string; done: boolean; icon: string }) {
+function Ring({ frac, color, done, icon }: { frac: number; color: string; done: boolean; icon: IconName }) {
   const r = 22;
   const len = 2 * Math.PI * r;
   return (
@@ -170,7 +171,7 @@ function Ring({ frac, color, done, icon }: { frac: number; color: string; done: 
         {frac > 0 ? <Circle cx={26} cy={26} r={r} fill="none" stroke={color} strokeWidth={5} strokeDasharray={`${len * frac} ${len}`} strokeLinecap="round" transform="rotate(-90 26 26)" /> : null}
         {done ? <Path d="M19 27l5 5 9-10" fill="none" stroke="#1E8A68" strokeWidth={3.2} strokeLinecap="round" strokeLinejoin="round" /> : null}
       </Svg>
-      {done ? null : <Text style={{ fontSize: 18 }}>{icon}</Text>}
+      {done ? null : <Icon name={icon} size={20} color={color} filled />}
     </View>
   );
 }
@@ -205,13 +206,13 @@ function LogSheet({ habit, onClose }: { habit: Habit; onClose: () => void }) {
       <View style={styles.sheet}>
         <View style={styles.grab} />
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-          <Text style={{ fontSize: 26 }}>{INFO[habit].icon}</Text>
+          <View style={{ width: 40, height: 40, borderRadius: 13, backgroundColor: INFO[habit].color + '22', alignItems: 'center', justifyContent: 'center' }}><Icon name={INFO[habit].icon} size={22} color={INFO[habit].color} filled /></View>
           <Text style={[font.title, { flex: 1 }]}>{title}</Text>
           <PopIn key={xp} from={0.7}>
             <View style={styles.xp}><Text style={styles.xpText}>+{xp} XP</Text></View>
           </PopIn>
         </View>
-        <Text style={[font.body, { fontWeight: '800', color: colors.muted }]}>{line}</Text>
+        <Text style={[font.body, { color: colors.muted }]}>{line}</Text>
 
         {habit === 'steps' && isVerified(healthProvider()) ? (
           <View style={styles.goal}>
@@ -349,50 +350,50 @@ function WishRow() {
 const styles = StyleSheet.create({
   wish: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: '#FFF4D6', borderRadius: 14, padding: 10 },
   wishMark: { width: 30, height: 30, borderRadius: 15, backgroundColor: '#FFE3A0', alignItems: 'center', justifyContent: 'center' },
-  wishMarkText: { fontSize: 16, fontWeight: '900', color: '#B06A00' },
-  wishText: { fontSize: 14, fontWeight: '900', color: colors.ink },
+  wishMarkText: { fontSize: 16, fontWeight: '700', color: '#B06A00' },
+  wishText: { fontSize: 14, fontWeight: '700', color: colors.ink },
   wishTrack: { height: 6, borderRadius: 9, backgroundColor: '#F2E2B8', overflow: 'hidden' },
   wishFill: { height: '100%', borderRadius: 9, backgroundColor: '#2FB58A' },
-  wishMeta: { fontSize: 12, fontWeight: '800', color: '#7A5900' },
-  wishDone: { fontSize: 14, fontWeight: '900', color: colors.mintDark, textAlign: 'center' },
+  wishMeta: { fontSize: 12, fontWeight: '600', color: '#7A5900' },
+  wishDone: { fontSize: 14, fontWeight: '700', color: colors.mintDark, textAlign: 'center' },
   extras: { gap: 6 },
   row: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: '#F6FAF8', borderRadius: 12, paddingVertical: 8, paddingHorizontal: 10 },
   rowDot: { width: 20, height: 20, borderRadius: 10, borderWidth: 2, borderColor: '#B9C9C2', alignItems: 'center', justifyContent: 'center' },
-  rowCheck: { color: '#FFFFFF', fontSize: 12, fontWeight: '900' },
-  rowText: { flex: 1, fontSize: 14, fontWeight: '900', color: colors.ink },
-  rowMeta: { fontSize: 12, fontWeight: '900', color: '#B07A00' },
-  next: { fontSize: 13, fontWeight: '900', color: colors.mintDark },
+  rowCheck: { color: '#FFFFFF', fontSize: 12, fontWeight: '600' },
+  rowText: { flex: 1, fontSize: 14, fontWeight: '700', color: colors.ink },
+  rowMeta: { fontSize: 12, fontWeight: '600', color: '#B07A00' },
+  next: { fontSize: 13, fontWeight: '600', color: colors.mintDark },
   changed: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#FFF4D6', borderRadius: 12, padding: 10 },
-  changedText: { flex: 1, fontSize: 13, fontWeight: '800', color: '#6A4A00' },
-  changedX: { fontSize: 13, fontWeight: '900', color: '#B06A00' },
+  changedText: { flex: 1, fontSize: 13, fontWeight: '600', color: '#6A4A00' },
+  changedX: { fontSize: 13, fontWeight: '600', color: '#B06A00' },
   starterChip: { backgroundColor: '#FFF1C2', borderRadius: 999, paddingHorizontal: 8, paddingVertical: 3 },
-  starterChipText: { fontSize: 12, fontWeight: '900', color: '#8A6100' },
-  whyLink: { fontSize: 14, fontWeight: '900', color: '#3D6E9C', textDecorationLine: 'underline' },
+  starterChipText: { fontSize: 12, fontWeight: '600', color: '#8A6100' },
+  whyLink: { fontSize: 14, fontWeight: '700', color: '#3D6E9C', textDecorationLine: 'underline' },
   tipLine: { gap: 2, paddingVertical: 2 },
-  starter: { fontSize: 12, fontWeight: '800', color: '#B06A00' },
-  tipTag: { fontSize: 12, fontWeight: '900', color: '#3D6E9C' },
-  tipText: { fontSize: 12, fontWeight: '700', color: colors.muted },
-  tipSource: { fontSize: 12, fontWeight: '700', color: colors.muted },
+  starter: { fontSize: 12, fontWeight: '600', color: '#B06A00' },
+  tipTag: { fontSize: 12, fontWeight: '600', color: '#3D6E9C' },
+  tipText: { fontSize: 12, fontWeight: '600', color: colors.muted },
+  tipSource: { fontSize: 12, fontWeight: '600', color: colors.muted },
   why: { backgroundColor: '#F6FAF8', borderRadius: 12, padding: 10, gap: 3 },
-  whyText: { fontSize: 13, fontWeight: '700', color: colors.ink },
-  small: { fontSize: 12, fontWeight: '900', color: colors.muted, letterSpacing: 0.8 },
+  whyText: { fontSize: 13, fontWeight: '600', color: colors.ink },
+  small: { fontSize: 12, fontWeight: '600', color: colors.muted, letterSpacing: 0.8 },
   activity: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: '#FFF0F3', borderRadius: 14, padding: 10 },
-  actTitle: { fontSize: 14, fontWeight: '900', color: colors.ink },
-  actSub: { fontSize: 12, fontWeight: '800', color: colors.muted },
+  actTitle: { fontSize: 14, fontWeight: '700', color: colors.ink },
+  actSub: { fontSize: 12, fontWeight: '600', color: colors.muted },
   mindful: { borderRadius: 999, paddingHorizontal: 9, paddingVertical: 4, backgroundColor: '#EFEDF6' },
   mindfulOn: { backgroundColor: '#E4DCFA' },
-  mindfulText: { fontSize: 12, fontWeight: '900', color: colors.muted },
+  mindfulText: { fontSize: 12, fontWeight: '600', color: colors.muted },
   head: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  title: { fontSize: 19, fontWeight: '900', color: colors.ink },
-  subtitle: { fontSize: 12, fontWeight: '800', color: colors.muted },
+  title: { fontSize: 19, fontWeight: '800', color: colors.ink },
+  subtitle: { fontSize: 12, fontWeight: '600', color: colors.muted },
   xp: { backgroundColor: colors.mintSoft, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 3 },
-  xpText: { color: colors.mintDark, fontSize: 14, fontWeight: '900' },
+  xpText: { color: colors.mintDark, fontSize: 14, fontWeight: '700' },
   tiles: { flexDirection: 'row', gap: 8 },
   tile: { flex: 1, borderWidth: 0, borderColor: 'transparent', backgroundColor: '#F6FAF8', borderRadius: 16, paddingVertical: 10, paddingHorizontal: 4, alignItems: 'center', gap: 3 },
-  value: { fontSize: 16, fontWeight: '900', color: colors.ink },
-  label: { fontSize: 12, fontWeight: '800', color: colors.muted },
+  value: { fontSize: 16, fontWeight: '700', color: colors.ink },
+  label: { fontSize: 12, fontWeight: '600', color: colors.muted },
   mult: { position: 'absolute', top: -9, right: -5, backgroundColor: '#7F77DD', borderRadius: 999, paddingHorizontal: 7, paddingVertical: 2, zIndex: 2 },
-  multText: { color: '#FFFFFF', fontSize: 12, fontWeight: '900' },
+  multText: { color: '#FFFFFF', fontSize: 12, fontWeight: '600' },
   backdrop: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(24,30,48,0.5)', justifyContent: 'flex-end', alignItems: 'center', zIndex: 50 },
   sheet: { backgroundColor: '#FFFFFF', borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: space.lg, paddingTop: 10, gap: space.md, width: '100%', maxWidth: 520, alignSelf: 'center' },
   grab: { width: 44, height: 5, borderRadius: 999, backgroundColor: colors.line, alignSelf: 'center' },
@@ -401,5 +402,5 @@ const styles = StyleSheet.create({
   glass: { width: '21.5%', height: 60, borderRadius: 14, borderWidth: 2, borderColor: '#B9DAF3', alignItems: 'center', justifyContent: 'center', backgroundColor: '#FFFFFF' },
   glassOn: { backgroundColor: '#E2F1FC', borderColor: '#8FC3EE' },
   goal: { backgroundColor: '#EAF3FC', borderRadius: 12, paddingVertical: 10, paddingHorizontal: 12 },
-  goalText: { fontSize: 14, fontWeight: '800', color: '#1F5C94' },
+  goalText: { fontSize: 14, fontWeight: '700', color: '#1F5C94' },
 });

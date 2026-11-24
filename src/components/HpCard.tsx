@@ -90,10 +90,10 @@ export default function HpCard({ pet, onInfo }: { pet: OwnedPet; onInfo?: () => 
 const styles = StyleSheet.create({
   card: { backgroundColor: '#FFFFFF', borderRadius: 18, padding: space.md, gap: 8, borderWidth: 1, borderColor: colors.line },
   row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  title: { fontSize: 18, fontWeight: '900', color: colors.ink },
-  state: { fontSize: 14, fontWeight: '900' },
+  title: { fontSize: 18, fontWeight: '800', color: colors.ink },
+  state: { fontSize: 14, fontWeight: '700' },
   potions: { flexDirection: 'row', gap: 8 },
   potion: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 6, borderWidth: 2, borderRadius: 14, padding: 8, backgroundColor: '#FFFBF2' },
-  potionName: { fontWeight: '900', fontSize: 13, color: colors.ink },
-  potionSub: { fontWeight: '700', fontSize: 12, color: colors.muted },
+  potionName: { fontWeight: '600', fontSize: 13, color: colors.ink },
+  potionSub: { fontWeight: '600', fontSize: 12, color: colors.muted },
 });

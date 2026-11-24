@@ -87,8 +87,8 @@ export default function GuildQuests() {
 
 const styles = StyleSheet.create({
   box: { backgroundColor: '#2A3366', borderRadius: 18, padding: 14, gap: 10 },
-  head: { fontSize: 17, fontWeight: '900', color: '#FFF6D8' },
-  sub: { fontSize: 12, fontWeight: '700', color: '#B9C2E8', marginTop: -6 },
+  head: { fontSize: 17, fontWeight: '800', color: '#FFF6D8' },
+  sub: { fontSize: 12, fontWeight: '600', color: '#B9C2E8', marginTop: -6 },
   quest: { backgroundColor: '#232A55', borderRadius: 16, padding: 12, gap: 6, borderWidth: 2, borderColor: '#3D4785' },
   questTeam: { borderColor: '#F2C14E' },
   questDone: { borderColor: '#8FE3C0' },
@@ -96,10 +96,10 @@ const styles = StyleSheet.create({
   tag: { backgroundColor: '#3D4785', borderRadius: 8, paddingHorizontal: 7, paddingVertical: 2 },
   tagTeam: { backgroundColor: '#F2C14E' },
   tagMonth: { backgroundColor: '#8B6BD8' },
-  tagText: { fontSize: 11, fontWeight: '900', color: '#C9D3FF' },
-  name: { flex: 1, fontSize: 15, fontWeight: '900', color: '#FFF6D8' },
-  doneText: { fontSize: 12, fontWeight: '900', color: '#8FE3C0' },
-  text: { fontSize: 12, fontWeight: '700', color: '#B9C2E8' },
-  meta: { fontSize: 11, fontWeight: '900', color: '#B9C2E8' },
-  msg: { fontSize: 13, fontWeight: '800', color: '#8FE3C0' },
+  tagText: { fontSize: 11, fontWeight: '600', color: '#C9D3FF' },
+  name: { flex: 1, fontSize: 15, fontWeight: '700', color: '#FFF6D8' },
+  doneText: { fontSize: 12, fontWeight: '600', color: '#8FE3C0' },
+  text: { fontSize: 12, fontWeight: '600', color: '#B9C2E8' },
+  meta: { fontSize: 11, fontWeight: '600', color: '#B9C2E8' },
+  msg: { fontSize: 13, fontWeight: '600', color: '#8FE3C0' },
 });

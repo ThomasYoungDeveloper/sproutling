@@ -31,6 +31,7 @@ import { markSeenNew, useIsNew } from '../lib/newDots';
 import GuildTag, { PlayerLevel } from '../components/GuildTag';
 import FashionShow from '../components/FashionShow';
 import { SocialIcon } from '../components/SocialIcons';
+import { Icon, IconTile } from '../components/Icon';
 import { LockedCard } from '../components/Unlocks';
 import { useGame } from '../state/GameContext';
 import * as U from '../game/unlocks';
@@ -103,7 +104,7 @@ export default function FriendsScreen({ initialAdd, onUsedInitialAdd, initialGui
       <SectionHead title="Add a friend" />
       <View style={styles.row}>
         <TextInput
-          style={[styles.input, { flex: 1 }]}
+          style={[styles.input, { flex: 1, minWidth: 0 }]}
           value={target}
           onChangeText={(v) => {
             setTarget(v);
@@ -163,8 +164,8 @@ export default function FriendsScreen({ initialAdd, onUsedInitialAdd, initialGui
       <View style={styles.segs}>
         {SECTIONS.map((sec) => (
           <Pressable key={sec.id} onPress={() => { setSection(sec.id); if (sec.id === 'team') markSeenNew('guild'); if (sec.id === 'ranks') markSeenNew('ranks'); }} style={[styles.seg, section === sec.id && styles.segOn]} accessibilityRole="tab" accessibilityState={{ selected: section === sec.id }} accessibilityLabel={sec.label}>
-            <SocialIcon name={sec.id} color={section === sec.id ? '#FFFFFF' : '#2E5E50'} />
-            <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8} style={[styles.segText, section === sec.id && { color: '#fff' }]}>{sec.label}</Text>
+            <SocialIcon name={sec.id} color={section === sec.id ? colors.ink : colors.muted} />
+            <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8} style={[styles.segText, section === sec.id && { color: colors.ink }]}>{sec.label}</Text>
             {sec.id === 'friends' && incoming.length + tradesForMe + liveWaiting > 0 ? <View style={styles.segDot} /> : null}
             {sec.id === 'battle' && liveWaiting > 0 ? <View style={styles.segDot} /> : null}
             {sec.id === 'chat' && chatUnread > 0 ? <View style={styles.segDot} /> : null}
@@ -196,7 +197,7 @@ export default function FriendsScreen({ initialAdd, onUsedInitialAdd, initialGui
             <Text style={font.small} numberOfLines={1}>wants to be friends{r.from.card?.streak ? ` · ${r.from.card.streak}-day streak` : ''}</Text>
           </View>
           <Pressable onPress={() => respond(r.id, false)} style={styles.decline} accessibilityRole="button" accessibilityLabel={`Decline ${r.from.username}`}>
-            <Text style={styles.declineText}>✕</Text>
+            <Icon name="close" size={16} color={colors.muted} />
           </Pressable>
           <Button
             small
@@ -218,17 +219,17 @@ export default function FriendsScreen({ initialAdd, onUsedInitialAdd, initialGui
         {error ? <Text style={styles.msg}>{error}</Text> : null}
         {!loading && !error && friends.length === 0 ? (
           <View style={styles.empty}>
-            <Text style={{ fontSize: 40 }}>👋</Text>
+            <IconTile name="people" size={56} />
             <Text style={[font.body, { fontWeight: '800', textAlign: 'center' }]}>No friends yet</Text>
             <Text style={[font.small, { textAlign: 'center' }]}>
               Share your invite link with friends. You’ll see each other’s pets and streaks, and you can send each other gifts every day.
             </Text>
           </View>
         ) : null}
-        {friends.map((f) => (
-          <Pressable key={f.id} onPress={() => openFriend(f)} style={({ pressed }) => [styles.person, pressed && { opacity: 0.7 }]} accessibilityRole="button" accessibilityLabel={`Open ${f.username}'s profile`}>
+        {friends.map((f, i) => (
+          <Pressable key={f.id} onPress={() => openFriend(f)} style={({ pressed }) => [styles.person, i < friends.length - 1 && styles.divider, pressed && { opacity: 0.7 }]} accessibilityRole="button" accessibilityLabel={`Open ${f.username}'s profile`}>
             <Avatar t={f} />
-            <View style={{ flex: 1 }}>
+            <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                 <Text style={styles.personName} numberOfLines={1}>{f.username}</Text>
                 <PlayerLevel userId={f.id} />
@@ -241,10 +242,10 @@ export default function FriendsScreen({ initialAdd, onUsedInitialAdd, initialGui
                 ) : null}
               </View>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                <Text style={[font.small, { flexShrink: 1 }]} numberOfLines={1}>
-                  🔥 {f.card?.streak ?? 0}-day · {lastSeen(f)}
-                </Text>
                 <GuildTag userId={f.id} small />
+                <Text style={[font.small, { flexShrink: 1 }]} numberOfLines={1}>
+                  {f.card?.streak ?? 0}-day streak · {lastSeen(f)}
+                </Text>
               </View>
             </View>
             <Button
@@ -299,31 +300,32 @@ function Avatar({ t }: { t: Trainer }) {
 }
 
 const styles = StyleSheet.create({
-  codeBox: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.mintSoft, borderRadius: 16, padding: 12, marginTop: 4 },
+  codeBox: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.tile, borderRadius: 16, padding: 12, marginTop: 4 },
   msgDot: { backgroundColor: '#E0567A', borderRadius: 999, paddingHorizontal: 7, paddingVertical: 1 },
-  msgDotText: { color: '#fff', fontWeight: '900', fontSize: 12 },
-  segs: { flexDirection: 'row', gap: 3, backgroundColor: '#B9E2D1', borderRadius: 19, padding: 4 },
-  seg: { flex: 1, alignItems: 'center', gap: 3, paddingTop: 9, paddingBottom: 8, paddingHorizontal: 2, borderRadius: 15 },
-  segOn: { backgroundColor: colors.ink },
-  segText: { fontWeight: '900', fontSize: 12, color: '#2E5E50' },
-  request: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: colors.card, borderRadius: 22, borderWidth: 3, borderColor: colors.gold, padding: 12, marginTop: 6 },
+  msgDotText: { color: '#fff', fontWeight: '600', fontSize: 12 },
+  segs: { flexDirection: 'row', gap: 2, backgroundColor: '#E2ECE7', borderRadius: 16, padding: 4 },
+  seg: { flex: 1, alignItems: 'center', gap: 2, paddingTop: 8, paddingBottom: 7, paddingHorizontal: 2, borderRadius: 12, minHeight: 52 },
+  segOn: { backgroundColor: '#FFFFFF' },
+  segText: { fontWeight: '600', fontSize: 12, color: colors.muted },
+  request: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: colors.card, borderRadius: 20, borderWidth: 2, borderColor: colors.gold, padding: 12, marginTop: 6 },
   newTag: { position: 'absolute', top: -11, left: 14, backgroundColor: '#FF6B5B', borderRadius: 999, paddingHorizontal: 8, paddingVertical: 2 },
-  newTagText: { color: '#FFFFFF', fontSize: 12, fontWeight: '900', letterSpacing: 0.6 },
-  decline: { width: 38, height: 38, borderRadius: 12, backgroundColor: '#E8EEEC', alignItems: 'center', justifyContent: 'center' },
-  declineText: { fontSize: 15, fontWeight: '900', color: colors.muted },
-  segDot: { position: 'absolute', top: 6, right: '22%', width: 10, height: 10, borderRadius: 5, backgroundColor: colors.peach, borderWidth: 2, borderColor: '#B9E2D1' },
+  newTagText: { color: '#FFFFFF', fontSize: 12, fontWeight: '600', letterSpacing: 0.6 },
+  decline: { width: 36, height: 36, borderRadius: 12, backgroundColor: colors.tile, alignItems: 'center', justifyContent: 'center' },
+  declineText: { fontSize: 15, fontWeight: '700', color: colors.muted },
+  segDot: { position: 'absolute', top: 6, right: '22%', width: 9, height: 9, borderRadius: 5, backgroundColor: colors.peach, borderWidth: 2, borderColor: '#E2ECE7' },
   row: { flexDirection: 'row', gap: space.sm, alignItems: 'center' },
   codeRow: { flexDirection: 'row', gap: 6, justifyContent: 'center', marginVertical: space.xs },
-  codeChar: { width: 40, height: 50, borderRadius: 12, backgroundColor: '#fff', borderWidth: 1, borderColor: '#BFE8D6', alignItems: 'center', justifyContent: 'center' },
-  codeText: { fontSize: 26, fontWeight: '900', color: colors.mintDark },
-  input: { borderWidth: 1, borderColor: colors.line, borderRadius: 12, paddingVertical: 10, paddingHorizontal: 12, fontSize: 16, color: colors.ink, backgroundColor: '#FAFCFB' },
-  msg: { fontSize: 13, fontWeight: '700', color: '#C4562F' },
+  codeChar: { flex: 1, maxWidth: 44, height: 50, borderRadius: 12, backgroundColor: '#fff', borderWidth: 1, borderColor: colors.line, alignItems: 'center', justifyContent: 'center' },
+  codeText: { fontSize: 26, fontWeight: '800', color: colors.mintDark },
+  input: { borderWidth: 1, borderColor: colors.line, borderRadius: 14, minHeight: 44, paddingVertical: 10, paddingHorizontal: 14, fontSize: 16, color: colors.ink, backgroundColor: colors.tile },
+  msg: { fontSize: 13, fontWeight: '600', color: '#C4562F' },
   ok: { color: colors.mintDark },
-  person: { flexDirection: 'row', alignItems: 'center', gap: space.sm, paddingVertical: 6 },
-  personName: { fontWeight: '800', fontSize: 15, color: colors.ink, flexShrink: 1 },
+  divider: { borderBottomWidth: 1, borderBottomColor: colors.line },
+  person: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: 12 },
+  personName: { fontWeight: '700', fontSize: 15, color: colors.ink, flexShrink: 1 },
   lv: { position: 'absolute', bottom: 2, right: 2, minWidth: 18, height: 18, borderRadius: 9, backgroundColor: colors.ink, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4 },
-  lvText: { color: '#fff', fontWeight: '900', fontSize: 12 },
-  avatar: { width: 52, height: 52, borderRadius: 16, backgroundColor: colors.sky, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
+  lvText: { color: '#fff', fontWeight: '600', fontSize: 12 },
+  avatar: { width: 48, height: 48, borderRadius: 14, backgroundColor: colors.tile, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
   onlineDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.mint },
   empty: { alignItems: 'center', gap: 4, paddingVertical: space.md, paddingHorizontal: space.sm },
 });

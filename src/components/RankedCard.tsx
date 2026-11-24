@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { Text } from './ScaledText';
+import { Icon } from './Icon';
 import { useRanked } from '../state/RankedContext';
 import { Button, Card, ProgressBar } from './ui';
 import PetSprite from './PetSprite';
@@ -89,7 +90,7 @@ export default function RankedCard() {
           return (
             <View key={r.username + i} style={[styles.row, r.me && styles.rowMe]}>
               <Text style={styles.place}>{i + 1}</Text>
-              <View style={styles.avatar}>{sp && p ? <PetSprite species={sp} stage={stageFor(p.xp)} size={32} skin={p.skin} hat={(p as any).hat} /> : <Text>🥚</Text>}</View>
+              <View style={styles.avatar}>{sp && p ? <PetSprite species={sp} stage={stageFor(p.xp)} size={32} skin={p.skin} hat={(p as any).hat} /> : <Icon name="egg" size={18} color={colors.muted} />}</View>
               <Text style={styles.name} numberOfLines={1}>{r.username}{r.me ? ' (you)' : ''}</Text>
               <Text style={[styles.pts, { color: t.color }]}>{t.emoji} {r.points}</Text>
             </View>
@@ -112,22 +113,22 @@ export default function RankedCard() {
 const styles = StyleSheet.create({
   card: { backgroundColor: '#1B2240', borderColor: '#1B2240', gap: space.sm },
   badge: { width: 58, height: 58, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
-  label: { fontSize: 12, fontWeight: '900', color: '#AFB8E8', letterSpacing: 1 },
-  tier: { fontSize: 24, fontWeight: '900', color: '#FFFFFF' },
-  sub: { fontSize: 12, fontWeight: '800', color: '#C8CEF0' },
-  help: { fontSize: 12, fontWeight: '700', color: '#AFB8E8' },
+  label: { fontSize: 12, fontWeight: '600', color: '#AFB8E8', letterSpacing: 1 },
+  tier: { fontSize: 24, fontWeight: '800', color: '#FFFFFF' },
+  sub: { fontSize: 12, fontWeight: '600', color: '#C8CEF0' },
+  help: { fontSize: 12, fontWeight: '600', color: '#AFB8E8' },
   claim: { backgroundColor: '#FFFFFF', borderRadius: 14, padding: space.sm, gap: 8 },
-  claimText: { fontSize: 14, fontWeight: '800', color: colors.ink },
+  claimText: { fontSize: 14, fontWeight: '700', color: colors.ink },
   row: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: 'rgba(255,255,255,0.08)', borderRadius: 12, padding: 6 },
   rowMe: { backgroundColor: 'rgba(255,255,255,0.18)' },
-  place: { width: 26, textAlign: 'center', fontSize: 15, fontWeight: '900', color: '#FFFFFF' },
+  place: { width: 26, textAlign: 'center', fontSize: 15, fontWeight: '700', color: '#FFFFFF' },
   avatar: { width: 36, height: 36, borderRadius: 10, backgroundColor: 'rgba(255,255,255,0.9)', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
-  name: { flex: 1, fontSize: 14, fontWeight: '900', color: '#FFFFFF' },
-  pts: { fontSize: 14, fontWeight: '900' },
+  name: { flex: 1, fontSize: 14, fontWeight: '700', color: '#FFFFFF' },
+  pts: { fontSize: 14, fontWeight: '700' },
   tabs: { flexDirection: 'row', backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 14, padding: 4, gap: 4 },
   tab: { flex: 1, paddingVertical: 8, borderRadius: 10, alignItems: 'center' },
   tabOn: { backgroundColor: '#FFFFFF' },
-  tabText: { fontSize: 14, fontWeight: '900', color: '#C8CEF0' },
+  tabText: { fontSize: 14, fontWeight: '700', color: '#C8CEF0' },
   tabTextOn: { color: '#1B2240' },
-  msg: { fontSize: 13, fontWeight: '800', color: '#FFE0D1' },
+  msg: { fontSize: 13, fontWeight: '600', color: '#FFE0D1' },
 });

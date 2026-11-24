@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { KeyboardAvoidingView, Linking, Platform, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { Text } from './ScaledText';
+import { Group, SRow } from './Settings';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useChat, QUICK_PHRASES, type ChatMessage, type ChatRoom } from '../state/ChatContext';
 import { useFriends } from '../state/FriendsContext';
@@ -168,7 +169,7 @@ export function ChatList() {
               </View>
               <View style={{ flex: 1, minWidth: 0 }}>
                 <Text style={styles.name} numberOfLines={1}>{title}</Text>
-                <Text style={[styles.preview, r.unread ? { color: colors.ink, fontWeight: '900' } : null]} numberOfLines={1}>
+                <Text style={[styles.preview, r.unread ? { color: colors.ink, fontWeight: '800' } : null]} numberOfLines={1}>
                   {r.last ? `${r.lastFrom === 'me' ? 'You: ' : isTeam && r.lastFrom ? `${r.lastFrom}: ` : ''}${previewText(r.last)}` : isTeam ? 'Say hi to your guild!' : ''}
                 </Text>
               </View>
@@ -301,7 +302,7 @@ function ChatRoomScreen({ room, title, otherId, onClose }: { room: string; title
                 {sp ? <View style={styles.momentArt}><PetSprite species={sp} stage="baby" size={84} skin={m.sticker.skin as any} shiny={m.sticker.shiny} mood="joy" /></View> : null}
                 <View style={{ flex: 1, gap: 5 }}>
                   <Text style={styles.momentText}>
-                    <Text style={{ fontWeight: '900' }}>{who}</Text> {momentText(m.sticker.type, m.sticker.speciesId, m.sticker.skin, m.sticker.shiny)}
+                    <Text style={{ fontWeight: '800' }}>{who}</Text> {momentText(m.sticker.type, m.sticker.speciesId, m.sticker.skin, m.sticker.shiny)}
                     {rare ? <Text style={{ color: '#C77D00' }}> ✦</Text> : null}
                   </Text>
                   <Pills list={byMsg[m.id]} onToggle={(e) => toggle(m.id, e)} quick={m.sticker.type === 'catch' ? ['🎉', '👏'] : ['🎉', '❤️']} />
@@ -542,19 +543,14 @@ export function SupportSheet({ onClose }: { onClose: () => void }) {
 }
 
 /** Help and support + Community rules, for the account page. */
-export function HelpRows() {
+export function HelpRows({ extra }: { extra?: React.ReactNode } = {}) {
   const overlay = useOverlay();
   return (
-    <View style={{ gap: 2 }}>
-      <Pressable onPress={() => overlay.open(<SupportSheet onClose={overlay.close} />)} style={styles.toggleRow} accessibilityRole="button">
-        <Text style={font.body}>Help and support</Text>
-        <Text style={font.small}>›</Text>
-      </Pressable>
-      <Pressable onPress={() => overlay.open(<ChatRules onClose={overlay.close} />)} style={styles.toggleRow} accessibilityRole="button">
-        <Text style={font.body}>Community rules</Text>
-        <Text style={font.small}>›</Text>
-      </Pressable>
-    </View>
+    <Group label="Help">
+      <SRow icon="help" title="Help and support" chevron onPress={() => overlay.open(<SupportSheet onClose={overlay.close} />)} />
+      <SRow icon="doc" title="Community rules" chevron onPress={() => overlay.open(<ChatRules onClose={overlay.close} />)} />
+      {extra}
+    </Group>
   );
 }
 
@@ -564,34 +560,26 @@ export function ChatSettings() {
   const [list, setList] = useState<{ id: string; name: string }[] | null>(null);
   const modes: { id: 'on' | 'phrases' | 'off'; label: string }[] = [
     { id: 'on', label: 'On' },
-    { id: 'phrases', label: 'Phrases & stickers' },
+    { id: 'phrases', label: 'Phrases only' },
     { id: 'off', label: 'Off' },
   ];
   return (
-    <View style={{ gap: 8 }}>
-      <Text style={styles.setHead}>Chat</Text>
-      <View style={{ flexDirection: 'row', gap: 6 }}>
-        {modes.map((m) => (
-          <Pressable key={m.id} onPress={() => chat.setSettings({ mode: m.id })} style={[styles.seg, chat.mode === m.id && styles.segOn]} accessibilityRole="radio" accessibilityState={{ checked: chat.mode === m.id }}>
-            <Text style={[styles.segText, chat.mode === m.id && { color: '#fff' }]}>{m.label}</Text>
-          </Pressable>
-        ))}
-      </View>
-      <Pressable onPress={() => chat.setSettings({ push: !chat.push })} style={styles.toggleRow} accessibilityRole="switch" accessibilityState={{ checked: chat.push }}>
-        <Text style={font.body}>Message notifications</Text>
-        <View style={[styles.tog, !chat.push && styles.togOff]}><View style={[styles.knob, !chat.push && { left: 3, right: undefined }]} /></View>
-      </Pressable>
-      <Pressable onPress={async () => setList(await chat.blocked())} style={styles.toggleRow} accessibilityRole="button">
-        <Text style={font.body}>Blocked trainers</Text>
-        <Text style={font.small}>{list ? `${list.length}` : 'Show ›'}</Text>
-      </Pressable>
-      {list?.map((b) => (
-        <View key={b.id} style={styles.toggleRow}>
-          <Text style={font.small}>{b.name}</Text>
-          <Button small label="Unblock" onPress={async () => { await chat.unblock(b.id); setList(await chat.blocked()); }} />
+    <Group label="Chat">
+      <View style={{ padding: 12 }}>
+        <View style={styles.setSegs}>
+          {modes.map((m) => (
+            <Pressable key={m.id} onPress={() => chat.setSettings({ mode: m.id })} style={[styles.setSeg, chat.mode === m.id && styles.setSegOn]} accessibilityRole="radio" accessibilityState={{ checked: chat.mode === m.id }} accessibilityLabel={m.id === 'phrases' ? 'Phrases and stickers only' : `Chat ${m.label}`}>
+              <Text style={[styles.setSegText, chat.mode === m.id && { color: colors.ink }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>{m.label}</Text>
+            </Pressable>
+          ))}
         </View>
+      </View>
+      <SRow icon="bell" title="Message notifications" switchOn={chat.push} onPress={() => chat.setSettings({ push: !chat.push })} />
+      <SRow icon="ban" tint="#FBE7E3" iconColor="#C2412D" title="Blocked trainers" value={list ? `${list.length}` : undefined} chevron={!list} onPress={async () => setList(await chat.blocked())} />
+      {list?.map((b) => (
+        <SRow key={b.id} title={b.name} right={<Button small label="Unblock" onPress={async () => { await chat.unblock(b.id); setList(await chat.blocked()); }} />} />
       ))}
-    </View>
+    </Group>
   );
 }
 
@@ -641,10 +629,10 @@ const styles = StyleSheet.create({
   csegs: { flexDirection: 'row', backgroundColor: '#E4EEEA', borderRadius: 14, padding: 3, gap: 3 },
   cseg: { flex: 1, minHeight: 38, borderRadius: 11, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 6 },
   csegOn: { backgroundColor: '#FFFFFF' },
-  csegText: { fontSize: 14, fontWeight: '900', color: '#6A7A75' },
+  csegText: { fontSize: 14, fontWeight: '700', color: '#6A7A75' },
   csegTextOn: { color: colors.ink },
   segCount: { backgroundColor: '#E0567A', borderRadius: 9, minWidth: 18, paddingHorizontal: 5, alignItems: 'center' },
-  segCountText: { color: '#FFFFFF', fontSize: 11, fontWeight: '900' },
+  segCountText: { color: '#FFFFFF', fontSize: 11, fontWeight: '600' },
   newDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#FF8A5C' },
   moment: { flexDirection: 'row', gap: 10, alignItems: 'center', backgroundColor: '#FFF4E4', borderWidth: 2, borderColor: '#FFE0A8', borderRadius: 16, padding: 9, alignSelf: 'stretch' },
   momentArt: { width: 88, height: 88, borderRadius: 18, backgroundColor: 'rgba(255,255,255,0.7)', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
@@ -653,69 +641,73 @@ const styles = StyleSheet.create({
   pills: { flexDirection: 'row', flexWrap: 'wrap', gap: 5 },
   pill: { backgroundColor: '#FFFFFF', borderWidth: 2, borderColor: '#DDE6E2', borderRadius: 12, paddingHorizontal: 8, paddingVertical: 2, minHeight: 28, justifyContent: 'center' },
   pillMine: { backgroundColor: '#DDF4EA', borderColor: '#2FB58A' },
-  pillText: { fontSize: 13, fontWeight: '900', color: colors.ink },
+  pillText: { fontSize: 13, fontWeight: '600', color: colors.ink },
   reactRow: { flexDirection: 'row', justifyContent: 'space-between' },
   reactBtn: { width: 38, height: 44, borderRadius: 19, alignItems: 'center', justifyContent: 'center' },
   tray: { backgroundColor: '#F3ECFF', borderTopWidth: 1, borderTopColor: '#E0D2FA', paddingTop: 8 },
-  trayTitle: { fontSize: 13, fontWeight: '900', color: '#4E3A80' },
-  trayHint: { fontSize: 12, fontWeight: '800', color: '#7A6AA0' },
+  trayTitle: { fontSize: 13, fontWeight: '600', color: '#4E3A80' },
+  trayHint: { fontSize: 12, fontWeight: '600', color: '#7A6AA0' },
   sticker: { width: 70, height: 74, borderRadius: 16, backgroundColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: 'transparent' },
   stickerOn: { borderColor: '#B497EA' },
-  stickerSend: { position: 'absolute', bottom: -2, backgroundColor: '#8A6BD8', color: '#FFFFFF', fontSize: 12, fontWeight: '900', borderRadius: 8, paddingHorizontal: 6, overflow: 'hidden' },
-  card: { backgroundColor: '#FFFBF2', borderRadius: 22, padding: space.md, gap: 4 },
+  stickerSend: { position: 'absolute', bottom: -2, backgroundColor: '#8A6BD8', color: '#FFFFFF', fontSize: 12, fontWeight: '600', borderRadius: 8, paddingHorizontal: 6, overflow: 'hidden' },
+  card: { backgroundColor: '#FFFFFF', borderRadius: 20, borderWidth: 1, borderColor: colors.line, padding: space.md, gap: 4 },
   rulesBack: { backgroundColor: 'rgba(20,30,28,0.55)', paddingHorizontal: 14 },
-  rulesCard: { backgroundColor: '#FFFBF2', borderRadius: 28, padding: 20, gap: 2 },
-  rulesTitle: { fontSize: 24, fontWeight: '900', color: colors.ink, textAlign: 'center', marginTop: 4 },
+  rulesCard: { backgroundColor: '#FFFFFF', borderRadius: 28, padding: 20, gap: 2 },
+  rulesTitle: { fontSize: 24, fontWeight: '800', color: colors.ink, textAlign: 'center', marginTop: 4 },
   rulesSub: { fontSize: 14, fontWeight: '700', color: colors.muted, textAlign: 'center', marginBottom: 8 },
   ruleRow: { flexDirection: 'row', gap: 12, alignItems: 'flex-start', paddingVertical: 10, borderTopWidth: 1, borderTopColor: '#E3ECE7' },
   ruleNum: { width: 28, height: 28, borderRadius: 14, backgroundColor: '#DDF3EA', alignItems: 'center', justifyContent: 'center' },
-  ruleNumText: { color: '#1E8A68', fontWeight: '900', fontSize: 14 },
-  ruleT: { fontSize: 15, fontWeight: '900', color: colors.ink },
-  ruleS: { fontSize: 13, fontWeight: '700', color: colors.muted, lineHeight: 18, marginTop: 2 },
+  ruleNumText: { color: '#1E8A68', fontWeight: '700', fontSize: 14 },
+  ruleT: { fontSize: 15, fontWeight: '700', color: colors.ink },
+  ruleS: { fontSize: 13, fontWeight: '600', color: colors.muted, lineHeight: 18, marginTop: 2 },
   supportInput: { minHeight: 110, borderRadius: 16, borderWidth: 2, borderColor: '#DCE7E2', backgroundColor: '#fff', padding: 12, fontSize: 15, fontWeight: '700', color: colors.ink, textAlignVertical: 'top' },
-  rulesFine: { fontSize: 12, fontWeight: '700', color: colors.muted, marginVertical: 10 },
-  notNow: { textAlign: 'center', color: colors.muted, fontWeight: '800', fontSize: 14 },
+  rulesFine: { fontSize: 12, fontWeight: '600', color: colors.muted, marginVertical: 10 },
+  notNow: { textAlign: 'center', color: colors.muted, fontWeight: '700', fontSize: 14 },
   guildRow: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: '#2A3366', borderRadius: 18, paddingHorizontal: 14, paddingVertical: 10 },
-  guildRowTitle: { color: '#fff', fontWeight: '900', fontSize: 15 },
-  guildRowPrev: { color: '#C9D3FF', fontWeight: '700', fontSize: 13 },
-  guildRowGo: { color: '#C9D3FF', fontWeight: '900', fontSize: 22 },
+  guildRowTitle: { color: '#fff', fontWeight: '700', fontSize: 15 },
+  guildRowPrev: { color: '#C9D3FF', fontWeight: '600', fontSize: 13 },
+  guildRowGo: { color: '#C9D3FF', fontWeight: '800', fontSize: 22 },
   row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10, borderTopWidth: 1, borderTopColor: colors.line },
   av: { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
-  avText: { color: '#fff', fontWeight: '900', fontSize: 12 },
-  name: { fontWeight: '900', fontSize: 16, color: colors.ink },
-  preview: { fontWeight: '700', fontSize: 13, color: colors.muted },
-  time: { fontWeight: '800', fontSize: 12, color: colors.muted },
+  avText: { color: '#fff', fontWeight: '600', fontSize: 12 },
+  name: { fontWeight: '700', fontSize: 16, color: colors.ink },
+  preview: { fontWeight: '600', fontSize: 13, color: colors.muted },
+  time: { fontWeight: '600', fontSize: 12, color: colors.muted },
   dot: { minWidth: 20, height: 20, borderRadius: 10, backgroundColor: '#E0567A', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 5 },
-  dotText: { color: '#fff', fontWeight: '900', fontSize: 12 },
+  dotText: { color: '#fff', fontWeight: '600', fontSize: 12 },
   full: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 85 },
   head: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 14, paddingBottom: 10, borderBottomWidth: 1, borderBottomColor: 'rgba(0,0,0,0.06)' },
-  back: { fontSize: 15, fontWeight: '900', color: colors.mintDark },
-  headTitle: { fontSize: 17, fontWeight: '900', color: colors.ink },
+  back: { fontSize: 15, fontWeight: '700', color: colors.mintDark },
+  headTitle: { fontSize: 17, fontWeight: '800', color: colors.ink },
   sys: { alignSelf: 'stretch', backgroundColor: '#2A3366', borderRadius: 12, paddingHorizontal: 12, paddingVertical: 8 },
-  sysText: { color: '#fff', fontWeight: '800', fontSize: 13 },
-  who: { fontSize: 12, fontWeight: '900', color: '#4A8FE0', marginLeft: 6, marginBottom: 2 },
+  sysText: { color: '#fff', fontWeight: '600', fontSize: 13 },
+  who: { fontSize: 12, fontWeight: '600', color: '#4A8FE0', marginLeft: 6, marginBottom: 2 },
   bubble: { borderRadius: 18, paddingHorizontal: 13, paddingVertical: 9 },
   mine: { backgroundColor: '#2EB88A', borderBottomRightRadius: 4 },
   theirs: { backgroundColor: '#FFFFFF', borderBottomLeftRadius: 4 },
   bubbleText: { fontSize: 15, fontWeight: '700', color: colors.ink },
-  stickerLine: { fontSize: 12, fontWeight: '900', color: colors.muted },
-  err: { textAlign: 'center', color: '#C4562F', fontWeight: '800', fontSize: 13, paddingHorizontal: 16, paddingTop: 4 },
+  stickerLine: { fontSize: 12, fontWeight: '600', color: colors.muted },
+  err: { textAlign: 'center', color: '#C4562F', fontWeight: '600', fontSize: 13, paddingHorizontal: 16, paddingTop: 4 },
   phrases: { gap: 6, paddingHorizontal: 12, paddingVertical: 8 },
   chip: { backgroundColor: '#fff', borderWidth: 2, borderColor: '#CFE6DA', borderRadius: 999, paddingHorizontal: 11, paddingVertical: 6 },
-  chipText: { fontWeight: '800', fontSize: 13, color: colors.ink },
+  chipText: { fontWeight: '600', fontSize: 13, color: colors.ink },
   inputRow: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 12, paddingTop: 8, backgroundColor: '#FFFBF2' },
   petBtn: { width: 42, height: 42, borderRadius: 21, backgroundColor: '#F2E3FF', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
-  petBtnText: { fontSize: 12, fontWeight: '900', color: '#6A3FB5' },
+  petBtnText: { fontSize: 12, fontWeight: '600', color: '#6A3FB5' },
   input: { flex: 1, height: 42, borderRadius: 21, backgroundColor: '#fff', borderWidth: 2, borderColor: '#CFE6DA', paddingHorizontal: 14, fontSize: 15, fontWeight: '700', color: colors.ink },
   sendBtn: { width: 42, height: 42, borderRadius: 21, backgroundColor: '#2EB88A', alignItems: 'center', justifyContent: 'center' },
-  sendText: { color: '#fff', fontSize: 24, fontWeight: '900', marginTop: -2 },
+  sendText: { color: '#fff', fontSize: 24, fontWeight: '800', marginTop: -2 },
   menuBack: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(20,30,28,0.5)', justifyContent: 'flex-end' },
-  menu: { backgroundColor: '#FFFBF2', borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: space.lg, gap: 10 },
+  menu: { backgroundColor: '#FFFFFF', borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: space.lg, gap: 10 },
   menuQuote: { fontSize: 15, fontWeight: '700', color: colors.muted },
-  setHead: { fontSize: 16, fontWeight: '900', color: colors.ink },
+  setHead: { fontSize: 16, fontWeight: '700', color: colors.ink },
+  setSegs: { flexDirection: 'row', gap: 2, backgroundColor: '#EBF0EE', borderRadius: 12, padding: 3 },
+  setSeg: { flex: 1, borderRadius: 10, minHeight: 34, paddingHorizontal: 4, alignItems: 'center', justifyContent: 'center' },
+  setSegOn: { backgroundColor: '#FFFFFF' },
+  setSegText: { fontWeight: '600', fontSize: 13, color: colors.muted },
   seg: { flex: 1, borderRadius: 12, paddingVertical: 8, alignItems: 'center', backgroundColor: '#EEF3F0' },
   segOn: { backgroundColor: colors.ink },
-  segText: { fontWeight: '900', fontSize: 12, color: colors.ink },
+  segText: { fontWeight: '600', fontSize: 12, color: colors.ink },
   toggleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 6 },
   tog: { width: 46, height: 28, borderRadius: 14, backgroundColor: '#2EB88A' },
   togOff: { backgroundColor: '#C9D3CF' },

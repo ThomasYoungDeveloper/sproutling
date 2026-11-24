@@ -8,6 +8,8 @@ import { Text } from './ScaledText';
 import { useAuth } from '../state/AuthContext';
 import { useGame } from '../state/GameContext';
 import { Button } from './ui';
+import { Group, SRow, Switch } from './Settings';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { isMuted, onMuteChange, play, setMuted } from '../lib/sound';
 import { useOverlay } from './Overlay';
 import PremiumSheet from './PremiumSheet';
@@ -28,22 +30,15 @@ function SoundToggle() {
     };
   }, []);
   return (
-    <Pressable
+    <SRow
+      icon={muted ? 'volumeOff' : 'volume'}
+      title="Sound effects"
+      switchOn={!muted}
       onPress={() => {
         setMuted(!muted);
         if (muted) setTimeout(() => play('chime'), 50);
       }}
-      style={styles.soundRow}
-      accessibilityRole="switch"
-      accessibilityState={{ checked: !muted }}
-      accessibilityLabel="Sound effects"
-    >
-      <Text style={{ fontSize: 20 }}>{muted ? '🔇' : '🔊'}</Text>
-      <Text style={[font.body, { flex: 1, fontWeight: '800' }]}>Sound effects</Text>
-      <View style={[styles.switch, !muted && styles.switchOn]}>
-        <View style={[styles.knob, !muted && { alignSelf: 'flex-end' }]} />
-      </View>
-    </Pressable>
+    />
   );
 }
 
@@ -61,17 +56,17 @@ function ReminderSettings() {
   const set = (patch: NonNullable<typeof state.reminderPrefs>) => apply((s) => ({ ...s, reminderPrefs: { ...s.reminderPrefs, ...patch } }));
   return (
     <View style={styles.coming}>
-      <Text style={[font.tiny, { fontWeight: '900' }]}>Never more than one habit reminder a day.</Text>
+      <Text style={font.tiny}>Never more than one habit reminder a day.</Text>
       {REMINDER_KINDS.map((k) => {
         const on = prefs[k.id] !== false;
         return (
           <View key={k.id} style={{ gap: 6 }}>
-            <Pressable onPress={() => set({ [k.id]: !on })} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 4 }} accessibilityRole="switch" accessibilityState={{ checked: on }} accessibilityLabel={k.title}>
+            <Pressable onPress={() => set({ [k.id]: !on })} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 44 }} accessibilityRole="switch" accessibilityState={{ checked: on }} accessibilityLabel={k.title}>
               <View style={{ flex: 1 }}>
-                <Text style={[font.body, { fontWeight: '800' }]}>{k.title}</Text>
+                <Text style={styles.subTitle}>{k.title}</Text>
                 <Text style={font.tiny}>{k.sub}</Text>
               </View>
-              <View style={[styles.switch, on && styles.switchOn]}><View style={[styles.knob, on && { alignSelf: 'flex-end' }]} /></View>
+              <Switch on={on} />
             </Pressable>
             {k.id === 'evening' && on ? (
               <View style={{ flexDirection: 'row', gap: 6 }}>
@@ -102,32 +97,25 @@ function RemindersToggle() {
   const when = (t: number) => new Date(t).toLocaleString(undefined, { weekday: 'short', hour: 'numeric', minute: '2-digit' });
   return (
     <View>
-      <Pressable
+      <SRow
+        icon="bell"
+        title="Reminders and alerts"
+        sub={`Streaks, eggs, trips, raids, friends and trades${remindersSupported ? '' : ' · phone app only'}`}
+        switchOn={on}
+        a11y="Reminders"
         onPress={async () => {
           const r = await setRemindersOn(!on);
           setNote(!on && !r ? 'Notifications are off for Sproutling. Turn them on in iPhone Settings › Sproutling.' : null);
         }}
-        style={styles.soundRow}
-        accessibilityRole="switch"
-        accessibilityState={{ checked: on }}
-        accessibilityLabel="Reminders"
-      >
-        <View style={{ flex: 1 }}>
-          <Text style={[font.body, { fontWeight: '800' }]}>Reminders & alerts</Text>
-          <Text style={font.tiny}>Streaks, eggs, expeditions, guild raids, plus friend requests, gifts and trades{remindersSupported ? '' : ' · phone app only'}</Text>
-        </View>
-        <View style={[styles.switch, on && styles.switchOn]}>
-          <View style={[styles.knob, on && { alignSelf: 'flex-end' }]} />
-        </View>
-      </Pressable>
-      {note ? <Text style={styles.msg}>{note}</Text> : null}
-      {on ? <ReminderSettings /> : null}
+      />
+      {note ? <Text style={[styles.msg, { paddingHorizontal: 16, paddingBottom: 10 }]}>{note}</Text> : null}
+      {on ? <View style={{ paddingHorizontal: 16, paddingBottom: 12 }}><ReminderSettings /></View> : null}
       {list.length ? (
-        <View style={styles.coming}>
-          <Text style={[font.tiny, { fontWeight: '900' }]}>Coming up</Text>
+        <View style={[styles.coming, { marginHorizontal: 16, marginBottom: 12, marginTop: 0 }]}>
+          <Text style={[font.tiny, { color: colors.ink }]}>Coming up</Text>
           {list.map((r) => (
             <Text key={r.id} style={font.tiny} numberOfLines={1}>
-              <Text style={{ fontWeight: '900' }}>{when(r.at)}</Text> · {r.title}
+              <Text style={{ fontWeight: '600', color: colors.ink }}>{when(r.at)}</Text> · {r.title}
             </Text>
           ))}
         </View>
@@ -139,11 +127,7 @@ function RemindersToggle() {
 function PremiumRow() {
   const overlay = useOverlay();
   return (
-    <Pressable onPress={() => overlay.open(<PremiumSheet onClose={overlay.close} />)} style={styles.soundRow} accessibilityRole="button" accessibilityLabel="Sproutling Premium">
-      <Text style={{ fontSize: 20 }}>⭐</Text>
-      <Text style={[font.body, { flex: 1, fontWeight: '800' }]}>Sproutling Premium</Text>
-      <Text style={{ fontWeight: '900', color: '#6E56CF' }}>Coming soon ›</Text>
-    </Pressable>
+    <SRow icon="star" tint="#ECE7FB" iconColor="#6E56CF" title="Sproutling Premium" value="Coming soon" chevron onPress={() => overlay.open(<PremiumSheet onClose={overlay.close} />)} />
   );
 }
 
@@ -182,50 +166,83 @@ export default function AccountSheet({ onClose, onTour }: { onClose: () => void;
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ text: string; ok?: boolean } | null>(null);
 
+  const insets = useSafeAreaInsets();
   const syncLabel = { local: 'Saved on this device', syncing: 'Saving to the cloud…', saved: 'Saved to the cloud', error: 'Couldn’t reach the cloud. We’ll keep trying.' }[sync];
 
   return (
     <View style={styles.backdrop}>
       <Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessibilityLabel="Close" />
-      <View style={styles.sheet}>
-        <ScrollView contentContainerStyle={{ gap: space.sm }} showsVerticalScrollIndicator={false}>
+      <View style={[styles.sheet, { paddingBottom: Math.max(insets.bottom, 12) }]}>
+        <View style={styles.grab} />
+        <View style={styles.topRow}>
+          <Text style={font.title}>Account</Text>
+          <Pressable onPress={onClose} style={styles.doneBtn} hitSlop={8} accessibilityRole="button">
+            <Text style={styles.doneText}>Done</Text>
+          </Pressable>
+        </View>
+        <ScrollView contentContainerStyle={{ gap: space.xl, paddingBottom: space.lg }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
         {user ? (
           <>
-            <Text style={font.h2}>Your account</Text>
-            <Text style={font.small}>{user.email}</Text>
-            <View style={[styles.status, sync === 'error' && { backgroundColor: '#FFE7DD' }]}>
-              <Text style={[font.small, { color: sync === 'error' ? '#C4562F' : colors.mintDark }]}>{syncLabel}</Text>
+            <View style={styles.profile}>
+              <View style={styles.bigAvatar}><Text style={styles.bigAvatarText}>{(username ?? 'T')[0].toUpperCase()}</Text></View>
+              <View style={{ flex: 1, minWidth: 0 }}>
+                <Text style={font.h2} numberOfLines={1}>{username ?? 'Trainer'}</Text>
+                <Text style={font.small} numberOfLines={1}>{user.email}</Text>
+                <View style={styles.syncRow}>
+                  <View style={[styles.syncDot, sync === 'error' && { backgroundColor: '#E0703C' }, sync === 'syncing' && { backgroundColor: colors.gold }]} />
+                  <Text style={[font.tiny, sync === 'error' && { color: '#C4562F' }]}>{syncLabel}</Text>
+                </View>
+              </View>
             </View>
-            <Text style={[font.body, { fontWeight: '800', marginTop: space.sm }]}>Trainer name</Text>
-            <Text style={font.small}>Friends and guildmates will see this.</Text>
-            <View style={styles.row}>
-              <TextInput style={[styles.input, { flex: 1 }]} value={name} onChangeText={setName} placeholder="e.g. PixelTom" autoCapitalize="none" maxLength={20} />
-              <Button
-                primary
-                label="Save"
-                disabled={busy || !name.trim() || name.trim() === username}
-                onPress={async () => {
-                  setBusy(true);
-                  const r = await saveUsername(name);
-                  setMsg(r.error ? { text: r.error } : { text: 'Name saved!', ok: true });
-                  setBusy(false);
-                }}
-              />
-            </View>
-            {msg ? <Text style={[styles.msg, msg.ok && styles.ok]}>{msg.text}</Text> : null}
-            <SoundToggle />
-            <RemindersToggle />
-            <View style={{ height: 1, backgroundColor: '#E3ECE7', marginVertical: 6 }} />
+
+            <Group label="Trainer name" note={msg ? undefined : 'Friends and guildmates see this name.'}>
+              <View style={styles.nameRow}>
+                <TextInput style={styles.input} value={name} onChangeText={setName} placeholder="e.g. PixelTom" autoCapitalize="none" maxLength={20} accessibilityLabel="Trainer name" />
+                <Pressable
+                  disabled={busy || !name.trim() || name.trim() === username}
+                  onPress={async () => {
+                    setBusy(true);
+                    const r = await saveUsername(name);
+                    setMsg(r.error ? { text: r.error } : { text: 'Name saved', ok: true });
+                    setBusy(false);
+                  }}
+                  style={({ pressed }) => [styles.saveBtn, (busy || !name.trim() || name.trim() === username) && { opacity: 0.4 }, pressed && { opacity: 0.7 }]}
+                  accessibilityRole="button"
+                >
+                  <Text style={styles.saveText}>{busy ? 'Saving…' : 'Save'}</Text>
+                </Pressable>
+              </View>
+            </Group>
+            {msg ? <Text style={[styles.msg, msg.ok && styles.ok, { marginTop: -16, paddingHorizontal: 16 }]}>{msg.text}</Text> : null}
+
             <GoalSettings />
-            <View style={{ height: 1, backgroundColor: '#E3ECE7', marginVertical: 6 }} />
+
+            <Group label="App">
+              <SoundToggle />
+              <RemindersToggle />
+              {onTour ? <SRow icon="sparkle" tint="#FFF1C9" iconColor="#B86E00" title="See what’s new" chevron onPress={onTour} /> : null}
+            </Group>
+
             <ChatSettings />
-            <View style={{ height: 1, backgroundColor: '#E3ECE7', marginVertical: 6 }} />
-            <HelpRows />
+
+            <HelpRows
+              extra={[
+                <SRow key="p" icon="shield" title="Privacy policy" chevron onPress={() => Linking.openURL('https://sproutling.vercel.app/privacy')} />,
+                <SRow key="t" icon="doc" title="Terms" chevron onPress={() => Linking.openURL('https://sproutling.vercel.app/terms')} />,
+              ]}
+            />
+
+            {adm.admin ? (
+              <Group label="Admin" note="Only you see Reports and Spots.">
+                <SRow icon="ban" tint="#FBE7E3" iconColor="#C2412D" title="Reports" a11y={`Reports, ${adm.reports} new`} right={adm.reports ? <View style={styles.adminCount}><Text style={styles.adminCountText}>{adm.reports} new</Text></View> : null} chevron onPress={() => setAdminPage('reports')} />
+                <SRow icon="compass" title="Spots" a11y={`Spots, ${adm.spots} requests`} right={adm.spots ? <View style={styles.adminCount}><Text style={styles.adminCountText}>{adm.spots} new</Text></View> : null} chevron onPress={() => setAdminPage('spots')} />
+              </Group>
+            ) : null}
+
             {/* Premium stays hidden until it's real: Apple rejects "coming soon" features. */}
             {testMode ? (
-            <View style={styles.testing}>
-              <Text style={[font.small, { fontWeight: '900' }]}>Testing (preview build)</Text>
-              <View style={[styles.row, { flexWrap: 'wrap' }]}>
+            <Group label="Testing (preview build)">
+              <View style={[styles.row, { flexWrap: 'wrap', padding: 12 }]}>
                 <Button small label="Skip to tomorrow" onPress={() => { apply(A.nextDay); onClose(); }} />
                 <Button small label="Replay tutorial" onPress={() => { apply((s) => ({ ...s, tutorialDone: false })); onClose(); }} />
                 <Button small label="Replay intro" onPress={() => { apply((s) => ({ ...s, onboard: { ...s.onboard, done: false } })); onClose(); }} />
@@ -245,45 +262,18 @@ export default function AccountSheet({ onClose, onTour }: { onClose: () => void;
                 />
               </View>
               <PremiumRow />
-              <Pressable onPress={() => setTestMode(false)} hitSlop={8} accessibilityRole="button"><Text style={styles.link}>Hide testing tools</Text></Pressable>
-            </View>
+              <SRow title="Hide testing tools" onPress={() => setTestMode(false)} />
+            </Group>
             ) : null}
-            {adm.admin ? (
-              <View style={{ gap: 8, marginTop: space.md }}>
-                <Pressable onPress={() => setAdminPage('reports')} style={styles.adminRow} accessibilityRole="button" accessibilityLabel={`Reports, ${adm.reports} new`}>
-                  <Text style={styles.adminTitle}>Reports</Text>
-                  {adm.reports ? <View style={styles.adminCount}><Text style={styles.adminCountText}>{adm.reports} new</Text></View> : <Text style={styles.adminChev}>›</Text>}
-                </Pressable>
-                <Pressable onPress={() => setAdminPage('spots')} style={styles.adminRow} accessibilityRole="button" accessibilityLabel={`Spots, ${adm.spots} requests`}>
-                  <Text style={styles.adminTitle}>Spots</Text>
-                  {adm.spots ? <View style={styles.adminCount}><Text style={styles.adminCountText}>{adm.spots} new</Text></View> : <Text style={styles.adminChev}>›</Text>}
-                </Pressable>
-                <Text style={font.tiny}>Only you see Reports and Spots.</Text>
-              </View>
-            ) : null}
-            {onTour ? <Button small label="See what’s new" onPress={onTour} style={{ marginTop: space.md, alignSelf: 'flex-start' }} /> : null}
-            <View style={[styles.row, { marginTop: space.md }]}>
-              <Button label="Sign out" onPress={signOut} />
-              <Button primary label="Done" onPress={onClose} style={{ flex: 1 }} />
-            </View>
-            <View style={styles.footer}>
-              <Pressable onPress={() => Linking.openURL('https://sproutling.vercel.app/privacy')} hitSlop={8} accessibilityRole="link">
-                <Text style={styles.link}>Privacy policy</Text>
-              </Pressable>
-              <Pressable onPress={() => Linking.openURL('https://sproutling.vercel.app/terms')} hitSlop={8} accessibilityRole="link">
-                <Text style={styles.link}>Terms</Text>
-              </Pressable>
-              <Pressable onPress={() => { setAskDelete(true); setDeleteErr(null); }} hitSlop={8} accessibilityRole="button">
-                <Text style={[styles.link, { color: '#C4562F' }]}>Delete account</Text>
-              </Pressable>
-            </View>
-            {/* Testers: tap the version 7 times to show the testing tools (skip a day, reset). */}
-            <Pressable onPress={tapVersion} accessibilityRole="text">
-              <Text style={styles.version}>Version {appVersion()}</Text>
-            </Pressable>
+
+            <Group>
+              <SRow icon="logout" tint={colors.tile} iconColor={colors.ink} title="Sign out" onPress={signOut} />
+              <SRow title="Delete account" danger onPress={() => { setAskDelete(true); setDeleteErr(null); }} />
+            </Group>
+
             {askDelete ? (
               <View style={styles.danger}>
-                <Text style={[font.body, { fontWeight: '900', color: '#A23B1B' }]}>Delete your account for good?</Text>
+                <Text style={[font.body, { fontWeight: '700', color: '#A23B1B' }]}>Delete your account for good?</Text>
                 <Text style={font.small}>This removes your login, your pets and saved game, friends, trades and guild spot on every device. It can’t be undone.</Text>
                 {deleteErr ? <Text style={styles.msg}>{deleteErr}</Text> : null}
                 <View style={styles.row}>
@@ -305,6 +295,11 @@ export default function AccountSheet({ onClose, onTour }: { onClose: () => void;
                 </View>
               </View>
             ) : null}
+
+            {/* Testers: tap the version 7 times to show the testing tools (skip a day, reset). */}
+            <Pressable onPress={tapVersion} accessibilityRole="text">
+              <Text style={styles.version}>Sproutling {appVersion()}</Text>
+            </Pressable>
           </>
         ) : null}
         </ScrollView>
@@ -316,34 +311,36 @@ export default function AccountSheet({ onClose, onTour }: { onClose: () => void;
 }
 
 const styles = StyleSheet.create({
-  adminRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F4F9F6', borderRadius: 14, paddingHorizontal: 14, paddingVertical: 12 },
-  adminTitle: { flex: 1, fontSize: 15, fontWeight: '900', color: colors.ink },
   adminCount: { backgroundColor: '#E0567A', borderRadius: 9, paddingHorizontal: 8, paddingVertical: 1 },
-  adminCountText: { color: '#FFFFFF', fontSize: 12, fontWeight: '900' },
-  adminChev: { fontSize: 20, color: '#9AA7A2' },
-  healthBox: { backgroundColor: '#F4F9F6', borderRadius: 14, padding: 10, gap: 6 },
-  hourChip: { flex: 1, borderRadius: 12, backgroundColor: '#EEF4F1', paddingVertical: 8, alignItems: 'center' },
+  adminCountText: { color: '#FFFFFF', fontSize: 12, fontWeight: '600' },
+  healthBox: { backgroundColor: colors.tile, borderRadius: 12, padding: 12, gap: 6 },
+  hourChip: { flex: 1, borderRadius: 10, backgroundColor: colors.tile, minHeight: 36, alignItems: 'center', justifyContent: 'center' },
   hourChipOn: { backgroundColor: colors.mint },
-  hourText: { fontSize: 14, fontWeight: '900', color: colors.ink },
-  coming: { backgroundColor: '#F6FAF8', borderRadius: 12, padding: 10, gap: 3, marginTop: 6 },
-  soundRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 8 },
-  switch: { width: 46, height: 26, borderRadius: 13, backgroundColor: '#D6DEDA', padding: 3, justifyContent: 'center' },
-  switchOn: { backgroundColor: colors.mint },
-  knob: { width: 20, height: 20, borderRadius: 10, backgroundColor: '#FFFFFF' },
-  backdrop: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(24,30,48,0.55)', justifyContent: 'center', alignItems: 'center', padding: space.lg, zIndex: 50 },
-  sheet: { backgroundColor: '#FFFFFF', borderRadius: 22, padding: space.lg, width: '100%', maxWidth: 420, maxHeight: '92%' },
-  footer: { flexDirection: 'row', justifyContent: 'space-between', paddingTop: space.sm },
-  link: { fontSize: 13, fontWeight: '800', color: colors.mintDark },
-  version: { fontSize: 12, fontWeight: '700', color: colors.muted, textAlign: 'center', paddingTop: 10 },
+  hourText: { fontSize: 14, fontWeight: '600', color: colors.ink },
+  coming: { backgroundColor: colors.tile, borderRadius: 12, padding: 12, gap: 4, marginTop: 6 },
+  subTitle: { fontSize: 15, fontWeight: '600', color: colors.ink },
+  backdrop: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(20,28,32,0.45)', justifyContent: 'flex-end', alignItems: 'center', zIndex: 50 },
+  sheet: { backgroundColor: '#F2F6F4', borderTopLeftRadius: 28, borderTopRightRadius: 28, paddingHorizontal: space.lg, paddingTop: 8, width: '100%', maxWidth: 560, maxHeight: '94%' },
+  grab: { alignSelf: 'center', width: 36, height: 5, borderRadius: 3, backgroundColor: '#CBD5D1', marginBottom: 6 },
+  topRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 8, marginBottom: 4 },
+  doneBtn: { minHeight: 44, minWidth: 44, alignItems: 'flex-end', justifyContent: 'center' },
+  doneText: { fontSize: 16, fontWeight: '700', color: colors.mintDark },
+  profile: { flexDirection: 'row', alignItems: 'center', gap: space.md, backgroundColor: '#FFFFFF', borderRadius: 16, padding: space.lg },
+  bigAvatar: { width: 56, height: 56, borderRadius: 28, backgroundColor: colors.mint, alignItems: 'center', justifyContent: 'center' },
+  bigAvatarText: { color: '#FFFFFF', fontSize: 24, fontWeight: '800' },
+  syncRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 },
+  syncDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.mint },
+  nameRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm, paddingLeft: space.lg, paddingRight: 8, minHeight: 52 },
+  input: { flex: 1, minWidth: 0, fontSize: 16, fontWeight: '500', color: colors.ink, paddingVertical: 12 },
+  saveBtn: { minHeight: 36, paddingHorizontal: 14, borderRadius: 10, backgroundColor: colors.mint, alignItems: 'center', justifyContent: 'center' },
+  saveText: { color: '#FFFFFF', fontSize: 14, fontWeight: '700' },
+  version: { fontSize: 12, fontWeight: '500', color: colors.muted, textAlign: 'center' },
   deleteBtn: { flex: 1, height: 48, borderRadius: 14, backgroundColor: '#D9483B', alignItems: 'center', justifyContent: 'center' },
-  deleteText: { color: '#FFFFFF', fontSize: 16, fontWeight: '900' },
-  danger: { backgroundColor: '#FFF1EC', borderRadius: 14, padding: 12, gap: 8 },
-  input: { borderWidth: 1, borderColor: colors.line, borderRadius: 12, paddingVertical: 10, paddingHorizontal: 12, fontSize: 16, color: colors.ink, backgroundColor: '#FAFCFB' },
+  deleteText: { color: '#FFFFFF', fontSize: 16, fontWeight: '700' },
+  danger: { backgroundColor: '#FFF1EC', borderRadius: 16, padding: space.lg, gap: 8 },
   row: { flexDirection: 'row', gap: space.sm, alignItems: 'center' },
-  msg: { fontSize: 13, fontWeight: '700', color: '#C4562F' },
+  msg: { fontSize: 13, fontWeight: '600', color: '#C4562F' },
   ok: { color: colors.mintDark },
-  testing: { borderTopWidth: 1, borderTopColor: colors.line, paddingTop: space.sm, gap: 6, marginTop: space.sm },
-  status: { backgroundColor: colors.mintSoft, borderRadius: 10, paddingVertical: 6, paddingHorizontal: 10, alignSelf: 'flex-start' },
 });
 
 /**
@@ -368,17 +365,17 @@ function HealthCheck() {
   return (
     <View style={styles.healthBox}>
       <View style={[styles.row, { alignItems: 'center', justifyContent: 'space-between' }]}>
-        <Text style={[font.body, { fontWeight: '800', flex: 1 }]}>Apple Health</Text>
+        <Text style={[styles.subTitle, { flex: 1 }]}>Apple Health</Text>
         <Button small label={busy ? 'Checking…' : 'Check it'} disabled={busy} onPress={check} />
       </View>
       {!res ? (
         <Text style={font.tiny}>{ago === null ? 'Tap Check it to see if your steps are coming in.' : `Last read ${ago === 0 ? 'just now' : `${ago} min ago`}.`}</Text>
       ) : res.health > 0 ? (
-        <Text style={[font.small, { color: colors.mintDark, fontWeight: '800' }]}>
+        <Text style={[font.small, { color: colors.mintDark }]}>
           Connected. Apple Health has {res.health.toLocaleString()} steps today and Sproutling has {Math.max(res.game, res.health).toLocaleString()}.
         </Text>
       ) : (
-        <Text style={[font.small, { color: '#B4532A', fontWeight: '800' }]}>
+        <Text style={[font.small, { color: '#B4532A' }]}>
           Apple Health shows 0 steps today. If you’ve walked with your phone, open the iPhone Settings app, then Health › Data Access & Devices › Sproutling, and turn on Steps.
         </Text>
       )}
@@ -400,29 +397,39 @@ function GoalSettings() {
       return { ...s, goals, days: d ? { ...s.days, [key]: { ...d, stepGoal: goals.steps, waterGoal: goals.water } } : s.days };
     });
   return (
-    <View style={{ gap: 8 }}>
-      <Text style={[font.body, { fontWeight: '800' }]}>Daily goals</Text>
-      <View style={[styles.row, { alignItems: 'center', justifyContent: 'space-between' }]}>
-        <Text style={font.small}>Steps a day</Text>
-        <View style={[styles.row, { alignItems: 'center' }]}>
-          <Button small label="−" onPress={() => set({ steps: I.clampGoal(goal - 500) })} />
-          <Text style={[font.body, { fontWeight: '900', minWidth: 64, textAlign: 'center' }]}>{goal.toLocaleString()}</Text>
-          <Button small label="+" onPress={() => set({ steps: I.clampGoal(goal + 500) })} />
-        </View>
-      </View>
-      <View style={[styles.row, { alignItems: 'center', justifyContent: 'space-between' }]}>
-        <Text style={font.small}>Water ({I.waterText(I.waterGoal(state), unit)} a day)</Text>
-        <View style={styles.row}>
-          <Button small primary={unit === 'oz'} label="oz" onPress={() => set({ unit: 'oz' })} />
-          <Button small primary={unit === 'ml'} label="mL" onPress={() => set({ unit: 'ml' })} />
-        </View>
-      </View>
-      {state.goals?.auto ? <Text style={font.tiny}>Your step goal moves with you each week: up after good weeks, down after slow ones.</Text> : null}
-      {!skipped && healthAvailable() ? <HealthCheck /> : null}
+    <Group label="Daily goals" note={state.goals?.auto ? 'Your step goal moves with you each week: up after good weeks, down after slow ones.' : undefined}>
+      <SRow
+        icon="steps"
+        title="Steps a day"
+        right={
+          <View style={styles.row}>
+            <Button small label="−" onPress={() => set({ steps: I.clampGoal(goal - 500) })} />
+            <Text style={[styles.subTitle, { minWidth: 56, textAlign: 'center', fontVariant: ['tabular-nums'] }]}>{goal.toLocaleString()}</Text>
+            <Button small label="+" onPress={() => set({ steps: I.clampGoal(goal + 500) })} />
+          </View>
+        }
+      />
+      <SRow
+        icon="drop"
+        tint="#DDEEFB"
+        iconColor="#2E7FB8"
+        title="Water"
+        sub={`${I.waterText(I.waterGoal(state), unit)} a day`}
+        right={
+          <View style={styles.row}>
+            <Button small primary={unit === 'oz'} label="oz" onPress={() => set({ unit: 'oz' })} />
+            <Button small primary={unit === 'ml'} label="mL" onPress={() => set({ unit: 'ml' })} />
+          </View>
+        }
+      />
+      {!skipped && healthAvailable() ? <View style={{ padding: 12 }}><HealthCheck /></View> : null}
       {skipped && healthAvailable() ? (
-        <Button
-          small
-          label="Connect Apple Health"
+        <SRow
+          icon="heart"
+          tint="#FBE3EA"
+          iconColor="#D6456B"
+          title="Connect Apple Health"
+          chevron
           onPress={async () => {
             const h = nativeHealth();
             if (!h) return;
@@ -431,6 +438,6 @@ function GoalSettings() {
           }}
         />
       ) : null}
-    </View>
+    </Group>
   );
 }

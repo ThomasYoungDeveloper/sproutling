@@ -69,7 +69,7 @@ export default function SpotWelcome({ spot, action, onAction, onLater, note }: {
         </View>
         <Text style={styles.line}>
           {spot.members > 1 ? `${spot.members} players chat and walk in the ` : 'Be one of the first in the '}
-          <Text style={{ fontWeight: '900' }}>{spot.name}</Text> group.
+          <Text style={{ fontWeight: '800' }}>{spot.name}</Text> group.
         </Text>
         {note ? <Text style={[font.small, { textAlign: 'center', color: '#C4562F' }]}>{note}</Text> : null}
         <Button primary label={action} onPress={onAction} style={{ alignSelf: 'stretch' }} />
@@ -83,12 +83,12 @@ export default function SpotWelcome({ spot, action, onAction, onLater, note }: {
 const styles = StyleSheet.create({
   full: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 300, justifyContent: 'space-between', backgroundColor: '#CFE9F2' },
   banner: { backgroundColor: colors.mint, borderRadius: 999, paddingHorizontal: 16, paddingVertical: 8 },
-  bannerText: { color: '#FFFFFF', fontSize: 16, fontWeight: '900' },
+  bannerText: { color: '#FFFFFF', fontSize: 16, fontWeight: '700' },
   postcard: { backgroundColor: '#FFFFFF', padding: 12, paddingBottom: 14, borderRadius: 6, transform: [{ rotate: '-3deg' }], shadowColor: '#000', shadowOpacity: 0.22, shadowRadius: 14, shadowOffset: { width: 0, height: 8 }, elevation: 6, width: 250 },
   tape: { position: 'absolute', top: -12, alignSelf: 'center', width: 76, height: 24, backgroundColor: 'rgba(255,214,140,0.85)', transform: [{ rotate: '4deg' }], zIndex: 2 },
   photo: { width: 226, height: 190, borderRadius: 3 },
-  place: { marginTop: 10, textAlign: 'center', fontSize: 21, fontWeight: '900', color: '#2F4A40' },
-  card: { marginHorizontal: 12, backgroundColor: '#FFFCF5', borderRadius: 24, padding: 16, gap: 10, alignItems: 'center', width: undefined, maxWidth: 560, alignSelf: 'stretch' },
+  place: { marginTop: 10, textAlign: 'center', fontSize: 21, fontWeight: '800', color: '#2F4A40' },
+  card: { marginHorizontal: 12, backgroundColor: '#FFFFFF', borderRadius: 24, padding: 16, gap: 10, alignItems: 'center', width: undefined, maxWidth: 560, alignSelf: 'stretch' },
   dancers: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'center', gap: 4, height: 64 },
   line: { fontSize: 15, fontWeight: '700', color: '#3D4A46', textAlign: 'center' },
 });

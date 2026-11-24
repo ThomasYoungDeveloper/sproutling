@@ -3,7 +3,7 @@ import React, { useEffect, useRef } from 'react';
 import { Animated, Pressable, ScrollView, StyleSheet, View, type ViewStyle, type StyleProp, type LayoutChangeEvent } from 'react-native';
 import { useWindowDimensions } from 'react-native';
 import { Text } from './ScaledText';
-import { colors, radius, space, font } from '../theme';
+import { colors, radius, space, font, cardStyle, TAP } from '../theme';
 import type { Rarity } from '../game/types';
 import { RARITY_INFO } from '../game/rarity';
 
@@ -38,15 +38,15 @@ export function Button({ label, onPress, primary, disabled, small, style }: { la
       onPressOut={() => to(1, 3.5)}
       style={outer}
     >
-      <Animated.View style={[styles.btn, primary && styles.btnPrimary, small && styles.btnSmall, disabled && styles.btnDisabled, inner, { transform: [{ scale }] }]}>
-        <Text style={[styles.btnText, primary && { color: '#fff' }]}>{label}</Text>
+      <Animated.View style={[styles.btn, primary && styles.btnPrimary, small && styles.btnSmall, small && primary && { backgroundColor: colors.mint, borderColor: colors.mint }, disabled && styles.btnDisabled, inner, { transform: [{ scale }] }]}>
+        <Text style={[styles.btnText, small && styles.btnTextSmall, primary && { color: '#fff' }]}>{label}</Text>
       </Animated.View>
     </Pressable>
   );
 }
 
 /** A bar that slides smoothly to its new value. */
-export function ProgressBar({ value, color = colors.mint, height = 10 }: { value: number; color?: string; height?: number }) {
+export function ProgressBar({ value, color = colors.mint, height = 8 }: { value: number; color?: string; height?: number }) {
   const target = Math.max(0, Math.min(1, value));
   const v = useRef(new Animated.Value(target)).current;
   useEffect(() => {
@@ -89,16 +89,17 @@ export function Chip({ label, tone = 'mint' }: { label: string; tone?: 'mint' | 
 }
 
 const styles = StyleSheet.create({
-  card: { backgroundColor: colors.card, borderRadius: radius.lg, padding: space.lg, gap: space.sm, shadowColor: '#24323A', shadowOpacity: 0.08, shadowRadius: 0, shadowOffset: { width: 0, height: 4 }, elevation: 2 },
-  head: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: space.xs },
-  btn: { borderWidth: 1, borderColor: colors.line, backgroundColor: '#F7FAF9', borderRadius: radius.sm, paddingVertical: 9, paddingHorizontal: 14, alignItems: 'center' },
+  card: { ...cardStyle, padding: space.lg, gap: space.sm },
+  head: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', marginTop: space.xs, marginBottom: space.xs, paddingHorizontal: space.xs },
+  btn: { borderWidth: 1, borderColor: colors.line, backgroundColor: '#FFFFFF', borderRadius: 14, minHeight: TAP, paddingVertical: 11, paddingHorizontal: 16, alignItems: 'center', justifyContent: 'center' },
   btnPrimary: { backgroundColor: colors.mint, borderColor: colors.mint },
-  btnSmall: { paddingVertical: 6, paddingHorizontal: 10 },
+  btnSmall: { minHeight: 36, borderRadius: radius.sm, paddingVertical: 7, paddingHorizontal: 12, backgroundColor: colors.tile, borderColor: colors.tile },
   btnDisabled: { opacity: 0.45 },
-  btnText: { fontWeight: '800', fontSize: 14, color: colors.ink, textAlign: 'center' },
-  track: { borderRadius: 999, backgroundColor: '#EEF4F1', borderWidth: 1, borderColor: '#CFE6DB', overflow: 'hidden' },
-  badge: { borderRadius: 999, paddingHorizontal: 9, paddingVertical: 3, alignSelf: 'flex-start' },
-  badgeText: { fontSize: 12, fontWeight: '800' },
+  btnText: { fontWeight: '700', fontSize: 15, color: colors.ink, textAlign: 'center' },
+  btnTextSmall: { fontSize: 13 },
+  track: { borderRadius: 999, backgroundColor: '#E9F0ED', overflow: 'hidden' },
+  badge: { borderRadius: 999, paddingHorizontal: 8, paddingVertical: 3, alignSelf: 'flex-start' },
+  badgeText: { fontSize: 12, fontWeight: '700' },
 });
 
 /**

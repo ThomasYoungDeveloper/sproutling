@@ -44,11 +44,11 @@ export function InfoPop({ tip, onClose }: { tip: Tip | null; onClose: () => void
 
 const styles = StyleSheet.create({
   dot: { width: 18, height: 18, borderRadius: 9, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
-  dotText: { fontSize: 11, fontWeight: '900', lineHeight: 13 },
+  dotText: { fontSize: 11, fontWeight: '600', lineHeight: 13 },
   backdrop: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(24,30,48,0.55)', justifyContent: 'center', alignItems: 'center', padding: 24, zIndex: 200 },
   card: { backgroundColor: '#FFFFFF', borderRadius: 22, padding: 20, width: '100%', maxWidth: 380, gap: 10, alignSelf: 'center' },
-  title: { fontSize: 20, fontWeight: '900', color: colors.ink },
+  title: { fontSize: 20, fontWeight: '800', color: colors.ink },
   text: { fontSize: 15, fontWeight: '700', color: '#4D5E59', lineHeight: 21 },
   ok: { marginTop: 6, backgroundColor: colors.mint, borderRadius: 14, paddingVertical: 12, alignItems: 'center' },
-  okText: { color: '#FFFFFF', fontWeight: '900', fontSize: 16 },
+  okText: { color: '#FFFFFF', fontWeight: '700', fontSize: 16 },
 });

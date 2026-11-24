@@ -105,18 +105,18 @@ export default function PetPicker({
 }
 
 const styles = StyleSheet.create({
-  hpText: { fontSize: 12, fontWeight: '900', textAlign: 'center' },
+  hpText: { fontSize: 12, fontWeight: '600', textAlign: 'center' },
   backdrop: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(24,30,48,0.6)', justifyContent: 'center', alignItems: 'center', padding: space.lg, zIndex: 80 },
-  sheet: { backgroundColor: '#FFFFFF', borderRadius: 22, padding: space.lg, gap: space.sm, width: '100%', maxWidth: 440, maxHeight: '96%' },
+  sheet: { backgroundColor: '#FFFFFF', borderRadius: 24, padding: space.lg, gap: space.sm, width: '100%', maxWidth: 440, maxHeight: '96%' },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: '3.5%', rowGap: space.sm, paddingVertical: space.xs },
   tile: { width: '31%', alignItems: 'center', gap: 3, padding: space.xs, paddingTop: space.sm, borderRadius: 16, borderWidth: 2, borderColor: colors.line, backgroundColor: '#FAFCFB' },
   on: { borderColor: colors.mint, backgroundColor: colors.mintSoft },
   off: { opacity: 0.4 },
   lv: { position: 'absolute', top: 4, left: 4, right: 4, alignItems: 'flex-start' },
-  lvText: { color: '#fff', fontWeight: '900', fontSize: 12, backgroundColor: colors.ink, borderRadius: 7, overflow: 'hidden', paddingHorizontal: 5, paddingVertical: 1 },
+  lvText: { color: '#fff', fontWeight: '600', fontSize: 12, backgroundColor: colors.ink, borderRadius: 7, overflow: 'hidden', paddingHorizontal: 5, paddingVertical: 1 },
   num: { position: 'absolute', top: 4, right: 4, width: 22, height: 22, borderRadius: 11, backgroundColor: colors.mint, alignItems: 'center', justifyContent: 'center' },
-  numText: { color: '#fff', fontWeight: '900', fontSize: 12 },
-  name: { fontWeight: '800', fontSize: 12, color: colors.ink },
-  why: { fontSize: 13, fontWeight: '700', color: '#C4562F' },
+  numText: { color: '#fff', fontWeight: '600', fontSize: 12 },
+  name: { fontWeight: '600', fontSize: 12, color: colors.ink },
+  why: { fontSize: 13, fontWeight: '600', color: '#C4562F' },
   row: { flexDirection: 'row', gap: space.sm, alignItems: 'center', marginTop: space.xs },
 });

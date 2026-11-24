@@ -2,6 +2,7 @@ import { useResetIn } from '../lib/useResetIn';
 import React, { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Text } from './ScaledText';
+import { Icon, type IconName } from './Icon';
 import { useGame } from '../state/GameContext';
 import * as A from '../game/actions';
 import * as F from '../game/food';
@@ -59,11 +60,11 @@ export default function FeedSheet({ onFeed, onClose, onShop }: { onFeed: (foodId
           <Text style={font.title}>Feed {pet.nickname}</Text>
           <View style={styles.chips}>
             <View style={[styles.chip, { backgroundColor: '#FBE7DA' }]}>
-              <Text style={styles.chipEmoji}>🍙</Text>
+              <Icon name="bowl" size={14} color="#B24E1C" />
               <Text style={[styles.chipText, { color: '#B24E1C' }]}>Food {needs.food}%</Text>
             </View>
             <View style={[styles.chip, { backgroundColor: '#E6F4EE' }]} accessibilityLabel={`${F.BOOSTS_PER_DAY - used} of ${F.BOOSTS_PER_DAY} stat bonuses left today`}>
-              <Text style={styles.chipEmoji}>💪</Text>
+              <Icon name="dumbbell" size={14} color={colors.mintDark} />
               <Text style={[styles.chipText, { color: colors.mintDark }]}>{used >= F.BOOSTS_PER_DAY ? `Stat bonuses back in ${resetIn}` : `Stat bonuses: ${F.BOOSTS_PER_DAY - used} of ${F.BOOSTS_PER_DAY} left`}</Text>
             </View>
           </View>
@@ -107,17 +108,17 @@ export default function FeedSheet({ onFeed, onClose, onShop }: { onFeed: (foodId
 
 /** Four tiny bars (food, fun, water, energy) for the name pill. */
 export function NeedsMini({ needs }: { needs: F.Needs }) {
-  const bars: [string, number, string, string][] = [
-    ['🍙', needs.food, '#E07A3F', '#F2E1D6'],
-    ['🎾', needs.fun, '#E5A800', '#F3EBC8'],
-    ['💧', needs.water, '#2E7FB8', '#D7E9F5'],
-    ['🌙', needs.energy, '#6E62C6', '#E6E2F6'],
+  const bars: [IconName, number, string, string][] = [
+    ['bowl', needs.food, '#E07A3F', '#F2E1D6'],
+    ['ball', needs.fun, '#E5A800', '#F3EBC8'],
+    ['drop', needs.water, '#2E7FB8', '#D7E9F5'],
+    ['moon', needs.energy, '#6E62C6', '#E6E2F6'],
   ];
   return (
     <View style={styles.mini}>
       {bars.map(([icon, v, fill, track]) => (
         <View key={icon} style={styles.miniItem}>
-          <Text style={styles.miniIcon}>{icon}</Text>
+          <Icon name={icon} size={11} color={fill} strokeWidth={2.4} />
           <View style={[styles.miniTrack, { backgroundColor: track }]}>
             <View style={[styles.miniFill, { width: `${v}%`, backgroundColor: fill }]} />
           </View>
@@ -129,11 +130,11 @@ export function NeedsMini({ needs }: { needs: F.Needs }) {
 
 /** The full "How your pet feels" panel, opened by tapping the name pill. */
 export function NeedsSheet({ name, needs, onClose, onFeed, onPlay }: { name: string; needs: F.Needs; onClose: () => void; onFeed: () => void; onPlay: () => void }) {
-  const rows: { icon: string; label: string; v: number; fill: string; track: string; action: string; onPress?: () => void }[] = [
-    { icon: '🍙', label: 'Food', v: needs.food, fill: '#E07A3F', track: '#F2E1D6', action: 'Feed', onPress: onFeed },
-    { icon: '🎾', label: 'Fun', v: needs.fun, fill: '#E5A800', track: '#F3EBC8', action: 'Play', onPress: onPlay },
-    { icon: '💧', label: 'Water', v: needs.water, fill: '#2E7FB8', track: '#D7E9F5', action: 'Log water' },
-    { icon: '🌙', label: 'Energy', v: needs.energy, fill: '#6E62C6', track: '#E6E2F6', action: 'Log sleep' },
+  const rows: { icon: IconName; label: string; v: number; fill: string; track: string; action: string; onPress?: () => void }[] = [
+    { icon: 'bowl', label: 'Food', v: needs.food, fill: '#E07A3F', track: '#F2E1D6', action: 'Feed', onPress: onFeed },
+    { icon: 'ball', label: 'Fun', v: needs.fun, fill: '#E5A800', track: '#F3EBC8', action: 'Play', onPress: onPlay },
+    { icon: 'drop', label: 'Water', v: needs.water, fill: '#2E7FB8', track: '#D7E9F5', action: 'Log water' },
+    { icon: 'moon', label: 'Energy', v: needs.energy, fill: '#6E62C6', track: '#E6E2F6', action: 'Log sleep' },
   ];
   return (
     <View style={styles.backdrop}>
@@ -143,7 +144,7 @@ export function NeedsSheet({ name, needs, onClose, onFeed, onPlay }: { name: str
         <Text style={font.title}>How {name} feels</Text>
         {rows.map((r) => (
           <View key={r.label} style={styles.needRow} accessibilityLabel={`${r.label} ${r.v}%`}>
-            <Text style={{ fontSize: 20, width: 28 }}>{r.icon}</Text>
+            <View style={{ width: 28, alignItems: 'center' }}><Icon name={r.icon} size={20} color={r.fill} /></View>
             <Text style={styles.needLabel}>{r.label}</Text>
             <View style={[styles.needTrack, { backgroundColor: r.track }]}>
               <View style={[styles.miniFill, { width: `${r.v}%`, backgroundColor: r.fill }]} />
@@ -169,37 +170,37 @@ export function NeedsSheet({ name, needs, onClose, onFeed, onPlay }: { name: str
 const styles = StyleSheet.create({
   tileFav: { borderWidth: 2, borderColor: '#F2617A' },
   taste: { position: 'absolute', top: 4, right: 4, backgroundColor: '#EEF3F1', borderRadius: 8, paddingHorizontal: 5, paddingVertical: 1 },
-  tasteText: { fontSize: 9, fontWeight: '900', color: '#5C6F69' },
+  tasteText: { fontSize: 9, fontWeight: '600', color: '#5C6F69' },
   backdrop: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(20,30,35,0.45)', justifyContent: 'flex-end', alignItems: 'center' },
-  sheet: { backgroundColor: '#FFFCF5', borderTopLeftRadius: 26, borderTopRightRadius: 26, padding: 18, paddingBottom: 30, gap: 10, width: '100%', maxWidth: 520 },
+  sheet: { backgroundColor: '#FFFFFF', borderTopLeftRadius: 26, borderTopRightRadius: 26, padding: 18, paddingBottom: 30, gap: 10, width: '100%', maxWidth: 520 },
   handle: { width: 44, height: 5, borderRadius: 999, backgroundColor: '#DCE7E2', alignSelf: 'center' },
   head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 4 },
   chips: { flexDirection: 'row', gap: 6, flexWrap: 'wrap' },
   chip: { flexDirection: 'row', alignItems: 'center', gap: 5, borderRadius: 999, paddingVertical: 4, paddingHorizontal: 10 },
   chipEmoji: { fontSize: 14 },
-  chipText: { fontSize: 13, fontWeight: '900' },
+  chipText: { fontSize: 13, fontWeight: '600' },
   market: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: '#FFE3B8', borderRadius: 14, padding: 10 },
   pellets: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: '#F1F4F3', borderRadius: 14, padding: 10 },
-  pelletsTitle: { fontSize: 15, fontWeight: '900', color: colors.ink },
-  feedWord: { fontSize: 14, fontWeight: '900', color: colors.mintDark },
-  section: { fontSize: 12, fontWeight: '900', color: '#3E6B5E', letterSpacing: 0.4 },
+  pelletsTitle: { fontSize: 15, fontWeight: '700', color: colors.ink },
+  feedWord: { fontSize: 14, fontWeight: '700', color: colors.mintDark },
+  section: { fontSize: 12, fontWeight: '600', color: '#3E6B5E', letterSpacing: 0.4 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   tile: { width: '23%', minWidth: 74, flexGrow: 1, borderRadius: 16, paddingVertical: 8, paddingHorizontal: 2, alignItems: 'center', gap: 1 },
-  tileName: { fontSize: 12, fontWeight: '900', color: colors.ink },
-  tileRarity: { fontSize: 9, fontWeight: '900' },
-  tileGain: { fontSize: 12, fontWeight: '800', color: colors.mintDark },
-  price: { fontSize: 12, fontWeight: '900', color: '#9A6A00' },
-  small: { fontSize: 12, fontWeight: '700', color: colors.muted },
-  msg: { fontSize: 13, fontWeight: '800', color: '#C4562F' },
+  tileName: { fontSize: 12, fontWeight: '600', color: colors.ink },
+  tileRarity: { fontSize: 9, fontWeight: '600' },
+  tileGain: { fontSize: 12, fontWeight: '600', color: colors.mintDark },
+  price: { fontSize: 12, fontWeight: '600', color: '#9A6A00' },
+  small: { fontSize: 12, fontWeight: '600', color: colors.muted },
+  msg: { fontSize: 13, fontWeight: '600', color: '#C4562F' },
   mini: { flexDirection: 'row', gap: 6, marginTop: 3 },
   miniItem: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 2 },
   miniIcon: { fontSize: 12 },
   miniTrack: { flex: 1, height: 5, borderRadius: 999, overflow: 'hidden' },
   miniFill: { height: '100%', borderRadius: 999 },
   needRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  needLabel: { width: 58, fontSize: 14, fontWeight: '900', color: colors.ink },
+  needLabel: { width: 58, fontSize: 14, fontWeight: '700', color: colors.ink },
   needTrack: { flex: 1, height: 12, borderRadius: 999, overflow: 'hidden' },
-  needAction: { fontSize: 13, fontWeight: '900', minWidth: 64, textAlign: 'right' },
+  needAction: { fontSize: 13, fontWeight: '600', minWidth: 64, textAlign: 'right' },
   close: { height: 48, borderRadius: 14, backgroundColor: colors.mint, alignItems: 'center', justifyContent: 'center', marginTop: 4 },
-  closeText: { color: '#FFFFFF', fontSize: 16, fontWeight: '900' },
+  closeText: { color: '#FFFFFF', fontSize: 16, fontWeight: '700' },
 });

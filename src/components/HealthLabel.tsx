@@ -45,6 +45,6 @@ const styles = StyleSheet.create({
   chip: { flexDirection: 'row', alignItems: 'center', gap: 4, borderRadius: 9, paddingHorizontal: 7, paddingVertical: 2, alignSelf: 'center' },
   health: { backgroundColor: '#2FB58A' },
   plus: { backgroundColor: '#5A6FE0' },
-  text: { fontSize: 11, fontWeight: '900', color: '#FFFFFF' },
-  explain: { fontSize: 12, fontWeight: '700', color: '#5A6A66', textAlign: 'center', maxWidth: 260 },
+  text: { fontSize: 11, fontWeight: '600', color: '#FFFFFF' },
+  explain: { fontSize: 12, fontWeight: '600', color: '#5A6A66', textAlign: 'center', maxWidth: 260 },
 });

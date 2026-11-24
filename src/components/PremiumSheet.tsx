@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Text } from './ScaledText';
+import { Icon, type IconName } from './Icon';
 import { ItemIcon } from './Cosmetics';
 import { Button } from './ui';
 import { buzz, PopIn } from './fx';
@@ -17,17 +18,17 @@ export const PREMIUM_PLANS = [
 ] as const;
 
 export const PREMIUM_PERKS = [
-  { icon: '🚫', title: 'No ads, ever', text: 'Play without any ads.' },
-  { icon: '👑', title: 'Premium dress-up', text: 'Golden Crown, Galaxy Swirl and Northern Lights, plus a new item every month.' },
-  { icon: '🥚', title: 'Extra incubator', text: 'Hatch two eggs at once.' },
-  { icon: '🧭', title: 'Second expedition', text: 'Send two pets exploring at the same time.' },
-  { icon: '🎁', title: 'Monthly Gold chest', text: 'A free Gold chest on the first of every month.' },
-  { icon: '❤️', title: 'Support Sproutling', text: 'Help keep the game growing with new pets and features.' },
+  { icon: 'ban' as IconName, title: 'No ads, ever', text: 'Play without any ads.' },
+  { icon: 'crown' as IconName, title: 'Premium dress-up', text: 'Golden Crown, Galaxy Swirl and Northern Lights, plus a new item every month.' },
+  { icon: 'egg' as IconName, title: 'Extra incubator', text: 'Hatch two eggs at once.' },
+  { icon: 'compass' as IconName, title: 'Second expedition', text: 'Send two pets exploring at the same time.' },
+  { icon: 'gift' as IconName, title: 'Monthly Gold chest', text: 'A free Gold chest on the first of every month.' },
+  { icon: 'heart' as IconName, title: 'Support Sproutling', text: 'Help keep the game growing with new pets and features.' },
 ];
 
 export const ADD_ONS = [
-  { icon: '🌟', name: 'Founder’s Pack', price: '$4.99', text: 'One-time: Founder badge, Golden Crown, 2 Gold chests and 1,000 coins.' },
-  { icon: '🔕', name: 'Remove Ads', price: '$2.99', text: 'One-time: no ads, forever. No subscription.' },
+  { icon: 'star' as IconName, name: 'Founder’s Pack', price: '$4.99', text: 'One-time: Founder badge, Golden Crown, 2 Gold chests and 1,000 coins.' },
+  { icon: 'bellOff' as IconName, name: 'Remove Ads', price: '$2.99', text: 'One-time: no ads, forever. No subscription.' },
 ];
 
 export default function PremiumSheet({ onClose }: { onClose: () => void }) {
@@ -53,7 +54,7 @@ export default function PremiumSheet({ onClose }: { onClose: () => void }) {
 
           {PREMIUM_PERKS.map((p) => (
             <View key={p.title} style={styles.perk}>
-              <Text style={{ fontSize: 22 }}>{p.icon}</Text>
+              <View style={{ width: 36, height: 36, borderRadius: 11, backgroundColor: '#ECE7FB', alignItems: 'center', justifyContent: 'center' }}><Icon name={p.icon} size={19} color="#6E56CF" /></View>
               <View style={{ flex: 1 }}>
                 <Text style={styles.perkTitle}>{p.title}</Text>
                 <Text style={font.small}>{p.text}</Text>
@@ -82,7 +83,7 @@ export default function PremiumSheet({ onClose }: { onClose: () => void }) {
           <Text style={[font.h2, { marginTop: space.sm }]}>One-time add-ons</Text>
           {ADD_ONS.map((a) => (
             <View key={a.name} style={styles.perk}>
-              <Text style={{ fontSize: 22 }}>{a.icon}</Text>
+              <View style={{ width: 36, height: 36, borderRadius: 11, backgroundColor: '#ECE7FB', alignItems: 'center', justifyContent: 'center' }}><Icon name={a.icon} size={19} color="#6E56CF" /></View>
               <View style={{ flex: 1 }}>
                 <Text style={styles.perkTitle}>{a.name} · {a.price}</Text>
                 <Text style={font.small}>{a.text}</Text>
@@ -99,18 +100,18 @@ export default function PremiumSheet({ onClose }: { onClose: () => void }) {
 
 const styles = StyleSheet.create({
   backdrop: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(24,30,48,0.6)', justifyContent: 'center', alignItems: 'center', padding: space.md, zIndex: 80 },
-  sheet: { backgroundColor: '#FFFFFF', borderRadius: 22, padding: space.lg, width: '100%', maxWidth: 440, maxHeight: '96%' },
+  sheet: { backgroundColor: '#FFFFFF', borderRadius: 24, padding: space.lg, width: '100%', maxWidth: 440, maxHeight: '96%' },
   hero: { alignItems: 'center', gap: 4, backgroundColor: '#6E56CF', borderRadius: 18, padding: space.md },
-  heroSub: { color: '#E5DEFF', fontWeight: '700', fontSize: 13, textAlign: 'center' },
+  heroSub: { color: '#E5DEFF', fontWeight: '600', fontSize: 13, textAlign: 'center' },
   items: { flexDirection: 'row', gap: space.sm, marginTop: space.xs },
   item: { width: 70, height: 62, borderRadius: 14, backgroundColor: 'rgba(255,255,255,0.18)', alignItems: 'center', justifyContent: 'center' },
   perk: { flexDirection: 'row', alignItems: 'center', gap: space.sm, paddingVertical: 4 },
-  perkTitle: { fontWeight: '900', fontSize: 14, color: colors.ink },
+  perkTitle: { fontWeight: '700', fontSize: 14, color: colors.ink },
   plans: { flexDirection: 'row', gap: space.sm, marginTop: space.xs },
   plan: { flex: 1, alignItems: 'center', padding: space.sm, borderRadius: 16, borderWidth: 2, borderColor: colors.line, backgroundColor: '#FAFCFB' },
   planOn: { borderColor: '#6E56CF', backgroundColor: '#F2EEFF' },
-  planName: { fontWeight: '900', fontSize: 14, color: colors.ink },
-  planPrice: { fontWeight: '900', fontSize: 24, color: '#6E56CF' },
-  save: { position: 'absolute', top: -10, backgroundColor: colors.gold, color: '#5A3E00', fontWeight: '900', fontSize: 12, borderRadius: 999, paddingHorizontal: 8, paddingVertical: 2, overflow: 'hidden' },
-  soon: { fontWeight: '800', fontSize: 13, color: '#6E56CF', textAlign: 'center' },
+  planName: { fontWeight: '700', fontSize: 14, color: colors.ink },
+  planPrice: { fontWeight: '800', fontSize: 24, color: '#6E56CF' },
+  save: { position: 'absolute', top: -10, backgroundColor: colors.gold, color: '#5A3E00', fontWeight: '600', fontSize: 12, borderRadius: 999, paddingHorizontal: 8, paddingVertical: 2, overflow: 'hidden' },
+  soon: { fontWeight: '600', fontSize: 13, color: '#6E56CF', textAlign: 'center' },
 });

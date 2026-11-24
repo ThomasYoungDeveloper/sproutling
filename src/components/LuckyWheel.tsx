@@ -31,7 +31,7 @@ function WheelArt({ size }: { size: number }) {
   const rad = (deg: number) => ((deg - 90) * Math.PI) / 180;
   return (
     <Svg width={size} height={size}>
-      <Circle cx={c} cy={c} r={r + 6} fill="#24323A" />
+      <Circle cx={c} cy={c} r={r + 6} fill="#1F2A2E" />
       {Wh.SLOTS.map((sl, i) => {
         const a0 = rad(i * SEG - SEG / 2);
         const a1 = rad(i * SEG + SEG / 2);
@@ -45,7 +45,7 @@ function WheelArt({ size }: { size: number }) {
       {Array.from({ length: 20 }, (_, k) => (
         <Circle key={k} cx={c + (r + 3) * Math.cos((k * 18 * Math.PI) / 180)} cy={c + (r + 3) * Math.sin((k * 18 * Math.PI) / 180)} r={2.6} fill="#FFE27A" />
       ))}
-      <Circle cx={c} cy={c} r={size * 0.09} fill="#FFFCF5" stroke="#24323A" strokeWidth={4} />
+      <Circle cx={c} cy={c} r={size * 0.09} fill="#FFFFFF" stroke="#1F2A2E" strokeWidth={4} />
     </Svg>
   );
 }
@@ -163,7 +163,7 @@ export function WheelSheet({ onClose }: { onClose: () => void }) {
               <WheelPictures size={size} />
             </Animated.View>
             <Svg width={34} height={34} style={{ position: 'absolute', top: 4 }}>
-              <Path d="M3 3 L31 3 L17 31 Z" fill="#F2617A" stroke="#24323A" strokeWidth={3} strokeLinejoin="round" />
+              <Path d="M3 3 L31 3 L17 31 Z" fill="#F2617A" stroke="#1F2A2E" strokeWidth={3} strokeLinejoin="round" />
             </Svg>
           </View>
           <View style={{ alignSelf: 'stretch', gap: 10, marginTop: 16 }}>
@@ -201,21 +201,21 @@ export function WheelBanner() {
 const styles = StyleSheet.create({
   backdrop: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(16,18,38,0.92)', zIndex: 90, alignItems: 'center', justifyContent: 'center', padding: space.lg },
   full: { width: '100%', maxWidth: 420, alignItems: 'center', gap: 6, borderRadius: 28, padding: space.lg, backgroundColor: '#1E2240' },
-  kicker: { fontSize: 12, fontWeight: '900', letterSpacing: 2, color: '#FFE27A' },
-  title: { fontSize: 26, fontWeight: '900', color: '#FFFFFF' },
-  odds: { fontSize: 12, fontWeight: '700', color: '#C9CDE8', textAlign: 'center', marginTop: 8 },
+  kicker: { fontSize: 12, fontWeight: '600', letterSpacing: 2, color: '#FFE27A' },
+  title: { fontSize: 26, fontWeight: '800', color: '#FFFFFF' },
+  odds: { fontSize: 12, fontWeight: '600', color: '#C9CDE8', textAlign: 'center', marginTop: 8 },
   prizeGlow: { width: 190, height: 190, borderRadius: 95, backgroundColor: '#3A3470', alignItems: 'center', justifyContent: 'center' },
-  prizeTitle: { fontSize: 28, fontWeight: '900', color: '#FFFFFF', textAlign: 'center' },
+  prizeTitle: { fontSize: 28, fontWeight: '800', color: '#FFFFFF', textAlign: 'center' },
   prizeBody: { fontSize: 14, fontWeight: '700', color: '#D8CEFF', textAlign: 'center', maxWidth: 300 },
   tag: { borderRadius: 8, paddingHorizontal: 8, paddingVertical: 2 },
-  slotNum: { fontWeight: '900', color: '#24323A', marginTop: -2 },
-  oddsLink: { fontSize: 14, fontWeight: '900', color: '#FFFFFF', opacity: 0.8, textAlign: 'center', marginTop: 12, textDecorationLine: 'underline' },
-  tagText: { fontSize: 12, fontWeight: '900', color: '#FFFFFF', letterSpacing: 1 },
+  slotNum: { fontWeight: '800', color: '#1F2A2E', marginTop: -2 },
+  oddsLink: { fontSize: 14, fontWeight: '700', color: '#FFFFFF', opacity: 0.8, textAlign: 'center', marginTop: 12, textDecorationLine: 'underline' },
+  tagText: { fontSize: 12, fontWeight: '600', color: '#FFFFFF', letterSpacing: 1 },
   crystal: { width: 60, height: 84, backgroundColor: '#7FD3F0', borderRadius: 10, transform: [{ rotate: '45deg' }], borderWidth: 3, borderColor: '#3B9CC2' },
   banner: { flexDirection: 'row', alignItems: 'center', gap: 12, borderRadius: 18, padding: 12, backgroundColor: '#FF8A4C', borderWidth: 3, borderColor: '#FFE7B0' },
   bannerWheel: { width: 54, height: 54 },
-  bannerTitle: { fontSize: 18, fontWeight: '900', color: '#FFFFFF' },
-  bannerSub: { fontSize: 12, fontWeight: '800', color: '#FFF3E0' },
+  bannerTitle: { fontSize: 18, fontWeight: '800', color: '#FFFFFF' },
+  bannerSub: { fontSize: 12, fontWeight: '600', color: '#FFF3E0' },
   bannerBtn: { backgroundColor: '#FFFFFF', borderRadius: 12, paddingHorizontal: 12, paddingVertical: 8 },
-  bannerBtnText: { fontSize: 15, fontWeight: '900', color: '#E8590C' },
+  bannerBtnText: { fontSize: 15, fontWeight: '700', color: '#E8590C' },
 });

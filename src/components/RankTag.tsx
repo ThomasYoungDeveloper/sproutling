@@ -26,5 +26,5 @@ export default function RankTag({ userId, small }: { userId: string | null | und
 const styles = StyleSheet.create({
   tag: { borderRadius: 8, paddingHorizontal: 7, paddingVertical: 2, alignSelf: 'flex-start', flexShrink: 1 },
   small: { paddingHorizontal: 5, paddingVertical: 1 },
-  text: { fontSize: 11, fontWeight: '900' },
+  text: { fontSize: 11, fontWeight: '600' },
 });

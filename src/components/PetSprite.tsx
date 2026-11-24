@@ -126,6 +126,6 @@ function SkinSparkles({ skin, size }: { skin: Skin; size: number }) {
 const styles = StyleSheet.create({
   glow: { position: 'absolute', opacity: 0.22 },
   shadow: { position: 'absolute', height: 10, borderRadius: 999, backgroundColor: 'rgba(36,50,58,0.12)' },
-  badge: { position: 'absolute', top: 4, right: 8, color: '#E3A81E', fontWeight: '900' },
-  zzz: { position: 'absolute', top: 6, left: 10, color: '#6B7C80', fontWeight: '900' },
+  badge: { position: 'absolute', top: 4, right: 8, color: '#E3A81E', fontWeight: '800' },
+  zzz: { position: 'absolute', top: 6, left: 10, color: '#6B7C80', fontWeight: '800' },
 });

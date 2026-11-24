@@ -3,6 +3,7 @@ import { useResetIn } from '../lib/useResetIn';
 import React, { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Text } from '../components/ScaledText';
+import { Icon } from '../components/Icon';
 import Svg, { Path, Rect } from 'react-native-svg';
 import { useGame } from '../state/GameContext';
 import { useTeam } from '../state/TeamContext';
@@ -201,7 +202,7 @@ export default function ChestsScreen() {
         {rows.map((r) => (
           <View key={r.key} style={styles.nextRow}>
             <View style={[styles.iconBox, { backgroundColor: r.kind === 'walk' ? colors.mintSoft : CHEST_SOFT[r.kind] }]}>
-              {r.kind === 'walk' ? <Text style={{ fontSize: 22 }}>👟</Text> : <ChestArt kind={r.kind} size={34} />}
+              {r.kind === 'walk' ? <Icon name="steps" size={22} color={colors.mintDark} filled /> : <ChestArt kind={r.kind} size={34} />}
             </View>
             <View style={{ flex: 1, gap: 3 }}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 8 }}>
@@ -222,29 +223,29 @@ export default function ChestsScreen() {
 const styles = StyleSheet.create({
   vault: { backgroundColor: '#3A3470', borderRadius: 22, padding: space.md, gap: space.md },
   vaultHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  vaultTitle: { fontSize: 20, fontWeight: '900', color: '#FFFFFF' },
+  vaultTitle: { fontSize: 20, fontWeight: '800', color: '#FFFFFF' },
   countPill: { backgroundColor: colors.gold, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4 },
-  countText: { fontSize: 12, fontWeight: '900', color: '#3B2A00' },
-  vaultEmpty: { fontSize: 14, fontWeight: '800', color: '#DCD8F5', textAlign: 'center' },
+  countText: { fontSize: 12, fontWeight: '600', color: '#3B2A00' },
+  vaultEmpty: { fontSize: 14, fontWeight: '700', color: '#DCD8F5', textAlign: 'center' },
   chestGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   chestTile: { width: '30%', flexGrow: 1, maxWidth: 160, alignItems: 'center', gap: 2, backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 18, paddingVertical: 10, paddingHorizontal: 4 },
-  chestName: { fontSize: 14, fontWeight: '900', color: '#FFFFFF' },
-  chestWhy: { fontSize: 12, fontWeight: '800', color: '#DCD8F5', textAlign: 'center' },
+  chestName: { fontSize: 14, fontWeight: '700', color: '#FFFFFF' },
+  chestWhy: { fontSize: 12, fontWeight: '600', color: '#DCD8F5', textAlign: 'center' },
   openAll: { backgroundColor: colors.gold, borderRadius: 16, minHeight: 52, alignItems: 'center', justifyContent: 'center', borderBottomWidth: 4, borderBottomColor: '#C99212' },
-  openAllText: { fontSize: 17, fontWeight: '900', color: '#3B2A00' },
-  tapHint: { fontSize: 13, fontWeight: '800', color: '#DCD8F5', textAlign: 'center' },
-  card: { backgroundColor: colors.card, borderRadius: 22, padding: space.md, gap: space.md, shadowColor: '#24323A', shadowOpacity: 0.08, shadowRadius: 0, shadowOffset: { width: 0, height: 4 }, elevation: 2 },
+  openAllText: { fontSize: 17, fontWeight: '800', color: '#3B2A00' },
+  tapHint: { fontSize: 13, fontWeight: '600', color: '#DCD8F5', textAlign: 'center' },
+  card: { backgroundColor: colors.card, borderRadius: 20, padding: space.md, gap: space.md , borderWidth: 1, borderColor: colors.line},
   nextHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   howBtn: { borderWidth: 2, borderColor: colors.line, borderRadius: 999, paddingHorizontal: 12, minHeight: 36, justifyContent: 'center' },
-  howBtnText: { fontSize: 13, fontWeight: '900', color: colors.mintDark },
+  howBtnText: { fontSize: 13, fontWeight: '600', color: colors.mintDark },
   nextRow: { flexDirection: 'row', alignItems: 'center', gap: space.md },
   iconBox: { width: 44, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
-  nextTitle: { flex: 1, fontSize: 15, fontWeight: '900', color: colors.ink },
-  nextCount: { fontSize: 13, fontWeight: '900', color: colors.muted },
+  nextTitle: { flex: 1, fontSize: 15, fontWeight: '700', color: colors.ink },
+  nextCount: { fontSize: 13, fontWeight: '600', color: colors.muted },
   howCard: { borderWidth: 2, borderColor: colors.line, borderRadius: 18, padding: space.sm, gap: 6 },
   howHead: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
-  way: { fontSize: 14, fontWeight: '800', color: colors.ink },
+  way: { fontSize: 14, fontWeight: '700', color: colors.ink },
   odds: { backgroundColor: '#FAFBF9', borderRadius: 12, borderWidth: 1, borderColor: colors.line, padding: space.sm, gap: 3 },
   backdrop: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(24,30,48,0.6)', justifyContent: 'center', alignItems: 'center', padding: space.md, zIndex: 80 },
-  sheet: { backgroundColor: '#FFFFFF', borderRadius: 22, padding: space.lg, width: '100%', maxWidth: 460, gap: space.sm },
+  sheet: { backgroundColor: '#FFFFFF', borderRadius: 24, padding: space.lg, width: '100%', maxWidth: 460, gap: space.sm },
 });

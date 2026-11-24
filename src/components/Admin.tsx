@@ -247,11 +247,11 @@ function QrPage({ code, onClose }: { code: string; onClose: () => void }) {
   const [svg, setSvg] = useState<string | null>(null);
   const link = spotLink(code);
   useEffect(() => {
-    QRCode.toString(link, { type: 'svg', errorCorrectionLevel: 'H', margin: 2, color: { dark: '#1F3A33', light: '#FFFFFF' } }).then(setSvg).catch(() => setSvg(null));
+    QRCode.toString(link, { type: 'svg', errorCorrectionLevel: 'H', margin: 2, color: { dark: '#1F2A2E', light: '#FFFFFF' } }).then(setSvg).catch(() => setSvg(null));
   }, [link]);
   const download = async () => {
     if (Platform.OS !== 'web' || typeof document === 'undefined') return;
-    const png = await QRCode.toDataURL(link, { errorCorrectionLevel: 'H', margin: 2, width: 1200, color: { dark: '#1F3A33', light: '#FFFFFF' } });
+    const png = await QRCode.toDataURL(link, { errorCorrectionLevel: 'H', margin: 2, width: 1200, color: { dark: '#1F2A2E', light: '#FFFFFF' } });
     const a = document.createElement('a');
     a.href = png;
     a.download = `Sproutling-Spot-${code}.png`;
@@ -271,21 +271,21 @@ function QrPage({ code, onClose }: { code: string; onClose: () => void }) {
 
 const styles = StyleSheet.create({
   full: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: colors.bg, zIndex: 220 },
-  back: { fontSize: 15, fontWeight: '900', color: colors.mintDark },
-  title: { fontSize: 28, fontWeight: '900', color: colors.ink },
+  back: { fontSize: 15, fontWeight: '700', color: colors.mintDark },
+  title: { fontSize: 28, fontWeight: '800', color: colors.ink },
   sub: { fontSize: 14, fontWeight: '700', color: colors.muted },
-  head: { fontSize: 17, fontWeight: '900', color: colors.ink, marginTop: 6 },
-  card: { backgroundColor: '#FFFCF5', borderRadius: 20, padding: 14, gap: 8 },
+  head: { fontSize: 17, fontWeight: '800', color: colors.ink, marginTop: 6 },
+  card: { backgroundColor: colors.card, borderRadius: 20, padding: 14, gap: 8 , borderWidth: 1, borderColor: colors.line},
   chips: { flexDirection: 'row', gap: 6, alignItems: 'center', flexWrap: 'wrap' },
   chip: { backgroundColor: '#E3F5EC', borderRadius: 8, paddingHorizontal: 7, paddingVertical: 2 },
-  chipText: { fontSize: 11, fontWeight: '900', color: '#1F7A58' },
-  time: { fontSize: 11, fontWeight: '800', color: '#9AA7A2' },
-  name: { fontSize: 15, fontWeight: '900', color: colors.ink },
+  chipText: { fontSize: 11, fontWeight: '600', color: '#1F7A58' },
+  time: { fontSize: 11, fontWeight: '600', color: '#9AA7A2' },
+  name: { fontSize: 15, fontWeight: '700', color: colors.ink },
   quote: { backgroundColor: '#F4F9F6', borderRadius: 12, padding: 10 },
   quoteText: { fontSize: 14, fontWeight: '700', color: colors.ink },
-  meta: { fontSize: 12, fontWeight: '700', color: colors.muted },
-  link: { fontSize: 13, fontWeight: '900', color: colors.mintDark },
-  label: { fontSize: 12, fontWeight: '900', color: colors.muted, marginTop: 4 },
+  meta: { fontSize: 12, fontWeight: '600', color: colors.muted },
+  link: { fontSize: 13, fontWeight: '600', color: colors.mintDark },
+  label: { fontSize: 12, fontWeight: '600', color: colors.muted, marginTop: 4 },
   input: { borderRadius: 12, paddingVertical: 10, paddingHorizontal: 12, fontSize: 16, color: colors.ink, backgroundColor: '#FFFFFF', borderWidth: 2, borderColor: '#E4EEEA' },
-  err: { fontSize: 13, fontWeight: '800', color: '#C4562F' },
+  err: { fontSize: 13, fontWeight: '600', color: '#C4562F' },
 });
