@@ -11,7 +11,7 @@ export type IconName =
   | 'flame' | 'shield' | 'gift' | 'volume' | 'volumeOff' | 'star' | 'swords' | 'steps' | 'drop' | 'moon'
   | 'bowl' | 'ball' | 'cookie' | 'blocks' | 'palette' | 'compass' | 'lock' | 'crown' | 'egg' | 'heart'
   | 'mail' | 'key' | 'bell' | 'bellOff' | 'trophy' | 'bag' | 'sparkle' | 'check' | 'chevron' | 'people'
-  | 'ban' | 'sprout' | 'dumbbell' | 'calm' | 'bolt' | 'user' | 'help' | 'logout' | 'doc' | 'plus' | 'close' | 'clock';
+  | 'ban' | 'tower' | 'rings' | 'sprout' | 'dumbbell' | 'calm' | 'bolt' | 'user' | 'help' | 'logout' | 'doc' | 'plus' | 'close' | 'clock';
 
 const P: Record<IconName, (c: string, f: boolean) => React.ReactNode> = {
   flame: (c, f) => <Path d="M12 3c.8 3.2 4.5 5.2 4.5 9.6A4.5 4.5 0 0 1 7.5 13c0-1.9.9-3.2 2-4.2.1 1.8.8 2.9 2 3.2-.3-3 .2-5.9.5-9z" fill={f ? c : 'none'} />,
@@ -44,6 +44,8 @@ const P: Record<IconName, (c: string, f: boolean) => React.ReactNode> = {
   check: () => <Path d="M5 12.5l4.5 4.5L19 7.5" />,
   chevron: () => <Path d="M9.5 6l6 6-6 6" />,
   people: () => <><Circle cx={9} cy={8.5} r={3.5} /><Path d="M3 20c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5M16 5.2a3.5 3.5 0 0 1 0 6.6M18 14.8c1.8.6 3 2.4 3 5.2" /></>,
+  tower: () => <Path d="M8 21V9l4-5 4 5v12zM6 21h12M11 12h2M11 16h2" />,
+  rings: () => <><Circle cx={12} cy={12} r={8.5} /><Circle cx={12} cy={12} r={5.5} /><Circle cx={12} cy={12} r={2.5} /></>,
   ban: () => <><Circle cx={12} cy={12} r={8.5} /><Path d="M6 6l12 12" /></>,
   sprout: () => <Path d="M12 21v-9M12 12c0-4.2-3-6.5-7.5-6.5 0 4.2 3 6.5 7.5 6.5zM12 14c0-4.2 3-6.5 7.5-6.5 0 4.2-3 6.5-7.5 6.5z" />,
   dumbbell: () => <Path d="M6.5 7.5v9M17.5 7.5v9M3.5 10v4M20.5 10v4M6.5 12h11" />,

@@ -474,6 +474,14 @@ ok(A.applyShields(shielded.state).used === 0, 'shields are not used twice');
   ok(!R.planReminders(doneDay, { now: morning.getTime() }).some((r: any) => r.id === 'habits-0'), 'no reminder tonight once habits are done');
   const late = new Date(morning); late.setHours(21);
   ok(!R.planReminders(S0, { now: late.getTime() }).some((r: any) => r.id === 'habits-0'), 'no reminder for an evening that already passed');
+  {
+    const since = new Date(morning); const key = `${since.getFullYear()}-${String(since.getMonth() + 1).padStart(2, '0')}-${String(since.getDate()).padStart(2, '0')}`;
+    const HS = { ...S0, onboard: { ...S0.onboard, health: 'skipped', healthNudge: { since: key } } };
+    const hp = R.planReminders(HS, { now: morning.getTime(), healthOff: true }).filter((r: any) => r.id.startsWith('health-'));
+    ok(hp.length === 3 && new Set(hp.map((r: any) => r.body)).size === 3, 'three Health nudges, each a different reason');
+    ok(hp.every((r: any, i: number) => i === 0 || r.at - hp[i - 1].at >= 6 * 86400000), 'Health nudges are a week apart');
+    ok(!R.planReminders(HS, { now: morning.getTime(), healthOff: false }).some((r: any) => r.id.startsWith('health-')), 'no Health nudges once connected');
+  }
   ok(R.planReminders(S0, { now: morning.getTime(), inGuild: true, raidHpLeft: 900 }).some((r: any) => r.id === 'guild') || morning.getDay() === 0 || morning.getDay() === 6, 'guild reminder before the weekend ends');
   ok(R.planReminders({ ...S0, pets: [], activePetId: null }, { now: morning.getTime() }).length === 0, 'no reminders before you have a pet');
   // Guild boss already beaten: no "hit the boss" nudge; point at the next chest instead, and announce Monday's boss.

@@ -202,6 +202,8 @@ export interface GameState {
     focus?: import('./intro').Focus[];
     activity?: import('./intro').Activity;
     health?: 'connected' | 'skipped';
+    /** The "Connect Apple Health" card on Home: first shown (YYYY-MM-DD), hidden until (ms), times dismissed. */
+    healthNudge?: { since?: string; until?: number; dismissed?: number };
     /** Features whose "now open" card was already shown or dismissed. */
     seen?: string[];
     /** Highest best-pet level whose level-up pop-up was shown. */

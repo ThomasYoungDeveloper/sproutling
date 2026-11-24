@@ -20,7 +20,7 @@ import { SPECIES_BY_ID } from '../game/species';
 import { levelFor, stageFor } from '../game/scoring';
 import { GIFTS_PER_DAY, GIFT_COINS } from '../game/actions';
 import { activeToday, copyText, lastSeen, shareInvite } from './friendsShared';
-import { ArenaCard, LiveBattlesCard, TradesCard } from '../components/SocialPanels';
+import { ArenaCard, LiveBattlesCard, BattleTiles, TradesCard } from '../components/SocialPanels';
 import { useLive } from '../state/LiveBattleContext';
 import RankedCard from '../components/RankedCard';
 import TeamCard from '../components/TeamCard';
@@ -178,10 +178,16 @@ export default function FriendsScreen({ initialAdd, onUsedInitialAdd, initialGui
       {section === 'team' && <Glow id="guild"><TeamCard initialJoin={initialGuild} onUsedInitialJoin={onUsedInitialGuild} /></Glow>}
       {section === 'battle' && !battlesOpen && <LockedCard feature="battles" />}
       {section === 'battle' && battlesOpen && <Glow id="battles"><WildCard /></Glow>}
-      {section === 'battle' && battlesOpen && <LiveBattlesCard />}
-      {section === 'battle' && battlesOpen && (U.unlocked(state, 'tower') ? <Glow id="tower"><TowerCard /></Glow> : <LockedCard feature="tower" compact />)}
-      {section === 'battle' && battlesOpen && <ArenaCard />}
-      {section === 'battle' && battlesOpen && <RankedCard />}
+      {section === 'battle' && battlesOpen && (
+        <>
+          <SectionHead title="Play" />
+          <ArenaCard />
+          <BattleTiles tower={U.unlocked(state, 'tower') ? <View style={{ flex: 1 }}><Glow id="tower"><TowerCard /></Glow></View> : <View style={{ flex: 1 }}><LockedCard feature="tower" compact /></View>} onFriends={() => setSection('friends')} />
+          <LiveBattlesCard />
+          <SectionHead title="Ranked" />
+          <RankedCard />
+        </>
+      )}
       {section === 'ranks' && <RanksCard />}
       {section === 'show' && <FashionShow />}
       {section === 'friends' && (

@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Animated, Easing, Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { Text } from './ScaledText';
+import { Icon } from './Icon';
 import Svg, { Defs, LinearGradient, Polygon, RadialGradient, Rect, Stop, Circle } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useGame } from '../state/GameContext';
@@ -33,15 +34,13 @@ export function TowerCard() {
   const { open, close } = useOverlay();
   const t = T.towerOf(state);
   const theme = T.themeFor(t.week);
+  const top = t.floor >= T.FLOORS;
   return (
-    <Pressable onPress={() => open(<TowerScreen onClose={close} />)} accessibilityRole="button" accessibilityLabel={`${theme.name}, ${t.floor} of ${T.FLOORS} floors cleared`}>
-      <View style={[styles.card, { backgroundColor: theme.sky[1] }]}>
-        <View style={{ flex: 1 }}>
-          <Text style={styles.cardKicker}>WEEKLY SKY TOWER</Text>
-          <Text style={styles.cardTitle}>{theme.name}</Text>
-          <Text style={styles.cardSub}>{t.floor >= T.FLOORS ? 'You reached the top!' : `${t.floor} of ${T.FLOORS} floors cleared`}</Text>
-        </View>
-        <View style={styles.cardBtn}><Text style={styles.cardBtnText}>{t.floor >= T.FLOORS ? 'View' : 'Climb'}</Text></View>
+    <Pressable onPress={() => open(<TowerScreen onClose={close} />)} style={({ pressed }) => [styles.tile, pressed && { opacity: 0.8 }]} accessibilityRole="button" accessibilityLabel={`Sky Tower: ${theme.name}, ${t.floor} of ${T.FLOORS} floors cleared`}>
+      <View style={styles.tileIcon}><Icon name="tower" size={19} color="#2E7FB8" /></View>
+      <View>
+        <Text style={styles.tileTitle}>Sky Tower</Text>
+        <Text style={styles.tileSub} numberOfLines={2}>{top ? `${theme.name} · top reached` : `${theme.name} · ${t.floor} of ${T.FLOORS}`}</Text>
       </View>
     </Pressable>
   );
@@ -295,6 +294,10 @@ const styles = StyleSheet.create({
   blessTier: { color: '#fff', opacity: 0.8, fontSize: 12, fontWeight: '600', letterSpacing: 0.8 },
   blessName: { color: '#fff', fontSize: 20, fontWeight: '800' },
   blessText: { color: '#fff', opacity: 0.92, fontSize: 14, fontWeight: '700' },
+  tile: { flex: 1, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: colors.line, borderRadius: 20, padding: 14, gap: 8, minHeight: 112 },
+  tileIcon: { width: 36, height: 36, borderRadius: 11, backgroundColor: '#DDF0FB', alignItems: 'center', justifyContent: 'center' },
+  tileTitle: { fontSize: 15, fontWeight: '700', color: colors.ink },
+  tileSub: { fontSize: 12, fontWeight: '500', color: colors.muted },
   card: { flexDirection: 'row', alignItems: 'center', gap: 12, borderRadius: 22, padding: space.md },
   cardKicker: { color: '#FFB98A', fontSize: 12, fontWeight: '600', letterSpacing: 1 },
   cardTitle: { color: '#fff', fontSize: 22, fontWeight: '800' },

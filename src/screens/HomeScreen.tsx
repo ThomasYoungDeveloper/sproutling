@@ -5,6 +5,7 @@ import { Text } from '../components/ScaledText';
 import { useGame } from '../state/GameContext';
 import PetScene from '../components/PetScene';
 import TodayCard from '../components/TodayCard';
+import { HealthNudge } from '../components/HealthNudge';
 import { useOverlay } from '../components/Overlay';
 import { ShopSheet, WardrobeSheet } from '../components/ShopSheets';
 import ExpeditionCard from '../components/ExpeditionCard';
@@ -65,6 +66,7 @@ export default function HomeScreen({ onNavigate, onAccount, account, banner }: {
       <View style={styles.homeSheet}>
       {banner}
       <UnlockCard onGo={(g) => (g === 'shop' ? openShop() : g === 'home' ? undefined : onNavigate?.(g))} />
+      <HealthNudge />
       <TodayCard />
 
       {readyEggs.length ? <HatchCard rarity={readyEggs[0].rarity} count={readyEggs.length} onPress={() => { buzz('success'); onNavigate?.('eggs'); }} /> : null}

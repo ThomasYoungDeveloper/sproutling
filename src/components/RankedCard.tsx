@@ -29,34 +29,35 @@ export default function RankedCard() {
     <Card style={styles.card}>
       {party ? <Confetti key={party} amount={50} width={400} height={500} /> : null}
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.sm }}>
-        <View style={[styles.badge, { backgroundColor: tier.color }]}>
-          <Text style={{ fontSize: 30 }}>{tier.emoji}</Text>
+        <View style={[styles.badge, { backgroundColor: tier.color + '33' }]}>
+          <Text style={{ fontSize: 26 }}>{tier.emoji}</Text>
         </View>
         <View style={{ flex: 1 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-            <Text style={styles.label}>RANKED · {R.seasonName(ranked.season).toUpperCase()}</Text>
-            <InfoDot color="#D6DCF5" label="ranked points" onPress={() => overlay.open(<InfoPop tip={{ title: 'Ranked points', text: `Friend battles: win +${R.RANKED_POINTS.friendWin}, lose ${R.RANKED_POINTS.friendLoss} (the first ${R.RANKED_POINTS.perFriendPerDay} a day with each friend count). Wild wins: +${R.RANKED_POINTS.wildWin}, up to ${R.RANKED_POINTS.wildPerDay} a day. Rewards come at the end of the month, by tier.` }} onClose={overlay.close} />)} />
+            <Text style={styles.label}>{R.seasonName(ranked.season)} · {days} day{days === 1 ? '' : 's'} left</Text>
+            <InfoDot color={colors.muted} label="ranked points" onPress={() => overlay.open(<InfoPop tip={{ title: 'Ranked points', text: `Friend battles: win +${R.RANKED_POINTS.friendWin}, lose ${R.RANKED_POINTS.friendLoss} (the first ${R.RANKED_POINTS.perFriendPerDay} a day with each friend count). Wild wins: +${R.RANKED_POINTS.wildWin}, up to ${R.RANKED_POINTS.wildPerDay} a day. Rewards come at the end of the month, by tier.` }} onClose={overlay.close} />)} />
           </View>
-          <Text style={styles.tier}>{tier.name}</Text>
-          <Text style={styles.sub}>
-            {ranked.points} points · {ranked.wins}W {ranked.losses}L · {days} day{days === 1 ? '' : 's'} left
+          <Text style={styles.tier}>
+            {tier.name} <Text style={styles.tierPts}>{ranked.points} pts · {ranked.wins}W {ranked.losses}L</Text>
           </Text>
         </View>
       </View>
       <View style={{ gap: 4 }}>
-        <ProgressBar value={prog.frac} height={12} color={prog.next ? prog.next.color : tier.color} />
-        <Text style={styles.sub}>{prog.next ? `${prog.need} points to ${prog.next.emoji} ${prog.next.name}` : 'Top tier! You’re a Legend this season.'}</Text>
+        <ProgressBar value={prog.frac} height={8} color={prog.next ? prog.next.color : tier.color} />
+        <Text style={styles.sub}>{prog.next ? `${prog.need} points to ${prog.next.name}` : 'Top tier! You’re a Legend this season.'}</Text>
       </View>
 
       {last && !last.claimed && lastTier ? (
         <PopIn>
           <View style={styles.claim}>
+            <Icon name="trophy" size={20} color="#B86E00" />
             <Text style={styles.claimText}>
-              {R.seasonName(last.season)} is over! You finished {lastTier.emoji} {lastTier.name} with {last.points} points.
+              {R.seasonName(last.season)}: you finished {lastTier.name}
             </Text>
             <Button
+              small
               primary
-              label="Claim season reward"
+              label="Claim"
               onPress={async () => {
                 const r = await claimSeason();
                 setMsg(r);
@@ -82,17 +83,17 @@ export default function RankedCard() {
           {ranked.rank ? `You’re #${ranked.rank.toLocaleString()} of ${ranked.players.toLocaleString()} ranked players.` : `${ranked.players.toLocaleString()} ranked players this season. Win a battle to join the board!`}
         </Text>
       ) : null}
-      <View style={{ gap: 6 }}>
+      <View>
         {(tab === 'global' ? ranked.global.slice(0, 25) : ranked.board.slice(0, 10)).map((r, i) => {
           const t = R.tierFor(r.points);
           const p = r.card?.active;
           const sp = p ? SPECIES_BY_ID[p.speciesId] : undefined;
           return (
-            <View key={r.username + i} style={[styles.row, r.me && styles.rowMe]}>
+            <View key={r.username + i} style={[styles.row, r.me && styles.rowMe]} accessibilityLabel={`${i + 1}. ${r.username}, ${t.name}, ${r.points} points`}>
               <Text style={styles.place}>{i + 1}</Text>
               <View style={styles.avatar}>{sp && p ? <PetSprite species={sp} stage={stageFor(p.xp)} size={32} skin={p.skin} hat={(p as any).hat} /> : <Icon name="egg" size={18} color={colors.muted} />}</View>
               <Text style={styles.name} numberOfLines={1}>{r.username}{r.me ? ' (you)' : ''}</Text>
-              <Text style={[styles.pts, { color: t.color }]}>{t.emoji} {r.points}</Text>
+              <Text style={styles.pts}>{r.points.toLocaleString()}</Text>
             </View>
           );
         })}
@@ -100,35 +101,36 @@ export default function RankedCard() {
           <View style={[styles.row, styles.rowMe]}>
             <Text style={[styles.place, { width: 44 }]}>#{ranked.rank}</Text>
             <Text style={styles.name} numberOfLines={1}>You</Text>
-            <Text style={[styles.pts, { color: tier.color }]}>{tier.emoji} {ranked.points}</Text>
+            <Text style={styles.pts}>{ranked.points.toLocaleString()}</Text>
           </View>
         ) : null}
         {tab === 'friends' && ranked.board.length < 2 ? <Text style={styles.sub}>Add friends to see who’s on top this season!</Text> : null}
       </View>
-      {msg ? <Text style={[styles.msg, msg.ok && { color: '#DDF4EA' }]}>{msg.text}</Text> : null}
+      {msg ? <Text style={[styles.msg, msg.ok && { color: colors.mintDark }]}>{msg.text}</Text> : null}
     </Card>
   );
 }
 
 const styles = StyleSheet.create({
-  card: { backgroundColor: '#1B2240', borderColor: '#1B2240', gap: space.sm },
-  badge: { width: 58, height: 58, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
-  label: { fontSize: 12, fontWeight: '600', color: '#AFB8E8', letterSpacing: 1 },
-  tier: { fontSize: 24, fontWeight: '800', color: '#FFFFFF' },
-  sub: { fontSize: 12, fontWeight: '600', color: '#C8CEF0' },
-  help: { fontSize: 12, fontWeight: '600', color: '#AFB8E8' },
-  claim: { backgroundColor: '#FFFFFF', borderRadius: 14, padding: space.sm, gap: 8 },
-  claimText: { fontSize: 14, fontWeight: '700', color: colors.ink },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: 'rgba(255,255,255,0.08)', borderRadius: 12, padding: 6 },
-  rowMe: { backgroundColor: 'rgba(255,255,255,0.18)' },
-  place: { width: 26, textAlign: 'center', fontSize: 15, fontWeight: '700', color: '#FFFFFF' },
-  avatar: { width: 36, height: 36, borderRadius: 10, backgroundColor: 'rgba(255,255,255,0.9)', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
-  name: { flex: 1, fontSize: 14, fontWeight: '700', color: '#FFFFFF' },
-  pts: { fontSize: 14, fontWeight: '700' },
-  tabs: { flexDirection: 'row', backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 14, padding: 4, gap: 4 },
-  tab: { flex: 1, paddingVertical: 8, borderRadius: 10, alignItems: 'center' },
+  card: { gap: space.sm },
+  badge: { width: 52, height: 52, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
+  label: { fontSize: 12, fontWeight: '600', color: colors.muted },
+  tier: { fontSize: 20, fontWeight: '800', color: colors.ink },
+  tierPts: { fontSize: 14, fontWeight: '600', color: colors.muted },
+  sub: { fontSize: 12, fontWeight: '600', color: colors.muted },
+  help: { fontSize: 12, fontWeight: '600', color: colors.muted },
+  claim: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: '#FFF7E0', borderRadius: 14, padding: 12 },
+  claimText: { flex: 1, fontSize: 13, fontWeight: '600', color: colors.ink },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 8, paddingHorizontal: 8, borderBottomWidth: 1, borderBottomColor: colors.line },
+  rowMe: { backgroundColor: '#E8F7F0', borderRadius: 12, borderBottomColor: 'transparent' },
+  place: { width: 22, textAlign: 'center', fontSize: 14, fontWeight: '700', color: colors.muted },
+  avatar: { width: 34, height: 34, borderRadius: 10, backgroundColor: colors.tile, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
+  name: { flex: 1, fontSize: 15, fontWeight: '600', color: colors.ink },
+  pts: { fontSize: 14, fontWeight: '700', color: colors.ink, fontVariant: ['tabular-nums'] },
+  tabs: { flexDirection: 'row', backgroundColor: '#E2ECE7', borderRadius: 12, padding: 3, gap: 2 },
+  tab: { flex: 1, minHeight: 34, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
   tabOn: { backgroundColor: '#FFFFFF' },
-  tabText: { fontSize: 14, fontWeight: '700', color: '#C8CEF0' },
-  tabTextOn: { color: '#1B2240' },
-  msg: { fontSize: 13, fontWeight: '600', color: '#FFE0D1' },
+  tabText: { fontSize: 13, fontWeight: '600', color: colors.muted },
+  tabTextOn: { color: colors.ink },
+  msg: { fontSize: 13, fontWeight: '600', color: '#C2412D' },
 });

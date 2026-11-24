@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { Text } from './ScaledText';
-import { Icon } from './Icon';
+import { Icon, type IconName } from './Icon';
 import { useLive, type LiveBattle } from '../state/LiveBattleContext';
 import { useGame } from '../state/GameContext';
 import { useFriends, type Friend, type Trade } from '../state/FriendsContext';
@@ -274,30 +274,32 @@ export function LiveBattlesCard() {
   if (!shown.length) return null;
   const waiting = shown.filter((b) => b.myTurn).length;
   return (
-    <Card style={waiting ? { borderColor: '#E0567A' } : undefined}>
-      <SectionHead title="Live battles" meta={waiting ? `${waiting} waiting on you` : undefined} />
-      {shown.map((b) => {
+    <>
+    <SectionHead title="Your turn" meta={waiting ? `${waiting} waiting` : undefined} />
+    <Card style={{ paddingVertical: 4 }}>
+      {shown.map((b, i) => {
         const invite = b.status === 'invited' && !b.iChallenged;
         const canOpen = b.status === 'active' || (b.status === 'done' && !!b.battle);
         return (
-          <Pressable key={b.id} disabled={!canOpen} onPress={() => openLive(b)} style={styles.liveRow} accessibilityRole="button" accessibilityLabel={`Live battle with ${b.friendName}: ${liveLine(b)}`}>
+          <Pressable key={b.id} disabled={!canOpen} onPress={() => openLive(b)} style={[styles.liveRow, i < shown.length - 1 && styles.liveDivider]} accessibilityRole="button" accessibilityLabel={`Live battle with ${b.friendName}: ${liveLine(b)}`}>
             <View style={[styles.liveDot, { backgroundColor: b.myTurn ? '#E0567A' : b.status === 'active' ? colors.gold : colors.line }]} />
             <View style={{ flex: 1, minWidth: 0 }}>
               <Text style={styles.liveName} numberOfLines={1}>{b.friendName}</Text>
-              <Text style={[font.small, b.myTurn && { color: '#C2365C', fontWeight: '800' }]} numberOfLines={1}>{liveLine(b)}</Text>
+              <Text style={[font.small, b.myTurn && { color: '#C2412D', fontWeight: '600' }]} numberOfLines={1}>{liveLine(b)}</Text>
             </View>
             {invite ? (
               <View style={{ flexDirection: 'row', gap: 6 }}>
-                <Button small label="Not now" onPress={() => decline(b)} />
+                <Button small label="Later" onPress={() => decline(b)} />
                 <Button small primary label="Accept" onPress={() => accept(b)} />
               </View>
             ) : canOpen ? (
-              <Text style={styles.liveGo}>{b.status === 'done' ? 'See' : b.myTurn ? 'Play ›' : 'Open ›'}</Text>
+              b.myTurn ? <Button small primary label="Play" onPress={() => openLive(b)} /> : <Text style={styles.liveGo}>{b.status === 'done' ? 'See' : 'Open'}</Text>
             ) : null}
           </Pressable>
         );
       })}
     </Card>
+    </>
   );
 }
 
@@ -317,55 +319,72 @@ export function ArenaCard() {
   const has = (id: string) => buffs.some((b) => b.id === id);
   const left = B.battlesLeftToday(state);
   const resetIn = useResetIn();
-  const rec = state.battle;
+  const list: { id: string; icon: IconName; color: string; label: string; hint: string }[] = [
+    { id: 'rested', icon: 'moon', color: '#6E56CF', label: 'Rested', hint: 'Sleep 7h' },
+    { id: 'hydrated', icon: 'drop', color: '#2E7FB8', label: 'Hydrated', hint: 'Water' },
+    { id: 'energized', icon: 'steps', color: colors.mintDark, label: 'Energized', hint: 'Steps' },
+    { id: 'cared', icon: 'heart', color: '#D6456B', label: 'Cared for', hint: 'Pet care' },
+    ...(isVerified(healthProvider())
+      ? ([
+          { id: 'trained', icon: 'dumbbell', color: '#B86E00', label: 'Trained', hint: '30 min exercise' },
+          { id: 'calm', icon: 'calm', color: '#3D8FD6', label: 'Calm', hint: '5 mindful min' },
+          { id: 'rings', icon: 'rings', color: '#E0567A', label: 'Rings closed', hint: 'Close 3 rings' },
+        ] as const)
+      : []),
+  ];
+  const on = list.filter((b) => has(b.id)).length;
   return (
-    <Card style={styles.arena}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.sm }}>
-        <Icon name="swords" size={34} color={colors.ink} strokeWidth={1.6} />
-        <View style={{ flex: 1 }}>
-          <Text style={[font.h2, { color: '#FFFFFF' }]}>Battle arena</Text>
-          <Text style={[font.small, { color: '#D6DCF5' }]}>
-            {rec ? `${rec.wins} wins · ${rec.losses} losses` : 'Battle wild pets or a friend’s team'}
+    <Card>
+      <View style={styles.arenaTop}>
+        <View style={[styles.arenaTile, { backgroundColor: '#E9E5FB' }]}><Icon name="swords" size={23} color="#5B45C2" /></View>
+        <View style={{ flex: 1, minWidth: 0 }}>
+          <Text style={font.h2}>Wild battle</Text>
+          <Text style={font.small}>
+            {left > 0 ? `${left} rewarded battle${left === 1 ? '' : 's'} left · first win gets a chest` : `Rewards are back in ${resetIn}. Battle for fun.`}
           </Text>
         </View>
-
       </View>
-      <Text style={[font.small, { color: '#D6DCF5', fontWeight: '800' }]}>Today’s habit buffs</Text>
+      <Text style={styles.buffHead}>TODAY’S BUFFS · {on} OF {list.length}</Text>
       <View style={styles.buffs}>
-        {[
-          { id: 'rested', emoji: '😴', label: 'Rested', hint: 'Sleep 7+ h' },
-          { id: 'hydrated', emoji: '💧', label: 'Hydrated', hint: 'Water goal' },
-          { id: 'energized', emoji: '👟', label: 'Energized', hint: 'Step goal' },
-          { id: 'cared', emoji: '💖', label: 'Cared for', hint: 'Pet care' },
-          ...(isVerified(healthProvider())
-            ? [
-                { id: 'trained', emoji: '🏋️', label: 'Trained', hint: '30 min exercise' },
-                { id: 'calm', emoji: '🧘', label: 'Calm', hint: '5 mindful min' },
-                { id: 'rings', emoji: '⭕', label: 'Rings Closed', hint: 'Close 3 rings' },
-              ]
-            : []),
-        ].map((b) => (
-          <Pressable key={b.id} onPress={() => overlay.open(<BuffSheet id={b.id as B.BuffInfo['id']} onClose={overlay.close} />)} style={({ pressed }) => [styles.buff, has(b.id) && styles.buffOn, pressed && { transform: [{ scale: 0.95 }] }]} accessibilityRole="button" accessibilityLabel={`${b.label}${has(b.id) ? ', on today' : ''}. Tap to see how to earn it`}>
-            <Text style={{ fontSize: 16, opacity: has(b.id) ? 1 : 0.5 }}>{b.emoji}</Text>
-            <Text style={[styles.buffText, has(b.id) && { color: '#1B2240' }]}>{has(b.id) ? b.label : b.hint}</Text>
-          </Pressable>
-        ))}
+        {list.map((b) => {
+          const got = has(b.id);
+          return (
+            <Pressable key={b.id} onPress={() => overlay.open(<BuffSheet id={b.id as B.BuffInfo['id']} onClose={overlay.close} />)} style={({ pressed }) => [styles.buff, got && styles.buffOn, pressed && { opacity: 0.7 }]} accessibilityRole="button" accessibilityLabel={`${b.label}${got ? ', on today' : ''}. Tap to see how to earn it`}>
+              <Icon name={b.icon} size={14} color={got ? b.color : '#9AA8A3'} />
+              <Text style={[styles.buffText, got && { color: '#1E8A68' }]}>{got ? b.label : b.hint}</Text>
+              {got ? <Icon name="check" size={13} color="#1E8A68" strokeWidth={2.6} /> : null}
+            </Pressable>
+          );
+        })}
       </View>
-      <Text style={[font.small, { color: '#D6DCF5' }]}>
-        {left > 0 ? `${left} rewarded battle${left === 1 ? '' : 's'} left today. First win gets a chest.` : `Rewards are back in ${resetIn}. You can still battle for fun.`}
-      </Text>
-      <View style={{ flexDirection: 'row', gap: space.sm }}>
-        <Button
-          primary
-          label="Wild battle"
-          style={{ flex: 1 }}
-          onPress={() => {
-            const levels = B.defaultTeam(state).map((id) => levelFor(state.pets.find((p) => p.id === id)!.xp));
-            battle({ name: 'Wild pets', team: B.wildTeam(levels) });
-          }}
-        />
-      </View>
+      <Button
+        primary
+        label="Battle a wild pet"
+        onPress={() => {
+          const levels = B.defaultTeam(state).map((id) => levelFor(state.pets.find((p) => p.id === id)!.xp));
+          battle({ name: 'Wild pets', team: B.wildTeam(levels) });
+        }}
+      />
     </Card>
+  );
+}
+
+/** Two small tiles under the arena: the weekly Sky Tower and battling a friend. */
+export function BattleTiles({ tower, onFriends }: { tower: React.ReactNode; onFriends: () => void }) {
+  const { battles } = useLive();
+  const waiting = battles.filter((b) => b.myTurn || (b.status === 'invited' && !b.iChallenged)).length;
+  return (
+    <View style={styles.tiles}>
+      {tower}
+      <Pressable onPress={onFriends} style={({ pressed }) => [styles.tile, pressed && { opacity: 0.8 }]} accessibilityRole="button" accessibilityLabel={`Battle a friend${waiting ? `, ${waiting} waiting on you` : ''}`}>
+        {waiting ? <View style={styles.tileBadge}><Text style={styles.tileBadgeText}>{waiting}</Text></View> : null}
+        <View style={[styles.arenaTile, { width: 36, height: 36, borderRadius: 11, backgroundColor: '#FDE7EC' }]}><Icon name="bolt" size={19} color="#D6456B" /></View>
+        <View>
+          <Text style={styles.tileTitle}>Battle a friend</Text>
+          <Text style={styles.tileSub} numberOfLines={2}>Live, turn by turn</Text>
+        </View>
+      </Pressable>
+    </View>
   );
 }
 
@@ -571,11 +590,20 @@ export function TradesCard() {
 }
 
 const styles = StyleSheet.create({
-  arena: { backgroundColor: '#2A3366', borderColor: '#2A3366' },
-  buffs: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
-  buff: { flexDirection: 'row', alignItems: 'center', gap: 4, borderRadius: 999, paddingHorizontal: 9, paddingVertical: 4, backgroundColor: 'rgba(255,255,255,0.12)' },
-  buffOn: { backgroundColor: colors.gold },
-  buffText: { fontWeight: '600', fontSize: 12, color: '#D6DCF5' },
+  arenaTop: { flexDirection: 'row', alignItems: 'center', gap: space.md },
+  arenaTile: { width: 44, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
+  buffHead: { fontSize: 12, fontWeight: '600', color: colors.muted, letterSpacing: 0.3, marginTop: 6 },
+  buffs: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 6 },
+  buff: { flexDirection: 'row', alignItems: 'center', gap: 5, borderRadius: 10, paddingHorizontal: 9, minHeight: 30, backgroundColor: '#F2F5F4' },
+  buffOn: { backgroundColor: '#E3F5EC' },
+  buffText: { fontWeight: '600', fontSize: 12, color: colors.muted },
+  tiles: { flexDirection: 'row', gap: 10 },
+  tile: { flex: 1, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: colors.line, borderRadius: 20, padding: 14, gap: 8, minHeight: 112 },
+  tileTitle: { fontSize: 15, fontWeight: '700', color: colors.ink },
+  tileSub: { fontSize: 12, fontWeight: '500', color: colors.muted },
+  tileBadge: { position: 'absolute', top: 12, right: 12, backgroundColor: '#E0567A', borderRadius: 9, minWidth: 20, paddingHorizontal: 6, alignItems: 'center' },
+  tileBadgeText: { color: '#FFFFFF', fontSize: 12, fontWeight: '700' },
+  liveDivider: { borderBottomWidth: 1, borderBottomColor: colors.line },
   closedRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   trade: { borderTopWidth: 1, borderTopColor: colors.line, paddingTop: space.sm, gap: 6 },
   stack: { flexDirection: 'row', flexWrap: 'wrap', alignSelf: 'stretch', gap: 4, justifyContent: 'center', backgroundColor: colors.sky, borderRadius: 18, padding: 6, minHeight: 72, alignItems: 'center' },
@@ -593,8 +621,8 @@ const styles = StyleSheet.create({
   miniTop: { fontWeight: '600', fontSize: 12, letterSpacing: 0.5, marginBottom: 2 },
   miniLink: { fontWeight: '600', fontSize: 12, color: colors.mintDark },
   actions: { flexDirection: 'row', gap: space.sm, justifyContent: 'flex-end' },
-  liveRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm, borderTopWidth: 1, borderTopColor: colors.line, paddingTop: space.sm },
+  liveRow: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 56, paddingVertical: 10 },
   liveDot: { width: 10, height: 10, borderRadius: 5 },
   liveName: { fontWeight: '700', fontSize: 15, color: colors.ink },
-  liveGo: { fontWeight: '700', fontSize: 14, color: '#C2365C' },
+  liveGo: { fontWeight: '600', fontSize: 14, color: colors.muted },
 });

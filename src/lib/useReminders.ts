@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useGame } from '../state/GameContext';
 import { useTeam } from '../state/TeamContext';
 import { guildReminderOpts, planReminders } from '../game/reminders';
+import { healthAvailable } from './health';
 import { getRemindersOn, onRemindersChange, scheduleReminders } from './remindersState';
 
 /** Keeps the phone's scheduled reminders in step with the game (re-planned a moment after anything changes). */
@@ -16,7 +17,7 @@ export function useReminders() {
   useEffect(() => {
     if (!on) return;
     const t = setTimeout(() => {
-      scheduleReminders(planReminders(state, guildReminderOpts(team)));
+      scheduleReminders(planReminders(state, { ...guildReminderOpts(team), healthOff: healthAvailable() && state.onboard?.health === 'skipped' }));
     }, 1500);
     return () => clearTimeout(t);
   }, [on, state, team]);

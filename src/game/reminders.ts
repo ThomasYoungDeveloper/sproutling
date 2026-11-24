@@ -22,6 +22,13 @@ export interface Reminder {
 }
 
 export const EVENING_HOUR = 19;
+
+/** Days after the Health card first shows, with a different reason each time. */
+export const HEALTH_NUDGES = [
+  { day: 2, title: 'Let your steps count', body: 'Your eggs hatch faster with Apple Health. Connect it in 10 seconds.' },
+  { day: 9, title: 'Eggs are hiding on your walks', body: 'Every walk can dig up an egg, but only steps from Apple Health count. Connect it?' },
+  { day: 16, title: 'Your guild could use your steps', body: 'Connect Apple Health so your walks count toward guild quests and the boss.' },
+];
 export const EGG_NUDGE_HOURS = 2;
 
 function atHour(now: number, daysAhead: number, hour: number): number {
@@ -31,7 +38,7 @@ function atHour(now: number, daysAhead: number, hour: number): number {
   return d.getTime();
 }
 
-export function planReminders(s: GameState, opts: { now?: number; inGuild?: boolean; raidHitsLeft?: number; raidBeaten?: boolean; raidHpLeft?: number; guildSteps?: number; guildGoal?: number } = {}): Reminder[] {
+export function planReminders(s: GameState, opts: { now?: number; healthOff?: boolean; inGuild?: boolean; raidHitsLeft?: number; raidBeaten?: boolean; raidHpLeft?: number; guildSteps?: number; guildGoal?: number } = {}): Reminder[] {
   const now = opts.now ?? Date.now();
   const pet = s.pets.find((p) => p.id === s.activePetId);
   const name = pet?.nickname ?? 'Your pet';
@@ -40,6 +47,19 @@ export function planReminders(s: GameState, opts: { now?: number; inGuild?: bool
 
   const prefs = s.reminderPrefs ?? {};
   const hour = Math.min(21, Math.max(18, prefs.hour ?? EVENING_HOUR));
+
+  // Apple Health nudges for iPhone players who skipped it: weekly, 3 at most, each a different reason.
+  // They stop for good once Health is connected (the whole plan is redone then).
+  const since = s.onboard?.healthNudge?.since;
+  if (opts.healthOff && since) {
+    const start = new Date(`${since}T12:00:00`).getTime();
+    HEALTH_NUDGES.forEach((n, i) => {
+      const d = new Date(start);
+      d.setDate(d.getDate() + n.day);
+      d.setHours(Math.max(10, hour - 6), 0, 0, 0);
+      if (d.getTime() > now) out.push({ id: `health-${i}`, at: d.getTime(), title: n.title, body: n.body });
+    });
+  }
 
   // 1. Evening check-in: tonight only if today's habits aren't done (says what's left), then the next two evenings
   // in case the app isn't opened. Never more than one habit reminder a day.
