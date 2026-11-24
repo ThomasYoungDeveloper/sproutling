@@ -88,7 +88,7 @@ export default function Tutorial() {
           </Pressable>
         ) : null}
         <PopIn key={i} from={0.85}>
-          <View style={{ alignItems: 'center', gap: space.sm }}>
+          <View style={{ alignItems: 'flex-start', gap: space.sm }}>
             <View style={[styles.art, { backgroundColor: step.tint }]}>
               {step.art === 'pet' && pet && PET_IMAGES[pet.speciesId] ? (
                 <Image source={PET_IMAGES[pet.speciesId]} style={{ width: 120, height: 120 }} resizeMode="contain" />
@@ -137,11 +137,11 @@ const styles = StyleSheet.create({
   card: { backgroundColor: '#FFFFFF', borderRadius: 26, padding: space.lg, paddingTop: space.xl, width: '100%', maxWidth: 420, gap: space.md },
   skip: { position: 'absolute', top: 12, right: 14, padding: 6, zIndex: 2 },
   skipText: { fontWeight: '700', color: colors.muted, fontSize: 14 },
-  art: { width: 150, height: 150, borderRadius: 75, alignItems: 'center', justifyContent: 'center' },
-  title: { ...font.title, fontSize: 24, fontWeight: '800', textAlign: 'center' },
-  body: { ...font.body, textAlign: 'center', color: colors.muted, fontWeight: '700', lineHeight: 21 },
+  art: { width: 96, height: 96, borderRadius: 28, alignItems: 'center', justifyContent: 'center' },
+  title: { ...font.title, fontSize: 24, fontWeight: '800', marginTop: 4 },
+  body: { ...font.body, color: colors.muted, lineHeight: 21 },
   tips: { alignSelf: 'stretch', backgroundColor: '#F6FAF8', borderRadius: 14, padding: 12, gap: 6 },
-  tip: { fontSize: 14, fontWeight: '700', color: colors.ink },
+  tip: { fontSize: 14, fontWeight: '500', color: colors.ink },
   dots: { flexDirection: 'row', justifyContent: 'center', gap: 6 },
   dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.line },
   dotOn: { width: 22, backgroundColor: colors.mint },

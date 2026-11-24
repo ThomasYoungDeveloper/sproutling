@@ -50,8 +50,8 @@ export default function DailyLoginSheet({ onClose }: { onClose: () => void }) {
       <FitSheet onClose={onClose}>
       {got ? <Confetti width={width} height={height} amount={60} /> : null}
       <View style={styles.sheet}>
-        <Text style={[font.title, { textAlign: 'center' }]}>Daily rewards</Text>
-        <Text style={[font.small, { textAlign: 'center' }]}>Come back each day. Day 7 is a Silver chest.</Text>
+        <Text style={font.title}>Daily rewards</Text>
+        <Text style={font.small}>Come back each day. Day 7 is a Silver chest.</Text>
 
         <View style={styles.grid}>
           {A.LOGIN_REWARDS.map((r, i) => {
