@@ -62,7 +62,7 @@ function Overlay({ reveal, onClose }: { reveal: Reveal; onClose: () => void }) {
   // Stays inside the app's own area (never under a side camera column).
   const insets = useSafeAreaInsets();
   return (
-    <View style={[styles.backdrop, { left: insets.left, right: insets.right }]}>
+    <View style={styles.backdrop}>
       {reveal.kind === 'egg' && <EggReveal r={reveal} onClose={onClose} />}
       {reveal.kind === 'chest' && <ChestReveal r={reveal} onClose={onClose} />}
       {reveal.kind === 'grow' && <GrowReveal r={reveal} onClose={onClose} />}

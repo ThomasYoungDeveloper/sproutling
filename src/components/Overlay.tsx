@@ -20,7 +20,7 @@ export function OverlayProvider({ children }: { children: React.ReactNode }) {
   const close = useCallback(() => setNode(null), []);
   // Layers stop at the sides of the app's own area, so nothing runs under a side camera column.
   const insets = useSafeAreaInsets();
-  const area = { position: 'absolute' as const, top: 0, bottom: 0, left: insets.left, right: insets.right };
+  const area = { position: 'absolute' as const, top: 0, bottom: 0, left: 0, right: 0 };
   return (
     <OverlayCtx.Provider value={{ open, close, setTop }}>
       {children}

@@ -120,7 +120,6 @@ function Shell() {
   // Brand-new players (and, once, players from before the intro) go through the intro first.
   const intro = I.needsIntro(state);
   const introShown = useRef(false);
-  const layerInsets = useSafeAreaInsets();
   const starter = A.needsStarter(state) || intro;
   const login = A.loginStatus(state);
   const today = A.todayKey(state);
@@ -365,8 +364,8 @@ function Shell() {
           badges={{ eggs: readyEggs, chests: state.chests.length, friends: incoming.length + tradesForMe + liveWaiting + chatUnread, dex: Ach.claimable(state).length ? -1 : 0 }}
         />
       )}
-      {/* Pop-ups and toasts stay inside the app's own area (never under a side camera column). */}
-      <View pointerEvents="box-none" style={{ position: 'absolute', top: 0, bottom: 0, left: layerInsets.left, right: layerInsets.right, zIndex: 70 }}>
+      {/* Pop-ups and toasts fill the app's area; SideSafe already keeps it clear of side cut-outs. */}
+      <View pointerEvents="box-none" style={{ position: 'absolute', top: 0, bottom: 0, left: 0, right: 0, zIndex: 70 }}>
       {settled && !starter && !state.tutorialDone && tab === 'home' ? <YardTips /> : null}
       {settled && !starter && tab === 'home' && state.tutorialDone && !showLogin ? <FindMeAsk key="ask-open" where="open" /> : null}
       {settled && !starter && tab === 'friends' && !showLogin ? <FindMeAsk key="ask-social" where="social" /> : null}
