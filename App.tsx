@@ -267,11 +267,11 @@ function Shell() {
   }, [settled, starter, state]);
   // What's new tour: once per update, for players who already played, after the daily reward and any level-up.
   useEffect(() => {
-    if (tourChecked.current || !settled || starter || !state.tutorialDone || showLogin || U.levelMoment(state)) return;
+    if (tourChecked.current || !settled || starter || !state.tutorialDone || showLogin || login.canClaim || U.levelMoment(state)) return;
     tourChecked.current = true;
     const played = !!state.onboard?.legacy || (state.login?.count ?? 0) > 1;
     shouldShowTour(played).then((v) => v && setShowTour(true));
-  }, [settled, starter, state.tutorialDone, showLogin]);
+  }, [settled, starter, state.tutorialDone, showLogin, login.canClaim]);
   const goTour = (g: TourGo) => {
     setShowTour(false);
     setTab(g.tab);
