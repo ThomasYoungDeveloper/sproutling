@@ -21,6 +21,7 @@ import { ShareCardView } from './ShareCardView';
 import PetZoom from './PetZoom';
 import PowerUps from './PowerUps';
 import HpCard from './HpCard';
+import TypeChart, { ElementBadge } from './TypeChart';
 import { InfoDot, InfoPop, type Tip } from './InfoTip';
 import { useAuth } from '../state/AuthContext';
 import { useFriends } from '../state/FriendsContext';
@@ -38,7 +39,7 @@ export default function PetSheet({ petId, onClose }: { petId: string; onClose: (
   const pet = state.pets.find((p) => p.id === petId);
   // Training is permanent, so points are placed first and only saved when you tap Lock in.
   const [pending, setPending] = useState<St.Training>({});
-  const [info, setInfo] = useState<'personality' | null>(null);
+  const [info, setInfo] = useState<'personality' | 'types' | null>(null);
   const [tab, setTab] = useState<'stats' | 'moves' | 'about'>('stats');
   const [tip, setTip] = useState<Tip | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
@@ -91,7 +92,7 @@ export default function PetSheet({ petId, onClose }: { petId: string; onClose: (
               <Text style={styles.sub}>Level {lv}{pet.nickname !== sp.name ? ` ${sp.name}` : ''}{pet.skin ? ` · ${SKIN_INFO[pet.skin].label}` : ''}{pet.shiny ? ' · Shiny' : ''}</Text>
               <View style={{ flexDirection: 'row', gap: 6, flexWrap: 'wrap' }}>
                 <RarityBadge rarity={sp.rarity} />
-                <View style={[styles.chip, { backgroundColor: ELEMENT_COLOR[sp.element] }]}><Text style={styles.chipText}>{ELEMENT_LABEL[sp.element]}</Text></View>
+                <Pressable onPress={() => setInfo('types')} style={[styles.chip, styles.elChip, { backgroundColor: ELEMENT_COLOR[sp.element] }]} accessibilityRole="button" accessibilityLabel={`${ELEMENT_LABEL[sp.element]} type. Open the type chart`}><ElementBadge element={sp.element} size={18} /><Text style={styles.chipText}>{ELEMENT_LABEL[sp.element]}</Text></Pressable>
                 <Pressable onPress={() => setInfo('personality')} style={[styles.chip, styles.natureChip]} accessibilityRole="button" accessibilityLabel={`Nature: ${pers.label}. Tap for more`}>
                   <Text style={[styles.chipText, { color: '#6E56CF' }]}>{pers.label}{nb ? ` +${nb.amount} ${St.STAT_INFO[nb.stat].short}` : ''}</Text>
                   <InfoDot onPress={() => setInfo('personality')} label="nature" color="#6E56CF" />
@@ -299,6 +300,7 @@ export default function PetSheet({ petId, onClose }: { petId: string; onClose: (
         </View>
       ) : null}
       <InfoPop tip={tip} onClose={() => setTip(null)} />
+      {info === 'types' ? <TypeChart initial={sp.element} onClose={() => setInfo(null)} /> : null}
       {info === 'personality' ? <PersonalitySheet personality={St.personalityOf(pet)} name={pet.nickname} onClose={() => setInfo(null)} /> : null}
     </View>
   );
@@ -339,6 +341,7 @@ const styles = StyleSheet.create({
   zoomText: { fontSize: 13 },
   art: { width: 116, height: 116, borderRadius: 20, backgroundColor: colors.sky, alignItems: 'center', justifyContent: 'center' },
   chip: { borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4 },
+  elChip: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingLeft: 4 },
   chipText: { color: '#FFFFFF', fontWeight: '600', fontSize: 13 },
   section: { backgroundColor: '#FAFCFB', borderRadius: 16, borderWidth: 1, borderColor: colors.line, padding: space.md, gap: 8 },
   title: { fontWeight: '800', fontSize: 17, color: colors.ink },

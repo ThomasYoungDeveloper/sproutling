@@ -239,7 +239,8 @@ export default function BattleScreen({ opponent, onClose, onResult, live, specia
       Animated.timing(faint[ev.side], { toValue: 0, duration: final ? 1300 : 450, easing: Easing.out(Easing.quad), useNativeDriver: true }).start();
       await wait(final ? 1400 : 500);
       setBattle(f.battle);
-      if (!f.battle.over) faint[ev.side].setValue(1);
+      // When you get to pick who goes next, the field stays empty until you do.
+      if (!f.battle.over && !(ev.side === 'me' && (f.battle.choose ?? []).includes('me') && !live)) faint[ev.side].setValue(1);
       await wait(500);
     } else {
       // Switches, dozing and statuses wearing off.
@@ -407,14 +408,18 @@ export default function BattleScreen({ opponent, onClose, onResult, live, specia
             <Text style={styles.line} numberOfLines={2}>{line}</Text>
             {mustChoose ? (
               <View style={{ gap: 8 }}>
-                <Text style={styles.tip}>Your pet fainted. Choose who goes in next (this is free).</Text>
+                <View>
+                  <Text style={styles.pickKicker}>YOUR PET FAINTED</Text>
+                  <Text style={styles.pickTitle}>Who goes in next?</Text>
+                  <Text style={[styles.tip, { textAlign: 'left' }]}>{them.nickname} is {B.ELEMENT_LABEL[them.element]} type. Switching in is free.</Text>
+                </View>
                 <View style={{ gap: 8 }}>
                   {battle.mine.map((f, i) => {
                     if (f.hp <= 0) return null;
                     const sp = SPECIES_BY_ID[f.speciesId];
                     const pct = f.maxHp ? f.hp / f.maxHp : 0;
                     return (
-                      <Pressable key={f.key} onPress={() => { setLead(i); setBattle(B.previewLead(battle, 'me', i)); setLine(`Go, ${f.nickname}! What will ${f.nickname} do?`); buzz('light', 'whoosh'); }} style={styles.swCard} accessibilityRole="button" accessibilityLabel={`Send in ${f.nickname}, ${f.hp} of ${f.maxHp} HP`}>
+                      <Pressable key={f.key} onPress={() => { setLead(i); setBattle(B.previewLead(battle, 'me', i)); faint.me.setValue(1); setLine(`Go, ${f.nickname}! What will ${f.nickname} do?`); buzz('light', 'whoosh'); }} style={[styles.swCard, B.effectiveness(f.element, them.element) > 1 && styles.swGood]} accessibilityRole="button" accessibilityLabel={`Send in ${f.nickname}, ${f.hp} of ${f.maxHp} HP`}>
                         <View style={styles.swHead}>
                           <PetSprite species={sp} stage={stageFor(f.xp)} size={46} skin={f.skin} hat={f.hat} />
                           <View style={{ flex: 1, gap: 3 }}>
@@ -853,6 +858,9 @@ function DamagePop({ side, text, color, onDone }: { side: B.Side; text: string; 
 }
 
 const styles = StyleSheet.create({
+  pickKicker: { fontSize: 12, fontWeight: '700', color: '#C2365C', letterSpacing: 0.4 },
+  pickTitle: { fontSize: 20, fontWeight: '800', color: colors.ink, marginBottom: 2 },
+  swGood: { borderWidth: 2, borderColor: '#2EB88A' },
   effTag: { borderRadius: 999, paddingHorizontal: 7, paddingVertical: 2 },
   effTagText: { color: '#FFFFFF', fontWeight: '600', fontSize: 12 },
   stTag: { borderRadius: 999, paddingHorizontal: 7, paddingVertical: 1 },

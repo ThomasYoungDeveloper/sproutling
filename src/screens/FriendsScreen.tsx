@@ -20,6 +20,8 @@ import { SPECIES_BY_ID } from '../game/species';
 import { levelFor, stageFor } from '../game/scoring';
 import { GIFTS_PER_DAY, GIFT_COINS } from '../game/actions';
 import { activeToday, copyText, lastSeen, shareInvite } from './friendsShared';
+import TypeChart from '../components/TypeChart';
+import { ELEMENT_COLOR } from '../game/battle';
 import { ArenaCard, LiveBattlesCard, BattleTiles, TradesCard } from '../components/SocialPanels';
 import { useLive } from '../state/LiveBattleContext';
 import RankedCard from '../components/RankedCard';
@@ -180,7 +182,15 @@ export default function FriendsScreen({ initialAdd, onUsedInitialAdd, initialGui
       {section === 'battle' && battlesOpen && <Glow id="battles"><WildCard /></Glow>}
       {section === 'battle' && battlesOpen && (
         <>
-          <SectionHead title="Play" />
+          <View style={styles.playHead}>
+            <Text style={font.h2}>Play</Text>
+            <Pressable onPress={() => overlay.open(<TypeChart onClose={overlay.close} />)} style={({ pressed }) => [styles.typeBtn, pressed && { opacity: 0.7 }]} accessibilityRole="button" accessibilityLabel="Open the type chart">
+              <View style={{ flexDirection: 'row' }}>
+                {(['flower', 'tide', 'ember', 'moon'] as const).map((e, i) => <View key={e} style={[styles.typeDot, { backgroundColor: ELEMENT_COLOR[e], marginLeft: i ? -4 : 0 }]} />)}
+              </View>
+              <Text style={styles.typeBtnText}>Type chart</Text>
+            </Pressable>
+          </View>
           <ArenaCard />
           <BattleTiles tower={U.unlocked(state, 'tower') ? <View style={{ flex: 1 }}><Glow id="tower"><TowerCard /></Glow></View> : <View style={{ flex: 1 }}><LockedCard feature="tower" compact /></View>} onFriends={() => setSection('friends')} />
           <LiveBattlesCard />
@@ -326,6 +336,10 @@ const styles = StyleSheet.create({
   input: { borderWidth: 1, borderColor: colors.line, borderRadius: 14, minHeight: 44, paddingVertical: 10, paddingHorizontal: 14, fontSize: 16, color: colors.ink, backgroundColor: colors.tile },
   msg: { fontSize: 13, fontWeight: '600', color: '#C4562F' },
   ok: { color: colors.mintDark },
+  playHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 4, marginTop: 4 },
+  typeBtn: { flexDirection: 'row', alignItems: 'center', gap: 7, minHeight: 36, paddingHorizontal: 12, borderRadius: 999, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: colors.line },
+  typeDot: { width: 12, height: 12, borderRadius: 6, borderWidth: 1.5, borderColor: '#FFFFFF' },
+  typeBtnText: { fontSize: 13, fontWeight: '700', color: colors.ink },
   divider: { borderBottomWidth: 1, borderBottomColor: colors.line },
   person: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: 12 },
   personName: { fontWeight: '700', fontSize: 15, color: colors.ink, flexShrink: 1 },

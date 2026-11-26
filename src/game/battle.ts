@@ -530,8 +530,9 @@ function faint(b: Battle, side: Side, push: (e: BattleEvent) => void) {
   if (side === 'me') b.mi = next;
   else b.ti = next;
   // With more than one pet left, the player gets to choose who goes in.
-  if (team(b, side).filter(alive).length > 1) b.choose = [...(b.choose ?? []).filter((x) => x !== side), side];
-  push({ side, kind: 'faint', target: side, text: `${f.nickname} fainted! ${active(b, side).nickname} steps in!` });
+  const choosing = team(b, side).filter(alive).length > 1;
+  if (choosing) b.choose = [...(b.choose ?? []).filter((x) => x !== side), side];
+  push({ side, kind: 'faint', target: side, text: choosing ? `${f.nickname} fainted!` : `${f.nickname} fainted! ${active(b, side).nickname} steps in!` });
 }
 
 /** Runs a whole battle with both sides played by the AI (used for balance tests). */
