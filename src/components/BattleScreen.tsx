@@ -613,13 +613,14 @@ function MoveButton({ m, foe, energy, disabled, onPress }: { m: MoveDef; foe: B.
       accessibilityState={{ disabled: off }}
       accessibilityLabel={`${m.name}${m.signature ? ', signature move, once per battle' : ''}, ${typeName}${eff > 1 ? ', 2 times damage' : eff < 1 ? ', half damage' : ''}, costs ${m.cost} energy`}
     >
+      {/* The press bounce runs on the native driver and the signature glow on JS, so they live on separate views (mixing them on one view crashes). */}
+      <Animated.View style={{ transform: [{ scale: press }] }}>
       <Animated.View
         style={[
           styles.move,
           { borderColor: c, backgroundColor: m.signature ? '#FFF8DC' : '#FFFFFF' },
           m.signature && { shadowColor: '#FFC400', shadowOpacity: glow.interpolate({ inputRange: [0, 1], outputRange: [0.25, 0.8] }) as any, shadowRadius: 12, shadowOffset: { width: 0, height: 0 }, elevation: 6 },
           off && { opacity: 0.4 },
-          { transform: [{ scale: press }] },
         ]}
       >
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
@@ -633,6 +634,7 @@ function MoveButton({ m, foe, energy, disabled, onPress }: { m: MoveDef; foe: B.
           </Text>
           <Text style={[styles.cost, { backgroundColor: m.cost ? '#FFF1C9' : '#EAF7F1' }]}>{m.signature ? 'Once' : m.cost ? `${m.cost}⚡` : 'Free'}</Text>
         </View>
+      </Animated.View>
       </Animated.View>
     </Pressable>
   );
